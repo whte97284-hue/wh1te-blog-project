@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wh1te | 首页 - 我的互联网小屋</title>
+    <!-- 引入 Tailwind CSS 脚本 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 定义主色调和强调色 */
+        :root {
+            --tiffany-blue: #00A8A8; /* 主色调：清冷、现代 */
+            --text-dark: #333;
+        }
+        
+        /* 1. 设置全屏固定背景 */
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            color: var(--text-dark);
+            /* 背景图链接 */
+            background-image: url("https://i.ibb.co/xSX22X4m/P1011597.jpg"); 
+            background-size: cover;
+            background-position: center 40%;
+            background-attachment: fixed; /* 固定背景，实现视差效果 */
+            min-height: 100vh; 
+        }
+        
+        /* 自定义主色类 */
+        .text-tiffany { color: var(--tiffany-blue); }
+        .bg-tiffany { background-color: var(--tiffany-blue); }
+        .hover\:text-tiffany:hover { color: var(--tiffany-blue); }
+
+        /* 2. 移除 Hero 区背景，使用柔和阴影优化文字可读性 */
+        .hero-bg {
+            background-image: none;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 3. 主内容区域布局和圆角优化 */
+        main {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2.5rem;
+            
+            background-color: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* 增加阴影柔和度 */
+            border-radius: 1.5rem; /* 圆润边角 */
+        }
+        
+        @media (min-width: 1024px) {
+            main {
+                grid-template-columns: 1fr 3fr; 
+                padding: 2.5rem;
+            }
+        }
+        
+        /* 公告栏卡片样式 */
+        .notice-card {
+            border-left: 4px solid var(--tiffany-blue); /* 公告栏回归主色调 */
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header / Nav (透明导航栏, 圆角优化) -->
+    <nav class="bg-white/90 shadow-md sticky top-0 z-20"> 
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+            <a href="index.html" class="text-2xl font-light text-tiffany tracking-widest uppercase">
+                <span class="font-bold">Wh1te</span>.log
+            </a>
+            <div class="flex items-center space-x-4">
+                <a href="index.html" class="hidden md:inline text-tiffany transition">首页</a>
+                <a href="article-1.html" class="hidden md:inline text-gray-600 hover:text-tiffany transition">最新文章</a>
+                <a href="#" class="hidden md:inline text-gray-600 hover:text-tiffany transition">我的项目</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section (背景图上的文字和搜索框) -->
+    <header class="hero-bg py-24 relative mb-12"> <!-- 【优化】增加底部间距 -->
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center p-8 rounded-xl">
+            <!-- 标题和阴影：使用柔和的灰色阴影来衬托文字 -->
+            <h1 class="text-6xl font-extrabold text-white mb-4" style="text-shadow: 1px 1px 10px rgba(0, 0, 0, 0.6);">
+                我在互联网的偏安一隅
+            </h1>
+            <p class="text-xl text-white mb-8 font-light" style="text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8);">
+                更新一些我日常和感触
+            </p>
+            
+            <!-- Search Input -->
+            <div class="max-w-lg mx-auto">
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    placeholder="搜索文章标题或摘要..." 
+                    oninput="searchArticles()"
+                    class="w-full px-6 py-3 border border-gray-300 rounded-full text-lg shadow-2xl focus:ring-tiffany focus:border-tiffany transition bg-white/80 placeholder-gray-600"
+                > 
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content - Article List -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 shadow-2xl rounded-2xl">
+        
+        <!-- Left Column: 公告栏 (Notice Board) - 圆角优化 -->
+        <div id="notice" class="space-y-6 lg:border-r lg:pr-8 lg:order-1 order-2 py-4 lg:py-0">
+            <div class="bg-white p-4 rounded-xl shadow-md notice-card">
+                <h3 class="font-bold text-xl mb-3 text-tiffany">博客公告</h3>
+                <p class="text-sm text-gray-700 space-y-2">
+                    <!-- 移除金色文字，改用灰色 -->
+                    <span class="block font-medium text-gray-700">✨ 0-1 挑战更新:</span> 
+                    <span class="block">我已成功配置 Python 环境，下一步将专注博客维护脚本开发。</span>
+                </p>
+                <p class="text-sm text-gray-700 mt-3">
+                    <span class="block font-medium text-gray-700">🗓️ 近期计划:</span> 
+                    <span class="block">学习使用 Python 校验 HTML 格式，保障网站内容质量。</span>
+                </p>
+            </div>
+            
+            <div class="bg-white p-4 rounded-xl shadow-md border-gray-200 border"> 
+                <h3 class="font-bold text-lg mb-2 text-gray-700">社交链接</h3>
+                <ul class="text-sm space-y-2 text-tiffany">
+                    <li><a href="#" class="hover:underline">我的 哔哩哔哩</a></li>
+                    <li><a href="#" class="hover:underline">我的 抖音</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Right Column: 文章列表 (Article List) - 圆角优化 -->
+        <div id="latest" class="lg:order-2 order-1 py-4 lg:py-0">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 border-b pb-4 border-gray-200">最新分享</h2>
+            
+            <div id="article-list-container">
+                <!-- Article Card 1 -->
+                <div class="article-card bg-white/95 shadow-xl rounded-xl p-6 mb-6 border-l-4 border-tiffany hover:shadow-2xl transition duration-300">
+                    <h3 class="text-2xl font-semibold mb-2">
+                        <a href="article-1.html" class="hover:text-tiffany transition">
+                            从 Appium 到网站：我与代码的旅程初探
+                        </a>
+                    </h3>
+                    <p class="text-gray-600 mb-4 article-summary">
+                        起初我以为编程就是找个工具抢票，最终却被安全机制所阻止。这次经历让我明白：真正的编程价值在于构建思维框架和创造数字世界。
+                    </p>
+                    <div class="flex justify-between items-center text-sm text-gray-500">
+                        <span>发布于 2025年10月02日</span>
+                        <a href="article-1.html" class="text-tiffany font-medium hover:underline">阅读全文 &rarr;</a>
+                    </div>
+                </div>
+
+                <!-- Placeholder Article Card 2 -->
+                <div class="article-card bg-white/95 shadow-md rounded-xl p-6 mb-6 border-l-4 border-tiffany"> 
+                    <h3 class="text-2xl font-semibold mb-2 text-gray-700">
+                        新的旅程：我的第一个 Python 自动化脚本
+                    </h3>
+                    <p class="text-gray-700 mb-4 article-summary">
+                        这篇文章即将发布。我们将学习如何用 Python 来校验网站文章的字数和格式，保障网站内容质量。
+                    </p>
+                    <div class="flex justify-between items-center text-sm text-gray-500">
+                        <span>即将发布</span>
+                        <span>敬请期待</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer id="footer" class="bg-gray-900/90 text-white mt-16 rounded-t-2xl">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm">
+            &copy; 2025 Journey.log | 我的代码旅程 | <a href="#" class="hover:underline text-tiffany">隐私声明</a>
+        </div>
+    </footer>
+
+    <!-- JavaScript Search Logic -->
+    <script>
+        function searchArticles() {
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
+            const cards = document.querySelectorAll('.article-card');
+
+            cards.forEach(card => {
+                const title = card.querySelector('h3 a').textContent.toLowerCase();
+                const summary = card.querySelector('.article-summary').textContent.toLowerCase();
+                
+                if (title.includes(query) || summary.includes(query)) {
+                    card.style.display = ''; 
+                } else {
+                    card.style.display = 'none'; 
+                }
+            });
+        }
+    </script>
+</body>
+</html>
