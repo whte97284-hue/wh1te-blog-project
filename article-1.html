@@ -94,8 +94,8 @@
                 <button id="menu-button" class="md:hidden p-2 rounded-md hover:bg-gray-100" onclick="toggleSidebar()">
                     <svg class="w-6 h-6 text-tiffany" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
-                <a href="index.html" class="hidden md:inline text-tiffany transition">首页</a>
-                <a href="article-1.html" class="hidden md:inline text-gray-600 hover:text-tiffany transition">最新文章</a>
+                <a href="index.html" class="hidden md:inline text-tiffany transition" onclick="saveMusicState(event)">首页</a>
+                <a href="article-1.html" class="hidden md:inline text-gray-600 hover:text-tiffany transition" onclick="saveMusicState(event)">最新文章</a>
                 <a href="#" class="hidden md:inline text-gray-600 hover:text-tiffany transition">我的项目</a>
             </div>
         </div>
@@ -210,37 +210,67 @@
 
     <!-- JavaScript Logic -->
     <script>
+        // ----------------------------------------------------
+        // --- 1. 音乐播放逻辑 (LocalStorage 跨页面同步) ---
+        // ----------------------------------------------------
+
         // 在页面加载后立即设置图标状态，并监听点击事件
         document.addEventListener('DOMContentLoaded', () => {
             const music = document.getElementById('background-music');
+            const storedState = localStorage.getItem('music_playing');
             
-            // 确保音乐是静音的，以绕过浏览器自动播放限制
+            // 默认静音，解决浏览器自动播放限制
             music.muted = true;
+
+            // 1. 尝试从 LocalStorage 恢复状态
+            if (storedState === 'true') {
+                // 如果上个页面在播放，尝试恢复播放 (静音)
+                music.play().catch(error => {
+                    console.error("Muted playback failed on load, waiting for user interaction.", error);
+                });
+                setMusicIcon(true);
+            } else {
+                // 如果上个页面是暂停状态，则暂停，并显示播放图标
+                music.pause();
+                setMusicIcon(false);
+            }
             
-            // 尝试播放 (通常会成功，但仍需处理可能的 Promise 错误)
-            music.play().catch(error => {
-                console.error("Muted playback failed on load, waiting for user interaction.", error);
-            });
-            
-            // 初始图标显示为“播放”状态 (因为音乐正在或尝试静音播放)
-            setMusicIcon(true); 
+            // 2. 监听第一次用户交互，强制播放一次，确保音乐对象被激活
+            const activateAudio = () => {
+                music.play().catch(e => console.log('Audio activation failed on initial click.'));
+                document.removeEventListener('click', activateAudio);
+            };
+            document.addEventListener('click', activateAudio);
         });
+
+        // 保存音乐状态到 LocalStorage，在跳转前触发
+        // (在文章页中，链接点击后会执行这个函数)
+        function saveMusicState(event) {
+            const music = document.getElementById('background-music');
+            // 只有当音乐不处于完全暂停状态时，才保存 true
+            const isPlaying = !music.paused || !music.muted; 
+            localStorage.setItem('music_playing', isPlaying ? 'true' : 'false');
+        }
+
 
         // 切换播放/暂停和静音状态
         function toggleMusic() {
             const music = document.getElementById('background-music');
             
+            // 如果音乐被暂停 (手动点击播放)
             if (music.paused) {
-                music.muted = false; 
+                music.muted = false; // 取消静音
                 music.play().catch(error => {
                     console.error("Playback prevented:", error);
                 });
                 setMusicIcon(true);
             } 
+            // 如果音乐在静音播放 (用户点击取消静音)
             else if (music.muted) {
                  music.muted = false; 
                  setMusicIcon(true);
             }
+            // 如果音乐在非静音播放中或被暂停 (用户点击暂停)
             else {
                 music.pause();
                 setMusicIcon(false);
@@ -268,6 +298,10 @@
             }
         }
         
+        // ----------------------------------------------------
+        // --- 2. UI/互动逻辑 ---
+        // ----------------------------------------------------
+
         // 侧边栏切换逻辑 (移动端)
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
