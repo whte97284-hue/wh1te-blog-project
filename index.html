@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Journey.log | 首页 - 代码与生活漫游</title>
+    <title>Wh1te | 首页 - 我的互联网小屋</title>
     <!-- 引入 Tailwind CSS 脚本 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -29,11 +29,19 @@
         /* 自定义主色类 */
         .text-tiffany { color: var(--tiffany-blue); }
         .bg-tiffany { background-color: var(--tiffany-blue); }
-        .border-tiffany-accent { border-color: var(--soft-gold); } 
         .hover\:text-tiffany:hover { color: var(--tiffany-blue); }
         .text-soft-gold { color: var(--soft-gold); }
-        
-        /* 2. 主内容区域布局和圆角优化 */
+        .bg-soft-gold\/50 { background-color: rgba(234, 199, 153, 0.5); }
+        .bg-soft-gold\/90 { background-color: rgba(234, 199, 153, 0.9); }
+
+        /* 2. 移除 Hero 区背景，使用柔和阴影优化文字可读性 */
+        .hero-bg {
+            background-image: none;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 3. 主内容区域布局和圆角优化 */
         main {
             display: grid;
             grid-template-columns: 1fr;
@@ -53,7 +61,7 @@
         
         /* 公告栏卡片样式 */
         .notice-card {
-            border-left: 4px solid var(--soft-gold); 
+            border-left: 4px solid var(--tiffany-blue); /* 公告栏回归主色调 */
         }
     </style>
 </head>
@@ -61,7 +69,8 @@
 
     <!-- Audio Player (解决 Chrome 冲突，默认静音) -->
     <audio id="background-music" loop muted>
-        <source src="https://storage.googleapis.com/assessment-files/sample_audio/Summer.mp3" type="audio/mp3">
+        <!-- 音乐占位符：已修改为新的标准路径 -->
+        <source src="./audio/bgm.mp3" type="audio/mp3">
         您的浏览器不支持音频播放。
     </audio>
 
@@ -77,7 +86,7 @@
             <path d="M8 5v14l11-7z"/>
         </svg>
     </button>
-    
+
     <!-- Header / Nav (透明导航栏, 圆角优化) -->
     <nav class="bg-white/90 shadow-md sticky top-0 z-20"> 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
@@ -93,14 +102,14 @@
     </nav>
 
     <!-- Hero Section (背景图上的文字和搜索框) -->
-    <header class="hero-bg py-24 relative">
+    <header class="hero-bg py-24 relative mb-12"> 
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center p-8 rounded-xl">
-            <!-- 标题和阴影：使用柔和的淡金色阴影 -->
-            <h1 class="text-6xl font-extrabold text-white mb-4" style="text-shadow: 1px 1px 10px var(--soft-gold);">
+            <!-- 标题和阴影：使用柔和的灰色阴影来衬托文字 -->
+            <h1 class="text-6xl font-extrabold text-white mb-4" style="text-shadow: 1px 1px 10px rgba(0, 0, 0, 0.6);">
                 代码与生活的漫游日志
             </h1>
             <p class="text-xl text-white mb-8 font-light" style="text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8);">
-                记录从零到一的编程旅程，寻找代码世界的真谛。
+                更新一些我日常和感触
             </p>
             
             <!-- Search Input -->
@@ -110,7 +119,7 @@
                     id="search-input" 
                     placeholder="搜索文章标题或摘要..." 
                     oninput="searchArticles()"
-                    class="w-full px-6 py-3 border border-gray-300 rounded-full text-lg shadow-2xl focus:ring-tiffany focus:border-tiffany transition bg-white/95 placeholder-gray-800"
+                    class="w-full px-6 py-3 border border-gray-300 rounded-full text-lg shadow-2xl focus:ring-tiffany focus:border-tiffany transition bg-white/80 placeholder-gray-600"
                 > 
             </div>
         </div>
@@ -120,30 +129,30 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 shadow-2xl rounded-2xl">
         
         <!-- Left Column: 公告栏 (Notice Board) - 圆角优化 -->
-        <div id="notice" class="space-y-6 lg:border-r lg:pr-8 lg:order-1 order-2 py-8 lg:py-10">
+        <div id="notice" class="space-y-6 lg:border-r lg:pr-8 lg:order-1 order-2 py-4 lg:py-0">
             <div class="bg-white p-4 rounded-xl shadow-md notice-card">
                 <h3 class="font-bold text-xl mb-3 text-tiffany">博客公告</h3>
                 <p class="text-sm text-gray-700 space-y-2">
-                    <span class="block font-medium text-soft-gold">✨ 0-1 挑战更新:</span> 
+                    <span class="block font-medium text-gray-700">✨ 0-1 挑战更新:</span> 
                     <span class="block">我已成功配置 Python 环境，下一步将专注博客维护脚本开发。</span>
                 </p>
                 <p class="text-sm text-gray-700 mt-3">
-                    <span class="block font-medium text-soft-gold">🗓️ 近期计划:</span> 
+                    <span class="block font-medium text-gray-700">🗓️ 近期计划:</span> 
                     <span class="block">学习使用 Python 校验 HTML 格式，保障网站内容质量。</span>
                 </p>
             </div>
             
-            <div class="bg-white p-4 rounded-xl shadow-md border-tiffany-accent"> 
-                <h3 class="font-bold text-lg mb-2 text-gray-700">友情链接</h3>
+            <div class="bg-white p-4 rounded-xl shadow-md border-gray-200 border"> 
+                <h3 class="font-bold text-lg mb-2 text-gray-700">社交链接</h3>
                 <ul class="text-sm space-y-2 text-tiffany">
-                    <li><a href="#" class="hover:underline">我的 GitHub</a></li>
-                    <li><a href="#" class="hover:underline">Python 官方文档</a></li>
+                    <li><a href="#" class="hover:underline">我的 哔哩哔哩</a></li>
+                    <li><a href="#" class="hover:underline">我的 抖音</a></li>
                 </ul>
             </div>
         </div>
 
         <!-- Right Column: 文章列表 (Article List) - 圆角优化 -->
-        <div id="latest" class="lg:order-2 order-1 py-8 lg:py-10">
+        <div id="latest" class="lg:order-2 order-1 py-4 lg:py-0">
             <h2 class="text-3xl font-bold text-gray-800 mb-8 border-b pb-4 border-gray-200">最新分享</h2>
             
             <div id="article-list-container">
@@ -164,7 +173,7 @@
                 </div>
 
                 <!-- Placeholder Article Card 2 -->
-                <div class="article-card bg-white/95 shadow-md rounded-xl p-6 mb-6 border-l-4 border-tiffany-accent"> 
+                <div class="article-card bg-white/95 shadow-md rounded-xl p-6 mb-6 border-l-4 border-tiffany"> 
                     <h3 class="text-2xl font-semibold mb-2 text-gray-700">
                         新的旅程：我的第一个 Python 自动化脚本
                     </h3>
