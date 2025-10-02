@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wh1te | 首页 - 我的互联网小屋</title>
+    <title>Wh1te.log | 首页 - 我的互联网小屋</title>
     <!-- 引入 Tailwind CSS 脚本 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* 定义主色调和强调色 */
         :root {
             --tiffany-blue: #00A8A8; /* 主色调：清冷、现代 */
-            --soft-gold: #EAC799; /* 强调色：温暖、柔和 */
             --text-dark: #333;
         }
         
@@ -30,9 +29,6 @@
         .text-tiffany { color: var(--tiffany-blue); }
         .bg-tiffany { background-color: var(--tiffany-blue); }
         .hover\:text-tiffany:hover { color: var(--tiffany-blue); }
-        .text-soft-gold { color: var(--soft-gold); }
-        .bg-soft-gold\/50 { background-color: rgba(234, 199, 153, 0.5); }
-        .bg-soft-gold\/90 { background-color: rgba(234, 199, 153, 0.9); }
 
         /* 2. 移除 Hero 区背景，使用柔和阴影优化文字可读性 */
         .hero-bg {
@@ -69,7 +65,7 @@
 
     <!-- Audio Player (解决 Chrome 冲突，默认静音) -->
     <audio id="background-music" loop muted>
-        <!-- 音乐占位符：已修改为新的标准路径 -->
+        <!-- 音乐占位符：已修改为你的 GitHub 相对路径 -->
         <source src="./audio/bgm.mp3" type="audio/mp3">
         您的浏览器不支持音频播放。
     </audio>
@@ -81,7 +77,7 @@
         class="fixed bottom-6 right-6 bg-tiffany text-white p-3 rounded-full shadow-2xl hover:bg-opacity-80 transition duration-300 z-30"
         title="播放/暂停背景音乐"
     >
-        <!-- 初始显示为播放图标 (因为音乐暂停了) -->
+        <!-- 初始显示为播放图标 -->
         <svg id="music-icon" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
             <path d="M8 5v14l11-7z"/>
         </svg>
@@ -106,7 +102,7 @@
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center p-8 rounded-xl">
             <!-- 标题和阴影：使用柔和的灰色阴影来衬托文字 -->
             <h1 class="text-6xl font-extrabold text-white mb-4" style="text-shadow: 1px 1px 10px rgba(0, 0, 0, 0.6);">
-                代码与生活的漫游日志
+                我在互联网的偏安一隅
             </h1>
             <p class="text-xl text-white mb-8 font-light" style="text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8);">
                 更新一些我日常和感触
@@ -159,7 +155,7 @@
                 <!-- Article Card 1 -->
                 <div class="article-card bg-white/95 shadow-xl rounded-xl p-6 mb-6 border-l-4 border-tiffany hover:shadow-2xl transition duration-300">
                     <h3 class="text-2xl font-semibold mb-2">
-                        <a href="article-1.html" class="hover:text-tiffany transition">
+                        <a href="article-1.html" class="hover:text-tiffany transition" onclick="saveMusicState(event)">
                             从 Appium 到网站：我与代码的旅程初探
                         </a>
                     </h3>
@@ -168,7 +164,7 @@
                     </p>
                     <div class="flex justify-between items-center text-sm text-gray-500">
                         <span>发布于 2025年10月02日</span>
-                        <a href="article-1.html" class="text-tiffany font-medium hover:underline">阅读全文 &rarr;</a>
+                        <a href="article-1.html" class="text-tiffany font-medium hover:underline" onclick="saveMusicState(event)">阅读全文 &rarr;</a>
                     </div>
                 </div>
 
@@ -198,37 +194,66 @@
 
     <!-- JavaScript Logic -->
     <script>
+        // ----------------------------------------------------
+        // --- 1. 音乐播放逻辑 (LocalStorage 跨页面同步) ---
+        // ----------------------------------------------------
+
         // 在页面加载后立即设置图标状态，并监听点击事件
         document.addEventListener('DOMContentLoaded', () => {
             const music = document.getElementById('background-music');
+            const storedState = localStorage.getItem('music_playing');
             
-            // 确保音乐是静音的，以绕过浏览器自动播放限制
+            // 默认静音，解决浏览器自动播放限制
             music.muted = true;
+
+            // 1. 尝试从 LocalStorage 恢复状态
+            if (storedState === 'true') {
+                // 如果上个页面在播放，尝试恢复播放 (静音)
+                music.play().catch(error => {
+                    console.error("Muted playback failed on load, waiting for user interaction.", error);
+                });
+                setMusicIcon(true);
+            } else {
+                // 如果上个页面是暂停状态，则暂停，并显示播放图标
+                music.pause();
+                setMusicIcon(false);
+            }
             
-            // 尝试播放 (通常会成功，但仍需处理可能的 Promise 错误)
-            music.play().catch(error => {
-                console.error("Muted playback failed on load, waiting for user interaction.", error);
-            });
-            
-            // 初始图标显示为“播放”状态 (因为音乐正在或尝试静音播放)
-            setMusicIcon(true); 
+            // 2. 监听第一次用户交互，强制播放一次，确保音乐对象被激活
+            const activateAudio = () => {
+                music.play().catch(e => console.log('Audio activation failed on initial click.'));
+                document.removeEventListener('click', activateAudio);
+            };
+            document.addEventListener('click', activateAudio);
         });
+
+        // 保存音乐状态到 LocalStorage，在跳转前触发
+        function saveMusicState(event) {
+            const music = document.getElementById('background-music');
+            // 只有当音乐不处于完全暂停状态时，才保存 true
+            const isPlaying = !music.paused || !music.muted; 
+            localStorage.setItem('music_playing', isPlaying ? 'true' : 'false');
+        }
+
 
         // 切换播放/暂停和静音状态
         function toggleMusic() {
             const music = document.getElementById('background-music');
             
+            // 如果音乐被暂停 (手动点击播放)
             if (music.paused) {
-                music.muted = false; 
+                music.muted = false; // 取消静音
                 music.play().catch(error => {
                     console.error("Playback prevented:", error);
                 });
                 setMusicIcon(true);
             } 
+            // 如果音乐在静音播放 (用户点击取消静音)
             else if (music.muted) {
                  music.muted = false; 
                  setMusicIcon(true);
             }
+            // 如果音乐在非静音播放中或被暂停 (用户点击暂停)
             else {
                 music.pause();
                 setMusicIcon(false);
@@ -238,7 +263,7 @@
         // 设置图标状态的辅助函数
         function setMusicIcon(isPlaying) {
             const iconContainer = document.getElementById('music-icon');
-            
+            // ... (图标 SVG 逻辑保持不变) ...
             if (isPlaying) {
                 // 播放状态: 显示暂停图标
                 iconContainer.innerHTML = `
@@ -256,7 +281,10 @@
             }
         }
         
-        // 文章搜索功能 (实时筛选文章列表)
+        // ----------------------------------------------------
+        // --- 2. 搜索逻辑 (实时筛选文章列表) ---
+        // ----------------------------------------------------
+
         function searchArticles() {
             const query = document.getElementById('search-input').value.toLowerCase().trim();
             const cards = document.querySelectorAll('.article-card');
