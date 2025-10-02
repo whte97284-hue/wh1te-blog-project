@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wh1te.log | 编程小白如何快速入门？</title>
+    <!-- 引入 Tailwind CSS 脚本 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 定义主色调和强调色 */
+        :root {
+            --tiffany-blue: #00A8A8; /* 主色调：清冷、现代 */
+            --text-dark: #333;
+        }
+        
+        /* 1. 设置全屏固定背景 */
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            color: var(--text-dark);
+            /* 背景图链接：使用相对路径，文件需在 audio/bg_high_res.jpg */
+            background-image: url("./audio/bg_high_res.jpg"); 
+            background-size: cover;
+            background-position: center 40%;
+            background-attachment: fixed; /* 固定背景，实现视差效果 */
+            min-height: 100vh; 
+        }
+        
+        /* 自定义主色类 */
+        .text-tiffany { color: var(--tiffany-blue); }
+        .bg-tiffany { background-color: var(--tiffany-blue); }
+        .hover\:text-tiffany:hover { color: var(--tiffany-blue); }
+
+        /* 侧边栏切换样式 */
+        @media (max-width: 768px) {
+            #sidebar {
+                transform: translateX(-100%);
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100%;
+                z-index: 20;
+                transition: transform 0.3s ease-in-out;
+                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            }
+            #sidebar.open {
+                transform: translateX(0);
+            }
+        }
+        
+        /* 文章主体区域样式 */
+        .prose p {
+            line-height: 1.75;
+            margin-bottom: 1.25rem;
+        }
+        .prose h2 {
+            border-bottom: 2px solid #E0FFFF;
+            padding-bottom: 0.5rem;
+            margin-top: 2.5rem;
+        }
+
+        /* 回到顶部按钮样式 */
+        #back-to-top {
+            transition: opacity 0.3s ease-in-out;
+            opacity: 0;
+            cursor: pointer;
+        }
+        #back-to-top.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Audio Player (解决 Chrome 冲突，默认静音) -->
+    <audio id="background-music" loop muted>
+        <!-- 音乐占位符：已修改为你的 GitHub 相对路径 -->
+        <source src="./audio/bgm.mp3" type="audio/mp3">
+        您的浏览器不支持音频播放。
+    </audio>
+
+    <!-- 音乐控制按钮 (固定在右下角) -->
+    <button 
+        id="music-toggle-button" 
+        onclick="toggleMusic()" 
+        class="fixed bottom-6 right-6 bg-tiffany text-white p-3 rounded-full shadow-2xl hover:bg-opacity-80 transition duration-300 z-30"
+        title="播放/暂停背景音乐"
+    >
+        <!-- 初始显示为播放图标 -->
+        <svg id="music-icon" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z"/>
+        </svg>
+    </button>
+
+    <!-- Header / Nav (透明导航栏, 圆角优化) -->
+    <nav class="bg-white/90 shadow-md sticky top-0 z-20"> 
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+            <!-- LOGO: Wh1te.log -->
+            <a href="index.html" class="text-2xl font-light text-tiffany tracking-widest uppercase">
+                <span class="font-bold">Wh1te</span>.log
+            </a>
+
+            <!-- 导航和侧边栏切换按钮 -->
+            <div class="flex items-center space-x-4">
+                <button id="menu-button" class="md:hidden p-2 rounded-md hover:bg-gray-100" onclick="toggleSidebar()">
+                    <svg class="w-6 h-6 text-tiffany" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+                <a href="index.html" class="hidden md:inline text-tiffany transition" onclick="saveMusicState(event)">首页</a>
+                <a href="article-1.html" class="hidden md:inline text-gray-600 hover:text-tiffany transition" onclick="saveMusicState(event)">最新文章</a>
+                <a href="#" class="hidden md:inline text-gray-600 hover:text-tiffany transition">我的项目</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-10">
+        
+        <!-- 侧边栏 (Sidebar - 移动端默认隐藏) -->
+        <aside id="sidebar" class="w-full md:w-80 bg-white shadow-xl rounded-2xl p-6 space-y-8 flex-shrink-0 md:sticky md:top-20">
+            
+            <!-- 搜索功能 -->
+            <div class="pb-4 border-b border-gray-100">
+                <h3 class="font-bold text-xl mb-3 text-tiffany">文章内搜索</h3>
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    placeholder="输入关键词搜索..." 
+                    oninput="searchArticles()"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-full focus:ring-tiffany focus:border-tiffany transition shadow-sm"
+                >
+            </div>
+            
+            <!-- 新增: 文章标签/分类列表 -->
+            <div class="bg-white p-4 rounded-xl shadow-md border-gray-200 border">
+                <h3 class="font-bold text-lg mb-3 text-gray-700">文章标签</h3>
+                <div class="flex flex-wrap gap-2">
+                    <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-3 py-1 rounded-full hover:bg-tiffany/40 transition">#编程之旅</a>
+                    <a href="#" class="text-xs bg-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-300 transition">#Web维护</a>
+                    <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-3 py-1 rounded-full hover:bg-tiffany/40 transition">#Python基础</a>
+                </div>
+            </div>
+
+            <!-- 文章目录 -->
+            <div class="space-y-2">
+                <h3 class="font-bold text-lg mb-3 text-gray-700">文章目录</h3>
+                <ul class="text-sm space-y-2 text-gray-600">
+                    <li class="hover:text-tiffany"><a href="#intro">1. test第一次测试</a></li>
+                </ul>
+            </div>
+            
+            <!-- 关于作者/个人签名 -->
+            <div>
+                <h3 class="font-bold text-lg mb-3 text-gray-700">关于我</h3>
+                <div class="text-sm text-gray-600 space-y-3">
+                    <p>神秘ai使用者</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 文章主体 (Article Content) -->
+        <article class="w-full md:flex-1 bg-white shadow-xl rounded-2xl p-8 md:p-12">
+            <header class="mb-10 border-b border-tiffany/50 pb-4">
+                 <!-- 新增: 文章标签 -->
+                 <div class="flex flex-wrap gap-2 mb-3">
+                    <span class="text-xs bg-tiffany/20 text-tiffany px-2 py-1 rounded-full">#Python基础</span>
+                    <span class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full">#Web维护</span>
+                </div>
+                
+                <h1 class="text-4xl font-light text-gray-900 mb-2">
+                    Pyhon主页自动生成脚本测试
+                </h1>
+                <p class="text-sm text-gray-500">
+                    发布于 2025年10月02日 | 分类：测试
+                </p>
+            </header>
+
+            <section class="prose max-w-none space-y-8">
+                
+                <h2 id="intro" class="text-2xl font-light text-tiffany border-b border-gray-100 pb-2">test第一次测试</h2>
+                <p>
+                    辅助静态页面更新的自动化生成脚本第一次测试
+                </p>
+
+            </section>
+
+            <!-- 评论区 -->
+            <section class="mt-16 pt-8 border-t border-gray-100">
+                <h2 class="text-2xl font-light text-gray-800 mb-6">评论与交流</h2>
+                <div id="comments" class="space-y-4">
+                    <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-tiffany">
+                        <p class="font-semibold text-sm">旅人 No.1</p>
+                        <p class="text-gray-700 mt-1">评论</p>
+                    </div>
+                    <!-- 留言表单 -->
+                    <div class="pt-4">
+                        <h4 class="font-bold mb-2">留下你的足迹</h4>
+                        <textarea id="comment-text" placeholder="输入你的评论..." rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-tiffany focus:border-tiffany transition shadow-sm"></textarea>
+                        <button onclick="submitComment()" class="mt-2 px-6 py-2 bg-tiffany text-white font-semibold rounded-full hover:opacity-80 transition">
+                            提交评论
+                        </button>
+                        <div id="comment-status" class="mt-3 text-sm font-medium"></div>
+                    </div>
+                </div>
+            </section>
+        </article>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900/90 text-white mt-16 rounded-t-2xl">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm">
+            &copy; 2025 Wh1te.log | 我的代码旅程 | <a href="#" class="hover:underline text-tiffany">隐私声明</a>
+        </div>
+    </footer>
+
+    <!-- 新增: 回到顶部按钮 -->
+    <button
+        id="back-to-top"
+        title="回到顶部"
+        onclick="window.scrollTo({ top: 0, behavior: 'smooth' })"
+        class="fixed bottom-20 right-6 bg-white/80 text-tiffany p-3 rounded-full shadow-lg transition duration-300 z-30 opacity-0"
+    >
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 4l-8 8h5v8h6v-8h5z"/>
+        </svg>
+    </button>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // ----------------------------------------------------
+        // --- 1. 音乐播放逻辑 (LocalStorage 跨页面同步) ---
+        // ----------------------------------------------------
+
+        // 在页面加载后立即设置图标状态，并监听点击事件
+        document.addEventListener('DOMContentLoaded', () => {
+            const music = document.getElementById('background-music');
+            const storedState = localStorage.getItem('music_playing');
+            
+            // 默认静音，解决浏览器自动播放限制
+            music.muted = true;
+
+            // 1. 尝试从 LocalStorage 恢复状态
+            if (storedState === 'true') {
+                music.play().catch(error => {
+                    console.error("Muted playback failed on load, waiting for user interaction.", error);
+                });
+                setMusicIcon(true);
+            } else {
+                music.pause();
+                setMusicIcon(false);
+            }
+            
+            // 2. 监听第一次用户交互，强制播放一次，确保音乐对象被激活
+            const activateAudio = () => {
+                music.play().catch(e => console.log('Audio activation failed on initial click.'));
+                document.removeEventListener('click', activateAudio);
+            };
+            document.addEventListener('click', activateAudio);
+        });
+
+        // 保存音乐状态到 LocalStorage，在跳转前触发
+        function saveMusicState(event) {
+            const music = document.getElementById('background-music');
+            const isPlaying = !music.paused || !music.muted; 
+            localStorage.setItem('music_playing', isPlaying ? 'true' : 'false');
+        }
+
+
+        // 切换播放/暂停和静音状态
+        function toggleMusic() {
+            const music = document.getElementById('background-music');
+            
+            if (music.paused) {
+                music.muted = false; // 取消静音
+                music.play().catch(error => {
+                    console.error("Playback prevented:", error);
+                });
+                setMusicIcon(true);
+            } 
+            else if (music.muted) {
+                 music.muted = false; 
+                 setMusicIcon(true);
+            }
+            else {
+                music.pause();
+                setMusicIcon(false);
+            }
+        }
+        
+        // 设置图标状态的辅助函数
+        function setMusicIcon(isPlaying) {
+            const iconContainer = document.getElementById('music-icon');
+            
+            if (isPlaying) {
+                // 播放状态: 显示暂停图标
+                iconContainer.innerHTML = `
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                    </svg>
+                `;
+            } else {
+                // 暂停状态: 显示播放图标
+                iconContainer.innerHTML = `
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                `;
+            }
+        }
+        
+        // ----------------------------------------------------
+        // --- 2. UI/互动逻辑 ---
+        // ----------------------------------------------------
+
+        // 侧边栏切换逻辑 (移动端)
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        // 文章搜索逻辑 (文章内搜索)
+        const originalContent = {}; 
+
+        function searchArticles() {
+            const query = document.getElementById('search-input').value.trim();
+            const paragraphs = document.querySelectorAll('article p');
+
+            // 1. 先清除所有高亮
+            paragraphs.forEach(p => {
+                if (originalContent[p] !== undefined) {
+                    p.innerHTML = originalContent[p];
+                }
+            });
+
+            if (query === '') {
+                return;
+            }
+
+            // 2. 执行搜索和高亮
+            paragraphs.forEach(p => {
+                if (originalContent[p] === undefined) {
+                    originalContent[p] = p.innerHTML; // 备份原始内容
+                }
+
+                const regex = new RegExp(query, 'gi'); 
+                
+                // 替换匹配到的内容，并用 <span> 标签高亮 
+                p.innerHTML = p.innerHTML.replace(regex, (match) => {
+                    return `<span class="bg-yellow-200 text-black rounded px-1 font-semibold">${match}</span>`;
+                });
+            });
+        }
+        
+        // 评论提交逻辑
+        function submitComment() {
+            const commentTextarea = document.getElementById('comment-text');
+            const statusDiv = document.getElementById('comment-status');
+            const commentContent = commentTextarea.value.trim();
+            
+            if (commentContent === '') {
+                statusDiv.textContent = '❌ 评论内容不能为空！';
+                statusDiv.classList.remove('text-tiffany');
+                statusDiv.classList.add('text-red-500');
+                return;
+            }
+            
+            // 模拟提交成功
+            statusDiv.textContent = '✅ 评论提交成功，等待审核！';
+            statusDiv.classList.remove('text-red-500');
+            statusDiv.classList.add('text-tiffany');
+            
+            // 清空评论框
+            commentTextarea.value = '';
+        }
+
+        // --- 回到顶部逻辑 ---
+        const backToTopButton = document.getElementById('back-to-top');
+
+        // 监听滚动事件，超过 200px 时显示按钮
+        window.onscroll = () => {
+            // 使用 classList.add/remove 来控制 opacity，实现平滑显示/隐藏
+            if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+                backToTopButton.classList.add('show');
+            } else {
+                backToTopButton.classList.remove('show');
+            }
+        };
+
+        // 平滑滚动逻辑 (由 onclick 触发)
+    </script>
+</body>
+</html>
