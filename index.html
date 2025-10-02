@@ -102,7 +102,7 @@
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center p-8 rounded-xl">
             <!-- 标题和阴影：使用柔和的灰色阴影来衬托文字 -->
             <h1 class="text-6xl font-extrabold text-white mb-4" style="text-shadow: 1px 1px 10px rgba(0, 0, 0, 0.6);">
-                我的互联网驿站
+                代码与生活的漫游日志
             </h1>
             <p class="text-xl text-white mb-8 font-light" style="text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8);">
                 更新一些我日常和感触
@@ -124,9 +124,8 @@
     <!-- Main Content - Article List -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 shadow-2xl rounded-2xl">
         
-        <!-- Left Column: 公告栏/标签云 - 圆角优化 -->
+        <!-- Left Column: 公告栏 (Notice Board) - 圆角优化 -->
         <div id="notice" class="space-y-6 lg:border-r lg:pr-8 lg:order-1 order-2 py-4 lg:py-0">
-            <!-- 公告栏 -->
             <div class="bg-white p-4 rounded-xl shadow-md notice-card">
                 <h3 class="font-bold text-xl mb-3 text-tiffany">博客公告</h3>
                 <p class="text-sm text-gray-700 space-y-2">
@@ -139,27 +138,11 @@
                 </p>
             </div>
             
-            <!-- 新增: 文章标签/分类列表 -->
-            <div class="bg-white p-4 rounded-xl shadow-md border-gray-200 border">
-                <h3 class="font-bold text-lg mb-3 text-gray-700">文章标签</h3>
-                <div class="flex flex-wrap gap-2">
-                    <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-3 py-1 rounded-full hover:bg-tiffany/40 transition">#Python基础</a>
-                    <a href="#" class="text-xs bg-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-300 transition">#Web开发</a>
-                    <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-3 py-1 rounded-full hover:bg-tiffany/40 transition">#自动化</a>
-                    <a href="#" class="text-xs bg-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-300 transition">#学习反思</a>
-                    <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-3 py-1 rounded-full hover:bg-tiffany/40 transition">#Git教程</a>
-                </div>
-            </div>
-
             <div class="bg-white p-4 rounded-xl shadow-md border-gray-200 border"> 
                 <h3 class="font-bold text-lg mb-2 text-gray-700">社交链接</h3>
                 <ul class="text-sm space-y-2 text-tiffany">
-                    <!-- B站链接 -->
-                    <li><a href="https://space.bilibili.com/551898501" target="_blank" class="hover:underline">我的 哔哩哔哩</a></li>
-                    <!-- 抖音链接 -->
-                    <li><a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw?from_tab_name=main" target="_blank" class="hover:underline">我的 抖音</a></li>
-                    <!-- GitHub 链接 (新增) -->
-                    <li><a href="https://github.com/whte97284-hue/wh1te-blog-project/tree/main" target="_blank" class="hover:underline">我的 GitHub</a></li>
+                    <li><a href="#" class="hover:underline">我的 哔哩哔哩</a></li>
+                    <li><a href="#" class="hover:underline">我的 抖音</a></li>
                 </ul>
             </div>
         </div>
@@ -171,12 +154,6 @@
             <div id="article-list-container">
                 <!-- Article Card 1 -->
                 <div class="article-card bg-white/95 shadow-xl rounded-xl p-6 mb-6 border-l-4 border-tiffany hover:shadow-2xl transition duration-300">
-                    <!-- 新增: 文章标签 -->
-                    <div class="flex flex-wrap gap-2 mb-3">
-                        <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-2 py-1 rounded-full hover:bg-tiffany/40 transition">#编程之旅</a>
-                        <a href="#" class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full hover:bg-gray-300 transition">#Appium</a>
-                    </div>
-                    
                     <h3 class="text-2xl font-semibold mb-2">
                         <a href="article-1.html" class="hover:text-tiffany transition" onclick="saveMusicState(event)">
                             从 Appium 到网站：我与代码的旅程初探
@@ -193,12 +170,6 @@
 
                 <!-- Placeholder Article Card 2 -->
                 <div class="article-card bg-white/95 shadow-md rounded-xl p-6 mb-6 border-l-4 border-tiffany"> 
-                    <!-- 新增: 文章标签 -->
-                    <div class="flex flex-wrap gap-2 mb-3">
-                        <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-2 py-1 rounded-full hover:bg-tiffany/40 transition">#Python基础</a>
-                        <a href="#" class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full hover:bg-gray-300 transition">#Web维护</a>
-                    </div>
-                    
                     <h3 class="text-2xl font-semibold mb-2 text-gray-700">
                         新的旅程：我的第一个 Python 自动化脚本
                     </h3>
@@ -308,7 +279,7 @@
         }
         
         // ----------------------------------------------------
-        // --- 2. 搜索与 UI 逻辑 ---
+        // --- 2. 搜索逻辑 (实时筛选文章列表) ---
         // ----------------------------------------------------
 
         function searchArticles() {
@@ -318,10 +289,9 @@
             cards.forEach(card => {
                 const title = card.querySelector('h3 a').textContent.toLowerCase();
                 const summary = card.querySelector('.article-summary').textContent.toLowerCase();
-                const tagsContent = card.querySelector('.flex.flex-wrap.gap-2.mb-3')?.textContent.toLowerCase() || '';
                 
                 // 只要标题或摘要包含关键词，就显示文章卡片
-                if (title.includes(query) || summary.includes(query) || tagsContent.includes(query)) {
+                if (title.includes(query) || summary.includes(query)) {
                     card.style.display = ''; 
                 } else {
                     card.style.display = 'none'; 
@@ -331,4 +301,3 @@
     </script>
 </body>
 </html>
-
