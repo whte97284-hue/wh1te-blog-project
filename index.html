@@ -17,7 +17,7 @@
         body {
             font-family: 'Inter', 'Noto Sans SC', sans-serif;
             color: var(--text-dark);
-            /* 背景图链接：使用 Raw URL 的相对路径结构 */
+            /* 背景图链接：使用相对路径，文件需在 audio/bg_high_res.jpg */
             background-image: url("./audio/bg_high_res.jpg"); 
             background-size: cover;
             background-position: center 40%;
@@ -65,7 +65,6 @@
 
     <!-- Audio Player (解决 Chrome 冲突，默认静音) -->
     <audio id="background-music" loop muted>
-        <!-- 音乐占位符：已修改为你的 GitHub 相对路径 -->
         <source src="./audio/bgm.mp3" type="audio/mp3">
         您的浏览器不支持音频播放。
     </audio>
@@ -77,7 +76,6 @@
         class="fixed bottom-6 right-6 bg-tiffany text-white p-3 rounded-full shadow-2xl hover:bg-opacity-80 transition duration-300 z-30"
         title="播放/暂停背景音乐"
     >
-        <!-- 初始显示为播放图标 -->
         <svg id="music-icon" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
             <path d="M8 5v14l11-7z"/>
         </svg>
@@ -100,7 +98,6 @@
     <!-- Hero Section (背景图上的文字和搜索框) -->
     <header class="hero-bg py-24 relative mb-12"> 
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center p-8 rounded-xl">
-            <!-- 标题和阴影：使用柔和的灰色阴影来衬托文字 -->
             <h1 class="text-6xl font-extrabold text-white mb-4" style="text-shadow: 1px 1px 10px rgba(0, 0, 0, 0.6);">
                 代码与生活的漫游日志
             </h1>
@@ -124,8 +121,9 @@
     <!-- Main Content - Article List -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 shadow-2xl rounded-2xl">
         
-        <!-- Left Column: 公告栏 (Notice Board) - 圆角优化 -->
+        <!-- Left Column: 公告栏/标签云 -->
         <div id="notice" class="space-y-6 lg:border-r lg:pr-8 lg:order-1 order-2 py-4 lg:py-0">
+            <!-- 公告栏 -->
             <div class="bg-white p-4 rounded-xl shadow-md notice-card">
                 <h3 class="font-bold text-xl mb-3 text-tiffany">博客公告</h3>
                 <p class="text-sm text-gray-700 space-y-2">
@@ -138,22 +136,49 @@
                 </p>
             </div>
             
+            <!-- 文章标签/分类列表 -->
+            <div class="bg-white p-4 rounded-xl shadow-md border-gray-200 border">
+                <h3 class="font-bold text-lg mb-3 text-gray-700">文章标签</h3>
+                <div class="flex flex-wrap gap-2">
+                    <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-3 py-1 rounded-full hover:bg-tiffany/40 transition">#Python基础</a>
+                    <a href="#" class="text-xs bg-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-300 transition">#Web开发</a>
+                    <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-3 py-1 rounded-full hover:bg-tiffany/40 transition">#自动化</a>
+                    <a href="#" class="text-xs bg-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-300 transition">#学习反思</a>
+                    <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-3 py-1 rounded-full hover:bg-tiffany/40 transition">#Git教程</a>
+                </div>
+            </div>
+
             <div class="bg-white p-4 rounded-xl shadow-md border-gray-200 border"> 
                 <h3 class="font-bold text-lg mb-2 text-gray-700">社交链接</h3>
                 <ul class="text-sm space-y-2 text-tiffany">
-                    <li><a href="#" class="hover:underline">我的 哔哩哔哩</a></li>
-                    <li><a href="#" class="hover:underline">我的 抖音</a></li>
+                    <li><a href="https://space.bilibili.com/551898501" target="_blank" class="hover:underline">我的 哔哩哔哩</a></li>
+                    <li><a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw?from_tab_name=main" target="_blank" class="hover:underline">我的 抖音</a></li>
+                    <li><a href="https://github.com/whte97284-hue/wh1te-blog-project/tree/main" target="_blank" class="hover:underline">我的 GitHub</a></li>
                 </ul>
             </div>
         </div>
 
-        <!-- Right Column: 文章列表 (Article List) - 圆角优化 -->
+        <!-- Right Column: 文章列表 (Article List) -->
         <div id="latest" class="lg:order-2 order-1 py-4 lg:py-0">
             <h2 class="text-3xl font-bold text-gray-800 mb-8 border-b pb-4 border-gray-200">最新分享</h2>
             
             <div id="article-list-container">
-                <!-- Article Card 1 -->
+                
+                <!-- 🚀 Jinja2 模板循环开始：Python 将在这里自动填充文章卡片 -->
+                
                 <div class="article-card bg-white/95 shadow-xl rounded-xl p-6 mb-6 border-l-4 border-tiffany hover:shadow-2xl transition duration-300">
+                    
+                    <!-- 文章标签 -->
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        
+                        <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-2 py-1 rounded-full hover:bg-tiffany/40 transition">#编程之旅</a>
+                        
+                        <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-2 py-1 rounded-full hover:bg-tiffany/40 transition">#Appium</a>
+                        
+                        <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-2 py-1 rounded-full hover:bg-tiffany/40 transition">#学习反思</a>
+                        
+                    </div>
+                    
                     <h3 class="text-2xl font-semibold mb-2">
                         <a href="article-1.html" class="hover:text-tiffany transition" onclick="saveMusicState(event)">
                             从 Appium 到网站：我与代码的旅程初探
@@ -167,20 +192,34 @@
                         <a href="article-1.html" class="text-tiffany font-medium hover:underline" onclick="saveMusicState(event)">阅读全文 &rarr;</a>
                     </div>
                 </div>
-
-                <!-- Placeholder Article Card 2 -->
-                <div class="article-card bg-white/95 shadow-md rounded-xl p-6 mb-6 border-l-4 border-tiffany"> 
-                    <h3 class="text-2xl font-semibold mb-2 text-gray-700">
-                        新的旅程：我的第一个 Python 自动化脚本
+                
+                <div class="article-card bg-white/95 shadow-xl rounded-xl p-6 mb-6 border-l-4 border-tiffany hover:shadow-2xl transition duration-300">
+                    
+                    <!-- 文章标签 -->
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        
+                        <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-2 py-1 rounded-full hover:bg-tiffany/40 transition">#Python基础</a>
+                        
+                        <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-2 py-1 rounded-full hover:bg-tiffany/40 transition">#Web维护</a>
+                        
+                    </div>
+                    
+                    <h3 class="text-2xl font-semibold mb-2">
+                        <a href="article-2.html" class="hover:text-tiffany transition" onclick="saveMusicState(event)">
+                            Pyhon主页自动生成脚本测试
+                        </a>
                     </h3>
-                    <p class="text-gray-700 mb-4 article-summary">
-                        这篇文章即将发布。我们将学习如何用 Python 来校验网站文章的字数和格式，保障网站内容质量。
+                    <p class="text-gray-600 mb-4 article-summary">
+                        辅助静态页面更新的自动化生成脚本第一次测试
                     </p>
                     <div class="flex justify-between items-center text-sm text-gray-500">
-                        <span>即将发布</span>
-                        <span>敬请期待</span>
+                        <span>发布于 2025年10月3日</span>
+                        <a href="article-2.html" class="text-tiffany font-medium hover:underline" onclick="saveMusicState(event)">阅读全文 &rarr;</a>
                     </div>
                 </div>
+                
+                <!-- Jinja2 模板循环结束 -->
+
             </div>
         </div>
     </main>
@@ -208,13 +247,11 @@
 
             // 1. 尝试从 LocalStorage 恢复状态
             if (storedState === 'true') {
-                // 如果上个页面在播放，尝试恢复播放 (静音)
                 music.play().catch(error => {
                     console.error("Muted playback failed on load, waiting for user interaction.", error);
                 });
                 setMusicIcon(true);
             } else {
-                // 如果上个页面是暂停状态，则暂停，并显示播放图标
                 music.pause();
                 setMusicIcon(false);
             }
@@ -230,7 +267,6 @@
         // 保存音乐状态到 LocalStorage，在跳转前触发
         function saveMusicState(event) {
             const music = document.getElementById('background-music');
-            // 只有当音乐不处于完全暂停状态时，才保存 true
             const isPlaying = !music.paused || !music.muted; 
             localStorage.setItem('music_playing', isPlaying ? 'true' : 'false');
         }
@@ -279,9 +315,10 @@
         }
         
         // ----------------------------------------------------
-        // --- 2. 搜索逻辑 (实时筛选文章列表) ---
+        // --- 2. 搜索与 UI 逻辑 ---
         // ----------------------------------------------------
 
+        // 文章搜索功能 (实时筛选文章列表)
         function searchArticles() {
             const query = document.getElementById('search-input').value.toLowerCase().trim();
             const cards = document.querySelectorAll('.article-card');
@@ -289,15 +326,29 @@
             cards.forEach(card => {
                 const title = card.querySelector('h3 a').textContent.toLowerCase();
                 const summary = card.querySelector('.article-summary').textContent.toLowerCase();
+                // 搜索标签内容 (Jinja2 生成后会包含标签文本)
+                const tagsContent = card.querySelector('.flex.flex-wrap.gap-2.mb-3')?.textContent.toLowerCase() || '';
                 
-                // 只要标题或摘要包含关键词，就显示文章卡片
-                if (title.includes(query) || summary.includes(query)) {
+                // 只要标题、摘要或标签包含关键词，就显示文章卡片
+                if (title.includes(query) || summary.includes(query) || tagsContent.includes(query)) {
                     card.style.display = ''; 
                 } else {
                     card.style.display = 'none'; 
                 }
             });
         }
+
+        // --- 回到顶部逻辑 ---
+        const backToTopButton = document.getElementById('back-to-top');
+
+        // 监听滚动事件，超过 200px 时显示按钮
+        window.onscroll = () => {
+            if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+                backToTopButton.classList.add('show');
+            } else {
+                backToTopButton.classList.remove('show');
+            }
+        };
     </script>
 </body>
 </html>
