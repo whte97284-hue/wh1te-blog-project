@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wh1te.log | 首页 - 我的互联网小屋</title>
-    <!-- 引入 Tailwind CSS 脚本 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* 定义主色调和强调色 */
@@ -17,7 +16,7 @@
         body {
             font-family: 'Inter', 'Noto Sans SC', sans-serif;
             color: var(--text-dark);
-            /* 背景图链接：使用相对路径，文件需在 audio/bg_high_res.jpg */
+            /* 背景图链接：使用相对路径 */
             background-image: url("./audio/bg_high_res.jpg"); 
             background-size: cover;
             background-position: center 40%;
@@ -63,13 +62,11 @@
 </head>
 <body class="antialiased">
 
-    <!-- Audio Player (解决 Chrome 冲突，默认静音) -->
     <audio id="background-music" loop muted>
         <source src="./audio/bgm.mp3" type="audio/mp3">
         您的浏览器不支持音频播放。
     </audio>
 
-    <!-- 音乐控制按钮 (固定在右下角) -->
     <button 
         id="music-toggle-button" 
         onclick="toggleMusic()" 
@@ -81,7 +78,6 @@
         </svg>
     </button>
 
-    <!-- Header / Nav (透明导航栏, 圆角优化) -->
     <nav class="bg-white/90 shadow-md sticky top-0 z-20"> 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
             <a href="index.html" class="text-2xl font-light text-tiffany tracking-widest uppercase">
@@ -95,22 +91,20 @@
         </div>
     </nav>
 
-    <!-- Hero Section (背景图上的文字和搜索框) -->
     <header class="hero-bg py-24 relative mb-12"> 
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center p-8 rounded-xl">
             <h1 class="text-6xl font-extrabold text-white mb-4" style="text-shadow: 1px 1px 10px rgba(0, 0, 0, 0.6);">
-                Wh1te11的互联网小屋
+                代码与生活的漫游日志
             </h1>
             <p class="text-xl text-white mb-8 font-light" style="text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8);">
                 更新一些我日常和感触
             </p>
             
-            <!-- Search Input -->
             <div class="max-w-lg mx-auto">
                 <input 
                     type="text" 
                     id="search-input" 
-                    placeholder="搜索文章标题或摘要..." 
+                    placeholder="搜索文章标题、摘要或标签..." 
                     oninput="searchArticles()"
                     class="w-full px-6 py-3 border border-gray-300 rounded-full text-lg shadow-2xl focus:ring-tiffany focus:border-tiffany transition bg-white/80 placeholder-gray-600"
                 > 
@@ -118,14 +112,16 @@
         </div>
     </header>
 
-    <!-- Main Content - Article List -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 shadow-2xl rounded-2xl">
         
-        <!-- Left Column: 公告栏/标签云 -->
         <div id="notice" class="space-y-6 lg:border-r lg:pr-8 lg:order-1 order-2 py-4 lg:py-0">
-            <!-- 公告栏 -->
             <div class="bg-white p-4 rounded-xl shadow-md notice-card">
-                <h3 class="font-bold text-xl mb-3 text-tiffany">博客公告</h3>
+                <h3 class="flex items-center font-bold text-xl mb-3 text-tiffany">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-2.236 9.364-5.516l.08.08c.29.29.515.63.67 1.011l.178 1.485A15.002 15.002 0 0118 13" />
+                    </svg>
+                    博客公告
+                </h3>
                 <p class="text-sm text-gray-700 space-y-2">
                     <span class="block font-medium text-gray-700">✨ 0-1 挑战更新:</span> 
                     <span class="block">我已成功配置 Python 环境，下一步将专注博客维护脚本开发。</span>
@@ -136,9 +132,13 @@
                 </p>
             </div>
             
-            <!-- 文章标签/分类列表 -->
             <div class="bg-white p-4 rounded-xl shadow-md border-gray-200 border">
-                <h3 class="font-bold text-lg mb-3 text-gray-700">文章标签</h3>
+                <h3 class="flex items-center font-bold text-lg mb-3 text-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-5 5a2 2 0 01-2.828 0l-7-7A2 2 0 013 8V3a2 2 0 012-2z" />
+                    </svg>
+                    文章标签
+                </h3>
                 <div class="flex flex-wrap gap-2">
                     <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-3 py-1 rounded-full hover:bg-tiffany/40 transition">#Python基础</a>
                     <a href="#" class="text-xs bg-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-300 transition">#Web开发</a>
@@ -149,7 +149,12 @@
             </div>
 
             <div class="bg-white p-4 rounded-xl shadow-md border-gray-200 border"> 
-                <h3 class="font-bold text-lg mb-2 text-gray-700">社交链接</h3>
+                <h3 class="flex items-center font-bold text-lg mb-2 text-gray-700">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    社交链接
+                </h3>
                 <ul class="text-sm space-y-2 text-tiffany">
                     <li><a href="https://space.bilibili.com/551898501" target="_blank" class="hover:underline">我的 哔哩哔哩</a></li>
                     <li><a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw?from_tab_name=main" target="_blank" class="hover:underline">我的 抖音</a></li>
@@ -158,27 +163,17 @@
             </div>
         </div>
 
-        <!-- Right Column: 文章列表 (Article List) -->
         <div id="latest" class="lg:order-2 order-1 py-4 lg:py-0">
             <h2 class="text-3xl font-bold text-gray-800 mb-8 border-b pb-4 border-gray-200">最新分享</h2>
             
             <div id="article-list-container">
                 
-                <!-- 🚀 Jinja2 模板循环开始：Python 将在这里自动填充文章卡片 -->
-                
                 <div class="article-card bg-white/95 shadow-xl rounded-xl p-6 mb-6 border-l-4 border-tiffany hover:shadow-2xl transition duration-300">
-                    
-                    <!-- 文章标签 -->
-                    <div class="flex flex-wrap gap-2 mb-3">
-                        
+                    <div class="flex flex-wrap gap-2 mb-3 article-tags">
                         <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-2 py-1 rounded-full hover:bg-tiffany/40 transition">#编程之旅</a>
-                        
                         <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-2 py-1 rounded-full hover:bg-tiffany/40 transition">#Appium</a>
-                        
                         <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-2 py-1 rounded-full hover:bg-tiffany/40 transition">#学习反思</a>
-                        
                     </div>
-                    
                     <h3 class="text-2xl font-semibold mb-2">
                         <a href="article-1.html" class="hover:text-tiffany transition" onclick="saveMusicState(event)">
                             从 Appium 到网站：我与代码的旅程初探
@@ -194,16 +189,10 @@
                 </div>
                 
                 <div class="article-card bg-white/95 shadow-xl rounded-xl p-6 mb-6 border-l-4 border-tiffany hover:shadow-2xl transition duration-300">
-                    
-                    <!-- 文章标签 -->
-                    <div class="flex flex-wrap gap-2 mb-3">
-                        
+                    <div class="flex flex-wrap gap-2 mb-3 article-tags">
                         <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-2 py-1 rounded-full hover:bg-tiffany/40 transition">#Python基础</a>
-                        
                         <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-2 py-1 rounded-full hover:bg-tiffany/40 transition">#Web维护</a>
-                        
                     </div>
-                    
                     <h3 class="text-2xl font-semibold mb-2">
                         <a href="article-2.html" class="hover:text-tiffany transition" onclick="saveMusicState(event)">
                             Pyhon主页自动生成脚本测试
@@ -218,34 +207,26 @@
                     </div>
                 </div>
                 
-                <!-- Jinja2 模板循环结束 -->
-
-            </div>
+                </div>
         </div>
     </main>
 
-    <!-- Footer -->
     <footer id="footer" class="bg-gray-900/90 text-white mt-16 rounded-t-2xl">
         <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm">
             &copy; 2025 Wh1te.log | 我的代码旅程 | <a href="#" class="hover:underline text-tiffany">隐私声明</a>
         </div>
     </footer>
 
-    <!-- JavaScript Logic -->
     <script>
         // ----------------------------------------------------
         // --- 1. 音乐播放逻辑 (LocalStorage 跨页面同步) ---
         // ----------------------------------------------------
-
-        // 在页面加载后立即设置图标状态，并监听点击事件
         document.addEventListener('DOMContentLoaded', () => {
             const music = document.getElementById('background-music');
             const storedState = localStorage.getItem('music_playing');
             
-            // 默认静音，解决浏览器自动播放限制
             music.muted = true;
 
-            // 1. 尝试从 LocalStorage 恢复状态
             if (storedState === 'true') {
                 music.play().catch(error => {
                     console.error("Muted playback failed on load, waiting for user interaction.", error);
@@ -256,69 +237,50 @@
                 setMusicIcon(false);
             }
             
-            // 2. 监听第一次用户交互，强制播放一次，确保音乐对象被激活
             const activateAudio = () => {
+                // Play and immediately pause to "activate" the audio element for future programmatic plays.
                 music.play().catch(e => console.log('Audio activation failed on initial click.'));
-                document.removeEventListener('click', activateAudio);
+                if (localStorage.getItem('music_playing') !== 'true') {
+                    music.pause();
+                }
+                document.removeEventListener('click', activateAudio, true);
             };
-            document.addEventListener('click', activateAudio);
+            document.addEventListener('click', activateAudio, true);
         });
 
-        // 保存音乐状态到 LocalStorage，在跳转前触发
         function saveMusicState(event) {
             const music = document.getElementById('background-music');
-            const isPlaying = !music.paused || !music.muted; 
+            const isPlaying = !music.paused;
             localStorage.setItem('music_playing', isPlaying ? 'true' : 'false');
         }
 
-
-        // 切换播放/暂停和静音状态
         function toggleMusic() {
             const music = document.getElementById('background-music');
             
             if (music.paused) {
-                music.muted = false; // 取消静音
-                music.play().catch(error => {
-                    console.error("Playback prevented:", error);
-                });
+                music.muted = false;
+                music.play().catch(error => console.error("Playback prevented:", error));
                 setMusicIcon(true);
-            } 
-            else if (music.muted) {
-                 music.muted = false; 
-                 setMusicIcon(true);
-            }
-            else {
+            } else {
                 music.pause();
                 setMusicIcon(false);
             }
+            // Update localStorage whenever the button is manually toggled
+            localStorage.setItem('music_playing', !music.paused ? 'true' : 'false');
         }
         
-        // 设置图标状态的辅助函数
         function setMusicIcon(isPlaying) {
             const iconContainer = document.getElementById('music-icon');
-            
             if (isPlaying) {
-                // 播放状态: 显示暂停图标
-                iconContainer.innerHTML = `
-                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-                    </svg>
-                `;
+                iconContainer.innerHTML = `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
             } else {
-                // 暂停状态: 显示播放图标
-                iconContainer.innerHTML = `
-                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M8 5v14l11-7z"/>
-                    </svg>
-                `;
+                iconContainer.innerHTML = `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>`;
             }
         }
         
         // ----------------------------------------------------
-        // --- 2. 搜索与 UI 逻辑 ---
+        // --- 2. 搜索逻辑 ---
         // ----------------------------------------------------
-
-        // 文章搜索功能 (实时筛选文章列表)
         function searchArticles() {
             const query = document.getElementById('search-input').value.toLowerCase().trim();
             const cards = document.querySelectorAll('.article-card');
@@ -326,10 +288,8 @@
             cards.forEach(card => {
                 const title = card.querySelector('h3 a').textContent.toLowerCase();
                 const summary = card.querySelector('.article-summary').textContent.toLowerCase();
-                // 搜索标签内容 (Jinja2 生成后会包含标签文本)
-                const tagsContent = card.querySelector('.flex.flex-wrap.gap-2.mb-3')?.textContent.toLowerCase() || '';
+                const tagsContent = card.querySelector('.article-tags')?.textContent.toLowerCase() || '';
                 
-                // 只要标题、摘要或标签包含关键词，就显示文章卡片
                 if (title.includes(query) || summary.includes(query) || tagsContent.includes(query)) {
                     card.style.display = ''; 
                 } else {
@@ -337,18 +297,6 @@
                 }
             });
         }
-
-        // --- 回到顶部逻辑 ---
-        const backToTopButton = document.getElementById('back-to-top');
-
-        // 监听滚动事件，超过 200px 时显示按钮
-        window.onscroll = () => {
-            if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
-                backToTopButton.classList.add('show');
-            } else {
-                backToTopButton.classList.remove('show');
-            }
-        };
     </script>
 </body>
 </html>
