@@ -57,6 +57,16 @@
             padding-bottom: 0.5rem;
             margin-top: 2.5rem;
         }
+
+        /* 回到顶部按钮样式 */
+        #back-to-top {
+            transition: opacity 0.3s ease-in-out;
+            opacity: 0;
+            cursor: pointer;
+        }
+        #back-to-top.show {
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -119,6 +129,16 @@
                 >
             </div>
             
+            <!-- 新增: 文章标签/分类列表 -->
+            <div class="bg-white p-4 rounded-xl shadow-md border-gray-200 border">
+                <h3 class="font-bold text-lg mb-3 text-gray-700">文章标签</h3>
+                <div class="flex flex-wrap gap-2">
+                    <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-3 py-1 rounded-full hover:bg-tiffany/40 transition">#编程之旅</a>
+                    <a href="#" class="text-xs bg-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-300 transition">#Appium</a>
+                    <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-3 py-1 rounded-full hover:bg-tiffany/40 transition">#Python基础</a>
+                </div>
+            </div>
+
             <!-- 文章目录 -->
             <div class="space-y-2">
                 <h3 class="font-bold text-lg mb-3 text-gray-700">文章目录</h3>
@@ -142,11 +162,17 @@
         <!-- 文章主体 (Article Content) -->
         <article class="w-full md:flex-1 bg-white shadow-xl rounded-2xl p-8 md:p-12">
             <header class="mb-10 border-b border-tiffany/50 pb-4">
+                 <!-- 新增: 文章标签 -->
+                 <div class="flex flex-wrap gap-2 mb-3">
+                    <span class="text-xs bg-tiffany/20 text-tiffany px-2 py-1 rounded-full">#编程之旅</span>
+                    <span class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full">#Appium调试</span>
+                </div>
+                
                 <h1 class="text-4xl font-light text-gray-900 mb-2">
                     从 Appium 到网站：我与代码的旅程初探
                 </h1>
                 <p class="text-sm text-gray-500">
-                    发布于 2025年10月02日 | 标签：#编程入门 #个人成长
+                    发布于 2025年10月02日 | 分类：编程反思
                 </p>
             </header>
 
@@ -208,6 +234,18 @@
         </div>
     </footer>
 
+    <!-- 新增: 回到顶部按钮 -->
+    <button
+        id="back-to-top"
+        title="回到顶部"
+        onclick="window.scrollTo({ top: 0, behavior: 'smooth' })"
+        class="fixed bottom-20 right-6 bg-white/80 text-tiffany p-3 rounded-full shadow-lg transition duration-300 z-30 opacity-0"
+    >
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 4l-8 8h5v8h6v-8h5z"/>
+        </svg>
+    </button>
+
     <!-- JavaScript Logic -->
     <script>
         // ----------------------------------------------------
@@ -224,13 +262,11 @@
 
             // 1. 尝试从 LocalStorage 恢复状态
             if (storedState === 'true') {
-                // 如果上个页面在播放，尝试恢复播放 (静音)
                 music.play().catch(error => {
                     console.error("Muted playback failed on load, waiting for user interaction.", error);
                 });
                 setMusicIcon(true);
             } else {
-                // 如果上个页面是暂停状态，则暂停，并显示播放图标
                 music.pause();
                 setMusicIcon(false);
             }
@@ -244,10 +280,8 @@
         });
 
         // 保存音乐状态到 LocalStorage，在跳转前触发
-        // (在文章页中，链接点击后会执行这个函数)
         function saveMusicState(event) {
             const music = document.getElementById('background-music');
-            // 只有当音乐不处于完全暂停状态时，才保存 true
             const isPlaying = !music.paused || !music.muted; 
             localStorage.setItem('music_playing', isPlaying ? 'true' : 'false');
         }
@@ -257,7 +291,6 @@
         function toggleMusic() {
             const music = document.getElementById('background-music');
             
-            // 如果音乐被暂停 (手动点击播放)
             if (music.paused) {
                 music.muted = false; // 取消静音
                 music.play().catch(error => {
@@ -265,12 +298,10 @@
                 });
                 setMusicIcon(true);
             } 
-            // 如果音乐在静音播放 (用户点击取消静音)
             else if (music.muted) {
                  music.muted = false; 
                  setMusicIcon(true);
             }
-            // 如果音乐在非静音播放中或被暂停 (用户点击暂停)
             else {
                 music.pause();
                 setMusicIcon(false);
@@ -362,6 +393,21 @@
             // 清空评论框
             commentTextarea.value = '';
         }
+
+        // --- 回到顶部逻辑 ---
+        const backToTopButton = document.getElementById('back-to-top');
+
+        // 监听滚动事件，超过 200px 时显示按钮
+        window.onscroll = () => {
+            // 使用 classList.add/remove 来控制 opacity，实现平滑显示/隐藏
+            if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+                backToTopButton.classList.add('show');
+            } else {
+                backToTopButton.classList.remove('show');
+            }
+        };
+
+        // 平滑滚动逻辑 (由 onclick 触发)
     </script>
 </body>
 </html>
