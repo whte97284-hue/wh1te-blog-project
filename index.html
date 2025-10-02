@@ -59,16 +59,6 @@
         .notice-card {
             border-left: 4px solid var(--tiffany-blue); /* 公告栏回归主色调 */
         }
-
-        /* 回到顶部按钮样式 */
-        #back-to-top {
-            transition: opacity 0.3s ease-in-out;
-            opacity: 0;
-            cursor: pointer;
-        }
-        #back-to-top.show {
-            opacity: 1;
-        }
     </style>
 </head>
 <body class="antialiased">
@@ -164,8 +154,12 @@
             <div class="bg-white p-4 rounded-xl shadow-md border-gray-200 border"> 
                 <h3 class="font-bold text-lg mb-2 text-gray-700">社交链接</h3>
                 <ul class="text-sm space-y-2 text-tiffany">
-                    <li><a href="#" class="https://space.bilibili.com/551898501">我的 哔哩哔哩</a></li>
-                    <li><a href="#" class="hover:underline">我的 抖音</a></li>
+                    <!-- B站链接 -->
+                    <li><a href="https://space.bilibili.com/551898501" target="_blank" class="hover:underline">我的 哔哩哔哩</a></li>
+                    <!-- 抖音链接 -->
+                    <li><a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw?from_tab_name=main" target="_blank" class="hover:underline">我的 抖音</a></li>
+                    <!-- GitHub 链接 (新增) -->
+                    <li><a href="https://github.com/whte97284-hue/wh1te-blog-project/tree/main" target="_blank" class="hover:underline">我的 GitHub</a></li>
                 </ul>
             </div>
         </div>
@@ -199,7 +193,7 @@
 
                 <!-- Placeholder Article Card 2 -->
                 <div class="article-card bg-white/95 shadow-md rounded-xl p-6 mb-6 border-l-4 border-tiffany"> 
-                     <!-- 新增: 文章标签 -->
+                    <!-- 新增: 文章标签 -->
                     <div class="flex flex-wrap gap-2 mb-3">
                         <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-2 py-1 rounded-full hover:bg-tiffany/40 transition">#Python基础</a>
                         <a href="#" class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full hover:bg-gray-300 transition">#Web维护</a>
@@ -226,18 +220,6 @@
             &copy; 2025 Wh1te.log | 我的代码旅程 | <a href="#" class="hover:underline text-tiffany">隐私声明</a>
         </div>
     </footer>
-    
-    <!-- 新增: 回到顶部按钮 -->
-    <button
-        id="back-to-top"
-        title="回到顶部"
-        onclick="window.scrollTo({ top: 0, behavior: 'smooth' })"
-        class="fixed bottom-20 right-6 bg-white/80 text-tiffany p-3 rounded-full shadow-lg transition duration-300 z-30 opacity-0"
-    >
-        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 4l-8 8h5v8h6v-8h5z"/>
-        </svg>
-    </button>
 
     <!-- JavaScript Logic -->
     <script>
@@ -255,11 +237,13 @@
 
             // 1. 尝试从 LocalStorage 恢复状态
             if (storedState === 'true') {
+                // 如果上个页面在播放，尝试恢复播放 (静音)
                 music.play().catch(error => {
                     console.error("Muted playback failed on load, waiting for user interaction.", error);
                 });
                 setMusicIcon(true);
             } else {
+                // 如果上个页面是暂停状态，则暂停，并显示播放图标
                 music.pause();
                 setMusicIcon(false);
             }
@@ -275,6 +259,7 @@
         // 保存音乐状态到 LocalStorage，在跳转前触发
         function saveMusicState(event) {
             const music = document.getElementById('background-music');
+            // 只有当音乐不处于完全暂停状态时，才保存 true
             const isPlaying = !music.paused || !music.muted; 
             localStorage.setItem('music_playing', isPlaying ? 'true' : 'false');
         }
@@ -326,7 +311,6 @@
         // --- 2. 搜索与 UI 逻辑 ---
         // ----------------------------------------------------
 
-        // 文章搜索功能 (实时筛选文章列表)
         function searchArticles() {
             const query = document.getElementById('search-input').value.toLowerCase().trim();
             const cards = document.querySelectorAll('.article-card');
@@ -334,9 +318,9 @@
             cards.forEach(card => {
                 const title = card.querySelector('h3 a').textContent.toLowerCase();
                 const summary = card.querySelector('.article-summary').textContent.toLowerCase();
-                // 新增: 搜索标签和分类 (通过 innerHTML 获取所有文本内容)
                 const tagsContent = card.querySelector('.flex.flex-wrap.gap-2.mb-3')?.textContent.toLowerCase() || '';
                 
+                // 只要标题或摘要包含关键词，就显示文章卡片
                 if (title.includes(query) || summary.includes(query) || tagsContent.includes(query)) {
                     card.style.display = ''; 
                 } else {
@@ -344,27 +328,6 @@
                 }
             });
         }
-        
-        // --- 回到顶部逻辑 ---
-        const backToTopButton = document.getElementById('back-to-top');
-
-        // 监听滚动事件，超过 200px 时显示按钮
-        window.onscroll = () => {
-            if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
-                backToTopButton.classList.add('show');
-            } else {
-                backToTopButton.classList.remove('show');
-            }
-        };
-
-        // 平滑滚动逻辑 (由 onclick 触发)
     </script>
 </body>
 </html>
-
----
-
-## 💻 2. 文章详情页 (`article-1.html`) 更新
-
-文章详情页的修改也需要增加 **标签云** 和 **回到顶部** 按钮，但不需要文章列表的搜索功能。
-
