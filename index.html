@@ -90,8 +90,8 @@
                 <span class="font-bold">Wh1te</span>.log
             </a>
             <div class="flex items-center space-x-4">
-                <a href="index.html" class="hidden md:inline text-tiffany transition">首页</a>
-                <a href="article-1.html" class="hidden md:inline text-gray-600 hover:text-tiffany transition">最新文章</a>
+                <a href="index.html" class="hidden md:inline text-tiffany transition" onclick="saveMusicState(event)">首页</a>
+                <a href="article-1.html" class="hidden md:inline text-gray-600 hover:text-tiffany transition" onclick="saveMusicState(event)">最新文章</a>
                 <a href="#" class="hidden md:inline text-gray-600 hover:text-tiffany transition">我的项目</a>
             </div>
         </div>
@@ -102,7 +102,7 @@
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center p-8 rounded-xl">
             <!-- 标题和阴影：使用柔和的灰色阴影来衬托文字 -->
             <h1 class="text-6xl font-extrabold text-white mb-4" style="text-shadow: 1px 1px 10px rgba(0, 0, 0, 0.6);">
-                我在互联网的偏安一隅
+                代码与生活的漫游日志
             </h1>
             <p class="text-xl text-white mb-8 font-light" style="text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8);">
                 更新一些我日常和感触
@@ -240,7 +240,6 @@
         function toggleMusic() {
             const music = document.getElementById('background-music');
             
-            // 如果音乐被暂停 (手动点击播放)
             if (music.paused) {
                 music.muted = false; // 取消静音
                 music.play().catch(error => {
@@ -248,12 +247,10 @@
                 });
                 setMusicIcon(true);
             } 
-            // 如果音乐在静音播放 (用户点击取消静音)
             else if (music.muted) {
                  music.muted = false; 
                  setMusicIcon(true);
             }
-            // 如果音乐在非静音播放中或被暂停 (用户点击暂停)
             else {
                 music.pause();
                 setMusicIcon(false);
@@ -263,7 +260,7 @@
         // 设置图标状态的辅助函数
         function setMusicIcon(isPlaying) {
             const iconContainer = document.getElementById('music-icon');
-            // ... (图标 SVG 逻辑保持不变) ...
+            
             if (isPlaying) {
                 // 播放状态: 显示暂停图标
                 iconContainer.innerHTML = `
