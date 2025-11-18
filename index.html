@@ -31,6 +31,7 @@
                         'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                         'float': 'float 6s ease-in-out infinite',
                         'glitch': 'glitch 1s linear infinite',
+                        'scan': 'scan 8s linear infinite', /* 新增扫描线动画 */
                     },
                     keyframes: {
                         float: {
@@ -41,6 +42,10 @@
                             '2%, 64%': { transform: 'translate(2px,0) skew(0deg)' },
                             '4%, 60%': { transform: 'translate(-2px,0) skew(0deg)' },
                             '62%': { transform: 'translate(0,0) skew(5deg)' },
+                        },
+                        scan: {
+                            '0%': { backgroundPosition: '0 0' },
+                            '100%': { backgroundPosition: '0 100%' },
                         }
                     }
                 }
@@ -49,42 +54,47 @@
     </script>
 
     <style>
-        /* 1. 细腻的噪点纹理 */
+        /* 定义全局变量，用于鼠标跟随 */
+        :root {
+            --mouse-x: 50%;
+            --mouse-y: 50%;
+        }
+
+        /* 1. 噪点层 (静止) */
         .noise-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 50;
-            opacity: 0.06;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 40; opacity: 0.06;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
 
-        /* === 这里应用了新的 CSS 背景代码 ===
-           替换了原来的 background-image: url(...) 
-        */
+        /* 2. 扫描线层 (动态向下移动) */
+        .scanlines {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 41; opacity: 0.4;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
+            background-size: 100% 4px;
+            animation: scan 0.5s linear infinite; /* 快速闪烁感 */
+        }
+        
+        /* 3. 动态背景：网格 + 鼠标跟随光晕 */
         body {
-            /* 1. 深邃的黑底 */
             background-color: #050505;
-            
-            /* 2. CSS 绘制的酸性绿网格 + 径向光晕 */
             background-image: 
                 /* 垂直线 */
                 linear-gradient(rgba(204, 255, 0, 0.05) 1px, transparent 1px),
                 /* 水平线 */
                 linear-gradient(90deg, rgba(204, 255, 0, 0.05) 1px, transparent 1px),
-                /* 中间的光晕，营造氛围感 */
-                radial-gradient(circle at 50% 50%, rgba(204, 255, 0, 0.15) 0%, transparent 60%);
-                
-            /* 3. 网格大小 */
-            background-size: 40px 40px, 40px 40px, 100% 100%;
+                /* 光晕核心：位置由 CSS 变量控制 */
+                radial-gradient(circle 600px at var(--mouse-x) var(--mouse-y), rgba(204, 255, 0, 0.12) 0%, transparent 60%);
             
-            /* 4. 固定背景 */
+            background-size: 40px 40px, 40px 40px, 100% 100%;
             background-attachment: fixed;
-            min-height: 100vh;
-            color: white;
+            min-height: 100vh; color: white;
             -webkit-font-smoothing: antialiased;
+            transition: background 0.1s ease; /* 增加一点平滑度 */
         }
 
-        /* 2. Cyber Glass */
+        /* 卡片样式保持不变 */
         .cyber-card {
             background: rgba(5, 5, 5, 0.45);
             backdrop-filter: blur(20px);
@@ -93,43 +103,40 @@
             box-shadow: 0 8px 32px rgba(0,0,0,0.3);
             transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
-
         .cyber-card:hover {
             background: rgba(5, 5, 5, 0.6);
             border-color: rgba(204, 255, 0, 0.6);
             box-shadow: 0 12px 40px rgba(204, 255, 0, 0.1);
             transform: translateY(-4px);
         }
-
-        /* 3. 文字与光标 */
-        .text-stroke-layer {
-            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.6);
-            color: transparent;
-            pointer-events: none;
-        }
+        .text-stroke-layer { -webkit-text-stroke: 1px rgba(255, 255, 255, 0.6); color: transparent; pointer-events: none; }
         .caret-acid { caret-color: #ccff00; }
-
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 2px; }
         ::-webkit-scrollbar-thumb:hover { background: #ccff00; }
         ::selection { background: #ccff00; color: black; }
+        
+        /* 8-bit 人物图片的像素化处理 */
+        .pixel-art {
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            filter: drop-shadow(0 0 10px rgba(204, 255, 0, 0.5)); /* 自带绿色荧光投影 */
+        }
     </style>
 </head>
 <body class="antialiased overflow-x-hidden font-sans">
 
     <div class="noise-overlay"></div>
+    <!-- 新增：CRT 扫描线层 -->
+    <div class="scanlines"></div>
 
     <audio id="background-music" loop muted>
         <source src="./audio/bgm.mp3" type="audio/mp3">
     </audio>
 
     <!-- 音乐按钮 -->
-    <button 
-        id="music-toggle-button" 
-        onclick="toggleMusic()" 
-        class="fixed bottom-6 left-6 z-50 flex items-center gap-0 group cursor-pointer hover:scale-105 transition-transform"
-    >
+    <button id="music-toggle-button" onclick="toggleMusic()" class="fixed bottom-6 left-6 z-50 flex items-center gap-0 group cursor-pointer hover:scale-105 transition-transform">
         <div class="relative w-10 h-10 bg-black/60 border border-white/20 backdrop-blur-md rounded-full flex items-center justify-center group-hover:border-acid transition-colors duration-300 z-10">
             <div id="music-wave" class="hidden absolute inset-0 rounded-full border border-acid opacity-60 animate-ping"></div>
             <svg id="music-icon" class="w-4 h-4 text-white group-hover:text-acid transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -142,7 +149,7 @@
         </div>
     </button>
 
-    <!-- 装饰线条 -->
+    <!-- Grid 线 -->
     <div class="fixed top-0 left-0 w-full h-px bg-white/10 z-40"></div>
     <div class="fixed top-0 left-6 md:left-12 w-px h-full bg-white/5 z-30 hidden md:block"></div>
     <div class="fixed top-0 right-6 md:right-12 w-px h-full bg-white/5 z-30 hidden md:block"></div>
@@ -153,7 +160,6 @@
             <span class="text-lg font-black tracking-tighter leading-none group-hover:text-acid transition-colors">WH1TE.LOG</span>
             <span class="font-mono text-[9px] tracking-[0.2em] opacity-60 group-hover:opacity-100 transition-opacity">V2.0.5</span>
         </a>
-        
         <div class="hidden md:flex gap-10 font-mono text-[11px] tracking-widest">
             <a href="index.html" onclick="saveMusicState(event)" class="relative group py-2">
                 <span class="text-acid transition-colors">01_HOME</span>
@@ -168,14 +174,29 @@
                 <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-acid group-hover:w-full transition-all duration-300"></span>
             </a>
         </div>
-
-        <div class="md:hidden text-acid font-mono text-xs border border-acid/50 px-2 py-1 rounded cursor-pointer hover:bg-acid hover:text-black transition-colors">
-            MENU::OPEN
-        </div>
+        <div class="md:hidden text-acid font-mono text-xs border border-acid/50 px-2 py-1 rounded cursor-pointer hover:bg-acid hover:text-black transition-colors">MENU::OPEN</div>
     </nav>
 
-    <!-- Hero -->
+    <!-- Hero Section -->
     <header class="relative pt-32 pb-16 px-6 min-h-[75vh] flex flex-col justify-center items-center text-center z-10 overflow-hidden">
+        
+        <!-- 
+           ✨✨✨ 赛博朋克人物投影区域 ✨✨✨
+           1. 请将你的 8-bit 露西/大卫 GIF 图片上传，并替换下方的 src 链接。
+           2. 建议图片为透明背景 PNG 或 GIF。
+           3. 该容器自带 'glitch' 动画，会让人物偶尔闪烁。
+        -->
+        <div class="absolute right-[5%] bottom-[20%] md:right-[15%] md:bottom-[15%] w-48 md:w-64 opacity-80 pointer-events-none z-0 animate-pulse-fast hidden md:block mix-blend-lighten">
+            <img 
+                src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExbzN5dGd2Yzh3NzR4eHR6eHlxZnR6eHlxZnR6eHlxZnR6eHlxZnR6eCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/3o7bu3XilJ5BOiSGic/giphy.gif" 
+                alt="8bit Cyberpunk Character" 
+                class="w-full h-auto pixel-art grayscale hover:grayscale-0 transition-all duration-500"
+                style="transform: scaleX(-1);" 
+            >
+            <!-- 如果没有图片，这里显示一个占位符文字 -->
+            <!-- <div class="font-mono text-acid text-[10px] border border-acid p-2 text-center">INSERT_8BIT_IMG_HERE</div> -->
+        </div>
+
         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120vw] md:w-[50vw] aspect-square border border-dashed border-white/10 rounded-full animate-spin-slow pointer-events-none"></div>
         
         <div class="relative z-20 space-y-4 animate-fade-in-up">
@@ -183,35 +204,19 @@
                 <span class="px-2 py-1 bg-acid text-black font-mono text-[10px] font-bold uppercase tracking-wider rounded-sm">System Ready</span>
                 <span class="px-2 py-1 border border-white/20 backdrop-blur-sm text-white/70 font-mono text-[10px] font-bold uppercase tracking-wider rounded-sm">Loc: Internet</span>
             </div>
-
             <div class="relative inline-block">
-                <h1 class="text-6xl sm:text-8xl md:text-9xl font-black tracking-tighter leading-none text-white mix-blend-overlay opacity-90 select-none">
-                    WH1TE
-                </h1>
-                <h1 class="text-6xl sm:text-8xl md:text-9xl font-black tracking-tighter leading-none text-stroke-layer absolute top-0 left-0 w-full h-full flex items-center justify-center translate-x-[3px] translate-y-[3px]">
-                    WH1TE
-                </h1>
+                <h1 class="text-6xl sm:text-8xl md:text-9xl font-black tracking-tighter leading-none text-white mix-blend-overlay opacity-90 select-none">WH1TE</h1>
+                <h1 class="text-6xl sm:text-8xl md:text-9xl font-black tracking-tighter leading-none text-stroke-layer absolute top-0 left-0 w-full h-full flex items-center justify-center translate-x-[3px] translate-y-[3px]">WH1TE</h1>
             </div>
-
             <div class="flex items-center justify-center gap-4 mt-2">
                 <div class="h-px w-8 md:w-16 bg-acid/50"></div>
-                <h2 class="text-xl md:text-3xl font-bold text-white tracking-tight">
-                    互联网<span class="text-acid">小屋</span>
-                </h2>
+                <h2 class="text-xl md:text-3xl font-bold text-white tracking-tight">互联网<span class="text-acid">小屋</span></h2>
                 <div class="h-px w-8 md:w-16 bg-acid/50"></div>
             </div>
-            
-            <!-- 搜索框 -->
             <div class="mt-16 relative max-w-lg mx-auto w-full group">
                 <div class="relative flex items-center">
                     <div class="absolute left-0 pl-4 text-acid font-mono text-lg flex items-center h-full pb-1">></div>
-                    <input 
-                        type="text" 
-                        id="search-input" 
-                        placeholder="INPUT_KEYWORD..." 
-                        oninput="searchArticles()"
-                        class="w-full pl-10 pr-12 py-4 bg-black/30 backdrop-blur-xl border-b border-white/30 text-white font-mono text-sm md:text-base placeholder-white/20 focus:border-acid focus:bg-black/50 focus:outline-none transition-all caret-acid uppercase"
-                    >
+                    <input type="text" id="search-input" placeholder="INPUT_KEYWORD..." oninput="searchArticles()" class="w-full pl-10 pr-12 py-4 bg-black/30 backdrop-blur-xl border-b border-white/30 text-white font-mono text-sm md:text-base placeholder-white/20 focus:border-acid focus:bg-black/50 focus:outline-none transition-all caret-acid uppercase">
                     <div class="absolute right-4 w-1.5 h-4 bg-acid animate-pulse-fast"></div>
                 </div>
                 <div id="search-status" class="absolute top-full left-0 mt-2 text-[10px] font-mono text-acid hidden">FILTERING_RESULTS...</div>
@@ -222,42 +227,20 @@
     <!-- 主内容 -->
     <main class="max-w-7xl mx-auto px-6 md:px-12 pb-32 relative z-20">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
-            
-            <!-- 侧边栏 -->
             <aside class="lg:col-span-4 space-y-6 lg:sticky lg:top-24 h-fit">
-                <!-- 公告 -->
                 <div class="cyber-card rounded-xl p-6 relative overflow-hidden group">
-                    <h3 class="font-mono text-acid text-xs font-bold mb-4 border-b border-white/10 pb-2 flex items-center gap-2">
-                        <span class="w-1.5 h-1.5 bg-acid rounded-sm"></span>
-                        NOTICE_BOARD
-                    </h3>
+                    <h3 class="font-mono text-acid text-xs font-bold mb-4 border-b border-white/10 pb-2 flex items-center gap-2"><span class="w-1.5 h-1.5 bg-acid rounded-sm"></span>NOTICE_BOARD</h3>
                     <div class="space-y-3 font-mono text-[11px] md:text-xs leading-relaxed text-gray-300 relative z-10">
-                        <div class="flex gap-2">
-                            <span class="text-acid min-w-[14px]">>></span>
-                            <p>成功配置 Python 环境，下一步专注博客维护脚本开发。</p>
-                        </div>
+                        <div class="flex gap-2"><span class="text-acid min-w-[14px]">>></span><p>成功配置 Python 环境，下一步专注博客维护脚本开发。</p></div>
                     </div>
                 </div>
-
-                <!-- 社交 -->
                 <div class="grid grid-cols-3 gap-3 md:gap-4">
-                    <a href="https://github.com/whte97284-hue/wh1te-blog-project/tree/main" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-white hover:text-black transition-all group relative overflow-hidden">
-                         <span class="font-mono text-[9px] font-bold uppercase relative z-10">Git</span>
-                    </a>
-                    <a href="https://space.bilibili.com/551898501" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-[#fb7299] hover:text-white transition-all group relative overflow-hidden">
-                        <span class="font-mono text-[9px] font-bold uppercase relative z-10">Bili</span>
-                    </a>
-                    <a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-black hover:text-white transition-all group relative overflow-hidden">
-                        <span class="font-mono text-[9px] font-bold uppercase relative z-10">TikTok</span>
-                    </a>
+                    <a href="https://github.com/whte97284-hue/wh1te-blog-project/tree/main" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-white hover:text-black transition-all group relative overflow-hidden"><span class="font-mono text-[9px] font-bold uppercase relative z-10">Git</span></a>
+                    <a href="https://space.bilibili.com/551898501" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-[#fb7299] hover:text-white transition-all group relative overflow-hidden"><span class="font-mono text-[9px] font-bold uppercase relative z-10">Bili</span></a>
+                    <a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-black hover:text-white transition-all group relative overflow-hidden"><span class="font-mono text-[9px] font-bold uppercase relative z-10">TikTok</span></a>
                 </div>
-
-                <!-- 标签云 (带联动功能) -->
                 <div class="cyber-card rounded-xl p-6">
-                    <h3 class="font-mono text-gray-400 text-[10px] mb-4 uppercase tracking-widest flex justify-between">
-                        :: TAGS_COLLECTION
-                        <span>[04]</span>
-                    </h3>
+                    <h3 class="font-mono text-gray-400 text-[10px] mb-4 uppercase tracking-widest flex justify-between">:: TAGS_COLLECTION<span>[04]</span></h3>
                     <div class="flex flex-wrap gap-2" id="tag-cloud">
                          <button onclick="filterByTag('Python')" class="px-2 py-1.5 bg-white/5 border border-white/10 hover:bg-acid hover:border-acid hover:text-black text-[10px] font-mono uppercase transition-all rounded-md">#Python</button>
                          <button onclick="filterByTag('Web')" class="px-2 py-1.5 bg-white/5 border border-white/10 hover:bg-acid hover:border-acid hover:text-black text-[10px] font-mono uppercase transition-all rounded-md">#Web</button>
@@ -267,76 +250,36 @@
                 </div>
             </aside>
 
-            <!-- 文章流 -->
             <div class="lg:col-span-8 space-y-8">
                 <div class="flex items-center justify-between border-b border-white/10 pb-4">
                     <h2 class="text-2xl md:text-3xl font-bold tracking-tighter">LATEST_FEEDS</h2>
-                    <div class="flex items-center gap-2">
-                        <span class="w-2 h-2 bg-acid rounded-full animate-pulse"></span>
-                        <span class="font-mono text-xs text-acid">[ ONLINE ]</span>
-                    </div>
+                    <div class="flex items-center gap-2"><span class="w-2 h-2 bg-acid rounded-full animate-pulse"></span><span class="font-mono text-xs text-acid">[ ONLINE ]</span></div>
                 </div>
-                
                 <div id="article-list-container" class="space-y-6">
-                    
-                    <!-- 文章 1 -->
                     <article class="article-card cyber-card rounded-2xl p-6 md:p-8 relative group hover:bg-black/80 overflow-hidden" data-tags="Code Reflection Appium">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-acid/20 blur-[60px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                        
                         <div class="flex flex-col gap-4 relative z-10">
                             <div class="flex justify-between items-start">
-                                <div class="flex gap-2">
-                                    <span class="text-[10px] font-mono uppercase text-black bg-acid px-2 py-1 font-bold">Code</span>
-                                    <span class="text-[10px] font-mono uppercase text-white/60 border border-white/20 px-2 py-1">Reflection</span>
-                                </div>
+                                <div class="flex gap-2"><span class="text-[10px] font-mono uppercase text-black bg-acid px-2 py-1 font-bold">Code</span><span class="text-[10px] font-mono uppercase text-white/60 border border-white/20 px-2 py-1">Reflection</span></div>
                                 <span class="font-mono text-xs text-gray-500 border border-white/10 px-2 py-1 rounded-sm">2025.10.02</span>
                             </div>
-
-                            <h3 class="text-2xl md:text-3xl font-bold leading-tight max-w-lg">
-                                <a href="article-1.html" onclick="saveMusicState(event)" class="hover:text-acid transition-colors">
-                                    从 Appium 到网站：我与代码的旅程初探
-                                </a>
-                            </h3>
-                            <p class="text-gray-400 font-light leading-relaxed text-sm md:text-base border-l border-white/10 pl-4 article-summary">
-                                起初我以为编程就是找个工具抢票，最终却被安全机制所阻止。这次经历让我明白：真正的编程价值在于构建思维框架。
-                            </p>
-                            <div class="flex items-center justify-end mt-2">
-                                <a href="article-1.html" onclick="saveMusicState(event)" class="group-hover:translate-x-1 transition-transform flex items-center text-acid font-mono text-xs md:text-sm font-bold bg-white/5 px-4 py-2 rounded-full hover:bg-acid hover:text-black">
-                                    READ_FULL <span class="ml-2">→</span>
-                                </a>
-                            </div>
+                            <h3 class="text-2xl md:text-3xl font-bold leading-tight max-w-lg"><a href="article-1.html" onclick="saveMusicState(event)" class="hover:text-acid transition-colors">从 Appium 到网站：我与代码的旅程初探</a></h3>
+                            <p class="text-gray-400 font-light leading-relaxed text-sm md:text-base border-l border-white/10 pl-4 article-summary">起初我以为编程就是找个工具抢票，最终却被安全机制所阻止。这次经历让我明白：真正的编程价值在于构建思维框架。</p>
+                            <div class="flex items-center justify-end mt-2"><a href="article-1.html" onclick="saveMusicState(event)" class="group-hover:translate-x-1 transition-transform flex items-center text-acid font-mono text-xs md:text-sm font-bold bg-white/5 px-4 py-2 rounded-full hover:bg-acid hover:text-black">READ_FULL <span class="ml-2">→</span></a></div>
                         </div>
                     </article>
-
-                    <!-- 文章 2 -->
                     <article class="article-card cyber-card rounded-2xl p-6 md:p-8 relative group hover:bg-black/80 overflow-hidden" data-tags="Python Automation Web">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-acid/20 blur-[60px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                        
                         <div class="flex flex-col gap-4 relative z-10">
                              <div class="flex justify-between items-start">
-                                <div class="flex gap-2">
-                                    <span class="text-[10px] font-mono uppercase text-black bg-acid px-2 py-1 font-bold">Python</span>
-                                    <span class="text-[10px] font-mono uppercase text-white/60 border border-white/20 px-2 py-1">Automation</span>
-                                </div>
+                                <div class="flex gap-2"><span class="text-[10px] font-mono uppercase text-black bg-acid px-2 py-1 font-bold">Python</span><span class="text-[10px] font-mono uppercase text-white/60 border border-white/20 px-2 py-1">Automation</span></div>
                                 <span class="font-mono text-xs text-gray-500 border border-white/10 px-2 py-1 rounded-sm">2025.10.03</span>
                             </div>
-
-                            <h3 class="text-2xl md:text-3xl font-bold leading-tight max-w-lg">
-                                <a href="#" class="hover:text-acid transition-colors">
-                                    Python 主页自动生成脚本测试
-                                </a>
-                            </h3>
-                             <p class="text-gray-400 font-light leading-relaxed text-sm md:text-base border-l border-white/10 pl-4 article-summary">
-                                辅助静态页面更新的自动化生成脚本第一次测试，探索如何高效管理我的数字花园。
-                            </p>
-                            <div class="flex items-center justify-end mt-2">
-                                <a href="#" class="group-hover:translate-x-1 transition-transform flex items-center text-acid font-mono text-xs md:text-sm font-bold bg-white/5 px-4 py-2 rounded-full hover:bg-acid hover:text-black">
-                                    READ_FULL <span class="ml-2">→</span>
-                                </a>
-                            </div>
+                            <h3 class="text-2xl md:text-3xl font-bold leading-tight max-w-lg"><a href="#" class="hover:text-acid transition-colors">Python 主页自动生成脚本测试</a></h3>
+                             <p class="text-gray-400 font-light leading-relaxed text-sm md:text-base border-l border-white/10 pl-4 article-summary">辅助静态页面更新的自动化生成脚本第一次测试，探索如何高效管理我的数字花园。</p>
+                            <div class="flex items-center justify-end mt-2"><a href="#" class="group-hover:translate-x-1 transition-transform flex items-center text-acid font-mono text-xs md:text-sm font-bold bg-white/5 px-4 py-2 rounded-full hover:bg-acid hover:text-black">READ_FULL <span class="ml-2">→</span></a></div>
                         </div>
                     </article>
-
                 </div>
             </div>
         </div>
@@ -344,36 +287,32 @@
 
     <footer class="border-t border-white/10 bg-black/80 backdrop-blur-xl mt-20 relative z-20">
         <div class="max-w-7xl mx-auto py-12 px-6 md:px-12 flex flex-col md:flex-row justify-between items-end gap-8">
-            <div>
-                <h2 class="text-4xl font-black text-white tracking-tighter mb-2">WH1TE.LOG</h2>
-                <p class="font-mono text-xs text-gray-500">DESIGNED_FOR_THE_FUTURE_ARCHIVE</p>
-            </div>
-            <div class="font-mono text-xs text-gray-500 text-right">
-                <p>&copy; 2025 ALL RIGHTS RESERVED.</p>
-            </div>
+            <div><h2 class="text-4xl font-black text-white tracking-tighter mb-2">WH1TE.LOG</h2><p class="font-mono text-xs text-gray-500">DESIGNED_FOR_THE_FUTURE_ARCHIVE</p></div>
+            <div class="font-mono text-xs text-gray-500 text-right"><p>&copy; 2025 ALL RIGHTS RESERVED.</p><div class="flex gap-4 justify-end mt-2"><span class="hover:text-acid cursor-pointer">[ PRIVACY ]</span><span class="hover:text-acid cursor-pointer">[ ABOUT ]</span></div></div>
         </div>
     </footer>
 
     <script>
-        // 1. 音乐逻辑 (增强版：保存进度)
+        // --- 动态背景核心逻辑 ---
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth) * 100;
+            const y = (e.clientY / window.innerHeight) * 100;
+            document.documentElement.style.setProperty('--mouse-x', `${x}%`);
+            document.documentElement.style.setProperty('--mouse-y', `${y}%`);
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             const music = document.getElementById('background-music');
             const storedState = localStorage.getItem('music_playing');
-            const storedTime = localStorage.getItem('music_currentTime'); // 读取进度
+            const storedTime = localStorage.getItem('music_currentTime');
             const toggleBtn = document.getElementById('music-toggle-button');
             
             music.muted = true;
-
-            // 恢复进度
-            if (storedTime) {
-                music.currentTime = parseFloat(storedTime);
-            }
+            if (storedTime) music.currentTime = parseFloat(storedTime);
 
             if (storedState === 'true') {
                 const playPromise = music.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(error => console.warn("Autoplay blocked:", error));
-                }
+                if (playPromise !== undefined) playPromise.catch(error => console.warn("Autoplay blocked:", error));
                 setMusicIcon(true);
             } else {
                 music.pause();
@@ -390,16 +329,12 @@
                 document.removeEventListener('click', activateAudio, true);
             };
             document.addEventListener('click', activateAudio, true);
-            
-            // 2. 处理 URL 参数 (标签过滤联动)
+
             const urlParams = new URLSearchParams(window.location.search);
             const tagParam = urlParams.get('tag');
-            if (tagParam) {
-                filterByTag(tagParam);
-            }
+            if (tagParam) filterByTag(tagParam);
         });
 
-        // 页面离开前保存进度
         window.addEventListener('beforeunload', () => {
             const music = document.getElementById('background-music');
             localStorage.setItem('music_currentTime', music.currentTime);
@@ -408,14 +343,13 @@
         function saveMusicState(event) {
             const music = document.getElementById('background-music');
             localStorage.setItem('music_playing', !music.paused ? 'true' : 'false');
-            localStorage.setItem('music_currentTime', music.currentTime); // 显式保存一次
+            localStorage.setItem('music_currentTime', music.currentTime);
         }
 
         let isToggling = false;
         function toggleMusic() {
             if (isToggling) return;
             const music = document.getElementById('background-music');
-            
             if (music.paused) {
                 isToggling = true;
                 music.muted = false;
@@ -437,7 +371,6 @@
             const iconContainer = document.getElementById('music-icon');
             const wave = document.getElementById('music-wave');
             if (!iconContainer || !wave) return;
-
             if (isPlaying) {
                 wave.classList.remove('hidden');
                 iconContainer.innerHTML = `<svg class="w-4 h-4 text-white group-hover:text-acid transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
@@ -447,16 +380,13 @@
             }
         }
         
-        // 3. 搜索与标签过滤逻辑
         function searchArticles() {
             const query = document.getElementById('search-input').value.toLowerCase().trim();
             const cards = document.querySelectorAll('.article-card');
-
             cards.forEach(card => {
                 const title = card.querySelector('h3 a').textContent.toLowerCase();
                 const summary = card.querySelector('.article-summary').textContent.toLowerCase();
-                const tags = card.dataset.tags ? card.dataset.tags.toLowerCase() : ''; // 搜索数据属性
-                
+                const tags = card.dataset.tags ? card.dataset.tags.toLowerCase() : '';
                 if (title.includes(query) || summary.includes(query) || tags.includes(query)) {
                     card.style.display = ''; 
                 } else {
@@ -465,7 +395,6 @@
             });
         }
 
-        // 标签点击联动
         function filterByTag(tag) {
             const searchInput = document.getElementById('search-input');
             const status = document.getElementById('search-status');
@@ -473,8 +402,6 @@
             status.classList.remove('hidden');
             status.innerText = `FILTERING: [ ${tag.toUpperCase()} ]`;
             searchArticles();
-            
-            // 滚动到文章列表
             document.getElementById('article-list-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     </script>
