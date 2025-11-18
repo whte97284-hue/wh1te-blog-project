@@ -5,231 +5,350 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wh1te.log | 首页 - 我的互联网小屋</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* 定义主色调和强调色 */
-        :root {
-            --tiffany-blue: #00A8A8; /* 主色调：清冷、现代 */
-            --text-dark: #333;
-        }
-        
-        /* 1. 设置全屏固定背景 */
-        body {
-            font-family: 'Inter', 'Noto Sans SC', sans-serif;
-            color: var(--text-dark);
-            /* 背景图链接：使用相对路径 */
-            background-image: url("./audio/bg_high_res.jpg"); 
-            background-size: cover;
-            background-position: center 40%;
-            background-attachment: fixed; /* 固定背景，实现视差效果 */
-            min-height: 100vh; 
-        }
-        
-        /* 自定义主色类 */
-        .text-tiffany { color: var(--tiffany-blue); }
-        .bg-tiffany { background-color: var(--tiffany-blue); }
-        .hover\:text-tiffany:hover { color: var(--tiffany-blue); }
-
-        /* 2. 移除 Hero 区背景，使用柔和阴影优化文字可读性 */
-        .hero-bg {
-            background-image: none;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* 3. 主内容区域布局和圆角优化 */
-        main {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 2.5rem;
-            
-            background-color: rgba(255, 255, 255, 0.98);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* 增加阴影柔和度 */
-            border-radius: 1.5rem; /* 圆润边角 */
-        }
-        
-        @media (min-width: 1024px) {
-            main {
-                grid-template-columns: 1fr 3fr; 
-                padding: 2.5rem;
+    <!-- 引入 Google Fonts 增加设计感 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;500;700;900&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Outfit"', '"Noto Sans SC"', 'sans-serif'],
+                    },
+                    colors: {
+                        tiffany: {
+                            DEFAULT: '#00A8A8',
+                            light: '#4FD1C5',
+                            dark: '#007979'
+                        },
+                        glass: {
+                            100: 'rgba(255, 255, 255, 0.1)',
+                            200: 'rgba(255, 255, 255, 0.2)',
+                            300: 'rgba(255, 255, 255, 0.3)',
+                            800: 'rgba(255, 255, 255, 0.85)',
+                        }
+                    },
+                    backdropBlur: {
+                        xs: '2px',
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
             }
         }
+    </script>
+
+    <style>
+        /* 全局样式重置与背景 */
+        body {
+            /* 这里保留你的图片路径，建议图片色彩明亮，天空占比高 */
+            background-image: url("./audio/bg_high_res.jpg"); 
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            position: relative;
+        }
         
-        /* 公告栏卡片样式 */
-        .notice-card {
-            border-left: 4px solid var(--tiffany-blue); /* 公告栏回归主色调 */
+        /* 玻璃拟态核心类 - 白色半透明磨砂 */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.65); /* 透明度调整为 0.65，更通透 */
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+
+        /* 深色玻璃（用于强调或页脚） */
+        .glass-card-dark {
+            background: rgba(20, 30, 40, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 168, 168, 0.5);
+            border-radius: 10px;
+        }
+        
+        /* 文字渐变特效 */
+        .text-gradient {
+            background: linear-gradient(135deg, #00A8A8 0%, #2563EB 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
     </style>
 </head>
-<body class="antialiased">
+<body class="antialiased selection:bg-tiffany selection:text-white overflow-x-hidden">
 
+    <!-- 音乐播放器逻辑保留 -->
     <audio id="background-music" loop muted>
         <source src="./audio/bgm.mp3" type="audio/mp3">
         您的浏览器不支持音频播放。
     </audio>
 
+    <!-- 悬浮音乐按钮：重新设计为半透明胶囊 -->
     <button 
         id="music-toggle-button" 
         onclick="toggleMusic()" 
-        class="fixed bottom-6 right-6 bg-tiffany text-white p-3 rounded-full shadow-2xl hover:bg-opacity-80 transition duration-300 z-30"
+        class="fixed bottom-8 right-8 glass-card-dark p-4 rounded-full shadow-2xl hover:scale-110 transition-transform duration-300 z-50 flex items-center justify-center group border border-white/20"
         title="播放/暂停背景音乐"
     >
-        <svg id="music-icon" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M8 5v14l11-7z"/>
-        </svg>
+        <!-- 动态音波动画（仅播放时显示，这里用简单的圆环模拟） -->
+        <div id="music-wave" class="hidden absolute inset-0 rounded-full border border-tiffany/50 animate-ping"></div>
+        <div id="music-icon">
+            <!-- 默认图标 -->
+            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+            </svg>
+        </div>
     </button>
 
-    <nav class="bg-white/90 shadow-md sticky top-0 z-20"> 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
-            <a href="index.html" class="text-2xl font-light text-tiffany tracking-widest uppercase">
-                <span class="font-bold">Wh1te</span>.log
+    <!-- 顶部导航：悬浮岛屿风格 -->
+    <nav class="fixed top-6 left-0 right-0 z-40 flex justify-center px-4 pointer-events-none">
+        <!-- 内容区域开启 pointer-events -->
+        <div class="pointer-events-auto glass-card rounded-full px-8 py-4 flex justify-between items-center w-full max-w-5xl shadow-lg transition-all duration-300 hover:shadow-tiffany/20">
+            <a href="index.html" class="text-2xl font-black tracking-tighter flex items-center gap-2 group">
+                <span class="w-3 h-3 rounded-full bg-tiffany group-hover:animate-pulse"></span>
+                <span class="text-gray-800">WH1TE<span class="text-tiffany">.LOG</span></span>
             </a>
-            <div class="flex items-center space-x-4">
-                <a href="index.html" class="hidden md:inline text-tiffany transition" onclick="saveMusicState(event)">首页</a>
-                <a href="article-1.html" class="hidden md:inline text-gray-600 hover:text-tiffany transition" onclick="saveMusicState(event)">最新文章</a>
-                <a href="#" class="hidden md:inline text-gray-600 hover:text-tiffany transition">我的项目</a>
+            
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="index.html" onclick="saveMusicState(event)" class="relative font-bold text-tiffany after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-0.5 after:bg-tiffany after:rounded-full">首页</a>
+                <a href="article-1.html" onclick="saveMusicState(event)" class="font-medium text-gray-600 hover:text-tiffany transition-colors">最新文章</a>
+                <a href="#" class="font-medium text-gray-600 hover:text-tiffany transition-colors">我的项目</a>
             </div>
+
+            <!-- 移动端菜单按钮（占位） -->
+            <button class="md:hidden text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
         </div>
     </nav>
 
-    <header class="hero-bg py-24 relative mb-12"> 
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center p-8 rounded-xl">
-            <h1 class="text-6xl font-extrabold text-white mb-4" style="text-shadow: 1px 1px 10px rgba(0, 0, 0, 0.6);">
-                Wh1te的互联网小屋
+    <!-- Hero 区域：去除背景图层，直接悬浮于壁纸之上 -->
+    <header class="relative pt-48 pb-16 px-4 min-h-[60vh] flex flex-col justify-center items-center text-center">
+        
+        <!-- 装饰性光晕背景，增加文字可读性 -->
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/20 rounded-full blur-3xl -z-10 pointer-events-none"></div>
+
+        <div class="animate-fade-in-up space-y-6 max-w-3xl mx-auto">
+            <div class="inline-block px-4 py-1 rounded-full glass-card-dark text-xs font-bold tracking-widest uppercase mb-4 text-tiffany-light shadow-lg">
+                Welcome to my space
+            </div>
+            
+            <h1 class="text-6xl md:text-8xl font-black tracking-tight text-white drop-shadow-lg leading-none">
+                Wh1te<br>
+                <span class="text-gradient bg-clip-text text-transparent drop-shadow-none" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">互联网小屋</span>
             </h1>
-            <p class="text-xl text-white mb-8 font-light" style="text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8);">
-                更新一些我日常和感触
+            
+            <p class="text-xl md:text-2xl text-white font-medium tracking-wide max-w-2xl mx-auto drop-shadow-md bg-black/10 backdrop-blur-sm py-2 px-4 rounded-lg inline-block">
+                更新一些我的日常和感触
             </p>
             
-            <div class="max-w-lg mx-auto">
-                <input 
-                    type="text" 
-                    id="search-input" 
-                    placeholder="搜索文章标题、摘要或标签..." 
-                    oninput="searchArticles()"
-                    class="w-full px-6 py-3 border border-gray-300 rounded-full text-lg shadow-2xl focus:ring-tiffany focus:border-tiffany transition bg-white/80 placeholder-gray-600"
-                > 
+            <!-- 搜索框：重新设计为发光玻璃条 -->
+            <div class="mt-12 relative max-w-xl mx-auto group w-full">
+                <div class="absolute -inset-1 bg-gradient-to-r from-tiffany to-blue-600 rounded-full blur opacity-30 group-hover:opacity-60 transition duration-500"></div>
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        id="search-input" 
+                        placeholder="搜索文章标题、摘要或标签..." 
+                        oninput="searchArticles()"
+                        class="w-full pl-12 pr-6 py-4 bg-white/80 backdrop-blur-xl border border-white/40 rounded-full text-lg shadow-2xl text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-tiffany focus:bg-white focus:outline-none transition-all"
+                    >
+                    <svg class="w-5 h-5 text-gray-500 absolute left-4 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
             </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 shadow-2xl rounded-2xl">
-        
-        <div id="notice" class="space-y-6 lg:border-r lg:pr-8 lg:order-1 order-2 py-4 lg:py-0">
-            <div class="bg-white p-4 rounded-xl shadow-md notice-card">
-                <h3 class="flex items-center font-bold text-xl mb-3 text-tiffany">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-2.236 9.364-5.516l.08.08c.29.29.515.63.67 1.011l.178 1.485A15.002 15.002 0 0118 13" />
-                    </svg>
-                    博客公告
-                </h3>
-                <p class="text-sm text-gray-700 space-y-2">
-                    <span class="block font-medium text-gray-700">✨ 0-1 挑战更新:</span> 
-                    <span class="block">我已成功配置 Python 环境，下一步将专注博客维护脚本开发。</span>
-                </p>
-                <p class="text-sm text-gray-700 mt-3">
-                    <span class="block font-medium text-gray-700">🗓️ 近期计划:</span> 
-                    <span class="block">学习使用 Python 校验 HTML 格式，保障网站内容质量。</span>
-                </p>
-            </div>
+    <!-- 主内容区域：Grid 布局 -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
-            <div class="bg-white p-4 rounded-xl shadow-md border-gray-200 border">
-                <h3 class="flex items-center font-bold text-lg mb-3 text-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-5 5a2 2 0 01-2.828 0l-7-7A2 2 0 013 8V3a2 2 0 012-2z" />
-                    </svg>
-                    文章标签
-                </h3>
-                <div class="flex flex-wrap gap-2">
-                    <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-3 py-1 rounded-full hover:bg-tiffany/40 transition">#Python基础</a>
-                    <a href="#" class="text-xs bg-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-300 transition">#Web开发</a>
-                    <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-3 py-1 rounded-full hover:bg-tiffany/40 transition">#自动化</a>
-                    <a href="#" class="text-xs bg-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-300 transition">#学习反思</a>
-                    <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-3 py-1 rounded-full hover:bg-tiffany/40 transition">#Git教程</a>
+            <!-- 左侧：侧边栏信息流 (Bento Grid 风格) -->
+            <aside class="lg:col-span-4 space-y-6 animate-fade-in-up" style="animation-delay: 0.2s;">
+                
+                <!-- 1. 公告卡片 -->
+                <div class="glass-card rounded-3xl p-6 relative overflow-hidden group transition-all hover:-translate-y-1">
+                    <!-- 装饰圆圈 -->
+                    <div class="absolute -right-6 -top-6 w-24 h-24 bg-tiffany/10 rounded-full blur-xl group-hover:bg-tiffany/20 transition-all"></div>
+                    
+                    <h3 class="flex items-center font-bold text-xl mb-4 text-gray-800">
+                        <span class="bg-tiffany/10 p-2 rounded-lg mr-3 text-tiffany">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-2.236 9.364-5.516l.08.08c.29.29.515.63.67 1.011l.178 1.485A15.002 15.002 0 0118 13" /></svg>
+                        </span>
+                        小屋动态
+                    </h3>
+                    <div class="space-y-4 relative z-10">
+                        <div class="pl-4 border-l-2 border-tiffany/50">
+                            <span class="text-xs font-bold text-tiffany uppercase tracking-wider">Update</span>
+                            <p class="text-sm text-gray-700 font-medium mt-1">成功配置 Python 环境，下一步专注博客维护脚本开发。</p>
+                        </div>
+                        <div class="pl-4 border-l-2 border-gray-300">
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Plan</span>
+                            <p class="text-sm text-gray-600 mt-1">学习使用 Python 校验 HTML 格式。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. 社交链接 (深色玻璃风格) -->
+                <div class="glass-card-dark rounded-3xl p-6 text-center transition-all hover:-translate-y-1">
+                    <h3 class="text-sm font-bold text-gray-300 uppercase tracking-widest mb-4">Connect With Me</h3>
+                    <div class="flex justify-center space-x-4">
+                        <a href="https://github.com/whte97284-hue/wh1te-blog-project/tree/main" target="_blank" class="p-3 bg-white/10 rounded-2xl hover:bg-gray-800 hover:text-white text-gray-300 transition-all duration-300 transform hover:scale-110">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        </a>
+                        <a href="https://space.bilibili.com/551898501" target="_blank" class="p-3 bg-white/10 rounded-2xl hover:bg-pink-400 hover:text-white text-gray-300 transition-all duration-300 transform hover:scale-110">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.813 4.653h.854c1.51.054 2.769.31 3.91 1.517 1.142 1.223 1.422 2.482 1.422 3.993v6.8c-.054 1.51-.31 2.769-1.518 3.91-1.223 1.142-2.482 1.422-3.993 1.422h-12.978c-1.51-.054-2.769-.31-3.91-1.517-1.142-1.223-1.422-2.482-1.422-3.993v-6.8c.054-1.51.31-2.769 1.518-3.91 1.223-1.142 2.482-1.422 3.993-1.422h.854l-2.043-2.173.707-.707 3.18 3.18h5.211l3.18-3.18.707.707-2.692 2.876zm-12.978 1.817c-1.223 0-1.422.199-1.422 1.422v6.8c0 1.223.199 1.422 1.422 1.422h12.978c1.223 0 1.422-.199 1.422-1.422v-6.8c0-1.223-.199-1.422-1.422-1.422h-12.978zm3.993 3.807c1.106 0 1.997.891 1.997 1.997s-.891 1.997-1.997 1.997-1.997-.891-1.997-1.997.891-1.997 1.997-1.997zm8.985 0c1.106 0 1.997.891 1.997 1.997s-.891 1.997-1.997 1.997-1.997-.891-1.997-1.997.891-1.997 1.997-1.997z"/></svg>
+                        </a>
+                        <a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw" target="_blank" class="p-3 bg-white/10 rounded-2xl hover:bg-black hover:text-white text-gray-300 transition-all duration-300 transform hover:scale-110">
+                             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 3. 标签云 -->
+                <div class="glass-card rounded-3xl p-6 transition-all hover:-translate-y-1">
+                    <h3 class="font-bold text-lg mb-4 text-gray-800">热门标签</h3>
+                    <div class="flex flex-wrap gap-2">
+                         <a href="#" class="px-3 py-1.5 rounded-lg bg-white/60 hover:bg-tiffany hover:text-white text-xs font-medium text-gray-600 transition-all duration-300 border border-white/40 shadow-sm">#Python基础</a>
+                         <a href="#" class="px-3 py-1.5 rounded-lg bg-white/60 hover:bg-tiffany hover:text-white text-xs font-medium text-gray-600 transition-all duration-300 border border-white/40 shadow-sm">#Web开发</a>
+                         <a href="#" class="px-3 py-1.5 rounded-lg bg-white/60 hover:bg-tiffany hover:text-white text-xs font-medium text-gray-600 transition-all duration-300 border border-white/40 shadow-sm">#自动化</a>
+                         <a href="#" class="px-3 py-1.5 rounded-lg bg-white/60 hover:bg-tiffany hover:text-white text-xs font-medium text-gray-600 transition-all duration-300 border border-white/40 shadow-sm">#生活随笔</a>
+                         <a href="#" class="px-3 py-1.5 rounded-lg bg-white/60 hover:bg-tiffany hover:text-white text-xs font-medium text-gray-600 transition-all duration-300 border border-white/40 shadow-sm">#Git教程</a>
+                    </div>
+                </div>
+
+            </aside>
+
+            <!-- 右侧：文章列表 -->
+            <div class="lg:col-span-8 animate-fade-in-up" style="animation-delay: 0.4s;">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-3xl font-extrabold text-white drop-shadow-lg tracking-tight">最新分享</h2>
+                    <span class="text-white/90 text-sm font-bold bg-glass-200 px-4 py-1.5 rounded-full backdrop-blur-md border border-white/20">共 2 篇</span>
+                </div>
+                
+                <div id="article-list-container" class="space-y-6">
+                    
+                    <!-- 文章卡片 1 -->
+                    <article class="article-card glass-card rounded-3xl p-8 hover:transform hover:scale-[1.01] transition-all duration-300 hover:shadow-tiffany/20 group hover:bg-white/80">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="article-tags flex gap-2">
+                                <span class="px-3 py-1 rounded-md bg-blue-50 text-blue-600 text-xs font-bold uppercase tracking-wider border border-blue-100">编程之旅</span>
+                                <span class="px-3 py-1 rounded-md bg-gray-50 text-gray-500 text-xs font-bold border border-gray-200">Appium</span>
+                            </div>
+                            <span class="text-sm text-gray-400 font-mono bg-white/50 px-2 py-1 rounded-md">2025.10.02</span>
+                        </div>
+                        
+                        <h3 class="text-2xl md:text-3xl font-bold mb-3 leading-tight">
+                            <a href="article-1.html" onclick="saveMusicState(event)" class="text-gray-800 group-hover:text-tiffany transition-colors">
+                                从 Appium 到网站：我与代码的旅程初探
+                            </a>
+                        </h3>
+                        
+                        <p class="text-gray-600 mb-6 leading-relaxed article-summary text-lg">
+                            起初我以为编程就是找个工具抢票，最终却被安全机制所阻止。这次经历让我明白：真正的编程价值在于构建思维框架和创造数字世界。
+                        </p>
+                        
+                        <div class="flex items-center justify-between border-t border-gray-200/50 pt-5 mt-2">
+                            <a href="article-1.html" onclick="saveMusicState(event)" class="inline-flex items-center text-tiffany font-bold text-sm uppercase tracking-wide group-hover:translate-x-1 transition-transform">
+                                阅读全文 
+                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                            </a>
+                            <!-- 装饰性图标 -->
+                            <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-tiffany/30">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- 文章卡片 2 -->
+                    <article class="article-card glass-card rounded-3xl p-8 hover:transform hover:scale-[1.01] transition-all duration-300 hover:shadow-tiffany/20 group hover:bg-white/80">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="article-tags flex gap-2">
+                                <span class="px-3 py-1 rounded-md bg-green-50 text-green-600 text-xs font-bold uppercase tracking-wider border border-green-100">Python</span>
+                                <span class="px-3 py-1 rounded-md bg-gray-50 text-gray-500 text-xs font-bold border border-gray-200">Web维护</span>
+                            </div>
+                            <span class="text-sm text-gray-400 font-mono bg-white/50 px-2 py-1 rounded-md">2025.10.03</span>
+                        </div>
+                        
+                        <h3 class="text-2xl md:text-3xl font-bold mb-3 leading-tight">
+                            <a href="article-2.html" onclick="saveMusicState(event)" class="text-gray-800 group-hover:text-tiffany transition-colors">
+                                Python 主页自动生成脚本测试
+                            </a>
+                        </h3>
+                        
+                        <p class="text-gray-600 mb-6 leading-relaxed article-summary text-lg">
+                            辅助静态页面更新的自动化生成脚本第一次测试，探索如何高效管理我的数字花园。
+                        </p>
+                        
+                        <div class="flex items-center justify-between border-t border-gray-200/50 pt-5 mt-2">
+                            <a href="article-2.html" onclick="saveMusicState(event)" class="inline-flex items-center text-tiffany font-bold text-sm uppercase tracking-wide group-hover:translate-x-1 transition-transform">
+                                阅读全文 
+                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                            </a>
+                            <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-tiffany/30">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                            </div>
+                        </div>
+                    </article>
+
                 </div>
             </div>
-
-            <div class="bg-white p-4 rounded-xl shadow-md border-gray-200 border"> 
-                <h3 class="flex items-center font-bold text-lg mb-2 text-gray-700">
-                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                    </svg>
-                    社交链接
-                </h3>
-                <ul class="text-sm space-y-2 text-tiffany">
-                    <li><a href="https://space.bilibili.com/551898501" target="_blank" class="hover:underline">我的 哔哩哔哩</a></li>
-                    <li><a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw?from_tab_name=main" target="_blank" class="hover:underline">我的 抖音</a></li>
-                    <li><a href="https://github.com/whte97284-hue/wh1te-blog-project/tree/main" target="_blank" class="hover:underline">我的 GitHub</a></li>
-                </ul>
-            </div>
-        </div>
-
-        <div id="latest" class="lg:order-2 order-1 py-4 lg:py-0">
-            <h2 class="text-3xl font-bold text-gray-800 mb-8 border-b pb-4 border-gray-200">最新分享</h2>
-            
-            <div id="article-list-container">
-                
-                <div class="article-card bg-white/95 shadow-xl rounded-xl p-6 mb-6 border-l-4 border-tiffany hover:shadow-2xl transition duration-300">
-                    <div class="flex flex-wrap gap-2 mb-3 article-tags">
-                        <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-2 py-1 rounded-full hover:bg-tiffany/40 transition">#编程之旅</a>
-                        <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-2 py-1 rounded-full hover:bg-tiffany/40 transition">#Appium</a>
-                        <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-2 py-1 rounded-full hover:bg-tiffany/40 transition">#学习反思</a>
-                    </div>
-                    <h3 class="text-2xl font-semibold mb-2">
-                        <a href="article-1.html" class="hover:text-tiffany transition" onclick="saveMusicState(event)">
-                            从 Appium 到网站：我与代码的旅程初探
-                        </a>
-                    </h3>
-                    <p class="text-gray-600 mb-4 article-summary">
-                        起初我以为编程就是找个工具抢票，最终却被安全机制所阻止。这次经历让我明白：真正的编程价值在于构建思维框架和创造数字世界。
-                    </p>
-                    <div class="flex justify-between items-center text-sm text-gray-500">
-                        <span>发布于 2025年10月02日</span>
-                        <a href="article-1.html" class="text-tiffany font-medium hover:underline" onclick="saveMusicState(event)">阅读全文 &rarr;</a>
-                    </div>
-                </div>
-                
-                <div class="article-card bg-white/95 shadow-xl rounded-xl p-6 mb-6 border-l-4 border-tiffany hover:shadow-2xl transition duration-300">
-                    <div class="flex flex-wrap gap-2 mb-3 article-tags">
-                        <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-2 py-1 rounded-full hover:bg-tiffany/40 transition">#Python基础</a>
-                        <a href="#" class="text-xs bg-tiffany/20 text-tiffany px-2 py-1 rounded-full hover:bg-tiffany/40 transition">#Web维护</a>
-                    </div>
-                    <h3 class="text-2xl font-semibold mb-2">
-                        <a href="article-2.html" class="hover:text-tiffany transition" onclick="saveMusicState(event)">
-                            Pyhon主页自动生成脚本测试
-                        </a>
-                    </h3>
-                    <p class="text-gray-600 mb-4 article-summary">
-                        辅助静态页面更新的自动化生成脚本第一次测试
-                    </p>
-                    <div class="flex justify-between items-center text-sm text-gray-500">
-                        <span>发布于 2025年10月3日</span>
-                        <a href="article-2.html" class="text-tiffany font-medium hover:underline" onclick="saveMusicState(event)">阅读全文 &rarr;</a>
-                    </div>
-                </div>
-                
-                </div>
         </div>
     </main>
 
-    <footer id="footer" class="bg-gray-900/90 text-white mt-16 rounded-t-2xl">
-        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm">
-            &copy; 2025 Wh1te.log | 我的代码旅程 | <a href="#" class="hover:underline text-tiffany">隐私声明</a>
+    <footer class="glass-card-dark mt-16 border-t border-white/10">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center">
+            <div class="mb-4 md:mb-0 text-center md:text-left">
+                <span class="text-2xl font-black text-white tracking-tighter">WH1TE.LOG</span>
+                <p class="text-gray-400 text-sm mt-1">Designed for the Digital Age</p>
+            </div>
+            <div class="text-sm text-gray-400 flex gap-6">
+                <span>&copy; 2025 Wh1te.log</span>
+                <a href="#" class="hover:text-tiffany transition">隐私声明</a>
+                <a href="#" class="hover:text-tiffany transition">关于我</a>
+            </div>
         </div>
     </footer>
 
     <script>
         // ----------------------------------------------------
-        // --- 1. 音乐播放逻辑 (LocalStorage 跨页面同步) ---
+        // --- 1. 音乐播放逻辑 (保持原有逻辑，适配新UI) ---
         // ----------------------------------------------------
         document.addEventListener('DOMContentLoaded', () => {
             const music = document.getElementById('background-music');
             const storedState = localStorage.getItem('music_playing');
             
+            // 默认先静音，防止浏览器自动播放策略报错
             music.muted = true;
 
             if (storedState === 'true') {
                 music.play().catch(error => {
-                    console.error("Muted playback failed on load, waiting for user interaction.", error);
+                    console.warn("自动播放被浏览器拦截，等待用户点击。", error);
                 });
                 setMusicIcon(true);
             } else {
@@ -237,11 +356,11 @@
                 setMusicIcon(false);
             }
             
+            // 用户点击页面任意位置时，尝试解除静音并播放（如果是开启状态）
             const activateAudio = () => {
-                // Play and immediately pause to "activate" the audio element for future programmatic plays.
-                music.play().catch(e => console.log('Audio activation failed on initial click.'));
-                if (localStorage.getItem('music_playing') !== 'true') {
-                    music.pause();
+                if (localStorage.getItem('music_playing') === 'true') {
+                    music.muted = false; // 解除静音
+                    music.play().catch(e => console.log('Playback failed:', e));
                 }
                 document.removeEventListener('click', activateAudio, true);
             };
@@ -265,16 +384,21 @@
                 music.pause();
                 setMusicIcon(false);
             }
-            // Update localStorage whenever the button is manually toggled
             localStorage.setItem('music_playing', !music.paused ? 'true' : 'false');
         }
         
         function setMusicIcon(isPlaying) {
             const iconContainer = document.getElementById('music-icon');
+            const wave = document.getElementById('music-wave');
+            
             if (isPlaying) {
-                iconContainer.innerHTML = `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
+                // 播放状态图标 (暂停图标) + 动画
+                wave.classList.remove('hidden');
+                iconContainer.innerHTML = `<svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
             } else {
-                iconContainer.innerHTML = `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>`;
+                // 暂停状态图标 (播放图标) + 移除动画
+                wave.classList.add('hidden');
+                iconContainer.innerHTML = `<svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`;
             }
         }
         
@@ -292,6 +416,10 @@
                 
                 if (title.includes(query) || summary.includes(query) || tagsContent.includes(query)) {
                     card.style.display = ''; 
+                    // 重新添加动画类以触发淡入效果
+                    card.classList.remove('animate-fade-in-up');
+                    void card.offsetWidth; // 触发重绘
+                    card.classList.add('animate-fade-in-up');
                 } else {
                     card.style.display = 'none'; 
                 }
@@ -300,4 +428,3 @@
     </script>
 </body>
 </html>
-
