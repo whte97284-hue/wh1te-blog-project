@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WH1TE_LOG // ABOUT_ME</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;500;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Space Grotesk"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        acid: { DEFAULT: '#ccff00', dark: '#aacc00' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .noise-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; opacity: 0.06; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"); }
+        body { background-image: url("./audio/bg_high_res.jpg"); background-size: cover; background-position: center; background-attachment: fixed; min-height: 100vh; color: white; }
+        .cyber-card { background: rgba(5, 5, 5, 0.75); backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body class="antialiased overflow-x-hidden font-sans">
+    <div class="noise-overlay"></div>
+    
+    <!-- 导航 -->
+    <nav class="fixed top-0 w-full z-40 px-6 md:px-12 py-5 flex justify-between items-center mix-blend-difference text-white bg-gradient-to-b from-black/50 to-transparent backdrop-blur-[2px]">
+        <a href="index.html" class="flex flex-col group">
+            <span class="text-lg font-black tracking-tighter leading-none group-hover:text-acid transition-colors">WH1TE.LOG</span>
+            <span class="font-mono text-[9px] tracking-[0.2em] opacity-60">PROFILE_VIEW</span>
+        </a>
+        <div class="flex items-center gap-6 font-mono text-[11px] tracking-widest">
+            <a href="index.html" class="hover:text-acid transition-colors">[ HOME ]</a>
+            <span class="text-acid">[ ABOUT ]</span>
+        </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto pt-32 pb-20 px-6 md:px-12 relative z-20">
+        <div class="cyber-card rounded-2xl p-8 md:p-12">
+            
+            <!-- Profile Header -->
+            <div class="flex flex-col md:flex-row gap-8 items-start mb-12 border-b border-white/10 pb-12">
+                <div class="w-32 h-32 bg-gray-800 rounded-full overflow-hidden border-2 border-acid relative">
+                     <!-- 这里的图片可以换成你的头像 -->
+                     <div class="w-full h-full bg-gradient-to-br from-gray-700 to-black flex items-center justify-center text-acid font-black text-4xl">W</div>
+                </div>
+                <div class="flex-1">
+                    <h1 class="text-4xl md:text-6xl font-black mb-4">HELLO_WORLD</h1>
+                    <p class="text-gray-300 text-lg font-light leading-relaxed mb-6">
+                        我是 Wh1te，一名探索数字世界的初学者。<br>
+                        从自动化脚本到网页开发，我在 0 和 1 的世界里寻找创造的乐趣。
+                    </p>
+                    <div class="flex gap-4 font-mono text-xs">
+                        <span class="px-3 py-1 border border-acid text-acid rounded">PYTHON_LEARNER</span>
+                        <span class="px-3 py-1 border border-white/30 text-gray-400 rounded">WEB_DEVELOPER</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline -->
+            <div class="mb-12">
+                <h2 class="font-mono text-xl text-acid mb-8 flex items-center gap-2">>> MY_TIMELINE</h2>
+                <div class="space-y-8 border-l border-white/10 pl-8 ml-2">
+                    <div class="relative">
+                        <div class="absolute -left-[39px] top-1 w-5 h-5 bg-acid rounded-full border-4 border-black"></div>
+                        <span class="font-mono text-xs text-gray-500 mb-1 block">2025.10</span>
+                        <h3 class="text-xl font-bold mb-2">搭建个人博客</h3>
+                        <p class="text-gray-400 text-sm">放弃抢票脚本的执念，转向构建持久的数字资产。完成了这个 Cyber-Nature 风格的博客。</p>
+                    </div>
+                    <div class="relative">
+                        <div class="absolute -left-[39px] top-1 w-5 h-5 bg-gray-700 rounded-full border-4 border-black"></div>
+                        <span class="font-mono text-xs text-gray-500 mb-1 block">2025.09</span>
+                        <h3 class="text-xl font-bold mb-2">初探自动化</h3>
+                        <p class="text-gray-400 text-sm">学习 Appium 和 ADB，尝试与安卓底层通信。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Skills -->
+            <div>
+                <h2 class="font-mono text-xl text-acid mb-8 flex items-center gap-2">>> SKILL_MATRIX</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white/5 p-4 rounded border border-white/10">
+                        <h4 class="font-bold mb-2 text-sm">HTML/CSS</h4>
+                        <div class="w-full h-1 bg-gray-700 rounded overflow-hidden"><div class="h-full bg-acid w-[80%]"></div></div>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded border border-white/10">
+                        <h4 class="font-bold mb-2 text-sm">Python</h4>
+                        <div class="w-full h-1 bg-gray-700 rounded overflow-hidden"><div class="h-full bg-acid w-[60%]"></div></div>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded border border-white/10">
+                        <h4 class="font-bold mb-2 text-sm">Design</h4>
+                        <div class="w-full h-1 bg-gray-700 rounded overflow-hidden"><div class="h-full bg-acid w-[40%]"></div></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="text-center py-8 text-gray-600 text-xs font-mono">
+        &copy; 2025 WH1TE.LOG // SYSTEM_END
+    </footer>
+</body>
+</html>
