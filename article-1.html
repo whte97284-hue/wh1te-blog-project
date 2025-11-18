@@ -49,7 +49,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* 2. Cyber Card 风格 (保持与主页一致) */
+        /* 2. Cyber Card 风格 */
         .cyber-card {
             background: rgba(5, 5, 5, 0.75); /* 比主页略深，提高阅读专注度 */
             backdrop-filter: blur(24px);
@@ -112,7 +112,7 @@
         <source src="./audio/bgm.mp3" type="audio/mp3">
     </audio>
 
-    <!-- 音乐按钮：左下角胶囊 (保持一致) -->
+    <!-- 音乐按钮：左下角胶囊 (与主页一致) -->
     <button 
         id="music-toggle-button" 
         onclick="toggleMusic()" 
@@ -154,7 +154,7 @@
         
         <div class="flex items-center gap-6 font-mono text-[11px] tracking-widest">
             <a href="index.html" onclick="saveMusicState(event)" class="hidden md:block hover:text-acid transition-colors">[ HOME ]</a>
-            <a href="#" class="hidden md:block hover:text-acid transition-colors text-acid">[ ARTICLE ]</a>
+            <a href="about.html" onclick="saveMusicState(event)" class="hidden md:block hover:text-acid transition-colors">[ ABOUT ]</a>
             <!-- 移动端菜单触发 -->
             <button id="menu-button" class="md:hidden text-acid border border-acid/50 px-2 py-1 rounded hover:bg-acid hover:text-black transition-colors" onclick="toggleSidebar()">
                 MENU::OPEN
@@ -166,7 +166,6 @@
     <main class="max-w-7xl mx-auto pt-32 pb-20 px-6 md:px-12 flex flex-col lg:flex-row gap-8 relative z-20">
         
         <!-- 侧边栏 (Sidebar) -->
-        <!-- 移动端为固定遮罩，PC端为侧边栏 -->
         <aside id="sidebar" class="fixed lg:static inset-0 z-50 lg:z-auto transform -translate-x-full lg:translate-x-0 w-full lg:w-80 bg-black/95 lg:bg-transparent lg:block flex-shrink-0 transition-transform duration-300">
             
             <!-- 移动端关闭按钮 -->
@@ -217,13 +216,13 @@
                     </ul>
                 </div>
 
-                <!-- 标签云 -->
+                <!-- 标签云 (链接回主页过滤) -->
                 <div class="cyber-card rounded-xl p-6">
                     <h3 class="font-mono text-gray-500 text-[10px] uppercase mb-3 tracking-widest">:: TAGS</h3>
                     <div class="flex flex-wrap gap-2">
-                         <span class="px-2 py-1 border border-acid/30 text-acid text-[10px] font-mono uppercase rounded bg-acid/5">#Programming</span>
-                         <span class="px-2 py-1 border border-white/10 text-gray-400 text-[10px] font-mono uppercase rounded">#Appium</span>
-                         <span class="px-2 py-1 border border-white/10 text-gray-400 text-[10px] font-mono uppercase rounded">#Python</span>
+                         <a href="index.html?tag=Code" onclick="saveMusicState(event)" class="px-2 py-1 border border-acid/30 text-acid text-[10px] font-mono uppercase rounded bg-acid/5 hover:bg-acid hover:text-black transition-colors">#Code</a>
+                         <a href="index.html?tag=Appium" onclick="saveMusicState(event)" class="px-2 py-1 border border-white/10 text-gray-400 text-[10px] font-mono uppercase rounded hover:bg-acid hover:text-black transition-colors">#Appium</a>
+                         <a href="index.html?tag=Python" onclick="saveMusicState(event)" class="px-2 py-1 border border-white/10 text-gray-400 text-[10px] font-mono uppercase rounded hover:bg-acid hover:text-black transition-colors">#Python</a>
                     </div>
                 </div>
 
@@ -349,7 +348,6 @@
         </article>
     </main>
 
-    <!-- Footer (保持一致) -->
     <footer class="border-t border-white/10 bg-black/80 backdrop-blur-xl mt-20 relative z-20">
         <div class="max-w-7xl mx-auto py-12 px-6 md:px-12 flex flex-col md:flex-row justify-between items-end gap-8">
             <div>
@@ -378,13 +376,19 @@
             }
         }
 
-        // 2. 音乐逻辑 (与首页保持一致，包含防抖)
+        // 2. 音乐逻辑 (与首页保持一致，增加进度读取)
         document.addEventListener('DOMContentLoaded', () => {
             const music = document.getElementById('background-music');
             const storedState = localStorage.getItem('music_playing');
+            const storedTime = localStorage.getItem('music_currentTime'); // 读取进度
             const toggleBtn = document.getElementById('music-toggle-button');
             
             music.muted = true;
+
+            // 恢复进度
+            if (storedTime) {
+                music.currentTime = parseFloat(storedTime);
+            }
 
             if (storedState === 'true') {
                 const playPromise = music.play();
@@ -408,6 +412,18 @@
             };
             document.addEventListener('click', activateAudio, true);
         });
+
+        // 页面离开前保存进度
+        window.addEventListener('beforeunload', () => {
+            const music = document.getElementById('background-music');
+            localStorage.setItem('music_currentTime', music.currentTime);
+        });
+
+        function saveMusicState(event) {
+            const music = document.getElementById('background-music');
+            localStorage.setItem('music_playing', !music.paused ? 'true' : 'false');
+            localStorage.setItem('music_currentTime', music.currentTime);
+        }
 
         let isToggling = false;
         function toggleMusic() {
@@ -442,11 +458,6 @@
                 wave.classList.add('hidden');
                 iconContainer.innerHTML = `<svg class="w-4 h-4 text-white group-hover:text-acid transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`;
             }
-        }
-
-        function saveMusicState(event) {
-            const music = document.getElementById('background-music');
-            localStorage.setItem('music_playing', !music.paused ? 'true' : 'false');
         }
 
         // 3. 文章内搜索逻辑
