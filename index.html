@@ -58,10 +58,29 @@
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
 
+        /* === 这里应用了新的 CSS 背景代码 ===
+           替换了原来的 background-image: url(...) 
+        */
         body {
-            background-image: url("./audio/bg_high_res.jpg"); 
-            background-size: cover; background-position: center; background-attachment: fixed;
-            min-height: 100vh; color: white;
+            /* 1. 深邃的黑底 */
+            background-color: #050505;
+            
+            /* 2. CSS 绘制的酸性绿网格 + 径向光晕 */
+            background-image: 
+                /* 垂直线 */
+                linear-gradient(rgba(204, 255, 0, 0.05) 1px, transparent 1px),
+                /* 水平线 */
+                linear-gradient(90deg, rgba(204, 255, 0, 0.05) 1px, transparent 1px),
+                /* 中间的光晕，营造氛围感 */
+                radial-gradient(circle at 50% 50%, rgba(204, 255, 0, 0.15) 0%, transparent 60%);
+                
+            /* 3. 网格大小 */
+            background-size: 40px 40px, 40px 40px, 100% 100%;
+            
+            /* 4. 固定背景 */
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: white;
             -webkit-font-smoothing: antialiased;
         }
 
@@ -195,7 +214,6 @@
                     >
                     <div class="absolute right-4 w-1.5 h-4 bg-acid animate-pulse-fast"></div>
                 </div>
-                <!-- 搜索状态提示，默认隐藏 -->
                 <div id="search-status" class="absolute top-full left-0 mt-2 text-[10px] font-mono text-acid hidden">FILTERING_RESULTS...</div>
             </div>
         </div>
@@ -241,7 +259,6 @@
                         <span>[04]</span>
                     </h3>
                     <div class="flex flex-wrap gap-2" id="tag-cloud">
-                         <!-- 点击标签触发 filterByTag -->
                          <button onclick="filterByTag('Python')" class="px-2 py-1.5 bg-white/5 border border-white/10 hover:bg-acid hover:border-acid hover:text-black text-[10px] font-mono uppercase transition-all rounded-md">#Python</button>
                          <button onclick="filterByTag('Web')" class="px-2 py-1.5 bg-white/5 border border-white/10 hover:bg-acid hover:border-acid hover:text-black text-[10px] font-mono uppercase transition-all rounded-md">#Web</button>
                          <button onclick="filterByTag('Automation')" class="px-2 py-1.5 bg-white/5 border border-white/10 hover:bg-acid hover:border-acid hover:text-black text-[10px] font-mono uppercase transition-all rounded-md">#Automation</button>
@@ -263,7 +280,6 @@
                 <div id="article-list-container" class="space-y-6">
                     
                     <!-- 文章 1 -->
-                    <!-- 添加 data-tags 属性用于筛选 -->
                     <article class="article-card cyber-card rounded-2xl p-6 md:p-8 relative group hover:bg-black/80 overflow-hidden" data-tags="Code Reflection Appium">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-acid/20 blur-[60px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                         
@@ -334,18 +350,12 @@
             </div>
             <div class="font-mono text-xs text-gray-500 text-right">
                 <p>&copy; 2025 ALL RIGHTS RESERVED.</p>
-                <div class="flex gap-4 justify-end mt-2">
-                     <span class="hover:text-acid cursor-pointer">[ PRIVACY ]</span>
-                     <span class="hover:text-acid cursor-pointer">[ ABOUT ]</span>
-                </div>
             </div>
         </div>
     </footer>
 
     <script>
-        // ----------------------------------------------------
-        // --- 音乐播放逻辑 (增强版：保存进度) ---
-        // ----------------------------------------------------
+        // 1. 音乐逻辑 (增强版：保存进度)
         document.addEventListener('DOMContentLoaded', () => {
             const music = document.getElementById('background-music');
             const storedState = localStorage.getItem('music_playing');
@@ -427,6 +437,7 @@
             const iconContainer = document.getElementById('music-icon');
             const wave = document.getElementById('music-wave');
             if (!iconContainer || !wave) return;
+
             if (isPlaying) {
                 wave.classList.remove('hidden');
                 iconContainer.innerHTML = `<svg class="w-4 h-4 text-white group-hover:text-acid transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
