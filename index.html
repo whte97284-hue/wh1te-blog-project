@@ -16,15 +16,10 @@
                         mono: ['"JetBrains Mono"', 'monospace'],
                     },
                     colors: {
-                        acid: {
-                            DEFAULT: '#ccff00', 
-                            dark: '#aacc00',
-                            dim: 'rgba(204, 255, 0, 0.1)'
-                        },
-                        dark: {
-                            900: '#050505',
-                            800: '#0a0a0a',
-                        }
+                        primary: 'var(--primary-color)',
+                        secondary: 'var(--secondary-color)',
+                        bg: 'var(--bg-color)',
+                        surface: 'var(--surface-color)',
                     },
                     animation: {
                         'spin-slow': 'spin 20s linear infinite',
@@ -35,6 +30,7 @@
                         'breathe-glow': 'breatheGlow 4s ease-in-out infinite',
                         'cyber-slash': 'cyberSlash 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards',
                         'glitch-img': 'glitchImg 5s infinite',
+                        'pulse-ring': 'pulseRing 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite',
                     },
                     keyframes: {
                         floatHeavy: {
@@ -51,8 +47,8 @@
                             '100%': { backgroundPosition: '0 100%' },
                         },
                         breatheGlow: {
-                            '0%, 100%': { boxShadow: '0 0 15px rgba(204, 255, 0, 0.1)' },
-                            '50%': { boxShadow: '0 0 30px rgba(204, 255, 0, 0.25)' },
+                            '0%, 100%': { boxShadow: '0 0 15px var(--primary-dim)' },
+                            '50%': { boxShadow: '0 0 30px var(--primary-glow)' },
                         },
                         cyberSlash: {
                             '0%': { clipPath: 'inset(50% 0 50% 0)', opacity: 0 },
@@ -65,6 +61,10 @@
                             '95%': { transform: 'translate(-1px, -2px)', filter: 'hue-rotate(-90deg)' },
                             '96%': { transform: 'translate(0, 2px)', filter: 'none' },
                             '100%': { transform: 'translate(0)', filter: 'none' }
+                        },
+                         pulseRing: {
+                            '0%': { transform: 'scale(0.33)', opacity: '1' },
+                            '80%, 100%': { transform: 'scale(1)', opacity: '0' },
                         }
                     }
                 }
@@ -76,6 +76,34 @@
         :root {
             --mouse-x: 50%;
             --mouse-y: 50%;
+            --cursor-size: 800px; /* 动态光晕大小 */
+
+            /* === 默认主题 (Acid Lime) === */
+            --primary-color: #ccff00;
+            --primary-dim: rgba(204, 255, 0, 0.1);
+            --primary-glow: rgba(204, 255, 0, 0.25);
+            --secondary-color: #aacc00;
+            --bg-color: #050505;
+            --surface-color: rgba(10, 10, 10, 0.65);
+            --grid-color: rgba(204, 255, 0, 0.08);
+            --scanline-opacity: 0.3;
+            --hue-rotate: 0deg;
+        }
+
+        [data-theme="neon-pink"] {
+            --primary-color: #ff00ff; --primary-dim: rgba(255, 0, 255, 0.1); --primary-glow: rgba(255, 0, 255, 0.3);
+            --secondary-color: #00ffff; --bg-color: #0a000a; --surface-color: rgba(20, 0, 20, 0.65);
+            --grid-color: rgba(255, 0, 255, 0.08); --hue-rotate: 290deg;
+        }
+        [data-theme="cyber-blue"] {
+            --primary-color: #00f3ff; --primary-dim: rgba(0, 243, 255, 0.1); --primary-glow: rgba(0, 243, 255, 0.3);
+            --secondary-color: #0066ff; --bg-color: #00050a; --surface-color: rgba(0, 10, 20, 0.65);
+            --grid-color: rgba(0, 243, 255, 0.08); --hue-rotate: 180deg;
+        }
+        [data-theme="solar-orange"] {
+            --primary-color: #ff5f00; --primary-dim: rgba(255, 95, 0, 0.1); --primary-glow: rgba(255, 95, 0, 0.3);
+            --secondary-color: #ffaa00; --bg-color: #0a0200; --surface-color: rgba(20, 5, 0, 0.65);
+            --grid-color: rgba(255, 95, 0, 0.08); --hue-rotate: 45deg;
         }
 
         .noise-overlay {
@@ -83,87 +111,99 @@
             pointer-events: none; z-index: 40; opacity: 0.08;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
-
         .scanlines {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 41; opacity: 0.3;
-            background: linear-gradient(to bottom, 
-                rgba(255,255,255,0), 
-                rgba(255,255,255,0) 50%, 
-                rgba(0,0,0,0.2) 50%, 
-                rgba(0,0,0,0.2));
+            pointer-events: none; z-index: 41; opacity: var(--scanline-opacity);
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2));
             background-size: 100% 4px;
             animation: scan 0.3s linear infinite;
         }
         
         body {
-            background-color: #050505;
+            background-color: var(--bg-color);
             background-image: 
-                linear-gradient(rgba(204, 255, 0, 0.08) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(204, 255, 0, 0.08) 1px, transparent 1px),
-                radial-gradient(circle 800px at var(--mouse-x) var(--mouse-y), rgba(204, 255, 0, 0.12) 0%, transparent 60%);
-            background-size: 60px 60px, 60px 60px, 100% 100%;
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 60px 60px;
             background-attachment: fixed;
             min-height: 100vh; color: white;
             -webkit-font-smoothing: antialiased;
-            transition: background 0.1s ease;
+            transition: background-color 0.5s ease;
             overflow-x: hidden;
+            cursor: none; /* 隐藏默认鼠标 */
+        }
+
+        /* 独立光晕层 */
+        #cursor-glow {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: -1;
+            background-image: radial-gradient(
+                circle var(--cursor-size) at var(--mouse-x) var(--mouse-y), 
+                var(--primary-dim) 0%, 
+                transparent 60%
+            );
+            transition: --cursor-size 0.1s ease;
+            will-change: background-image;
+        }
+
+        /* 点击时的冲击波 */
+        .click-wave {
+            position: fixed;
+            border-radius: 50%;
+            border: 2px solid var(--primary-color);
+            background: transparent;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9998;
+            transform: translate(-50%, -50%);
+            animation: pulse-ring 0.6s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
         }
 
         .cyber-card {
-            background: rgba(10, 10, 10, 0.65); 
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            background: var(--surface-color); 
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.12); 
             box-shadow: 0 8px 32px rgba(0,0,0,0.5);
             transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
         .cyber-card:hover {
-            background: rgba(15, 15, 15, 0.85);
-            border-color: rgba(204, 255, 0, 0.6);
-            box-shadow: 0 12px 40px rgba(204, 255, 0, 0.15);
-            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.1); border-color: var(--primary-color);
+            box-shadow: 0 0 20px var(--primary-dim); transform: translateY(-2px);
         }
         
         .text-stroke-layer { -webkit-text-stroke: 1px rgba(255, 255, 255, 0.6); color: transparent; pointer-events: none; }
-        .caret-acid { caret-color: #ccff00; }
+        .caret-primary { caret-color: var(--primary-color); }
         
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #ccff00; }
-        ::selection { background: #ccff00; color: black; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-color); }
+        ::selection { background: var(--primary-color); color: black; }
         
-        /* 故障滤镜 */
+        /* 图片滤镜 */
         .image-filter-acid-glitch {
-            filter: grayscale(100%) contrast(120%) brightness(110%) sepia(50%) hue-rotate(60deg) saturate(300%) drop-shadow(0 0 20px rgba(204, 255, 0, 0.3));
+            filter: grayscale(100%) contrast(120%) brightness(110%) sepia(50%) hue-rotate(var(--hue-rotate)) saturate(300%) drop-shadow(0 0 20px var(--primary-dim));
             transform: scaleX(-1); mix-blend-mode: screen; opacity: 0.6;
             mask-image: linear-gradient(to bottom, black 60%, transparent 100%); 
             -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
             will-change: transform, filter, opacity;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.3s ease, filter 0.5s ease;
         }
 
-        /* --- AI助手专属优化：全息融合 --- */
         .image-filter-acid-subtle {
-            /* 1. 混合模式：Lighten 或 Screen 可以过滤掉黑色背景 */
             mix-blend-mode: lighten; 
-            /* 2. 滤镜：增加亮度和对比度，模拟发光投影 */
-            filter: contrast(1.3) brightness(1.2) saturate(1.2);
-            /* 3. 底部渐变遮罩：让身体下方柔和消失 */
+            filter: contrast(1.3) brightness(1.2) saturate(1.2) hue-rotate(calc(var(--hue-rotate) * 0.5)); 
             mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
             -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
-            /* 4. 透明度：稍微透明一点，看起来像全息 */
             opacity: 0.9;
+            transition: filter 0.5s ease;
         }
 
-        .cyber-swap-active {
-            animation: cyber-swap 0.6s steps(3) forwards;
-        }
-
+        .cyber-swap-active { animation: cyber-swap 0.6s steps(3) forwards; }
         @keyframes cyber-swap {
             0% { opacity: 0.6; transform: scaleX(-1) translateX(0); }
-            10% { opacity: 0.8; transform: scaleX(-1) translateX(-10px) skewX(20deg); clip-path: inset(10% 0 40% 0); }
+            10% { opacity: 0.8; transform: scaleX(-1) translateX(-10px) skewX(20deg); clip-path: inset(10% 0 40% 0); filter: hue-rotate(90deg); }
             30% { opacity: 0.2; transform: scaleX(-1) translateX(10px) skewX(-10deg); clip-path: inset(40% 0 10% 0); }
             50% { opacity: 0.1; filter: invert(1); }
             60% { opacity: 0.4; transform: scaleX(-1) translateX(-5px) skewX(5deg); clip-path: inset(0 0 0 0); }
@@ -172,36 +212,120 @@
         }
 
         .anime-item:hover {
-            background: linear-gradient(90deg, rgba(204,255,0,0.1) 0%, transparent 100%);
-            border-left-color: #ccff00;
+            background: linear-gradient(90deg, var(--primary-dim) 0%, transparent 100%);
+            border-left-color: var(--primary-color);
             padding-left: 8px;
         }
-
-        #anime-modal.active {
-            display: flex;
-            animation: cyber-slash 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-        }
-        .rgb-split {
-            text-shadow: 2px 0 #ff00c1, -2px 0 #00fff9;
-            animation: glitch 3s infinite;
-        }
-        .auto-glitch {
-            animation: glitch-img 5s infinite;
-        }
+        #anime-modal.active { display: flex; animation: cyber-slash 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+        .rgb-split { text-shadow: 2px 0 var(--secondary-color), -2px 0 var(--primary-color); animation: glitch 3s infinite; }
+        .auto-glitch { animation: glitch-img 5s infinite; }
         
-        /* CP2077 气泡 */
         .cp2077-bubble {
             background-color: rgba(10, 10, 10, 0.95);
-            border: 1px solid #ccff00;
-            color: #ccff00;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
             font-family: 'JetBrains Mono', monospace;
             clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 20px 100%, 0 calc(100% - 20px));
-            box-shadow: 4px 4px 0 rgba(204, 255, 0, 0.2);
+            box-shadow: 4px 4px 0 var(--primary-dim);
         }
         .cp2077-bubble::before {
             content: 'ERIRI_SYS';
             position: absolute; top: 0; left: 0;
-            background: #ccff00; color: black; font-size: 8px; padding: 2px 6px; font-weight: bold;
+            background: var(--primary-color); color: black; font-size: 8px; padding: 2px 6px; font-weight: bold;
+        }
+
+        /* 主题切换器 - 顶部导航样式 */
+        .nav-theme-switcher {
+            display: flex; gap: 8px; padding: 4px 8px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px; align-items: center;
+            margin-left: 16px;
+            pointer-events: auto; /* 确保可点击 */
+        }
+        .theme-btn {
+            width: 14px; height: 14px; border-radius: 2px; cursor: pointer;
+            border: 1px solid transparent; transition: all 0.2s; position: relative;
+        }
+        .theme-btn:hover { transform: scale(1.2); box-shadow: 0 0 8px currentColor; }
+        .theme-btn.active { border-color: white; box-shadow: 0 0 10px currentColor; transform: scale(1.1); }
+
+        /* === NEW: SONIC DECK 音乐播放器样式 === */
+        #sonic-deck {
+            position: fixed; bottom: 20px; left: 20px; z-index: 50;
+            display: flex; align-items: center; gap: 10px;
+            background: rgba(10, 10, 10, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--primary-dim);
+            border-radius: 40px; /* 收起时是圆形，展开时变长 */
+            padding: 5px;
+            width: 50px; /* 初始宽度 */
+            height: 50px;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); /* 弹性动画 */
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* 鼠标悬停时展开 */
+        #sonic-deck:hover {
+            width: 340px; /* 展开宽度 */
+            border-color: var(--primary-color);
+            box-shadow: 0 0 20px var(--primary-dim);
+        }
+
+        /* 播放按钮容器 (左侧固定) */
+        .deck-toggle {
+            flex-shrink: 0;
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            background: transparent;
+            cursor: pointer;
+            transition: transform 0.2s;
+            position: relative;
+            z-index: 2;
+        }
+        .deck-toggle:hover { transform: scale(1.1); }
+        .deck-toggle svg { width: 20px; height: 20px; fill: white; transition: fill 0.3s; }
+        #sonic-deck:hover .deck-toggle svg { fill: var(--primary-color); }
+
+        /* 展开后的控制面板 */
+        .deck-controls {
+            display: flex; flex-direction: column; flex-grow: 1;
+            opacity: 0; /* 默认隐藏 */
+            transition: opacity 0.3s ease 0.1s; /* 延迟显示 */
+            width: 260px;
+            pointer-events: none; /* 收起时不可点 */
+        }
+        #sonic-deck:hover .deck-controls { opacity: 1; pointer-events: auto; }
+
+        /* 歌曲信息 */
+        .track-info {
+            font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--primary-color);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            margin-bottom: 4px; letter-spacing: 1px;
+        }
+
+        /* 控制按钮行 */
+        .control-row { display: flex; align-items: center; gap: 12px; }
+        .mini-btn { cursor: pointer; color: white; transition: color 0.2s; }
+        .mini-btn:hover { color: var(--primary-color); }
+
+        /* 音量条 */
+        .volume-slider {
+            -webkit-appearance: none; width: 80px; height: 4px; background: rgba(255,255,255,0.1);
+            border-radius: 2px; outline: none;
+        }
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 10px; height: 10px; border-radius: 50%;
+            background: var(--primary-color); cursor: pointer;
+            box-shadow: 0 0 10px var(--primary-color);
+        }
+
+        /* 可视化 Canvas */
+        #audio-visualizer {
+            position: absolute; bottom: 0; left: 50px; right: 0; height: 100%; width: 280px;
+            z-index: 0; opacity: 0.3; pointer-events: none;
+            mix-blend-mode: screen;
         }
     </style>
 </head>
@@ -209,36 +333,74 @@
 
     <div class="noise-overlay"></div>
     <div class="scanlines"></div>
+    <div id="cursor-glow"></div>
 
-    <audio id="background-music" loop preload="metadata">
+    <audio id="background-music" crossorigin="anonymous" loop>
         <source src="./audio/bgm.mp3" type="audio/mp3">
     </audio>
 
-    <!-- ================== 全屏番剧详情模态框 ================== -->
+    <!-- ================== SONIC DECK 音乐控制台 ================== -->
+    <div id="sonic-deck">
+        <!-- 可视化背景 -->
+        <canvas id="audio-visualizer"></canvas>
+
+        <!-- 左侧开关/播放键 -->
+        <div class="deck-toggle" onclick="toggleMusic()">
+            <div id="deck-wave" class="hidden absolute inset-0 rounded-full border border-primary opacity-60 animate-ping"></div>
+            <svg id="deck-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+
+        <!-- 展开面板 -->
+        <div class="deck-controls">
+            <!-- 歌曲名 -->
+            <div class="track-info" id="track-title">SYSTEM_SOUNDTRACK</div>
+            
+            <div class="control-row">
+                <!-- 上一首 -->
+                <div class="mini-btn" onclick="changeTrack(-1)">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                </div>
+                
+                <!-- 音量图标 -->
+                <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24" class="text-gray-500 ml-2"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+                
+                <!-- 音量滑块 -->
+                <input type="range" class="volume-slider" min="0" max="1" step="0.01" value="0.5" oninput="setVolume(this.value)">
+                
+                <!-- 下一首 -->
+                <div class="mini-btn ml-auto mr-2" onclick="changeTrack(1)">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ======================================================== -->
+
+    <!-- 模态框 -->
     <div id="anime-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/90 backdrop-blur-xl cursor-pointer" onclick="closeAnimeModal()">
         <div class="absolute inset-0 pointer-events-none opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CjxwYXRoIGQ9Ik0wIDBoNDB2NDBIMHoiIGZpbGw9Im5vbmUiLz4KPHBhdGggZD0iTTAgNDBoNDBNNDAgMHY0ME0wIDB2NDAiIHN0cm9rZT0iIzAwZmZmOSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIvPgo8L3N2Zz4=')]"></div>
         <div class="relative w-full max-w-6xl h-[85vh] flex flex-col md:flex-row items-stretch justify-center gap-0 md:gap-8 p-6 md:p-12 cursor-default" onclick="event.stopPropagation()">
-            <div class="relative w-full md:w-5/12 h-[40vh] md:h-full border-2 border-acid/50 p-1 bg-black/50 flex-shrink-0">
-                <div class="absolute -top-1 -left-1 w-4 h-4 border-t-4 border-l-4 border-acid"></div>
-                <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-4 border-r-4 border-acid"></div>
+            <div class="relative w-full md:w-5/12 h-[40vh] md:h-full border-2 border-primary/50 p-1 bg-black/50 flex-shrink-0">
+                <div class="absolute -top-1 -left-1 w-4 h-4 border-t-4 border-l-4 border-primary"></div>
+                <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-4 border-r-4 border-primary"></div>
                 <div class="w-full h-full overflow-hidden relative">
                     <img id="modal-cover" src="" alt="Cover" class="w-full h-full object-cover auto-glitch">
-                    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-acid/10 to-transparent h-[20%] w-full animate-scan pointer-events-none"></div>
+                    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-primary/10 to-transparent h-[20%] w-full animate-scan pointer-events-none"></div>
                 </div>
             </div>
             <div class="w-full md:w-7/12 flex flex-col justify-center space-y-6 text-left overflow-hidden">
                 <div class="flex items-center gap-4">
-                    <div class="inline-block px-3 py-1 border border-acid text-acid font-mono text-xs w-fit">// DATA_RETRIEVED</div>
+                    <div class="inline-block px-3 py-1 border border-primary text-primary font-mono text-xs w-fit">// DATA_RETRIEVED</div>
                     <div class="h-px flex-1 bg-white/10"></div>
                 </div>
                 <h2 id="modal-title" class="text-3xl md:text-5xl font-black text-white tracking-tighter leading-tight rgb-split uppercase line-clamp-2">LOADING...</h2>
                 <div class="space-y-2 font-mono text-sm text-gray-400 pl-4 border-l-2 border-white/20">
-                    <p>STATUS: <span class="text-acid blink">BROADCASTING</span></p>
+                    <p>STATUS: <span class="text-primary blink">BROADCASTING</span></p>
                     <p>SYNC_RATE: 98.4%</p>
                     <p>RATING: <span id="modal-rating" class="text-white font-bold text-lg">--</span> / 10</p>
                 </div>
                 <div class="relative group flex-1 flex flex-col min-h-0">
-                    <h3 class="text-acid font-mono text-xs mb-2 font-bold">:: SUMMARY_DATA</h3>
+                    <h3 class="text-primary font-mono text-xs mb-2 font-bold">:: SUMMARY_DATA</h3>
                     <div class="overflow-y-auto pr-4 text-sm text-gray-300 leading-relaxed font-sans border border-white/10 p-4 bg-white/5 rounded-sm backdrop-blur-sm h-full">
                         <p id="modal-summary" class="whitespace-pre-wrap">Initializing connection to database...</p>
                     </div>
@@ -262,49 +424,52 @@
         >
     </div>
 
-    <!-- 音乐按钮 -->
-    <button id="music-toggle-button" onclick="toggleMusic()" class="fixed bottom-6 left-6 z-50 flex items-center gap-0 group cursor-pointer hover:scale-105 transition-transform">
-        <div class="relative w-10 h-10 bg-black/80 border border-white/20 backdrop-blur-md rounded-full flex items-center justify-center group-hover:border-acid transition-colors duration-300 z-10">
-            <div id="music-wave" class="hidden absolute inset-0 rounded-full border border-acid opacity-60 animate-ping"></div>
-            <svg id="music-icon" class="w-4 h-4 text-white group-hover:text-acid transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-        </div>
-        <div class="h-10 bg-black/80 border-y border-r border-white/20 backdrop-blur-md rounded-r-full flex items-center -ml-4 pl-6 pr-4 opacity-0 max-w-0 group-hover:max-w-[200px] group-hover:opacity-100 transition-all duration-500 overflow-hidden">
-            <div class="flex flex-col leading-none">
-                <span class="text-[10px] text-gray-400 font-mono uppercase">NOW PLAYING</span>
-                <span class="text-xs text-acid font-bold font-mono whitespace-nowrap">SYSTEM_SOUNDTRACK</span>
-            </div>
-        </div>
-    </button>
+    <!-- 主题切换器 (新功能) -->
+    <!-- <div class="theme-switcher"> ... Removed bottom right ... </div> -->
+
+    <!-- 音乐按钮 (已被 Sonic Deck 替代) -->
 
     <div class="fixed top-0 left-0 w-full h-px bg-white/10 z-40"></div>
 
+    <!-- 导航栏：包含颜色选择器 -->
     <nav class="fixed top-0 w-full z-40 px-6 md:px-12 py-4 flex justify-between items-center mix-blend-difference text-white bg-gradient-to-b from-black/80 to-transparent">
-        <a href="index.html" class="flex flex-col group">
-            <span class="text-xl font-black tracking-tighter leading-none group-hover:text-acid transition-colors">WH1TE.LOG</span>
-            <span class="font-mono text-[9px] tracking-[0.2em] opacity-60 group-hover:opacity-100 transition-opacity">V2.0.5</span>
-        </a>
-        <div class="hidden md:flex gap-8 font-mono text-[11px] tracking-widest">
+        <div class="flex items-center gap-4">
+            <a href="index.html" class="flex flex-col group cursor-pointer">
+                <span class="text-xl font-black tracking-tighter leading-none group-hover:text-primary transition-colors">WH1TE.LOG</span>
+                <span class="font-mono text-[9px] tracking-[0.2em] opacity-60 group-hover:opacity-100 transition-opacity">V2.0.5</span>
+            </a>
+            
+            <!-- 颜色选择器 -->
+            <div class="nav-theme-switcher ml-4 pointer-events-auto cursor-auto">
+                <div class="theme-btn active" style="background: #ccff00;" onclick="setTheme('default')" title="Acid Lime"></div>
+                <div class="theme-btn" style="background: #ff00ff;" onclick="setTheme('neon-pink')" title="Neon Pink"></div>
+                <div class="theme-btn" style="background: #00f3ff;" onclick="setTheme('cyber-blue')" title="Cyber Blue"></div>
+                <div class="theme-btn" style="background: #ff5f00;" onclick="setTheme('solar-orange')" title="Solar Orange"></div>
+            </div>
+        </div>
+        
+        <div class="hidden md:flex gap-8 font-mono text-[11px] tracking-widest cursor-pointer">
             <a href="index.html" onclick="saveMusicState(event)" class="relative group py-2">
-                <span class="text-acid transition-colors">01_HOME</span>
-                <span class="absolute bottom-0 left-0 w-full h-[2px] bg-acid"></span>
+                <span class="text-primary transition-colors">01_HOME</span>
+                <span class="absolute bottom-0 left-0 w-full h-[2px] bg-primary"></span>
             </a>
             <a href="article-1.html" onclick="saveMusicState(event)" class="relative group py-2">
-                <span class="group-hover:text-acid transition-colors">02_LATEST</span>
-                <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-acid group-hover:w-full transition-all duration-300"></span>
+                <span class="group-hover:text-primary transition-colors">02_LATEST</span>
+                <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-primary group-hover:w-full transition-all duration-300"></span>
             </a>
             <a href="about.html" onclick="saveMusicState(event)" class="relative group py-2">
-                <span class="group-hover:text-acid transition-colors">03_ABOUT</span>
-                <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-acid group-hover:w-full transition-all duration-300"></span>
+                <span class="group-hover:text-primary transition-colors">03_ABOUT</span>
+                <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-primary group-hover:w-full transition-all duration-300"></span>
             </a>
         </div>
-        <div class="md:hidden text-acid font-mono text-xs border border-acid/50 px-2 py-1 rounded cursor-pointer hover:bg-acid hover:text-black transition-colors">MENU::OPEN</div>
+        <div class="md:hidden text-primary font-mono text-xs border border-primary/50 px-2 py-1 rounded cursor-pointer hover:bg-primary hover:text-black transition-colors">MENU::OPEN</div>
     </nav>
 
-    <header class="relative pt-40 pb-12 px-6 md:px-12 max-w-screen-xl mx-auto min-h-[calc(100vh-100px)] flex flex-col justify-center items-start text-left z-20 overflow-hidden">
+    <header class="relative pt-40 pb-12 px-6 md:px-12 max-w-screen-xl mx-auto min-h-[calc(100vh-100px)] flex flex-col justify-center items-start text-left z-20 overflow-hidden cursor-default">
         <div class="absolute top-1/2 right-0 translate-x-1/3 -translate-y-1/2 w-[60vw] aspect-square border border-dashed border-white/10 rounded-full animate-spin-slow pointer-events-none z-0"></div>
         <div class="space-y-8 animate-fade-in-up w-full relative z-20 transition-all duration-500">
             <div class="flex justify-start gap-3 mb-4 relative z-10">
-                <span class="px-2 py-1 bg-acid text-black font-mono text-[10px] font-bold uppercase tracking-wider rounded-sm">System Ready</span>
+                <span class="px-2 py-1 bg-primary text-black font-mono text-[10px] font-bold uppercase tracking-wider rounded-sm">System Ready</span>
                 <span class="px-2 py-1 border border-white/20 backdrop-blur-sm text-white/70 font-mono text-[10px] font-bold uppercase tracking-wider rounded-sm">Loc: Internet</span>
             </div>
             <div class="relative inline-block z-10">
@@ -312,22 +477,22 @@
                 <h1 class="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-none text-stroke-layer absolute top-0 left-0 w-full h-full flex items-center justify-center translate-x-[3px] translate-y-[3px]">WH1TE</h1>
             </div>
             <div class="flex items-center justify-start gap-4 mt-2 relative z-10">
-                <div class="h-px w-16 bg-acid/50"></div>
-                <h2 class="text-xl md:text-2xl font-bold text-white tracking-tight">互联网<span class="text-acid">小屋</span></h2>
+                <div class="h-px w-16 bg-primary/50"></div>
+                <h2 class="text-xl md:text-2xl font-bold text-white tracking-tight">互联网<span class="text-primary">小屋</span></h2>
             </div>
-            <div class="mt-12 relative w-full max-w-3xl group z-10">
+            <div class="mt-12 relative w-full max-w-3xl group z-10 cursor-text">
                 <div class="relative flex items-center">
-                    <div class="absolute left-0 pl-4 text-acid font-mono text-sm flex items-center h-full pb-1 tracking-widest">_SEARCH_QUERY ::</div>
+                    <div class="absolute left-0 pl-4 text-primary font-mono text-sm flex items-center h-full pb-1 tracking-widest">_SEARCH_QUERY ::</div>
                     <input 
                         type="text" 
                         id="search-input" 
                         placeholder="INPUT_KEYWORD..." 
                         oninput="searchArticles()"
-                        class="w-full pl-48 pr-12 py-5 bg-black/40 backdrop-blur-xl border-b-2 border-white/20 text-white font-mono text-xl md:text-2xl placeholder-white/10 focus:border-acid focus:bg-black/60 focus:outline-none transition-all caret-acid uppercase"
+                        class="w-full pl-48 pr-12 py-5 bg-black/40 backdrop-blur-xl border-b-2 border-white/20 text-white font-mono text-xl md:text-2xl placeholder-white/10 focus:border-primary focus:bg-black/60 focus:outline-none transition-all caret-primary uppercase"
                     >
-                    <div class="absolute right-4 w-2 h-6 bg-acid animate-pulse-fast"></div>
+                    <div class="absolute right-4 w-2 h-6 bg-primary animate-pulse-fast"></div>
                 </div>
-                <div id="search-status" class="absolute top-full left-0 mt-2 text-[10px] font-mono text-acid hidden">FILTERING_RESULTS...</div>
+                <div id="search-status" class="absolute top-full left-0 mt-2 text-[10px] font-mono text-primary hidden">FILTERING_RESULTS...</div>
             </div>
         </div>
         <div class="absolute bottom-8 left-6 md:left-12 text-gray-600 font-mono text-[10px] animate-bounce">
@@ -340,61 +505,59 @@
             <aside class="lg:col-span-4 space-y-6 lg:sticky lg:top-24 h-fit">
                 
                 <!-- AI 助手: 优化融合感 -->
-                <div class="cyber-card rounded-xl p-0 overflow-visible animate-float-heavy animate-breathe-glow relative group transition-shadow duration-500 border-acid/30 cursor-pointer" onclick="triggerAiSpeech()">
-                    <div id="ai-speech-bubble" class="hidden absolute -top-24 left-0 w-64 z-50 animate-pop-in pointer-events-none">
+                <div class="cyber-card rounded-xl p-0 overflow-visible relative group transition-shadow duration-500 border-primary/30 cursor-pointer" onclick="triggerAiSpeech()">
+                    
+                    <div id="ai-speech-bubble" class="hidden absolute -top-16 left-0 z-50 animate-pop-in pointer-events-none" style="width: 250px; transform: translateY(-100%);">
                         <div class="cp2077-bubble relative p-4">
                              <p id="ai-speech-text" class="text-xs font-bold leading-relaxed"></p>
-                             <div class="absolute -bottom-4 left-8 w-0.5 h-4 bg-acid"></div>
+                             <div class="absolute -bottom-4 left-8 w-0.5 h-4 bg-primary"></div>
                         </div>
                     </div>
+
                     <div class="w-full relative aspect-[4/5] overflow-hidden rounded-xl bg-black/20">
-                        <!-- 背景融合优化：混合模式 + 内阴影遮罩 -->
                         <img src="./images/ai-assistant.jpg" alt="AI Assistant" 
                              class="w-full h-full object-cover image-filter-acid-subtle group-hover:scale-105 transition-transform duration-700" 
                              decoding="async">
-                        
-                        <!-- 顶部内阴影：让图片像是嵌在里面 -->
                         <div class="absolute inset-0 shadow-[inset_0_0_30px_rgba(0,0,0,0.8)] pointer-events-none"></div>
-                        <!-- 底部渐变遮罩 -->
                         <div class="absolute bottom-0 left-0 w-full h-2/3 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
                     </div>
                     <div class="absolute bottom-0 left-0 w-full p-5 z-10 pointer-events-none">
-                        <h3 class="font-mono text-acid text-sm font-bold mb-1 tracking-wider border-b border-white/10 pb-2">:: AI_ASSISTANT</h3>
-                        <p class="text-gray-300 text-xs font-mono leading-relaxed">STATUS: <span class="text-acid blink font-bold">ONLINE</span><br><span class="opacity-70">Click to interact...</span></p>
+                        <h3 class="font-mono text-primary text-sm font-bold mb-1 tracking-wider border-b border-white/10 pb-2">:: AI_ASSISTANT</h3>
+                        <p class="text-gray-300 text-xs font-mono leading-relaxed">STATUS: <span class="text-primary blink font-bold">ONLINE</span><br><span class="opacity-70">Click to interact...</span></p>
                     </div>
                 </div>
 
                 <!-- 每日新番放送窗口 -->
                 <div class="cyber-card rounded-xl p-6 relative overflow-hidden group">
-                    <div class="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-acid"></div>
-                    <div class="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-acid"></div>
-                    <h3 class="font-mono text-acid text-xs font-bold mb-4 border-b border-white/10 pb-2 flex items-center justify-between">
-                        <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-acid rounded-sm animate-pulse"></span>ANIME_SCHEDULE</span>
+                    <div class="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-primary"></div>
+                    <div class="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-primary"></div>
+                    <h3 class="font-mono text-primary text-xs font-bold mb-4 border-b border-white/10 pb-2 flex items-center justify-between">
+                        <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-primary rounded-sm animate-pulse"></span>ANIME_SCHEDULE</span>
                         <span id="anime-date" class="text-[9px] text-gray-500">LOADING...</span>
                     </h3>
                     <div id="anime-list" class="anime-scroll space-y-2 font-mono text-[10px] text-gray-300 max-h-64 overflow-y-auto pr-2">
-                        <div class="flex items-center justify-center py-4"><span class="text-acid animate-pulse">CONNECTING_BGM_NET...</span></div>
+                        <div class="flex items-center justify-center py-4"><span class="text-primary animate-pulse">CONNECTING_BGM_NET...</span></div>
                     </div>
                 </div>
 
                 <div class="cyber-card rounded-xl p-6 relative overflow-hidden group">
-                    <h3 class="font-mono text-acid text-xs font-bold mb-4 border-b border-white/10 pb-2 flex items-center gap-2"><span class="w-1.5 h-1.5 bg-acid rounded-sm"></span>NOTICE_BOARD</h3>
+                    <h3 class="font-mono text-primary text-xs font-bold mb-4 border-b border-white/10 pb-2 flex items-center gap-2"><span class="w-1.5 h-1.5 bg-primary rounded-sm"></span>NOTICE_BOARD</h3>
                     <div class="space-y-3 font-mono text-[11px] md:text-xs leading-relaxed text-gray-300 relative z-10">
-                        <div class="flex gap-2"><span class="text-acid min-w-[14px]">>></span><p>成功配置 Python 环境，下一步专注博客维护脚本开发。</p></div>
+                        <div class="flex gap-2"><span class="text-primary min-w-[14px]">>></span><p>成功配置 Python 环境，下一步专注博客维护脚本开发。</p></div>
                     </div>
                 </div>
                 <div class="grid grid-cols-3 gap-3">
-                    <a href="https://github.com/whte97284-hue/wh1te-blog-project/tree/main" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-white hover:text-black transition-all group relative overflow-hidden"><span class="font-mono text-[9px] font-bold uppercase relative z-10">Git</span></a>
-                    <a href="https://space.bilibili.com/551898501" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-[#fb7299] hover:text-white transition-all group relative overflow-hidden"><span class="font-mono text-[9px] font-bold uppercase relative z-10">Bili</span></a>
-                    <a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-black hover:text-white transition-all group relative overflow-hidden"><span class="font-mono text-[9px] font-bold uppercase relative z-10">TikTok</span></a>
+                    <a href="https://github.com/whte97284-hue/wh1te-blog-project/tree/main" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-white hover:text-black transition-all group relative overflow-hidden cursor-pointer"><span class="font-mono text-[9px] font-bold uppercase relative z-10">Git</span></a>
+                    <a href="https://space.bilibili.com/551898501" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-[#fb7299] hover:text-white transition-all group relative overflow-hidden cursor-pointer"><span class="font-mono text-[9px] font-bold uppercase relative z-10">Bili</span></a>
+                    <a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-black hover:text-white transition-all group relative overflow-hidden cursor-pointer"><span class="font-mono text-[9px] font-bold uppercase relative z-10">TikTok</span></a>
                 </div>
                 <div class="cyber-card rounded-xl p-6">
                     <h3 class="font-mono text-gray-400 text-[10px] mb-4 uppercase tracking-widest flex justify-between">:: TAGS<span>[04]</span></h3>
                     <div class="flex flex-wrap gap-2" id="tag-cloud">
-                         <button onclick="filterByTag('Novel')" class="px-2 py-1 bg-white/5 border border-white/10 hover:bg-acid hover:border-acid hover:text-black text-[10px] font-mono uppercase transition-all rounded-sm">#Novel</button>
-                         <button onclick="filterByTag('Code')" class="px-2 py-1 bg-white/5 border border-white/10 hover:bg-acid hover:border-acid hover:text-black text-[10px] font-mono uppercase transition-all rounded-sm">#Code</button>
-                         <button onclick="filterByTag('Python')" class="px-2 py-1 bg-white/5 border border-white/10 hover:bg-acid hover:border-acid hover:text-black text-[10px] font-mono uppercase transition-all rounded-sm">#Python</button>
-                         <button onclick="filterByTag('Web')" class="px-2 py-1 bg-white/5 border border-white/10 hover:bg-acid hover:border-acid hover:text-black text-[10px] font-mono uppercase transition-all rounded-sm">#Web</button>
+                         <button onclick="filterByTag('Novel')" class="px-2 py-1 bg-white/5 border border-white/10 hover:bg-primary hover:border-primary hover:text-black text-[10px] font-mono uppercase transition-all rounded-sm cursor-pointer">#Novel</button>
+                         <button onclick="filterByTag('Code')" class="px-2 py-1 bg-white/5 border border-white/10 hover:bg-primary hover:border-primary hover:text-black text-[10px] font-mono uppercase transition-all rounded-sm cursor-pointer">#Code</button>
+                         <button onclick="filterByTag('Python')" class="px-2 py-1 bg-white/5 border border-white/10 hover:bg-primary hover:border-primary hover:text-black text-[10px] font-mono uppercase transition-all rounded-sm cursor-pointer">#Python</button>
+                         <button onclick="filterByTag('Web')" class="px-2 py-1 bg-white/5 border border-white/10 hover:bg-primary hover:border-primary hover:text-black text-[10px] font-mono uppercase transition-all rounded-sm cursor-pointer">#Web</button>
                     </div>
                 </div>
             </aside>
@@ -402,44 +565,44 @@
             <div class="lg:col-span-8 space-y-8">
                 <div class="flex items-center justify-between border-b border-white/10 pb-4">
                     <h2 class="text-2xl md:text-3xl font-bold tracking-tighter">LATEST_FEEDS</h2>
-                    <div class="flex items-center gap-2"><span class="w-2 h-2 bg-acid rounded-full animate-pulse"></span><span class="font-mono text-xs text-acid">[ ONLINE ]</span></div>
+                    <div class="flex items-center gap-2"><span class="w-2 h-2 bg-primary rounded-full animate-pulse"></span><span class="font-mono text-xs text-primary">[ ONLINE ]</span></div>
                 </div>
                 <div id="article-list-container" class="space-y-6">
                     <!-- 文章列表 -->
-                    <article class="article-card cyber-card rounded-xl p-6 md:p-8 relative group hover:bg-black/80 overflow-hidden border-l-4 border-l-transparent hover:border-l-acid transition-all" data-tags="Novel ACG WhiteAlbum2">
-                        <div class="absolute top-0 right-0 w-48 h-48 bg-acid/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                    <article class="article-card cyber-card rounded-xl p-6 md:p-8 relative group hover:bg-black/80 overflow-hidden border-l-4 border-l-transparent hover:border-l-primary transition-all cursor-pointer" data-tags="Novel ACG WhiteAlbum2">
+                        <div class="absolute top-0 right-0 w-48 h-48 bg-primary/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                         <div class="flex flex-col gap-4 relative z-10">
                             <div class="flex justify-between items-start">
-                                <div class="flex gap-2"><span class="text-[10px] font-mono uppercase text-black bg-acid px-2 py-1 font-bold">NOVEL</span><span class="text-[10px] font-mono uppercase text-white/60 border border-white/20 px-2 py-1">WA2</span></div>
+                                <div class="flex gap-2"><span class="text-[10px] font-mono uppercase text-black bg-primary px-2 py-1 font-bold">NOVEL</span><span class="text-[10px] font-mono uppercase text-white/60 border border-white/20 px-2 py-1">WA2</span></div>
                                 <span class="font-mono text-xs text-gray-500 border border-white/10 px-2 py-1 rounded-sm">2025.10.05</span>
                             </div>
-                            <h3 class="text-2xl md:text-3xl font-bold leading-tight max-w-xl"><a href="article-3.html" onclick="saveMusicState(event)" class="hover:text-acid transition-colors">雪融化、然后直到再次飘落时</a></h3>
+                            <h3 class="text-2xl md:text-3xl font-bold leading-tight max-w-xl"><a href="article-3.html" onclick="saveMusicState(event)" class="hover:text-primary transition-colors">雪融化、然后直到再次飘落时</a></h3>
                             <p class="text-gray-400 font-light leading-relaxed text-sm md:text-base border-l border-white/10 pl-4 article-summary">冬马和纱，很讨厌天空。春天，当她翘掉自己今后每天都要去的峰城大学附属学园的入学仪式，在河边草丛上躺下来的时候，头顶那片苍蓝澄净的天空...</p>
-                            <div class="flex items-center justify-end mt-2"><a href="article-3.html" onclick="saveMusicState(event)" class="group-hover:translate-x-1 transition-transform flex items-center text-acid font-mono text-xs md:text-sm font-bold bg-white/5 px-4 py-2 rounded-full hover:bg-acid hover:text-black">READ_FULL <span class="ml-2">→</span></a></div>
+                            <div class="flex items-center justify-end mt-2"><a href="article-3.html" onclick="saveMusicState(event)" class="group-hover:translate-x-1 transition-transform flex items-center text-primary font-mono text-xs md:text-sm font-bold bg-white/5 px-4 py-2 rounded-full hover:bg-primary hover:text-black">READ_FULL <span class="ml-2">→</span></a></div>
                         </div>
                     </article>
-                    <article class="article-card cyber-card rounded-xl p-6 md:p-8 relative group hover:bg-black/80 overflow-hidden border-l-4 border-l-transparent hover:border-l-acid transition-all" data-tags="Python Automation Web">
-                        <div class="absolute top-0 right-0 w-48 h-48 bg-acid/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                    <article class="article-card cyber-card rounded-xl p-6 md:p-8 relative group hover:bg-black/80 overflow-hidden border-l-4 border-l-transparent hover:border-l-primary transition-all cursor-pointer" data-tags="Python Automation Web">
+                        <div class="absolute top-0 right-0 w-48 h-48 bg-primary/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                         <div class="flex flex-col gap-4 relative z-10">
                              <div class="flex justify-between items-start">
-                                <div class="flex gap-2"><span class="text-[10px] font-mono uppercase text-black bg-acid px-2 py-1 font-bold">Python</span><span class="text-[10px] font-mono uppercase text-white/60 border border-white/20 px-2 py-1">Automation</span></div>
+                                <div class="flex gap-2"><span class="text-[10px] font-mono uppercase text-black bg-primary px-2 py-1 font-bold">Python</span><span class="text-[10px] font-mono uppercase text-white/60 border border-white/20 px-2 py-1">Automation</span></div>
                                 <span class="font-mono text-xs text-gray-500 border border-white/10 px-2 py-1 rounded-sm">2025.10.03</span>
                             </div>
-                            <h3 class="text-2xl md:text-3xl font-bold leading-tight max-w-xl"><a href="article-2.html" onclick="saveMusicState(event)" class="hover:text-acid transition-colors">Python 主页自动生成脚本测试</a></h3>
+                            <h3 class="text-2xl md:text-3xl font-bold leading-tight max-w-xl"><a href="article-2.html" onclick="saveMusicState(event)" class="hover:text-primary transition-colors">Python 主页自动生成脚本测试</a></h3>
                              <p class="text-gray-400 font-light leading-relaxed text-sm md:text-base border-l border-white/10 pl-4 article-summary">辅助静态页面更新的自动化生成脚本第一次测试，探索如何高效管理我的数字花园。</p>
-                            <div class="flex items-center justify-end mt-2"><a href="article-2.html" onclick="saveMusicState(event)" class="group-hover:translate-x-1 transition-transform flex items-center text-acid font-mono text-xs md:text-sm font-bold bg-white/5 px-4 py-2 rounded-full hover:bg-acid hover:text-black">READ_FULL <span class="ml-2">→</span></a></div>
+                            <div class="flex items-center justify-end mt-2"><a href="article-2.html" onclick="saveMusicState(event)" class="group-hover:translate-x-1 transition-transform flex items-center text-primary font-mono text-xs md:text-sm font-bold bg-white/5 px-4 py-2 rounded-full hover:bg-primary hover:text-black">READ_FULL <span class="ml-2">→</span></a></div>
                         </div>
                     </article>
-                    <article class="article-card cyber-card rounded-xl p-6 md:p-8 relative group hover:bg-black/80 overflow-hidden border-l-4 border-l-transparent hover:border-l-acid transition-all" data-tags="Code Reflection Appium">
-                        <div class="absolute top-0 right-0 w-48 h-48 bg-acid/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                    <article class="article-card cyber-card rounded-xl p-6 md:p-8 relative group hover:bg-black/80 overflow-hidden border-l-4 border-l-transparent hover:border-l-primary transition-all cursor-pointer" data-tags="Code Reflection Appium">
+                        <div class="absolute top-0 right-0 w-48 h-48 bg-primary/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                         <div class="flex flex-col gap-4 relative z-10">
                             <div class="flex justify-between items-start">
-                                <div class="flex gap-2"><span class="text-[10px] font-mono uppercase text-black bg-acid px-2 py-1 font-bold">Code</span><span class="text-[10px] font-mono uppercase text-white/60 border border-white/20 px-2 py-1">Reflection</span></div>
+                                <div class="flex gap-2"><span class="text-[10px] font-mono uppercase text-black bg-primary px-2 py-1 font-bold">Code</span><span class="text-[10px] font-mono uppercase text-white/60 border border-white/20 px-2 py-1">Reflection</span></div>
                                 <span class="font-mono text-xs text-gray-500 border border-white/10 px-2 py-1 rounded-sm">2025.10.02</span>
                             </div>
-                            <h3 class="text-2xl md:text-3xl font-bold leading-tight max-w-xl"><a href="article-1.html" onclick="saveMusicState(event)" class="hover:text-acid transition-colors">从 Appium 到网站：我与代码的旅程初探</a></h3>
+                            <h3 class="text-2xl md:text-3xl font-bold leading-tight max-w-xl"><a href="article-1.html" onclick="saveMusicState(event)" class="hover:text-primary transition-colors">从 Appium 到网站：我与代码的旅程初探</a></h3>
                             <p class="text-gray-400 font-light leading-relaxed text-sm md:text-base border-l border-white/10 pl-4 article-summary">起初我以为编程就是找个工具抢票，最终却被安全机制所阻止。这次经历让我明白：真正的编程价值在于构建思维框架。</p>
-                            <div class="flex items-center justify-end mt-2"><a href="article-1.html" onclick="saveMusicState(event)" class="group-hover:translate-x-1 transition-transform flex items-center text-acid font-mono text-xs md:text-sm font-bold bg-white/5 px-4 py-2 rounded-full hover:bg-acid hover:text-black">READ_FULL <span class="ml-2">→</span></a></div>
+                            <div class="flex items-center justify-end mt-2"><a href="article-1.html" onclick="saveMusicState(event)" class="group-hover:translate-x-1 transition-transform flex items-center text-primary font-mono text-xs md:text-sm font-bold bg-white/5 px-4 py-2 rounded-full hover:bg-primary hover:text-black">READ_FULL <span class="ml-2">→</span></a></div>
                         </div>
                     </article>
                 </div>
@@ -456,18 +619,101 @@
 
     <script>
         let ticking = false;
+        // 鼠标拖尾数组
+        const trails = [];
+        const TRAIL_COUNT = 6;
+        let mouseX = 0, mouseY = 0;
+
+        // 初始化拖尾元素
+        const trailContainer = document.getElementById('cursor-trails');
+        if (trailContainer) { // 检查元素是否存在
+             for (let i = 0; i < TRAIL_COUNT; i++) {
+                const dot = document.createElement('div');
+                // 给不同的点分配不同的类，产生不同的颜色
+                // Trail 1 & 2: 主要颜色 (Acid/Theme)
+                // Trail 3: 辅助颜色 (Cyan)
+                // Trail 4: 辅助颜色 (Magenta)
+                // Trail 5: 中心白点
+                let className = 'trail-dot';
+                if (i === 0 || i === 1) className += ' trail-1';
+                else if (i === 2) className += ' trail-2';
+                else if (i === 3) className += ' trail-3';
+                else className += ' trail-4';
+                
+                dot.className = className;
+                trailContainer.appendChild(dot);
+                trails.push({ el: dot, x: window.innerWidth / 2, y: window.innerHeight / 2, lag: (i + 1) * 0.08 });
+            }
+        }
+       
+
         document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            // 保持原有的 CSS 变量更新，用于背景
             if (!ticking) {
                 window.requestAnimationFrame(() => {
-                    const x = (e.clientX / window.innerWidth) * 100;
-                    const y = (e.clientY / window.innerHeight) * 100;
-                    document.documentElement.style.setProperty('--mouse-x', `${x}%`);
-                    document.documentElement.style.setProperty('--mouse-y', `${y}%`);
+                    const xPct = (e.clientX / window.innerWidth) * 100;
+                    const yPct = (e.clientY / window.innerHeight) * 100;
+                    document.documentElement.style.setProperty('--mouse-x', `${xPct}%`);
+                    document.documentElement.style.setProperty('--mouse-y', `${yPct}%`);
+                    
+                    // 更新光晕位置，使其动态变化
+                    const speed = Math.abs(e.movementX) + Math.abs(e.movementY);
+                    const size = 600 + Math.min(speed * 5, 400); // 移动越快，光晕越大
+                    document.documentElement.style.setProperty('--cursor-size', `${size}px`);
+
                     ticking = false;
                 });
                 ticking = true;
             }
         });
+
+        document.addEventListener('mousedown', (e) => {
+            // 创建点击波纹
+            const wave = document.createElement('div');
+            wave.className = 'click-wave';
+            wave.style.left = `${e.clientX}px`;
+            wave.style.top = `${e.clientY}px`;
+            wave.style.width = '50px';
+            wave.style.height = '50px';
+            document.body.appendChild(wave);
+            
+            setTimeout(() => {
+                wave.remove();
+            }, 600);
+        });
+
+        // 动画循环：更新拖尾位置 (Sandevistan Lerp) - 移除循环调用，因为已经移除了拖尾元素
+        /* function animateTrails() {
+            trails.forEach(trail => {
+                // 简单的线性插值 (Lerp)
+                trail.x += (mouseX - trail.x) * trail.lag;
+                trail.y += (mouseY - trail.y) * trail.lag;
+                
+                // 应用位置
+                trail.el.style.transform = `translate(${trail.x}px, ${trail.y}px) translate(-50%, -50%)`;
+            });
+            requestAnimationFrame(animateTrails);
+        }
+        animateTrails(); */
+
+
+        // --- Theme Switcher Logic ---
+        function setTheme(themeName) {
+            document.documentElement.setAttribute('data-theme', themeName);
+            localStorage.setItem('theme', themeName);
+            
+            document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+            const targetBtn = document.querySelector(`.theme-btn[title="${themeName === 'default' ? 'Acid Lime' : themeName.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}"]`);
+            if(targetBtn) targetBtn.classList.add('active');
+        }
+        
+        const savedTheme = localStorage.getItem('theme');
+        if(savedTheme) {
+            setTheme(savedTheme);
+        }
 
         // --- Eriri AI Interaction ---
         const eririLines = [
@@ -557,14 +803,13 @@
                     const score = item.rating && item.rating.score ? item.rating.score : 'N/A';
                     const image = item.images ? (item.images.large || item.images.common) : '';
                     const id = item.id;
-
                     return `
-                    <div class="anime-item flex justify-between items-center group/item cursor-pointer transition-all duration-300 border-l-2 border-transparent py-1 hover:border-acid hover:pl-2 hover:bg-white/5"
+                    <div class="anime-item flex justify-between items-center group/item cursor-pointer transition-all duration-300 border-l-2 border-transparent py-1 hover:border-primary hover:pl-2 hover:bg-white/5"
                          onclick='openAnimeModal("${title.replace(/"/g, '&quot;')}", "${score}", "${image}", "${id}")'>
-                         <span class="text-gray-300 flex-1 truncate mx-2 text-[10px] group-hover/item:text-acid transition-colors">
+                         <span class="text-gray-300 flex-1 truncate mx-2 text-[10px] group-hover/item:text-primary transition-colors">
                             ${title}
                          </span>
-                         <span class="text-gray-600 border border-white/10 px-1 rounded text-[9px] font-mono group-hover/item:border-acid group-hover/item:text-acid">
+                         <span class="text-gray-600 border border-white/10 px-1 rounded text-[9px] font-mono group-hover/item:border-primary group-hover/item:text-primary">
                             ${score ? '★'+score : 'N/A'}
                          </span>
                     </div>
@@ -576,7 +821,7 @@
             const dateDisplay = document.getElementById('anime-date');
             const today = new Date();
             const weekDays = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-            dateDisplay.innerHTML = `${today.getMonth()+1}/${today.getDate()} <span class="text-acid">[${weekDays[today.getDay()]}]</span>`;
+            dateDisplay.innerHTML = `${today.getMonth()+1}/${today.getDate()} <span class="text-primary">[${weekDays[today.getDay()]}]</span>`;
 
             let bangumiWeekday = today.getDay();
             if (bangumiWeekday === 0) bangumiWeekday = 7;
@@ -606,37 +851,169 @@
             }
         }
 
+        // --- Audio Context & Visualizer Setup ---
+        let audioContext;
+        let analyser;
+        let dataArray;
+        let source;
+        let animationId;
+        const audioEl = document.getElementById('background-music');
+        const canvas = document.getElementById('audio-visualizer');
+        let canvasCtx;
+
+        // Resize canvas
+        function resizeCanvas() {
+            if(canvas) {
+                 canvas.width = canvas.offsetWidth;
+                 canvas.height = canvas.offsetHeight;
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function initAudioContext() {
+            if (audioContext) return;
+            
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioContext = new AudioContext();
+            
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 64; // Low res for retro feel
+            
+            // Fix: Check if source already connected to avoid errors
+            if(!source) {
+                 source = audioContext.createMediaElementSource(audioEl);
+                 source.connect(analyser);
+                 analyser.connect(audioContext.destination);
+            }
+            
+            dataArray = new Uint8Array(analyser.frequencyBinCount);
+            
+            if(canvas) {
+                 canvasCtx = canvas.getContext('2d');
+                 resizeCanvas();
+                 drawVisualizer();
+            }
+        }
+
+        function drawVisualizer() {
+            animationId = requestAnimationFrame(drawVisualizer);
+            
+            if(!canvasCtx) return;
+
+            analyser.getByteFrequencyData(dataArray);
+            
+            canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const barWidth = (canvas.width / dataArray.length) * 2.5;
+            let barHeight;
+            let x = 0;
+            
+            // Get current theme color from CSS variable
+            const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+
+            for(let i = 0; i < dataArray.length; i++) {
+                barHeight = dataArray[i] / 2;
+                
+                canvasCtx.fillStyle = primaryColor;
+                canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                
+                x += barWidth + 1;
+            }
+        }
+
+        // Playlist
+        const playlist = [
+            { title: "SYSTEM_SOUNDTRACK", src: "./audio/bgm.mp3" },
+            // Add more songs here if available
+        ];
+        let currentTrackIndex = 0;
+
+        // Player Controls
+        function toggleMusic() {
+            if (!audioContext) initAudioContext();
+            
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            // Fix: Check if there is a pending play request to avoid AbortError
+            if (audioEl.paused) {
+                // Only play if not already playing
+                var playPromise = audioEl.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        updatePlayerUI(true);
+                    }).catch(error => {
+                        console.log("Play interrupted or failed:", error);
+                        updatePlayerUI(false); // Reset UI on failure
+                    });
+                }
+            } else {
+                // If playing, pause it
+                 audioEl.pause();
+                 updatePlayerUI(false);
+            }
+        }
+
+        function changeTrack(direction) {
+            currentTrackIndex += direction;
+            if (currentTrackIndex >= playlist.length) currentTrackIndex = 0;
+            if (currentTrackIndex < 0) currentTrackIndex = playlist.length - 1;
+            
+            audioEl.src = playlist[currentTrackIndex].src;
+            const titleEl = document.getElementById('track-title');
+            if(titleEl) titleEl.innerText = playlist[currentTrackIndex].title;
+            
+            // Auto play if changing track, handling promise safely
+            var playPromise = audioEl.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                     updatePlayerUI(true);
+                }).catch(e => console.log("Auto-play on track change failed:", e));
+            }
+        }
+
+        function setVolume(val) {
+            audioEl.volume = val;
+        }
+
+        function updatePlayerUI(isPlaying) {
+            const deckIcon = document.getElementById('deck-icon');
+            const deckWave = document.getElementById('deck-wave');
+            
+            if(deckIcon && deckWave) {
+                if (isPlaying) {
+                    deckIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'; // Pause icon
+                    deckWave.classList.remove('hidden');
+                } else {
+                    deckIcon.innerHTML = '<path d="M8 5v14l11-7z"/>'; // Play icon
+                    deckWave.classList.add('hidden');
+                }
+            }
+            saveMusicState();
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             loadAnimeData();
             startHeroGlitch();
             
-            const music = document.getElementById('background-music');
             const storedState = localStorage.getItem('music_playing');
             const storedTime = localStorage.getItem('music_currentTime');
-            const toggleBtn = document.getElementById('music-toggle-button');
             
-            music.muted = true;
-            if (storedTime) music.currentTime = parseFloat(storedTime);
-
-            if (storedState === 'true') {
-                const playPromise = music.play();
-                if (playPromise !== undefined) playPromise.catch(error => console.warn("Autoplay blocked:", error));
-                setMusicIcon(true);
-            } else {
-                music.pause();
-                setMusicIcon(false);
-            }
-            
-            const activateAudio = (e) => {
-                if (toggleBtn && toggleBtn.contains(e.target)) return;
-                if (localStorage.getItem('music_playing') === 'true') {
-                    music.muted = false;
-                    const playPromise = music.play();
-                    if (playPromise !== undefined) playPromise.catch(e => {});
-                }
-                document.removeEventListener('click', activateAudio, true);
+            // Initialize Audio Context on first click (browser policy)
+            const initClick = () => {
+                initAudioContext();
+                document.removeEventListener('click', initClick);
             };
-            document.addEventListener('click', activateAudio, true);
+            document.addEventListener('click', initClick);
+
+            if (storedTime) audioEl.currentTime = parseFloat(storedTime);
+            
+            // Restore UI state, but don't auto-play audio context without user gesture
+            // Just update UI to reflect potential intent, actual play needs click
+            if (storedState === 'true') {
+                 updatePlayerUI(false); // Show as paused initially to respect browser policy
+            }
 
             const urlParams = new URLSearchParams(window.location.search);
             const tagParam = urlParams.get('tag');
@@ -644,49 +1021,12 @@
         });
 
         window.addEventListener('beforeunload', () => {
-            const music = document.getElementById('background-music');
-            localStorage.setItem('music_currentTime', music.currentTime);
+            saveMusicState();
         });
 
-        function saveMusicState(event) {
-            const music = document.getElementById('background-music');
-            localStorage.setItem('music_playing', !music.paused ? 'true' : 'false');
-            localStorage.setItem('music_currentTime', music.currentTime);
-        }
-
-        let isToggling = false;
-        function toggleMusic() {
-            if (isToggling) return;
-            const music = document.getElementById('background-music');
-            
-            if (music.paused) {
-                isToggling = true;
-                music.muted = false;
-                const playPromise = music.play();
-                if (playPromise !== undefined) {
-                    playPromise.then(() => {
-                        setMusicIcon(true);
-                        localStorage.setItem('music_playing', 'true');
-                    }).catch(error => console.error(error)).finally(() => isToggling = false);
-                } else { isToggling = false; }
-            } else {
-                music.pause();
-                setMusicIcon(false);
-                localStorage.setItem('music_playing', 'false');
-            }
-        }
-        
-        function setMusicIcon(isPlaying) {
-            const iconContainer = document.getElementById('music-icon');
-            const wave = document.getElementById('music-wave');
-            if (!iconContainer || !wave) return;
-            if (isPlaying) {
-                wave.classList.remove('hidden');
-                iconContainer.innerHTML = `<svg class="w-4 h-4 text-white group-hover:text-acid transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
-            } else {
-                wave.classList.add('hidden');
-                iconContainer.innerHTML = `<svg class="w-4 h-4 text-white group-hover:text-acid transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`;
-            }
+        function saveMusicState() {
+            localStorage.setItem('music_playing', !audioEl.paused);
+            localStorage.setItem('music_currentTime', audioEl.currentTime);
         }
         
         function searchArticles() {
