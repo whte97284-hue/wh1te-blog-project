@@ -34,7 +34,7 @@
                         'scan': 'scan 8s linear infinite', 
                         'breathe-glow': 'breatheGlow 4s ease-in-out infinite',
                         'cyber-slash': 'cyberSlash 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards',
-                        'glitch-img': 'glitchImg 4s infinite', // 无限循环的图片故障，4s一次
+                        'glitch-img': 'glitchImg 5s infinite', // 5秒一次循环，大部分时间静止
                     },
                     keyframes: {
                         floatHeavy: {
@@ -58,13 +58,14 @@
                             '0%': { clipPath: 'inset(50% 0 50% 0)', opacity: 0 },
                             '100%': { clipPath: 'inset(0 0 0 0)', opacity: 1 },
                         },
-                        // 图片自动故障位移 (不需要 hover)
+                        // 调整后的故障动画：92%的时间静止，偶尔闪烁
                         glitchImg: {
-                            '0%, 90%, 100%': { transform: 'translate(0)', filter: 'none' },
-                            '91%': { transform: 'translate(-2px, 2px)', filter: 'hue-rotate(90deg)' },
-                            '92%': { transform: 'translate(2px, -2px)', filter: 'none' },
-                            '93%': { transform: 'translate(-2px, -2px)', filter: 'hue-rotate(-90deg)' },
-                            '94%': { transform: 'translate(2px, 2px)', filter: 'none' }
+                            '0%, 92%': { transform: 'translate(0)', filter: 'none' },
+                            '93%': { transform: 'translate(-2px, 2px)', filter: 'hue-rotate(90deg) contrast(1.2)' },
+                            '94%': { transform: 'translate(2px, -1px)', filter: 'none' },
+                            '95%': { transform: 'translate(-1px, -2px)', filter: 'hue-rotate(-90deg)' },
+                            '96%': { transform: 'translate(0, 2px)', filter: 'none' },
+                            '100%': { transform: 'translate(0)', filter: 'none' }
                         }
                     }
                 }
@@ -152,19 +153,18 @@
             padding-left: 8px;
         }
 
-        /* 模态框特效 */
         #anime-modal.active {
             display: flex;
             animation: cyber-slash 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
         }
-        /* RGB分离效果 - 用于标题 */
         .rgb-split {
             text-shadow: 2px 0 #ff00c1, -2px 0 #00fff9;
             animation: glitch 3s infinite;
         }
-        /* 自动故障图片 class */
+        /* 自动故障图片 - 正常彩色，无灰度，偶尔故障 */
         .auto-glitch {
-            animation: glitch-img 4s infinite;
+            animation: glitch-img 5s infinite;
+            /* filter: contrast(1.1) saturate(1.1);  可以稍微增强一点质感 */
         }
     </style>
 </head>
@@ -177,73 +177,63 @@
         <source src="./audio/bgm.mp3" type="audio/mp3">
     </audio>
 
-    <!-- ================== 全屏番剧详情模态框 (默认隐藏) ================== -->
+    <!-- ================== 全屏番剧详情模态框 ================== -->
     <div id="anime-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/90 backdrop-blur-xl cursor-pointer" onclick="closeAnimeModal()">
-        <!-- 背景装饰 -->
         <div class="absolute inset-0 pointer-events-none opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CjxwYXRoIGQ9Ik0wIDBoNDB2NDBIMHoiIGZpbGw9Im5vbmUiLz4KPHBhdGggZD0iTTAgNDBoNDBNNDAgMHY0ME0wIDB2NDAiIHN0cm9rZT0iIzAwZmZmOSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIvPgo8L3N2Zz4=')]"></div>
         
-        <!-- 内容容器 - 点击此处 *不会* 关闭 -->
+        <!-- 点击内容区域不关闭 -->
         <div class="relative w-full max-w-6xl h-[85vh] flex flex-col md:flex-row items-stretch justify-center gap-0 md:gap-8 p-6 md:p-12 cursor-default" onclick="event.stopPropagation()">
             
             <!-- 左侧：超大封面图 -->
-            <div class="relative w-full md:w-5/12 h-[40vh] md:h-full group border-2 border-acid/50 p-1 bg-black/50 flex-shrink-0">
-                <!-- 四角装饰 -->
+            <div class="relative w-full md:w-5/12 h-[40vh] md:h-full border-2 border-acid/50 p-1 bg-black/50 flex-shrink-0">
                 <div class="absolute -top-1 -left-1 w-4 h-4 border-t-4 border-l-4 border-acid"></div>
                 <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-4 border-r-4 border-acid"></div>
                 
-                <!-- 图片容器 -->
                 <div class="w-full h-full overflow-hidden relative">
-                    <!-- auto-glitch 类实现无需交互的自动故障 -->
-                    <img id="modal-cover" src="" alt="Cover" class="w-full h-full object-cover grayscale contrast-125 brightness-90 auto-glitch transition-all duration-500">
-                    
-                    <!-- 扫描线覆盖 -->
+                    <!-- 图片：全彩，无交互hover，自动故障 -->
+                    <img id="modal-cover" src="" alt="Cover" class="w-full h-full object-cover auto-glitch">
                     <div class="absolute inset-0 bg-gradient-to-b from-transparent via-acid/10 to-transparent h-[20%] w-full animate-scan pointer-events-none"></div>
                 </div>
             </div>
 
             <!-- 右侧：信息面板 -->
             <div class="w-full md:w-7/12 flex flex-col justify-center space-y-6 text-left overflow-hidden">
-                
-                <!-- 头部状态标签 -->
                 <div class="flex items-center gap-4">
                     <div class="inline-block px-3 py-1 border border-acid text-acid font-mono text-xs w-fit">
-                        // NEURAL_LINK_ESTABLISHED
+                        // DATA_RETRIEVED
                     </div>
                     <div class="h-px flex-1 bg-white/10"></div>
                 </div>
 
-                <!-- 标题 -->
                 <h2 id="modal-title" class="text-3xl md:text-5xl font-black text-white tracking-tighter leading-tight rgb-split uppercase line-clamp-2">
-                    ANIME_TITLE
+                    LOADING...
                 </h2>
                 
-                <!-- 评分/状态 -->
                 <div class="space-y-2 font-mono text-sm text-gray-400 pl-4 border-l-2 border-white/20">
                     <p>STATUS: <span class="text-acid blink">BROADCASTING</span></p>
                     <p>SYNC_RATE: 98.4%</p>
-                    <p>RATING: <span id="modal-rating" class="text-white font-bold text-lg">8.5</span> / 10</p>
+                    <p>RATING: <span id="modal-rating" class="text-white font-bold text-lg">--</span> / 10</p>
                 </div>
 
-                <!-- 新增：简介区域 (带滚动条) -->
-                <div class="relative group">
+                <!-- 简介区域 -->
+                <div class="relative group flex-1 flex flex-col min-h-0">
                     <h3 class="text-acid font-mono text-xs mb-2 font-bold">:: SUMMARY_DATA</h3>
-                    <div class="max-h-[30vh] overflow-y-auto pr-4 text-sm text-gray-300 leading-relaxed font-sans border border-white/10 p-4 bg-white/5 rounded-sm backdrop-blur-sm">
-                        <p id="modal-summary">
-                            No data available...
+                    <div class="overflow-y-auto pr-4 text-sm text-gray-300 leading-relaxed font-sans border border-white/10 p-4 bg-white/5 rounded-sm backdrop-blur-sm h-full">
+                        <p id="modal-summary" class="whitespace-pre-wrap">
+                            Initializing connection to database...
                         </p>
                     </div>
                 </div>
                 
-                <!-- 底部装饰 -->
-                <div class="mt-auto pt-4 flex justify-between items-end text-[10px] font-mono text-gray-600">
+                <div class="mt-4 pt-2 flex justify-between items-end text-[10px] font-mono text-gray-600">
                     <span>ID: <span id="modal-id">000000</span></span>
-                    <span>CLICK_OUTSIDE_TO_CLOSE</span>
+                    <span>[ CLICK OUTSIDE TO CLOSE ]</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 1. 右侧 Hero 人物 (背景层) -->
+    <!-- 背景固定人物层 -->
     <div class="fixed right-0 bottom-0 z-0 pointer-events-none w-[45vw] max-w-[600px] flex items-end justify-end animate-glitch">
         <img 
             src="./images/hero-glitch.png" 
@@ -267,10 +257,8 @@
         </div>
     </button>
 
-    <!-- 顶部装饰线 -->
     <div class="fixed top-0 left-0 w-full h-px bg-white/10 z-40"></div>
 
-    <!-- 导航 -->
     <nav class="fixed top-0 w-full z-40 px-6 md:px-12 py-4 flex justify-between items-center mix-blend-difference text-white bg-gradient-to-b from-black/80 to-transparent">
         <a href="index.html" class="flex flex-col group">
             <span class="text-xl font-black tracking-tighter leading-none group-hover:text-acid transition-colors">WH1TE.LOG</span>
@@ -293,7 +281,6 @@
         <div class="md:hidden text-acid font-mono text-xs border border-acid/50 px-2 py-1 rounded cursor-pointer hover:bg-acid hover:text-black transition-colors">MENU::OPEN</div>
     </nav>
 
-    <!-- Hero Section -->
     <header class="relative pt-40 pb-12 px-6 md:px-12 max-w-screen-xl mx-auto min-h-[calc(100vh-100px)] flex flex-col justify-center items-start text-left z-20 overflow-hidden">
         <div class="absolute top-1/2 right-0 translate-x-1/3 -translate-y-1/2 w-[60vw] aspect-square border border-dashed border-white/10 rounded-full animate-spin-slow pointer-events-none z-0"></div>
         <div class="space-y-8 animate-fade-in-up w-full relative z-20 transition-all duration-500">
@@ -312,7 +299,13 @@
             <div class="mt-12 relative w-full max-w-3xl group z-10">
                 <div class="relative flex items-center">
                     <div class="absolute left-0 pl-4 text-acid font-mono text-sm flex items-center h-full pb-1 tracking-widest">_SEARCH_QUERY ::</div>
-                    <input type="text" id="search-input" placeholder="INPUT_KEYWORD..." oninput="searchArticles()" class="w-full pl-48 pr-12 py-5 bg-black/40 backdrop-blur-xl border-b-2 border-white/20 text-white font-mono text-xl md:text-2xl placeholder-white/10 focus:border-acid focus:bg-black/60 focus:outline-none transition-all caret-acid uppercase">
+                    <input 
+                        type="text" 
+                        id="search-input" 
+                        placeholder="INPUT_KEYWORD..." 
+                        oninput="searchArticles()"
+                        class="w-full pl-48 pr-12 py-5 bg-black/40 backdrop-blur-xl border-b-2 border-white/20 text-white font-mono text-xl md:text-2xl placeholder-white/10 focus:border-acid focus:bg-black/60 focus:outline-none transition-all caret-acid uppercase"
+                    >
                     <div class="absolute right-4 w-2 h-6 bg-acid animate-pulse-fast"></div>
                 </div>
                 <div id="search-status" class="absolute top-full left-0 mt-2 text-[10px] font-mono text-acid hidden">FILTERING_RESULTS...</div>
@@ -323,12 +316,9 @@
         </div>
     </header>
 
-    <!-- 主内容 -->
     <main class="max-w-screen-xl mx-auto px-6 md:px-12 pb-24 relative z-20">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
             <aside class="lg:col-span-4 space-y-6 lg:sticky lg:top-24 h-fit">
-                
-                <!-- AI 助手 Card -->
                 <div class="cyber-card rounded-xl p-0 overflow-hidden animate-float-heavy animate-breathe-glow relative group transition-shadow duration-500 border-acid/30">
                     <div class="w-full relative aspect-[4/5]">
                         <img src="./images/ai-assistant.jpg" alt="AI Assistant" class="w-full h-full object-cover image-filter-acid-subtle group-hover:scale-105 transition-transform duration-700" decoding="async">
@@ -362,13 +352,11 @@
                         <div class="flex gap-2"><span class="text-acid min-w-[14px]">>></span><p>成功配置 Python 环境，下一步专注博客维护脚本开发。</p></div>
                     </div>
                 </div>
-
                 <div class="grid grid-cols-3 gap-3">
                     <a href="https://github.com/whte97284-hue/wh1te-blog-project/tree/main" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-white hover:text-black transition-all group relative overflow-hidden"><span class="font-mono text-[9px] font-bold uppercase relative z-10">Git</span></a>
                     <a href="https://space.bilibili.com/551898501" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-[#fb7299] hover:text-white transition-all group relative overflow-hidden"><span class="font-mono text-[9px] font-bold uppercase relative z-10">Bili</span></a>
                     <a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-black hover:text-white transition-all group relative overflow-hidden"><span class="font-mono text-[9px] font-bold uppercase relative z-10">TikTok</span></a>
                 </div>
-
                 <div class="cyber-card rounded-xl p-6">
                     <h3 class="font-mono text-gray-400 text-[10px] mb-4 uppercase tracking-widest flex justify-between">:: TAGS<span>[04]</span></h3>
                     <div class="flex flex-wrap gap-2" id="tag-cloud">
@@ -438,16 +426,47 @@
         });
 
         // --- 模态框逻辑 ---
-        function openAnimeModal(title, rating, imageUrl, summary, id) {
+        // 修改：接受 ID，打开时异步获取简介
+        async function openAnimeModal(title, rating, imageUrl, id) {
             const modal = document.getElementById('anime-modal');
             document.getElementById('modal-title').innerText = title || 'UNKNOWN_SIGNAL';
             document.getElementById('modal-rating').innerText = rating || 'N/A';
             document.getElementById('modal-cover').src = imageUrl || 'https://framerusercontent.com/images/kC7Gq14O91w0T3H0O5E0U8y2v4.png';
-            document.getElementById('modal-summary').innerText = summary || 'No summary data found in local archive.';
             document.getElementById('modal-id').innerText = id || '000000';
+            
+            const summaryEl = document.getElementById('modal-summary');
+            summaryEl.innerText = "SEARCHING_DATABASE_FOR_SUMMARY...";
             
             modal.classList.remove('hidden');
             modal.classList.add('flex', 'active');
+
+            // 异步获取详情
+            if (id) {
+                const proxyUrl = 'https://corsproxy.io/?';
+                const targetUrl = `https://api.bgm.tv/v0/subjects/${id}`;
+                const token = '2Yc4zjFj30unuzP7LKLfgMzkEyUD07ZagLmWavCp';
+                
+                try {
+                    const response = await fetch(proxyUrl + encodeURIComponent(targetUrl), {
+                        headers: { 'Authorization': `Bearer ${token}`, 'accept': 'application/json' }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.summary) {
+                            summaryEl.innerText = data.summary;
+                        } else {
+                            summaryEl.innerText = "NO_SUMMARY_AVAILABLE_IN_ARCHIVE.";
+                        }
+                    } else {
+                        summaryEl.innerText = "DATA_CORRUPTED: UNABLE_TO_FETCH_DETAILS.";
+                    }
+                } catch (e) {
+                    console.error(e);
+                    summaryEl.innerText = "CONNECTION_LOST: OFFLINE_MODE.";
+                }
+            } else {
+                summaryEl.innerText = "INVALID_ID: ACCESS_DENIED.";
+            }
         }
 
         function closeAnimeModal() {
@@ -456,10 +475,10 @@
             modal.classList.remove('flex', 'active');
         }
 
-        // Mock Data
+        // Mock Data (Fallback)
         const mockData = [
-            { name: "胆大党", rating: { score: "8.2" }, images: { large: "https://lain.bgm.tv/pic/cover/l/3e/54/454014_091kM.jpg" }, summary: "灵异宅的高中生高仓健，与由于某种原因拥有灵异体质的绫濑桃，两人通过一次偶然的机会相遇..." },
-            { name: "蓝色监狱 第二季", rating: { score: "7.8" }, images: { large: "https://lain.bgm.tv/pic/cover/l/98/2e/465688_22824.jpg" }, summary: "日本国家足球队在2018年国际足联世界杯止步16强，日本足球联会为了在2022年世界杯获胜..." },
+            { id: 388296, name: "香格里拉·开拓异境", rating: { score: "8.1" }, images: { large: "https://lain.bgm.tv/pic/cover/l/13/9a/388296_7787Y.jpg" } },
+            { id: 425974, name: "Re:从零开始的异世界生活 S3", rating: { score: "8.6" }, images: { large: "https://lain.bgm.tv/pic/cover/l/80/b8/425974_Z888m.jpg" } }
         ];
 
         const renderList = (items) => {
@@ -467,17 +486,12 @@
              container.innerHTML = items.map(item => {
                     const title = item.name_cn || item.name;
                     const score = item.rating && item.rating.score ? item.rating.score : 'N/A';
-                    // 修复图片路径：Bangumi API 返回的图片通常是 http，需要升级为 https 或者做防盗链处理
-                    // 这里直接使用 API 返回的，如果显示不出来可能是 Referrer 问题
                     const image = item.images ? (item.images.large || item.images.common) : '';
-                    const summary = item.summary ? item.summary.replace(/"/g, '&quot;') : 'No summary.';
                     const id = item.id;
 
-                    // 将数据转义并传递给 onclick
-                    // 注意：在真实项目中不要这样内联传参，这里为了单文件演示方便
                     return `
                     <div class="anime-item flex justify-between items-center group/item cursor-pointer transition-all duration-300 border-l-2 border-transparent py-1 hover:border-acid hover:pl-2 hover:bg-white/5"
-                         onclick='openAnimeModal("${title.replace(/"/g, '&quot;')}", "${score}", "${image}", "${summary.substring(0, 150).replace(/\n/g, "")}...", "${id}")'>
+                         onclick='openAnimeModal("${title.replace(/"/g, '&quot;')}", "${score}", "${image}", "${id}")'>
                          <span class="text-gray-300 flex-1 truncate mx-2 text-[10px] group-hover/item:text-acid transition-colors">
                             ${title}
                          </span>
@@ -525,7 +539,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadAnimeData();
-            // ... (其余初始化逻辑保持不变)
+            
             const music = document.getElementById('background-music');
             const storedState = localStorage.getItem('music_playing');
             const storedTime = localStorage.getItem('music_currentTime');
