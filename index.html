@@ -134,7 +134,7 @@
         ::-webkit-scrollbar-thumb:hover { background: #ccff00; }
         ::selection { background: #ccff00; color: black; }
         
-        /* --- 1. 基础故障滤镜 (保持原样) --- */
+        /* 故障滤镜 */
         .image-filter-acid-glitch {
             filter: grayscale(100%) contrast(120%) brightness(110%) sepia(50%) hue-rotate(60deg) saturate(300%) drop-shadow(0 0 20px rgba(204, 255, 0, 0.3));
             transform: scaleX(-1); mix-blend-mode: screen; opacity: 0.6;
@@ -144,54 +144,27 @@
             transition: opacity 0.3s ease;
         }
 
-        /* --- 2. 赛博朋克故障动画 (仅闪烁，不换图) --- */
-        /* 当图片添加此 class 时触发一次强烈的故障 */
+        /* AI助手滤镜优化：提亮，去灰底，增加融合感 */
+        .image-filter-acid-subtle {
+            /* 稍微增加对比度和亮度，抵消深色背景的影响 */
+            filter: contrast(1.2) brightness(1.1) saturate(1.1);
+            /* 关键：让底部透明渐变，融合进框里 */
+            mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+        }
+
         .cyber-swap-active {
             animation: cyber-swap 0.6s steps(3) forwards;
         }
 
         @keyframes cyber-swap {
-            0% { 
-                opacity: 0.6; 
-                filter: grayscale(100%) contrast(120%) brightness(110%) sepia(50%) hue-rotate(60deg) saturate(300%);
-                transform: scaleX(-1) translateX(0);
-            }
-            10% {
-                opacity: 0.8;
-                filter: grayscale(0%) contrast(200%) brightness(150%) hue-rotate(90deg) invert(1);
-                transform: scaleX(-1) translateX(-10px) skewX(20deg);
-                clip-path: inset(10% 0 40% 0);
-            }
-            30% {
-                opacity: 0.2;
-                filter: sepia(100%) saturate(500%) hue-rotate(180deg) blur(4px);
-                transform: scaleX(-1) translateX(10px) skewX(-10deg);
-                clip-path: inset(40% 0 10% 0);
-            }
-            50% {
-                opacity: 0.1; /* 变得很淡，模拟信号丢失 */
-                filter: invert(1);
-            }
-            60% {
-                opacity: 0.4;
-                filter: grayscale(100%) contrast(150%) brightness(80%) hue-rotate(270deg);
-                transform: scaleX(-1) translateX(-5px) skewX(5deg);
-                clip-path: inset(0 0 0 0);
-            }
-            80% {
-                opacity: 0.7;
-                filter: grayscale(100%) contrast(120%) brightness(110%) sepia(50%) hue-rotate(60deg) saturate(300%) drop-shadow(0 0 30px rgba(204, 255, 0, 0.8));
-                transform: scaleX(-1) translateX(2px);
-            }
-            100% {
-                opacity: 0.6;
-                filter: grayscale(100%) contrast(120%) brightness(110%) sepia(50%) hue-rotate(60deg) saturate(300%) drop-shadow(0 0 20px rgba(204, 255, 0, 0.3));
-                transform: scaleX(-1) translateX(0);
-            }
-        }
-
-        .image-filter-acid-subtle {
-            filter: grayscale(40%) sepia(20%) hue-rotate(50deg) saturate(140%) brightness(95%) drop-shadow(0 0 15px rgba(204, 255, 0, 0.15));
+            0% { opacity: 0.6; transform: scaleX(-1) translateX(0); }
+            10% { opacity: 0.8; transform: scaleX(-1) translateX(-10px) skewX(20deg); clip-path: inset(10% 0 40% 0); }
+            30% { opacity: 0.2; transform: scaleX(-1) translateX(10px) skewX(-10deg); clip-path: inset(40% 0 10% 0); }
+            50% { opacity: 0.1; filter: invert(1); }
+            60% { opacity: 0.4; transform: scaleX(-1) translateX(-5px) skewX(5deg); clip-path: inset(0 0 0 0); }
+            80% { opacity: 0.7; transform: scaleX(-1) translateX(2px); }
+            100% { opacity: 0.6; transform: scaleX(-1) translateX(0); }
         }
 
         .anime-item:hover {
@@ -212,20 +185,12 @@
             animation: glitch-img 5s infinite;
         }
         
-        /* CP2077 气泡 */
         .cp2077-bubble {
             background-color: rgba(10, 10, 10, 0.95);
             border: 1px solid #ccff00;
             color: #ccff00;
             font-family: 'JetBrains Mono', monospace;
-            clip-path: polygon(
-                0 0, 
-                100% 0, 
-                100% calc(100% - 15px), 
-                calc(100% - 15px) 100%, 
-                20px 100%, 
-                0 calc(100% - 20px)
-            );
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 20px 100%, 0 calc(100% - 20px));
             box-shadow: 4px 4px 0 rgba(204, 255, 0, 0.2);
         }
         .cp2077-bubble::before {
@@ -281,7 +246,7 @@
         </div>
     </div>
 
-    <!-- 1. 右侧 Hero 人物 (背景层) - 增加 ID 方便 JS 选取 -->
+    <!-- Hero 背景人物 -->
     <div class="fixed right-0 bottom-0 z-0 pointer-events-none w-[45vw] max-w-[600px] flex items-end justify-end">
         <img 
             id="hero-character"
@@ -368,6 +333,8 @@
     <main class="max-w-screen-xl mx-auto px-6 md:px-12 pb-24 relative z-20">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
             <aside class="lg:col-span-4 space-y-6 lg:sticky lg:top-24 h-fit">
+                
+                <!-- AI 助手: 优化融合感 -->
                 <div class="cyber-card rounded-xl p-0 overflow-visible animate-float-heavy animate-breathe-glow relative group transition-shadow duration-500 border-acid/30 cursor-pointer" onclick="triggerAiSpeech()">
                     <div id="ai-speech-bubble" class="hidden absolute -top-24 left-0 w-64 z-50 animate-pop-in pointer-events-none">
                         <div class="cp2077-bubble relative p-4">
@@ -375,8 +342,15 @@
                              <div class="absolute -bottom-4 left-8 w-0.5 h-4 bg-acid"></div>
                         </div>
                     </div>
-                    <div class="w-full relative aspect-[4/5] overflow-hidden rounded-xl">
-                        <img src="./images/ai-assistant.jpg" alt="AI Assistant" class="w-full h-full object-cover image-filter-acid-subtle group-hover:scale-105 transition-transform duration-700" decoding="async">
+                    <div class="w-full relative aspect-[4/5] overflow-hidden rounded-xl bg-black/20">
+                        <!-- 背景融合优化：混合模式 + 内阴影遮罩 -->
+                        <img src="./images/ai-assistant.jpg" alt="AI Assistant" 
+                             class="w-full h-full object-cover image-filter-acid-subtle group-hover:scale-105 transition-transform duration-700" 
+                             decoding="async">
+                        
+                        <!-- 顶部内阴影：让图片像是嵌在里面 -->
+                        <div class="absolute inset-0 shadow-[inset_0_0_30px_rgba(0,0,0,0.8)] pointer-events-none"></div>
+                        <!-- 底部渐变遮罩 -->
                         <div class="absolute bottom-0 left-0 w-full h-2/3 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
                     </div>
                     <div class="absolute bottom-0 left-0 w-full p-5 z-10 pointer-events-none">
@@ -385,6 +359,7 @@
                     </div>
                 </div>
 
+                <!-- 每日新番 -->
                 <div class="cyber-card rounded-xl p-6 relative overflow-hidden group">
                     <div class="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-acid"></div>
                     <div class="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-acid"></div>
@@ -425,7 +400,7 @@
                     <div class="flex items-center gap-2"><span class="w-2 h-2 bg-acid rounded-full animate-pulse"></span><span class="font-mono text-xs text-acid">[ ONLINE ]</span></div>
                 </div>
                 <div id="article-list-container" class="space-y-6">
-                    <!-- 文章列表 -->
+                    <!-- 文章 3 -->
                     <article class="article-card cyber-card rounded-xl p-6 md:p-8 relative group hover:bg-black/80 overflow-hidden border-l-4 border-l-transparent hover:border-l-acid transition-all" data-tags="Novel ACG WhiteAlbum2">
                         <div class="absolute top-0 right-0 w-48 h-48 bg-acid/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                         <div class="flex flex-col gap-4 relative z-10">
@@ -438,6 +413,7 @@
                             <div class="flex items-center justify-end mt-2"><a href="article-3.html" onclick="saveMusicState(event)" class="group-hover:translate-x-1 transition-transform flex items-center text-acid font-mono text-xs md:text-sm font-bold bg-white/5 px-4 py-2 rounded-full hover:bg-acid hover:text-black">READ_FULL <span class="ml-2">→</span></a></div>
                         </div>
                     </article>
+                    <!-- 文章 2 -->
                     <article class="article-card cyber-card rounded-xl p-6 md:p-8 relative group hover:bg-black/80 overflow-hidden border-l-4 border-l-transparent hover:border-l-acid transition-all" data-tags="Python Automation Web">
                         <div class="absolute top-0 right-0 w-48 h-48 bg-acid/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                         <div class="flex flex-col gap-4 relative z-10">
@@ -450,6 +426,7 @@
                             <div class="flex items-center justify-end mt-2"><a href="article-2.html" onclick="saveMusicState(event)" class="group-hover:translate-x-1 transition-transform flex items-center text-acid font-mono text-xs md:text-sm font-bold bg-white/5 px-4 py-2 rounded-full hover:bg-acid hover:text-black">READ_FULL <span class="ml-2">→</span></a></div>
                         </div>
                     </article>
+                    <!-- 文章 1 -->
                     <article class="article-card cyber-card rounded-xl p-6 md:p-8 relative group hover:bg-black/80 overflow-hidden border-l-4 border-l-transparent hover:border-l-acid transition-all" data-tags="Code Reflection Appium">
                         <div class="absolute top-0 right-0 w-48 h-48 bg-acid/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                         <div class="flex flex-col gap-4 relative z-10">
@@ -515,18 +492,12 @@
         function startHeroGlitch() {
             const heroImg = document.getElementById('hero-character');
             if(!heroImg) return;
-
             setInterval(() => {
-                // 1. 触发强烈故障动画
                 heroImg.classList.add('cyber-swap-active');
-
-                // 2. 动画结束后移除 class，等待下一次触发
-                // 动画时长设置为 0.6s
                 setTimeout(() => {
                     heroImg.classList.remove('cyber-swap-active');
                 }, 600);
-
-            }, 10000); // 每 10 秒触发一次故障闪烁
+            }, 10000); 
         }
 
         // --- 3. 模态框逻辑 ---
@@ -536,10 +507,8 @@
             document.getElementById('modal-rating').innerText = rating || 'N/A';
             document.getElementById('modal-cover').src = imageUrl || 'https://framerusercontent.com/images/kC7Gq14O91w0T3H0O5E0U8y2v4.png';
             document.getElementById('modal-id').innerText = id || '000000';
-            
             const summaryEl = document.getElementById('modal-summary');
             summaryEl.innerText = "SEARCHING_DATABASE_FOR_SUMMARY...";
-            
             modal.classList.remove('hidden');
             modal.classList.add('flex', 'active');
 
@@ -547,7 +516,6 @@
                 const proxyUrl = 'https://corsproxy.io/?';
                 const targetUrl = `https://api.bgm.tv/v0/subjects/${id}`;
                 const token = '2Yc4zjFj30unuzP7LKLfgMzkEyUD07ZagLmWavCp';
-                
                 try {
                     const response = await fetch(proxyUrl + encodeURIComponent(targetUrl), {
                         headers: { 'Authorization': `Bearer ${token}`, 'accept': 'application/json' }
@@ -586,7 +554,6 @@
                     const score = item.rating && item.rating.score ? item.rating.score : 'N/A';
                     const image = item.images ? (item.images.large || item.images.common) : '';
                     const id = item.id;
-
                     return `
                     <div class="anime-item flex justify-between items-center group/item cursor-pointer transition-all duration-300 border-l-2 border-transparent py-1 hover:border-acid hover:pl-2 hover:bg-white/5"
                          onclick='openAnimeModal("${title.replace(/"/g, '&quot;')}", "${score}", "${image}", "${id}")'>
@@ -637,7 +604,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadAnimeData();
-            startHeroGlitch(); // 启动背景故障闪烁
+            startHeroGlitch();
             
             const music = document.getElementById('background-music');
             const storedState = localStorage.getItem('music_playing');
