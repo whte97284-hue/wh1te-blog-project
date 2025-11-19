@@ -30,18 +30,18 @@
                         'spin-slow': 'spin 20s linear infinite',
                         'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                         'float': 'float 6s ease-in-out infinite',
-                        'glitch': 'glitch 1s linear infinite',
+                        'glitch': 'glitch 2s linear infinite', /* 放慢一点故障频率 */
                         'scan': 'scan 8s linear infinite',
                     },
                     keyframes: {
                         float: {
                             '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-6px)' },
+                            '50%': { transform: 'translateY(-10px)' },
                         },
                         glitch: {
-                            '2%, 64%': { transform: 'translate(2px,0) skew(0deg)' },
-                            '4%, 60%': { transform: 'translate(-2px,0) skew(0deg)' },
-                            '62%': { transform: 'translate(0,0) skew(5deg)' },
+                            '2%, 64%': { transform: 'translate(1px,0) skew(0deg)' },
+                            '4%, 60%': { transform: 'translate(-1px,0) skew(0deg)' },
+                            '62%': { transform: 'translate(0,0) skew(2deg)' },
                         },
                         scan: {
                             '0%': { backgroundPosition: '0 0' },
@@ -76,29 +76,29 @@
         body {
             background-color: #050505;
             background-image: 
-                linear-gradient(rgba(204, 255, 0, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(204, 255, 0, 0.05) 1px, transparent 1px),
-                radial-gradient(circle 600px at var(--mouse-x) var(--mouse-y), rgba(204, 255, 0, 0.12) 0%, transparent 60%);
-            background-size: 40px 40px, 40px 40px, 100% 100%;
+                linear-gradient(rgba(204, 255, 0, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(204, 255, 0, 0.03) 1px, transparent 1px),
+                radial-gradient(circle 800px at var(--mouse-x) var(--mouse-y), rgba(204, 255, 0, 0.08) 0%, transparent 60%);
+            background-size: 60px 60px, 60px 60px, 100% 100%;
             background-attachment: fixed;
             min-height: 100vh; color: white;
             -webkit-font-smoothing: antialiased;
             transition: background 0.1s ease;
-            overflow-x: hidden; /* 防止图片过大导致横向滚动 */
+            overflow-x: hidden;
         }
 
         .cyber-card {
-            background: rgba(5, 5, 5, 0.45);
+            background: rgba(5, 5, 5, 0.6); /* 稍微加深背景，防止文字在图片上看不清 */
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.12); 
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
             transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
         .cyber-card:hover {
-            background: rgba(5, 5, 5, 0.6);
+            background: rgba(5, 5, 5, 0.8);
             border-color: rgba(204, 255, 0, 0.6);
-            box-shadow: 0 12px 40px rgba(204, 255, 0, 0.1);
+            box-shadow: 0 12px 40px rgba(204, 255, 0, 0.2);
             transform: translateY(-4px);
         }
         .text-stroke-layer { -webkit-text-stroke: 1px rgba(255, 255, 255, 0.6); color: transparent; pointer-events: none; }
@@ -109,33 +109,38 @@
         ::-webkit-scrollbar-thumb:hover { background: #ccff00; }
         ::selection { background: #ccff00; color: black; }
         
-        /* 图片滤镜 */
+        /* 动漫少女 1 (右侧 Hero 背景) */
         .image-filter-acid-glitch {
             filter: 
                 grayscale(100%) 
-                contrast(150%) 
-                brightness(120%) 
-                sepia(100%) 
+                contrast(130%) 
+                brightness(110%) 
+                sepia(80%) 
                 hue-rotate(60deg) 
-                saturate(400%) 
-                drop-shadow(0 0 15px rgba(204, 255, 0, 0.6));
-            transform: scaleX(-1);
-            mix-blend-mode: screen;
-            opacity: 0.9; /* 提高一点不透明度 */
+                saturate(300%) 
+                drop-shadow(0 0 20px rgba(204, 255, 0, 0.4));
+            transform: scaleX(-1); /* 镜像翻转，看向中间 */
+            mix-blend-mode: screen; /* 让黑色背景透明，融入网页 */
+            opacity: 0.85;
+            mask-image: linear-gradient(to bottom, black 80%, transparent 100%); /* 底部渐变消失，避免硬切 */
+            -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
         }
 
+        /* 动漫少女 2 (左侧 AI 助手) */
         .image-filter-acid-subtle {
             filter: 
-                grayscale(80%)
-                sepia(50%)
-                hue-rotate(60deg)
-                saturate(200%)
+                grayscale(50%)
+                sepia(30%)
+                hue-rotate(50deg)
+                saturate(150%)
                 brightness(90%)
-                drop-shadow(0 0 10px rgba(204, 255, 0, 0.2));
+                drop-shadow(0 0 15px rgba(204, 255, 0, 0.2));
+            mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
         }
     </style>
 </head>
-<body class="antialiased font-sans">
+<body class="antialiased overflow-x-hidden font-sans">
 
     <div class="noise-overlay"></div>
     <div class="scanlines"></div>
@@ -143,6 +148,30 @@
     <audio id="background-music" loop muted>
         <source src="./audio/bgm.mp3" type="audio/mp3">
     </audio>
+
+    <!-- ================== 背景固定人物层 (Z-INDEX: 0) ================== -->
+    
+    <!-- 1. 右侧 Hero 人物 (黑白故障风) -->
+    <!-- 固定在右下角，利用右侧冗余空间 -->
+    <div class="fixed right-0 bottom-0 z-0 pointer-events-none w-[50vw] md:w-[35vw] lg:w-[30vw] max-h-[90vh] flex items-end justify-end animate-glitch">
+        <img 
+            src="./images/hero-glitch.png" 
+            alt="Cyberpunk Hero" 
+            class="w-full h-auto object-contain image-filter-acid-glitch"
+        >
+    </div>
+
+    <!-- 2. 左侧 AI 助手 (彩色柔和风) -->
+    <!-- 固定在左下角，利用左侧冗余空间 -->
+    <div class="fixed left-0 bottom-0 z-0 pointer-events-none w-[45vw] md:w-[30vw] lg:w-[25vw] max-h-[80vh] flex items-end justify-start animate-float hidden md:flex">
+        <img 
+            src="./images/ai-assistant.jpg" 
+            alt="AI Assistant" 
+            class="w-full h-auto object-contain image-filter-acid-subtle"
+        >
+    </div>
+
+    <!-- ================== 页面主体内容层 (Z-INDEX: 10) ================== -->
 
     <!-- 音乐按钮 -->
     <button id="music-toggle-button" onclick="toggleMusic()" class="fixed bottom-6 left-6 z-50 flex items-center gap-0 group cursor-pointer hover:scale-105 transition-transform">
@@ -158,10 +187,12 @@
         </div>
     </button>
 
+    <!-- Grid 线 -->
     <div class="fixed top-0 left-0 w-full h-px bg-white/10 z-40"></div>
     <div class="fixed top-0 left-6 md:left-12 w-px h-full bg-white/5 z-30 hidden md:block"></div>
     <div class="fixed top-0 right-6 md:right-12 w-px h-full bg-white/5 z-30 hidden md:block"></div>
 
+    <!-- 导航 -->
     <nav class="fixed top-0 w-full z-40 px-6 md:px-12 py-5 flex justify-between items-center mix-blend-difference text-white">
         <a href="index.html" class="flex flex-col group">
             <span class="text-lg font-black tracking-tighter leading-none group-hover:text-acid transition-colors">WH1TE.LOG</span>
@@ -184,26 +215,13 @@
         <div class="md:hidden text-acid font-mono text-xs border border-acid/50 px-2 py-1 rounded cursor-pointer hover:bg-acid hover:text-black transition-colors">MENU::OPEN</div>
     </nav>
 
-    <!-- Hero Section - 布局调整以适应大图 -->
-    <header class="relative pt-32 pb-16 px-6 min-h-[85vh] flex flex-col justify-center items-center text-center z-10 overflow-hidden">
+    <!-- Hero Section (文本居中，不偏倚) -->
+    <header class="relative pt-40 pb-20 px-6 min-h-[80vh] flex flex-col justify-center items-center text-center z-20">
         
-        <!-- === 1. Hero 大图 (Hero Glitch) === 
-             调整：w-[50vw] 甚至更大，position fixed/absolute right-0 bottom-0
-             利用右侧冗余空间
-        -->
-        <div class="absolute right-0 bottom-0 w-[80vw] md:w-[50vw] lg:w-[45vw] max-w-[1000px] pointer-events-none z-0 animate-glitch origin-bottom-right">
-            <img 
-                src="./images/hero-glitch.png"
-                alt="Cyberpunk Girl Glitch" 
-                class="w-full h-auto image-filter-acid-glitch object-contain"
-            >
-        </div>
-
         <!-- 装饰圆环 -->
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120vw] md:w-[50vw] aspect-square border border-dashed border-white/10 rounded-full animate-spin-slow pointer-events-none"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] md:w-[40vw] aspect-square border border-dashed border-white/10 rounded-full animate-spin-slow pointer-events-none"></div>
         
-        <!-- 文本内容 - 稍微向左偏移一点，避开右侧大图 -->
-        <div class="relative z-20 space-y-4 animate-fade-in-up md:mr-[20vw]">
+        <div class="space-y-4 animate-fade-in-up max-w-3xl mx-auto">
             <div class="flex justify-center gap-3 mb-8">
                 <span class="px-2 py-1 bg-acid text-black font-mono text-[10px] font-bold uppercase tracking-wider rounded-sm">System Ready</span>
                 <span class="px-2 py-1 border border-white/20 backdrop-blur-sm text-white/70 font-mono text-[10px] font-bold uppercase tracking-wider rounded-sm">Loc: Internet</span>
@@ -228,32 +246,21 @@
         </div>
     </header>
 
+    <!-- 主内容 -->
     <main class="max-w-7xl mx-auto px-6 md:px-12 pb-32 relative z-20">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+            
+            <!-- 侧边栏 -->
             <aside class="lg:col-span-4 space-y-6 lg:sticky lg:top-24 h-fit">
                 
-                <!-- === 2. AI 助手 (AI Assistant) ===
-                     调整：w-full 撑满侧边栏，去除多余 padding，视觉冲击力更强
-                -->
-                <div class="cyber-card rounded-xl p-0 overflow-hidden animate-float relative group">
-                    <!-- 图片 -->
-                    <div class="relative w-full aspect-[4/3] overflow-hidden">
-                        <img 
-                            src="./images/ai-assistant.jpg" 
-                            alt="AI Assistant" 
-                            class="w-full h-full object-cover image-filter-acid-subtle group-hover:scale-110 transition-transform duration-700"
-                        >
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                    </div>
-                    
-                    <!-- 文字信息覆盖在图片下方 -->
-                    <div class="absolute bottom-0 left-0 w-full p-4">
-                        <h3 class="font-mono text-acid text-xs font-bold mb-1">:: AI_ASSISTANT_STATUS</h3>
-                        <p class="text-gray-300 text-[10px] font-mono">
-                            System Online. Awaiting input.<br>
-                            DATA: <span class="text-acid blink">READY</span>
-                        </p>
-                    </div>
+                <!-- 纯文字状态面板 (图片已移至左侧背景) -->
+                <div class="cyber-card rounded-xl p-6 border-l-2 border-l-acid relative overflow-hidden">
+                    <h3 class="font-mono text-acid text-xs font-bold mb-2">:: SYSTEM_STATUS</h3>
+                    <p class="text-gray-400 text-xs font-mono leading-relaxed">
+                        Left_Flank: AI_Assistant [ONLINE]<br>
+                        Right_Flank: Guardian_Zero [ONLINE]<br>
+                        Core: <span class="text-acid blink">STABLE</span>
+                    </p>
                 </div>
 
                 <div class="cyber-card rounded-xl p-6 relative overflow-hidden group">
