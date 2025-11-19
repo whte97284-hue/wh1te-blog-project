@@ -31,6 +31,7 @@
                         'cyber-slash': 'cyberSlash 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards',
                         'glitch-img': 'glitchImg 5s infinite',
                         'pulse-ring': 'pulseRing 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite',
+                        'scan-vertical': 'scanVertical 2s linear infinite',
                     },
                     keyframes: {
                         floatHeavy: {
@@ -65,6 +66,12 @@
                          pulseRing: {
                             '0%': { transform: 'scale(0.33)', opacity: '1' },
                             '80%, 100%': { transform: 'scale(1)', opacity: '0' },
+                        },
+                        scanVertical: {
+                            '0%': { top: '-10%', opacity: 0 },
+                            '10%': { opacity: 1 },
+                            '90%': { opacity: 1 },
+                            '100%': { top: '110%', opacity: 0 },
                         }
                     }
                 }
@@ -76,9 +83,8 @@
         :root {
             --mouse-x: 50%;
             --mouse-y: 50%;
-            --cursor-size: 800px; /* 动态光晕大小 */
+            --cursor-size: 800px;
 
-            /* === 默认主题 (Acid Lime) === */
             --primary-color: #ccff00;
             --primary-dim: rgba(204, 255, 0, 0.1);
             --primary-glow: rgba(204, 255, 0, 0.25);
@@ -89,116 +95,30 @@
             --scanline-opacity: 0.3;
             --hue-rotate: 0deg;
         }
-
-        [data-theme="neon-pink"] {
-            --primary-color: #ff00ff; --primary-dim: rgba(255, 0, 255, 0.1); --primary-glow: rgba(255, 0, 255, 0.3);
-            --secondary-color: #00ffff; --bg-color: #0a000a; --surface-color: rgba(20, 0, 20, 0.65);
-            --grid-color: rgba(255, 0, 255, 0.08); --hue-rotate: 290deg;
-        }
-        [data-theme="cyber-blue"] {
-            --primary-color: #00f3ff; --primary-dim: rgba(0, 243, 255, 0.1); --primary-glow: rgba(0, 243, 255, 0.3);
-            --secondary-color: #0066ff; --bg-color: #00050a; --surface-color: rgba(0, 10, 20, 0.65);
-            --grid-color: rgba(0, 243, 255, 0.08); --hue-rotate: 180deg;
-        }
-        [data-theme="solar-orange"] {
-            --primary-color: #ff5f00; --primary-dim: rgba(255, 95, 0, 0.1); --primary-glow: rgba(255, 95, 0, 0.3);
-            --secondary-color: #ffaa00; --bg-color: #0a0200; --surface-color: rgba(20, 5, 0, 0.65);
-            --grid-color: rgba(255, 95, 0, 0.08); --hue-rotate: 45deg;
-        }
-
-        .noise-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 40; opacity: 0.08;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-        }
-        .scanlines {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 41; opacity: var(--scanline-opacity);
-            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2));
-            background-size: 100% 4px;
-            animation: scan 0.3s linear infinite;
-        }
         
-        body {
-            background-color: var(--bg-color);
-            background-image: 
-                linear-gradient(var(--grid-color) 1px, transparent 1px),
-                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-            background-size: 60px 60px;
-            background-attachment: fixed;
-            min-height: 100vh; color: white;
-            -webkit-font-smoothing: antialiased;
-            transition: background-color 0.5s ease;
-            overflow-x: hidden;
-            cursor: none; /* 隐藏默认鼠标 */
-        }
+        [data-theme="neon-pink"] { --primary-color: #ff00ff; --primary-dim: rgba(255, 0, 255, 0.1); --primary-glow: rgba(255, 0, 255, 0.3); --secondary-color: #00ffff; --bg-color: #0a000a; --surface-color: rgba(20, 0, 20, 0.65); --grid-color: rgba(255, 0, 255, 0.08); --hue-rotate: 290deg; }
+        [data-theme="cyber-blue"] { --primary-color: #00f3ff; --primary-dim: rgba(0, 243, 255, 0.1); --primary-glow: rgba(0, 243, 255, 0.3); --secondary-color: #0066ff; --bg-color: #00050a; --surface-color: rgba(0, 10, 20, 0.65); --grid-color: rgba(0, 243, 255, 0.08); --hue-rotate: 180deg; }
+        [data-theme="solar-orange"] { --primary-color: #ff5f00; --primary-dim: rgba(255, 95, 0, 0.1); --primary-glow: rgba(255, 95, 0, 0.3); --secondary-color: #ffaa00; --bg-color: #0a0200; --surface-color: rgba(20, 5, 0, 0.65); --grid-color: rgba(255, 95, 0, 0.08); --hue-rotate: 45deg; }
 
-        /* 独立光晕层 */
-        #cursor-glow {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: -1;
-            background-image: radial-gradient(
-                circle var(--cursor-size) at var(--mouse-x) var(--mouse-y), 
-                var(--primary-dim) 0%, 
-                transparent 60%
-            );
-            transition: --cursor-size 0.1s ease;
-            will-change: background-image;
-        }
-
-        /* 点击时的冲击波 */
-        .click-wave {
-            position: fixed;
-            border-radius: 50%;
-            border: 2px solid var(--primary-color);
-            background: transparent;
-            opacity: 0;
-            pointer-events: none;
-            z-index: 9998;
-            transform: translate(-50%, -50%);
-            animation: pulse-ring 0.6s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
-        }
-
-        .cyber-card {
-            background: var(--surface-color); 
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.12); 
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-        .cyber-card:hover {
-            background: rgba(255, 255, 255, 0.1); border-color: var(--primary-color);
-            box-shadow: 0 0 20px var(--primary-dim); transform: translateY(-2px);
-        }
+        .noise-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 40; opacity: 0.08; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"); }
+        .scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 41; opacity: var(--scanline-opacity); background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2)); background-size: 100% 4px; animation: scan 0.3s linear infinite; }
+        body { background-color: var(--bg-color); background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); background-size: 60px 60px; background-attachment: fixed; min-height: 100vh; color: white; -webkit-font-smoothing: antialiased; transition: background-color 0.5s ease; overflow-x: hidden; cursor: none; }
+        #cursor-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; background-image: radial-gradient(circle var(--cursor-size) at var(--mouse-x) var(--mouse-y), var(--primary-dim) 0%, transparent 60%); transition: --cursor-size 0.1s ease; will-change: background-image; }
+        
+        .click-wave { position: fixed; border-radius: 50%; border: 2px solid var(--primary-color); background: transparent; opacity: 0; pointer-events: none; z-index: 9998; transform: translate(-50%, -50%); animation: pulse-ring 0.6s cubic-bezier(0.215, 0.61, 0.355, 1) forwards; }
+        .cyber-card { background: var(--surface-color); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 8px 32px rgba(0,0,0,0.5); transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        .cyber-card:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--primary-color); box-shadow: 0 0 20px var(--primary-dim); transform: translateY(-2px); }
         
         .text-stroke-layer { -webkit-text-stroke: 1px rgba(255, 255, 255, 0.6); color: transparent; pointer-events: none; }
         .caret-primary { caret-color: var(--primary-color); }
-        
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--primary-color); }
         ::selection { background: var(--primary-color); color: black; }
         
-        /* 图片滤镜 */
-        .image-filter-acid-glitch {
-            filter: grayscale(100%) contrast(120%) brightness(110%) sepia(50%) hue-rotate(var(--hue-rotate)) saturate(300%) drop-shadow(0 0 20px var(--primary-dim));
-            transform: scaleX(-1); mix-blend-mode: screen; opacity: 0.6;
-            mask-image: linear-gradient(to bottom, black 60%, transparent 100%); 
-            -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
-            will-change: transform, filter, opacity;
-            transition: opacity 0.3s ease, filter 0.5s ease;
-        }
-
-        .image-filter-acid-subtle {
-            mix-blend-mode: lighten; 
-            filter: contrast(1.3) brightness(1.2) saturate(1.2) hue-rotate(calc(var(--hue-rotate) * 0.5)); 
-            mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
-            -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
-            opacity: 0.9;
-            transition: filter 0.5s ease;
-        }
+        .image-filter-acid-glitch { filter: grayscale(100%) contrast(120%) brightness(110%) sepia(50%) hue-rotate(var(--hue-rotate)) saturate(300%) drop-shadow(0 0 20px var(--primary-dim)); transform: scaleX(-1); mix-blend-mode: screen; opacity: 0.6; mask-image: linear-gradient(to bottom, black 60%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%); will-change: transform, filter, opacity; transition: opacity 0.3s ease, filter 0.5s ease; }
+        .image-filter-acid-subtle { mix-blend-mode: lighten; filter: contrast(1.3) brightness(1.2) saturate(1.2) hue-rotate(calc(var(--hue-rotate) * 0.5)); mask-image: linear-gradient(to bottom, black 70%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%); opacity: 0.9; transition: filter 0.5s ease; }
 
         .cyber-swap-active { animation: cyber-swap 0.6s steps(3) forwards; }
         @keyframes cyber-swap {
@@ -211,122 +131,52 @@
             100% { opacity: 0.6; transform: scaleX(-1) translateX(0); }
         }
 
-        .anime-item:hover {
-            background: linear-gradient(90deg, var(--primary-dim) 0%, transparent 100%);
-            border-left-color: var(--primary-color);
-            padding-left: 8px;
-        }
+        .anime-item:hover { background: linear-gradient(90deg, var(--primary-dim) 0%, transparent 100%); border-left-color: var(--primary-color); padding-left: 8px; }
         #anime-modal.active { display: flex; animation: cyber-slash 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
         .rgb-split { text-shadow: 2px 0 var(--secondary-color), -2px 0 var(--primary-color); animation: glitch 3s infinite; }
         .auto-glitch { animation: glitch-img 5s infinite; }
         
-        .cp2077-bubble {
-            background-color: rgba(10, 10, 10, 0.95);
-            border: 1px solid var(--primary-color);
-            color: var(--primary-color);
-            font-family: 'JetBrains Mono', monospace;
-            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 20px 100%, 0 calc(100% - 20px));
-            box-shadow: 4px 4px 0 var(--primary-dim);
-        }
-        .cp2077-bubble::before {
-            content: 'ERIRI_SYS';
-            position: absolute; top: 0; left: 0;
-            background: var(--primary-color); color: black; font-size: 8px; padding: 2px 6px; font-weight: bold;
-        }
+        .cp2077-bubble { background-color: rgba(10, 10, 10, 0.95); border: 1px solid var(--primary-color); color: var(--primary-color); font-family: 'JetBrains Mono', monospace; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 20px 100%, 0 calc(100% - 20px)); box-shadow: 4px 4px 0 var(--primary-dim); }
+        .cp2077-bubble::before { content: 'ERIRI_SYS'; position: absolute; top: 0; left: 0; background: var(--primary-color); color: black; font-size: 8px; padding: 2px 6px; font-weight: bold; }
 
-        /* 主题切换器 - 顶部导航样式 */
-        .nav-theme-switcher {
-            display: flex; gap: 8px; padding: 4px 8px;
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 4px; align-items: center;
-            margin-left: 16px;
-            pointer-events: auto; /* 确保可点击 */
-        }
-        .theme-btn {
-            width: 14px; height: 14px; border-radius: 2px; cursor: pointer;
-            border: 1px solid transparent; transition: all 0.2s; position: relative;
-        }
+        .nav-theme-switcher { display: flex; gap: 8px; padding: 4px 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; align-items: center; margin-left: 16px; pointer-events: auto; }
+        .theme-btn { width: 14px; height: 14px; border-radius: 2px; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; position: relative; }
         .theme-btn:hover { transform: scale(1.2); box-shadow: 0 0 8px currentColor; }
         .theme-btn.active { border-color: white; box-shadow: 0 0 10px currentColor; transform: scale(1.1); }
 
-        /* === NEW: SONIC DECK 音乐播放器样式 === */
-        #sonic-deck {
-            position: fixed; bottom: 20px; left: 20px; z-index: 50;
-            display: flex; align-items: center; gap: 10px;
-            background: rgba(10, 10, 10, 0.85);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--primary-dim);
-            border-radius: 40px; /* 收起时是圆形，展开时变长 */
-            padding: 5px;
-            width: 50px; /* 初始宽度 */
-            height: 50px;
-            overflow: hidden;
-            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); /* 弹性动画 */
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
-
-        /* 鼠标悬停时展开 */
-        #sonic-deck:hover {
-            width: 340px; /* 展开宽度 */
-            border-color: var(--primary-color);
-            box-shadow: 0 0 20px var(--primary-dim);
-        }
-
-        /* 播放按钮容器 (左侧固定) */
-        .deck-toggle {
-            flex-shrink: 0;
-            width: 40px; height: 40px;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            background: transparent;
-            cursor: pointer;
-            transition: transform 0.2s;
-            position: relative;
-            z-index: 2;
-        }
+        #sonic-deck { position: fixed; bottom: 20px; left: 20px; z-index: 50; display: flex; align-items: center; gap: 10px; background: rgba(10, 10, 10, 0.85); backdrop-filter: blur(20px); border: 1px solid var(--primary-dim); border-radius: 40px; padding: 5px; width: 50px; height: 50px; overflow: hidden; transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        #sonic-deck:hover { width: 340px; border-color: var(--primary-color); box-shadow: 0 0 20px var(--primary-dim); }
+        .deck-toggle { flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: transparent; cursor: pointer; transition: transform 0.2s; position: relative; z-index: 2; }
         .deck-toggle:hover { transform: scale(1.1); }
         .deck-toggle svg { width: 20px; height: 20px; fill: white; transition: fill 0.3s; }
         #sonic-deck:hover .deck-toggle svg { fill: var(--primary-color); }
-
-        /* 展开后的控制面板 */
-        .deck-controls {
-            display: flex; flex-direction: column; flex-grow: 1;
-            opacity: 0; /* 默认隐藏 */
-            transition: opacity 0.3s ease 0.1s; /* 延迟显示 */
-            width: 260px;
-            pointer-events: none; /* 收起时不可点 */
-        }
+        .deck-controls { display: flex; flex-direction: column; flex-grow: 1; opacity: 0; transition: opacity 0.3s ease 0.1s; width: 260px; pointer-events: none; }
         #sonic-deck:hover .deck-controls { opacity: 1; pointer-events: auto; }
-
-        /* 歌曲信息 */
-        .track-info {
-            font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--primary-color);
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            margin-bottom: 4px; letter-spacing: 1px;
-        }
-
-        /* 控制按钮行 */
+        .track-info { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--primary-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; letter-spacing: 1px; }
         .control-row { display: flex; align-items: center; gap: 12px; }
         .mini-btn { cursor: pointer; color: white; transition: color 0.2s; }
         .mini-btn:hover { color: var(--primary-color); }
+        .volume-slider { -webkit-appearance: none; width: 80px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; outline: none; }
+        .volume-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; border-radius: 50%; background: var(--primary-color); cursor: pointer; box-shadow: 0 0 10px var(--primary-color); }
+        #audio-visualizer { position: absolute; bottom: 0; left: 50px; right: 0; height: 100%; width: 280px; z-index: 0; opacity: 0.3; pointer-events: none; mix-blend-mode: screen; }
 
-        /* 音量条 */
-        .volume-slider {
-            -webkit-appearance: none; width: 80px; height: 4px; background: rgba(255,255,255,0.1);
-            border-radius: 2px; outline: none;
-        }
-        .volume-slider::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 10px; height: 10px; border-radius: 50%;
-            background: var(--primary-color); cursor: pointer;
+        /* === AI 助手扫描特效 === */
+        .cyber-scan-line {
+            position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+            background: var(--primary-color);
             box-shadow: 0 0 10px var(--primary-color);
+            animation: scanVertical 2s linear infinite;
+            opacity: 0; transition: opacity 0.3s; pointer-events: none;
         }
-
-        /* 可视化 Canvas */
-        #audio-visualizer {
-            position: absolute; bottom: 0; left: 50px; right: 0; height: 100%; width: 280px;
-            z-index: 0; opacity: 0.3; pointer-events: none;
-            mix-blend-mode: screen;
+        .cyber-scan-data {
+            position: absolute; top: 10%; right: -20px;
+            background: rgba(0,0,0,0.8); border: 1px solid var(--primary-color);
+            color: var(--primary-color); font-family: 'JetBrains Mono', monospace;
+            font-size: 8px; padding: 4px; pointer-events: none;
+            opacity: 0; transform: translateX(10px); transition: all 0.3s;
         }
+        .cyber-card:hover .cyber-scan-line { opacity: 0.5; }
+        .cyber-card:hover .cyber-scan-data { opacity: 1; transform: translateX(0); }
     </style>
 </head>
 <body class="antialiased overflow-x-hidden font-sans">
@@ -339,44 +189,23 @@
         <source src="./audio/bgm.mp3" type="audio/mp3">
     </audio>
 
-    <!-- ================== SONIC DECK 音乐控制台 ================== -->
     <div id="sonic-deck">
-        <!-- 可视化背景 -->
         <canvas id="audio-visualizer"></canvas>
-
-        <!-- 左侧开关/播放键 -->
         <div class="deck-toggle" onclick="toggleMusic()">
             <div id="deck-wave" class="hidden absolute inset-0 rounded-full border border-primary opacity-60 animate-ping"></div>
             <svg id="deck-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
         </div>
-
-        <!-- 展开面板 -->
         <div class="deck-controls">
-            <!-- 歌曲名 -->
             <div class="track-info" id="track-title">SYSTEM_SOUNDTRACK</div>
-            
             <div class="control-row">
-                <!-- 上一首 -->
-                <div class="mini-btn" onclick="changeTrack(-1)">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-                </div>
-                
-                <!-- 音量图标 -->
+                <div class="mini-btn" onclick="changeTrack(-1)"><svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></div>
                 <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24" class="text-gray-500 ml-2"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
-                
-                <!-- 音量滑块 -->
                 <input type="range" class="volume-slider" min="0" max="1" step="0.01" value="0.5" oninput="setVolume(this.value)">
-                
-                <!-- 下一首 -->
-                <div class="mini-btn ml-auto mr-2" onclick="changeTrack(1)">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
-                </div>
+                <div class="mini-btn ml-auto mr-2" onclick="changeTrack(1)"><svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></div>
             </div>
         </div>
     </div>
-    <!-- ======================================================== -->
 
-    <!-- 模态框 -->
     <div id="anime-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/90 backdrop-blur-xl cursor-pointer" onclick="closeAnimeModal()">
         <div class="absolute inset-0 pointer-events-none opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CjxwYXRoIGQ9Ik0wIDBoNDB2NDBIMHoiIGZpbGw9Im5vbmUiLz4KPHBhdGggZD0iTTAgNDBoNDBNNDAgMHY0ME0wIDB2NDAiIHN0cm9rZT0iIzAwZmZmOSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIvPgo8L3N2Zz4=')]"></div>
         <div class="relative w-full max-w-6xl h-[85vh] flex flex-col md:flex-row items-stretch justify-center gap-0 md:gap-8 p-6 md:p-12 cursor-default" onclick="event.stopPropagation()">
@@ -413,7 +242,6 @@
         </div>
     </div>
 
-    <!-- Hero 背景人物 -->
     <div class="fixed right-0 bottom-0 z-0 pointer-events-none w-[45vw] max-w-[600px] flex items-end justify-end">
         <img 
             id="hero-character"
@@ -424,14 +252,8 @@
         >
     </div>
 
-    <!-- 主题切换器 (新功能) -->
-    <!-- <div class="theme-switcher"> ... Removed bottom right ... </div> -->
-
-    <!-- 音乐按钮 (已被 Sonic Deck 替代) -->
-
     <div class="fixed top-0 left-0 w-full h-px bg-white/10 z-40"></div>
 
-    <!-- 导航栏：包含颜色选择器 -->
     <nav class="fixed top-0 w-full z-40 px-6 md:px-12 py-4 flex justify-between items-center mix-blend-difference text-white bg-gradient-to-b from-black/80 to-transparent">
         <div class="flex items-center gap-4">
             <a href="index.html" class="flex flex-col group cursor-pointer">
@@ -439,7 +261,6 @@
                 <span class="font-mono text-[9px] tracking-[0.2em] opacity-60 group-hover:opacity-100 transition-opacity">V2.0.5</span>
             </a>
             
-            <!-- 颜色选择器 -->
             <div class="nav-theme-switcher ml-4 pointer-events-auto cursor-auto">
                 <div class="theme-btn active" style="background: #ccff00;" onclick="setTheme('default')" title="Acid Lime"></div>
                 <div class="theme-btn" style="background: #ff00ff;" onclick="setTheme('neon-pink')" title="Neon Pink"></div>
@@ -504,9 +325,16 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
             <aside class="lg:col-span-4 space-y-6 lg:sticky lg:top-24 h-fit">
                 
-                <!-- AI 助手: 优化融合感 -->
+                <!-- AI 助手: 扫描与交互增强 -->
                 <div class="cyber-card rounded-xl p-0 overflow-visible relative group transition-shadow duration-500 border-primary/30 cursor-pointer" onclick="triggerAiSpeech()">
                     
+                    <div class="cyber-scan-line"></div>
+                    <div class="cyber-scan-data">
+                        <div>SYNC: <span class="text-white">98%</span></div>
+                        <div>CPU: <span class="text-white">34%</span></div>
+                        <div>BIO: <span class="text-white animate-pulse">OK</span></div>
+                    </div>
+
                     <div id="ai-speech-bubble" class="hidden absolute -top-16 left-0 z-50 animate-pop-in pointer-events-none" style="width: 250px; transform: translateY(-100%);">
                         <div class="cp2077-bubble relative p-4">
                              <p id="ai-speech-text" class="text-xs font-bold leading-relaxed"></p>
@@ -523,7 +351,10 @@
                     </div>
                     <div class="absolute bottom-0 left-0 w-full p-5 z-10 pointer-events-none">
                         <h3 class="font-mono text-primary text-sm font-bold mb-1 tracking-wider border-b border-white/10 pb-2">:: AI_ASSISTANT</h3>
-                        <p class="text-gray-300 text-xs font-mono leading-relaxed">STATUS: <span class="text-primary blink font-bold">ONLINE</span><br><span class="opacity-70">Click to interact...</span></p>
+                        <p class="text-gray-300 text-xs font-mono leading-relaxed">
+                            STATUS: <span id="ai-status-text" class="text-primary blink font-bold">ONLINE</span><br>
+                            <span class="opacity-70">Click to interact...</span>
+                        </p>
                     </div>
                 </div>
 
@@ -619,49 +450,17 @@
 
     <script>
         let ticking = false;
-        // 鼠标拖尾数组
-        const trails = [];
-        const TRAIL_COUNT = 6;
-        let mouseX = 0, mouseY = 0;
-
-        // 初始化拖尾元素
-        const trailContainer = document.getElementById('cursor-trails');
-        if (trailContainer) { // 检查元素是否存在
-             for (let i = 0; i < TRAIL_COUNT; i++) {
-                const dot = document.createElement('div');
-                // 给不同的点分配不同的类，产生不同的颜色
-                // Trail 1 & 2: 主要颜色 (Acid/Theme)
-                // Trail 3: 辅助颜色 (Cyan)
-                // Trail 4: 辅助颜色 (Magenta)
-                // Trail 5: 中心白点
-                let className = 'trail-dot';
-                if (i === 0 || i === 1) className += ' trail-1';
-                else if (i === 2) className += ' trail-2';
-                else if (i === 3) className += ' trail-3';
-                else className += ' trail-4';
-                
-                dot.className = className;
-                trailContainer.appendChild(dot);
-                trails.push({ el: dot, x: window.innerWidth / 2, y: window.innerHeight / 2, lag: (i + 1) * 0.08 });
-            }
-        }
-       
-
         document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-            
-            // 保持原有的 CSS 变量更新，用于背景
             if (!ticking) {
                 window.requestAnimationFrame(() => {
-                    const xPct = (e.clientX / window.innerWidth) * 100;
-                    const yPct = (e.clientY / window.innerHeight) * 100;
-                    document.documentElement.style.setProperty('--mouse-x', `${xPct}%`);
-                    document.documentElement.style.setProperty('--mouse-y', `${yPct}%`);
+                    const x = (e.clientX / window.innerWidth) * 100;
+                    const y = (e.clientY / window.innerHeight) * 100;
+                    document.documentElement.style.setProperty('--mouse-x', `${x}%`);
+                    document.documentElement.style.setProperty('--mouse-y', `${y}%`);
                     
-                    // 更新光晕位置，使其动态变化
+                    // 更新光晕大小
                     const speed = Math.abs(e.movementX) + Math.abs(e.movementY);
-                    const size = 600 + Math.min(speed * 5, 400); // 移动越快，光晕越大
+                    const size = 600 + Math.min(speed * 5, 400);
                     document.documentElement.style.setProperty('--cursor-size', `${size}px`);
 
                     ticking = false;
@@ -679,26 +478,8 @@
             wave.style.width = '50px';
             wave.style.height = '50px';
             document.body.appendChild(wave);
-            
-            setTimeout(() => {
-                wave.remove();
-            }, 600);
+            setTimeout(() => wave.remove(), 600);
         });
-
-        // 动画循环：更新拖尾位置 (Sandevistan Lerp) - 移除循环调用，因为已经移除了拖尾元素
-        /* function animateTrails() {
-            trails.forEach(trail => {
-                // 简单的线性插值 (Lerp)
-                trail.x += (mouseX - trail.x) * trail.lag;
-                trail.y += (mouseY - trail.y) * trail.lag;
-                
-                // 应用位置
-                trail.el.style.transform = `translate(${trail.x}px, ${trail.y}px) translate(-50%, -50%)`;
-            });
-            requestAnimationFrame(animateTrails);
-        }
-        animateTrails(); */
-
 
         // --- Theme Switcher Logic ---
         function setTheme(themeName) {
@@ -715,7 +496,7 @@
             setTheme(savedTheme);
         }
 
-        // --- Eriri AI Interaction ---
+        // --- Eriri AI Interaction (Enhanced) ---
         const eririLines = [
             "哼，才不是特意等你的！\n(Hmph, wasn't waiting for you!)",
             "别误会了，我只是路过而已。\n(Just passing by, don't misunderstand.)",
@@ -728,13 +509,32 @@
         function triggerAiSpeech() {
             const bubble = document.getElementById('ai-speech-bubble');
             const textEl = document.getElementById('ai-speech-text');
+            const statusEl = document.getElementById('ai-status-text');
+            
+            // 状态切换
+            statusEl.innerText = "BUSY";
+            statusEl.style.color = "#ff0055"; // 红色
+
             const line = eririLines[Math.floor(Math.random() * eririLines.length)];
-            textEl.innerText = line;
+            
+            // 打字机效果
+            textEl.innerText = "";
             bubble.classList.remove('hidden');
-            if (window.speechTimeout) clearTimeout(window.speechTimeout);
-            window.speechTimeout = setTimeout(() => {
-                bubble.classList.add('hidden');
-            }, 4000);
+            let i = 0;
+            const typeWriter = setInterval(() => {
+                if (i < line.length) {
+                    textEl.innerText += line.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(typeWriter);
+                    // 恢复状态
+                    setTimeout(() => {
+                        statusEl.innerText = "ONLINE";
+                        statusEl.style.color = ""; // 恢复默认色
+                        bubble.classList.add('hidden');
+                    }, 3000);
+                }
+            }, 30); // 打字速度
         }
 
         // --- 2. Hero 背景人物动画逻辑 (仅闪烁，不切换) ---
