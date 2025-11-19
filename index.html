@@ -141,11 +141,11 @@
             mask-image: linear-gradient(to bottom, black 60%, transparent 100%); 
             -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
             will-change: transform, filter, opacity;
-            transition: opacity 0.3s ease; /* 确保透明度变化平滑 */
+            transition: opacity 0.3s ease;
         }
 
-        /* --- 2. 新增：切换时的赛博朋克故障动画 --- */
-        /* 当图片添加此 class 时触发 */
+        /* --- 2. 赛博朋克故障动画 (仅闪烁，不换图) --- */
+        /* 当图片添加此 class 时触发一次强烈的故障 */
         .cyber-swap-active {
             animation: cyber-swap 0.6s steps(3) forwards;
         }
@@ -168,11 +168,9 @@
                 transform: scaleX(-1) translateX(10px) skewX(-10deg);
                 clip-path: inset(40% 0 10% 0);
             }
-            49% {
-                opacity: 0; /* 在此瞬间切换图片源 */
-            }
             50% {
-                opacity: 0; 
+                opacity: 0.1; /* 变得很淡，模拟信号丢失 */
+                filter: invert(1);
             }
             60% {
                 opacity: 0.4;
@@ -427,7 +425,7 @@
                     <div class="flex items-center gap-2"><span class="w-2 h-2 bg-acid rounded-full animate-pulse"></span><span class="font-mono text-xs text-acid">[ ONLINE ]</span></div>
                 </div>
                 <div id="article-list-container" class="space-y-6">
-                    <!-- 文章列表 (Updated) -->
+                    <!-- 文章列表 -->
                     <article class="article-card cyber-card rounded-xl p-6 md:p-8 relative group hover:bg-black/80 overflow-hidden border-l-4 border-l-transparent hover:border-l-acid transition-all" data-tags="Novel ACG WhiteAlbum2">
                         <div class="absolute top-0 right-0 w-48 h-48 bg-acid/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                         <div class="flex flex-col gap-4 relative z-10">
@@ -513,34 +511,22 @@
             }, 4000);
         }
 
-        // --- 2. Hero 背景人物切换逻辑 (赛博朋克风格) ---
-        const heroImages = [
-            './images/hero-glitch.png',   // 黑白原图
-            './images/hero-variant-1.png', // 双人彩图
-            './images/hero-variant-2.png'  // 单人彩图
-        ];
-        let currentHeroIndex = 0;
+        // --- 2. Hero 背景人物动画逻辑 (仅闪烁，不切换) ---
+        function startHeroGlitch() {
+            const heroImg = document.getElementById('hero-character');
+            if(!heroImg) return;
 
-        function startHeroRotation() {
             setInterval(() => {
-                const heroImg = document.getElementById('hero-character');
-                if(!heroImg) return;
-
-                // 1. 触发故障动画
+                // 1. 触发强烈故障动画
                 heroImg.classList.add('cyber-swap-active');
 
-                // 2. 在动画中间（完全消失时）切换图片
-                setTimeout(() => {
-                    currentHeroIndex = (currentHeroIndex + 1) % heroImages.length;
-                    heroImg.src = heroImages[currentHeroIndex];
-                }, 280); // 对应 CSS 动画中 opacity: 0 的时间点
-
-                // 3. 动画结束后移除 class，等待下一次触发
+                // 2. 动画结束后移除 class，等待下一次触发
+                // 动画时长设置为 0.6s
                 setTimeout(() => {
                     heroImg.classList.remove('cyber-swap-active');
-                }, 600); // 动画总时长
+                }, 600);
 
-            }, 30000); // 每 30 秒切换一次
+            }, 10000); // 每 10 秒触发一次故障闪烁
         }
 
         // --- 3. 模态框逻辑 ---
@@ -651,7 +637,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadAnimeData();
-            startHeroRotation(); // 启动图片切换
+            startHeroGlitch(); // 启动背景故障闪烁
             
             const music = document.getElementById('background-music');
             const storedState = localStorage.getItem('music_playing');
