@@ -29,16 +29,15 @@
                     animation: {
                         'spin-slow': 'spin 20s linear infinite',
                         'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        /* 增强版浮动：幅度更大，带缩放 */
                         'float-heavy': 'floatHeavy 5s ease-in-out infinite', 
                         'glitch': 'glitch 2s linear infinite',
-                        'scan': 'scan 6s linear infinite', /* 扫描线加快 */
-                        'breathe-glow': 'breatheGlow 4s ease-in-out infinite', /* 新增呼吸光晕 */
+                        'scan': 'scan 8s linear infinite', 
+                        'breathe-glow': 'breatheGlow 4s ease-in-out infinite',
                     },
                     keyframes: {
                         floatHeavy: {
                             '0%, 100%': { transform: 'translateY(0) scale(1)' },
-                            '50%': { transform: 'translateY(-12px) scale(1.02)' }, /* 动效更明显 */
+                            '50%': { transform: 'translateY(-8px) scale(1.01)' }, 
                         },
                         glitch: {
                             '2%, 64%': { transform: 'translate(1px,0) skew(0deg)' },
@@ -51,7 +50,7 @@
                         },
                         breatheGlow: {
                             '0%, 100%': { boxShadow: '0 0 15px rgba(204, 255, 0, 0.1)' },
-                            '50%': { boxShadow: '0 0 30px rgba(204, 255, 0, 0.3)' },
+                            '50%': { boxShadow: '0 0 30px rgba(204, 255, 0, 0.25)' },
                         }
                     }
                 }
@@ -65,14 +64,12 @@
             --mouse-y: 50%;
         }
 
-        /* 1. 噪点层 - 透明度增加 (0.06 -> 0.09) */
         .noise-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 40; opacity: 0.09;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
 
-        /* 2. 扫描线层 - 动效更明显 (Opacity 0.4 -> 0.5, 渐变更锐利) */
         .scanlines {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 41; opacity: 0.5;
@@ -82,17 +79,14 @@
                 rgba(0,0,0,0.2) 50%, 
                 rgba(0,0,0,0.2));
             background-size: 100% 4px;
-            animation: scan 0.3s linear infinite; /* 极速闪烁，更有CRT感 */
+            animation: scan 0.3s linear infinite;
         }
         
-        /* 3. 动态背景 - 网格线条更亮 */
         body {
             background-color: #050505;
             background-image: 
-                /* 线条透明度 0.05 -> 0.1，更清晰 */
                 linear-gradient(rgba(204, 255, 0, 0.1) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(204, 255, 0, 0.1) 1px, transparent 1px),
-                /* 鼠标光晕 */
                 radial-gradient(circle 800px at var(--mouse-x) var(--mouse-y), rgba(204, 255, 0, 0.15) 0%, transparent 60%);
             background-size: 60px 60px, 60px 60px, 100% 100%;
             background-attachment: fixed;
@@ -124,7 +118,6 @@
         ::-webkit-scrollbar-thumb:hover { background: #ccff00; }
         ::selection { background: #ccff00; color: black; }
         
-        /* 动漫少女 1 (右侧 Hero 背景) */
         .image-filter-acid-glitch {
             filter: 
                 grayscale(100%) 
@@ -141,7 +134,6 @@
             -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
         }
 
-        /* 动漫少女 2 (左侧 AI 助手) */
         .image-filter-acid-subtle {
             filter: 
                 grayscale(50%)
@@ -150,8 +142,6 @@
                 saturate(150%)
                 brightness(90%)
                 drop-shadow(0 0 15px rgba(204, 255, 0, 0.2));
-            mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
-            -webkit-mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
         }
     </style>
 </head>
@@ -164,10 +154,7 @@
         <source src="./audio/bgm.mp3" type="audio/mp3">
     </audio>
 
-    <!-- 背景固定人物层 (Z-INDEX: 0) -->
-    
-    <!-- 1. 右侧 Hero 人物 -->
-    <!-- 调整：w减小 (40vw/25vw)，max-h减小 (85vh)，位置微调，确保露出额头 -->
+    <!-- 1. 右侧 Hero 人物 (保持在背景) -->
     <div class="fixed right-0 bottom-0 z-0 pointer-events-none w-[40vw] md:w-[30vw] lg:w-[25vw] max-h-[85vh] flex items-end justify-end animate-glitch">
         <img 
             src="./images/hero-glitch.png" 
@@ -176,8 +163,7 @@
         >
     </div>
 
-    <!-- 页面主体内容层 (Z-INDEX: 10) -->
-
+    <!-- 音乐按钮 -->
     <button id="music-toggle-button" onclick="toggleMusic()" class="fixed bottom-6 left-6 z-50 flex items-center gap-0 group cursor-pointer hover:scale-105 transition-transform">
         <div class="relative w-10 h-10 bg-black/60 border border-white/20 backdrop-blur-md rounded-full flex items-center justify-center group-hover:border-acid transition-colors duration-300 z-10">
             <div id="music-wave" class="hidden absolute inset-0 rounded-full border border-acid opacity-60 animate-ping"></div>
@@ -195,6 +181,7 @@
     <div class="fixed top-0 left-6 md:left-12 w-px h-full bg-white/5 z-30 hidden md:block"></div>
     <div class="fixed top-0 right-6 md:right-12 w-px h-full bg-white/5 z-30 hidden md:block"></div>
 
+    <!-- 导航 -->
     <nav class="fixed top-0 w-full z-40 px-6 md:px-12 py-5 flex justify-between items-center mix-blend-difference text-white">
         <a href="index.html" class="flex flex-col group">
             <span class="text-lg font-black tracking-tighter leading-none group-hover:text-acid transition-colors">WH1TE.LOG</span>
@@ -218,23 +205,37 @@
     </nav>
 
     <!-- Hero Section -->
-    <header class="relative pt-40 pb-20 px-6 min-h-[80vh] flex flex-col justify-center items-center text-center z-20">
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] md:w-[40vw] aspect-square border border-dashed border-white/10 rounded-full animate-spin-slow pointer-events-none"></div>
-        <div class="space-y-4 animate-fade-in-up max-w-3xl mx-auto">
-            <div class="flex justify-center gap-3 mb-8">
+    <header class="relative pt-40 pb-20 px-6 min-h-[80vh] flex flex-col justify-center items-center text-center z-20 overflow-hidden">
+        
+        <!-- 中间标题容器: 
+             max-w-[90vw] (小屏) -> xl:max-w-[50vw] (大屏缩窄，避让左右元素) 
+             transition-all 保证缩放平滑
+        -->
+        <div class="space-y-4 animate-fade-in-up w-full max-w-[90vw] xl:max-w-[50vw] mx-auto relative z-20 transition-all duration-500">
+             <!-- 装饰圆环 -->
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] md:w-[40vw] aspect-square border border-dashed border-white/10 rounded-full animate-spin-slow pointer-events-none z-0"></div>
+
+            <div class="flex justify-center gap-3 mb-8 relative z-10">
                 <span class="px-2 py-1 bg-acid text-black font-mono text-[10px] font-bold uppercase tracking-wider rounded-sm">System Ready</span>
                 <span class="px-2 py-1 border border-white/20 backdrop-blur-sm text-white/70 font-mono text-[10px] font-bold uppercase tracking-wider rounded-sm">Loc: Internet</span>
             </div>
-            <div class="relative inline-block">
-                <h1 class="text-6xl sm:text-8xl md:text-9xl font-black tracking-tighter leading-none text-white mix-blend-overlay opacity-90 select-none">WH1TE</h1>
-                <h1 class="text-6xl sm:text-8xl md:text-9xl font-black tracking-tighter leading-none text-stroke-layer absolute top-0 left-0 w-full h-full flex items-center justify-center translate-x-[3px] translate-y-[3px]">WH1TE</h1>
+            
+            <div class="relative inline-block z-10">
+                <!-- 标题字号调整: 
+                     text-[12vw] (移动优先，够大) 
+                     xl:text-[7rem] (大屏锁定最大值，防止过大侵入侧边)
+                -->
+                <h1 class="text-[12vw] xl:text-[7rem] font-black tracking-tighter leading-none text-white mix-blend-overlay opacity-90 select-none">WH1TE</h1>
+                <h1 class="text-[12vw] xl:text-[7rem] font-black tracking-tighter leading-none text-stroke-layer absolute top-0 left-0 w-full h-full flex items-center justify-center translate-x-[3px] translate-y-[3px]">WH1TE</h1>
             </div>
-            <div class="flex items-center justify-center gap-4 mt-2">
+            
+            <div class="flex items-center justify-center gap-4 mt-2 relative z-10">
                 <div class="h-px w-8 md:w-16 bg-acid/50"></div>
                 <h2 class="text-xl md:text-3xl font-bold text-white tracking-tight">互联网<span class="text-acid">小屋</span></h2>
                 <div class="h-px w-8 md:w-16 bg-acid/50"></div>
             </div>
-            <div class="mt-16 relative max-w-lg mx-auto w-full group">
+            
+            <div class="mt-16 relative max-w-lg mx-auto w-full group z-10">
                 <div class="relative flex items-center">
                     <div class="absolute left-0 pl-4 text-acid font-mono text-lg flex items-center h-full pb-1">></div>
                     <input type="text" id="search-input" placeholder="INPUT_KEYWORD..." oninput="searchArticles()" class="w-full pl-10 pr-12 py-4 bg-black/30 backdrop-blur-xl border-b border-white/30 text-white font-mono text-sm md:text-base placeholder-white/20 focus:border-acid focus:bg-black/50 focus:outline-none transition-all caret-acid uppercase">
@@ -248,40 +249,46 @@
     <!-- 主内容 -->
     <main class="max-w-7xl mx-auto px-6 md:px-12 pb-32 relative z-20">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
-            <aside class="lg:col-span-4 space-y-6 lg:sticky lg:top-24 h-fit">
+            
+            <!-- 侧边栏 (宽度占比加大：col-span-5) -->
+            <aside class="lg:col-span-5 space-y-6 lg:sticky lg:top-24 h-fit">
                 
-                <!-- === 2. AI 助手 (Side Bar) === 
-                     动效升级：animate-float-heavy (大幅度浮动+缩放) + animate-breathe-glow (呼吸光晕)
-                -->
+                <!-- AI 助手 Card (大尺寸) -->
                 <div class="cyber-card rounded-xl p-0 overflow-hidden animate-float-heavy animate-breathe-glow relative group transition-shadow duration-500">
                     <div class="w-full relative">
                         <img 
                             src="./images/ai-assistant.jpg" 
                             alt="AI Assistant" 
-                            class="w-full h-auto object-cover image-filter-acid-subtle"
+                            class="w-full h-auto object-cover image-filter-acid-subtle group-hover:scale-105 transition-transform duration-700"
                         >
-                        <div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
+                        <div class="absolute bottom-0 left-0 w-full h-2/3 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
                     </div>
-                    <div class="absolute bottom-0 left-0 w-full p-5 z-10">
-                        <h3 class="font-mono text-acid text-sm font-bold mb-1 tracking-wider">:: AI_ASSISTANT</h3>
-                        <p class="text-gray-300 text-xs font-mono">
+                    
+                    <div class="absolute bottom-0 left-0 w-full p-6 z-10">
+                        <h3 class="font-mono text-acid text-sm font-bold mb-2 tracking-wider border-b border-white/10 pb-2">:: AI_ASSISTANT</h3>
+                        <p class="text-gray-300 text-xs font-mono leading-relaxed">
                             STATUS: <span class="text-acid blink font-bold">ONLINE</span><br>
-                            <span class="opacity-70">Awaiting command input...</span>
+                            <span class="opacity-70">"System ready. Waiting for your command, Commander."</span>
                         </p>
                     </div>
                 </div>
 
                 <div class="cyber-card rounded-xl p-6 relative overflow-hidden group">
-                    <h3 class="font-mono text-acid text-xs font-bold mb-4 border-b border-white/10 pb-2 flex items-center gap-2"><span class="w-1.5 h-1.5 bg-acid rounded-sm"></span>NOTICE_BOARD</h3>
+                    <h3 class="font-mono text-acid text-xs font-bold mb-4 border-b border-white/10 pb-2 flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 bg-acid rounded-sm"></span>
+                        NOTICE_BOARD
+                    </h3>
                     <div class="space-y-3 font-mono text-[11px] md:text-xs leading-relaxed text-gray-300 relative z-10">
                         <div class="flex gap-2"><span class="text-acid min-w-[14px]">>></span><p>成功配置 Python 环境，下一步专注博客维护脚本开发。</p></div>
                     </div>
                 </div>
+
                 <div class="grid grid-cols-3 gap-3 md:gap-4">
                     <a href="https://github.com/whte97284-hue/wh1te-blog-project/tree/main" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-white hover:text-black transition-all group relative overflow-hidden"><span class="font-mono text-[9px] font-bold uppercase relative z-10">Git</span></a>
                     <a href="https://space.bilibili.com/551898501" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-[#fb7299] hover:text-white transition-all group relative overflow-hidden"><span class="font-mono text-[9px] font-bold uppercase relative z-10">Bili</span></a>
                     <a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-black hover:text-white transition-all group relative overflow-hidden"><span class="font-mono text-[9px] font-bold uppercase relative z-10">TikTok</span></a>
                 </div>
+
                 <div class="cyber-card rounded-xl p-6">
                     <h3 class="font-mono text-gray-400 text-[10px] mb-4 uppercase tracking-widest flex justify-between">:: TAGS_COLLECTION<span>[04]</span></h3>
                     <div class="flex flex-wrap gap-2" id="tag-cloud">
@@ -293,7 +300,8 @@
                 </div>
             </aside>
 
-            <div class="lg:col-span-8 space-y-8">
+            <!-- 文章流 (宽度占比减小：col-span-7) -->
+            <div class="lg:col-span-7 space-y-8">
                 <div class="flex items-center justify-between border-b border-white/10 pb-4">
                     <h2 class="text-2xl md:text-3xl font-bold tracking-tighter">LATEST_FEEDS</h2>
                     <div class="flex items-center gap-2"><span class="w-2 h-2 bg-acid rounded-full animate-pulse"></span><span class="font-mono text-xs text-acid">[ ONLINE ]</span></div>
