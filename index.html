@@ -30,13 +30,13 @@
                         'spin-slow': 'spin 20s linear infinite',
                         'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                         'float': 'float 6s ease-in-out infinite',
-                        'glitch': 'glitch 2s linear infinite', /* 放慢一点故障频率 */
+                        'glitch': 'glitch 2s linear infinite',
                         'scan': 'scan 8s linear infinite',
                     },
                     keyframes: {
                         float: {
                             '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-10px)' },
+                            '50%': { transform: 'translateY(-6px)' },
                         },
                         glitch: {
                             '2%, 64%': { transform: 'translate(1px,0) skew(0deg)' },
@@ -88,7 +88,7 @@
         }
 
         .cyber-card {
-            background: rgba(5, 5, 5, 0.6); /* 稍微加深背景，防止文字在图片上看不清 */
+            background: rgba(5, 5, 5, 0.6);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.12); 
@@ -119,24 +119,22 @@
                 hue-rotate(60deg) 
                 saturate(300%) 
                 drop-shadow(0 0 20px rgba(204, 255, 0, 0.4));
-            transform: scaleX(-1); /* 镜像翻转，看向中间 */
-            mix-blend-mode: screen; /* 让黑色背景透明，融入网页 */
+            transform: scaleX(-1); 
+            mix-blend-mode: screen; 
             opacity: 0.85;
-            mask-image: linear-gradient(to bottom, black 80%, transparent 100%); /* 底部渐变消失，避免硬切 */
-            -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+            mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
         }
 
         /* 动漫少女 2 (左侧 AI 助手) */
         .image-filter-acid-subtle {
             filter: 
-                grayscale(50%)
-                sepia(30%)
-                hue-rotate(50deg)
-                saturate(150%)
-                brightness(90%)
-                drop-shadow(0 0 15px rgba(204, 255, 0, 0.2));
-            mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
-            -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+                grayscale(30%) /* 稍微保留一点彩色 */
+                sepia(20%)
+                hue-rotate(30deg)
+                saturate(120%)
+                brightness(95%)
+                drop-shadow(0 0 15px rgba(204, 255, 0, 0.1));
         }
     </style>
 </head>
@@ -151,9 +149,8 @@
 
     <!-- ================== 背景固定人物层 (Z-INDEX: 0) ================== -->
     
-    <!-- 1. 右侧 Hero 人物 (黑白故障风) -->
-    <!-- 固定在右下角，利用右侧冗余空间 -->
-    <div class="fixed right-0 bottom-0 z-0 pointer-events-none w-[50vw] md:w-[35vw] lg:w-[30vw] max-h-[90vh] flex items-end justify-end animate-glitch">
+    <!-- 1. 右侧 Hero 人物 (黑白故障风) - 保持在背景，大尺寸 -->
+    <div class="fixed right-0 bottom-0 z-0 pointer-events-none w-[50vw] md:w-[40vw] lg:w-[35vw] max-h-[90vh] flex items-end justify-end animate-glitch">
         <img 
             src="./images/hero-glitch.png" 
             alt="Cyberpunk Hero" 
@@ -161,15 +158,7 @@
         >
     </div>
 
-    <!-- 2. 左侧 AI 助手 (彩色柔和风) -->
-    <!-- 固定在左下角，利用左侧冗余空间 -->
-    <div class="fixed left-0 bottom-0 z-0 pointer-events-none w-[45vw] md:w-[30vw] lg:w-[25vw] max-h-[80vh] flex items-end justify-start animate-float hidden md:flex">
-        <img 
-            src="./images/ai-assistant.jpg" 
-            alt="AI Assistant" 
-            class="w-full h-auto object-contain image-filter-acid-subtle"
-        >
-    </div>
+    <!-- 2. 左侧 AI 助手 - 已移动回 Sidebar (见下文) -->
 
     <!-- ================== 页面主体内容层 (Z-INDEX: 10) ================== -->
 
@@ -215,7 +204,7 @@
         <div class="md:hidden text-acid font-mono text-xs border border-acid/50 px-2 py-1 rounded cursor-pointer hover:bg-acid hover:text-black transition-colors">MENU::OPEN</div>
     </nav>
 
-    <!-- Hero Section (文本居中，不偏倚) -->
+    <!-- Hero Section -->
     <header class="relative pt-40 pb-20 px-6 min-h-[80vh] flex flex-col justify-center items-center text-center z-20">
         
         <!-- 装饰圆环 -->
@@ -253,14 +242,30 @@
             <!-- 侧边栏 -->
             <aside class="lg:col-span-4 space-y-6 lg:sticky lg:top-24 h-fit">
                 
-                <!-- 纯文字状态面板 (图片已移至左侧背景) -->
-                <div class="cyber-card rounded-xl p-6 border-l-2 border-l-acid relative overflow-hidden">
-                    <h3 class="font-mono text-acid text-xs font-bold mb-2">:: SYSTEM_STATUS</h3>
-                    <p class="text-gray-400 text-xs font-mono leading-relaxed">
-                        Left_Flank: AI_Assistant [ONLINE]<br>
-                        Right_Flank: Guardian_Zero [ONLINE]<br>
-                        Core: <span class="text-acid blink">STABLE</span>
-                    </p>
+                <!-- === 2. AI 助手 (已放回框里，且尺寸变大) === 
+                     修改：p-0 去除内边距，w-full 让图片撑满，relative group 增加互动
+                -->
+                <div class="cyber-card rounded-xl p-0 overflow-hidden animate-float relative group shadow-2xl hover:shadow-acid/20 transition-shadow duration-500">
+                    <!-- 图片容器：设置为全宽 -->
+                    <div class="w-full relative">
+                        <!-- 图片：w-full 撑满，object-cover 保持比例 -->
+                        <img 
+                            src="./images/ai-assistant.jpg" 
+                            alt="AI Assistant" 
+                            class="w-full h-auto object-cover image-filter-acid-subtle"
+                        >
+                        <!-- 底部渐变遮罩，让文字更清晰 -->
+                        <div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
+                    </div>
+                    
+                    <!-- 覆盖在图片底部的文字信息 -->
+                    <div class="absolute bottom-0 left-0 w-full p-5 z-10">
+                        <h3 class="font-mono text-acid text-sm font-bold mb-1 tracking-wider">:: AI_ASSISTANT</h3>
+                        <p class="text-gray-300 text-xs font-mono">
+                            STATUS: <span class="text-acid blink font-bold">ONLINE</span><br>
+                            <span class="opacity-70">Awaiting command input...</span>
+                        </p>
+                    </div>
                 </div>
 
                 <div class="cyber-card rounded-xl p-6 relative overflow-hidden group">
