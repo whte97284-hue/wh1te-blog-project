@@ -69,12 +69,14 @@
             --mouse-y: 50%;
         }
 
+        /* 1. 噪点层 */
         .noise-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 40; opacity: 0.08;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
 
+        /* 2. 扫描线层 */
         .scanlines {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 41; opacity: 0.3;
@@ -87,6 +89,7 @@
             animation: scan 0.3s linear infinite;
         }
         
+        /* 3. 动态背景 */
         body {
             background-color: #050505;
             background-image: 
@@ -125,6 +128,7 @@
         ::-webkit-scrollbar-thumb:hover { background: #ccff00; }
         ::selection { background: #ccff00; color: black; }
         
+        /* 动漫少女 1 (右侧背景) */
         .image-filter-acid-glitch {
             filter: grayscale(100%) contrast(120%) brightness(110%) sepia(50%) hue-rotate(60deg) saturate(300%) drop-shadow(0 0 20px rgba(204, 255, 0, 0.3));
             transform: scaleX(-1); mix-blend-mode: screen; opacity: 0.6;
@@ -133,10 +137,12 @@
             will-change: transform;
         }
 
+        /* 动漫少女 2 (左侧侧边栏) */
         .image-filter-acid-subtle {
             filter: grayscale(40%) sepia(20%) hue-rotate(50deg) saturate(140%) brightness(95%) drop-shadow(0 0 15px rgba(204, 255, 0, 0.15));
         }
 
+        /* 动漫更新条目动效 */
         .anime-item:hover {
             background: linear-gradient(90deg, rgba(204,255,0,0.1) 0%, transparent 100%);
             border-left-color: #ccff00;
@@ -280,18 +286,19 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
             
             <!-- 侧边栏 -->
-            <aside class="lg:col-span-5 space-y-6 lg:sticky lg:top-24 h-fit">
+            <aside class="lg:col-span-4 space-y-6 lg:sticky lg:top-24 h-fit">
                 
-                <!-- AI 助手 Card (Interactive) -->
+                <!-- AI 助手 Card (Interactive with Bubble) -->
                 <div class="cyber-card rounded-xl p-0 overflow-visible animate-float-heavy animate-breathe-glow relative group transition-shadow duration-500 border-acid/30 cursor-pointer" onclick="triggerAiSpeech()">
+                    
                     <!-- 赛博气泡 (默认隐藏) -->
-                    <div id="ai-speech-bubble" class="hidden absolute -top-20 left-1/2 -translate-x-1/2 w-64 z-50 animate-pop-in pointer-events-none">
+                    <div id="ai-speech-bubble" class="hidden absolute -top-24 left-0 w-64 z-50 animate-pop-in pointer-events-none">
                         <div class="cp2077-bubble relative p-4">
                              <p id="ai-speech-text" class="text-xs font-bold leading-relaxed">
                                  <!-- JS 填充 -->
                              </p>
-                             <!-- 连接小三角 -->
-                             <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-black border-b border-r border-acid transform rotate-45"></div>
+                             <!-- 连接线 -->
+                             <div class="absolute -bottom-4 left-8 w-0.5 h-4 bg-acid"></div>
                         </div>
                     </div>
 
