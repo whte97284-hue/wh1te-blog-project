@@ -136,10 +136,13 @@
         .image-filter-acid-subtle {
             filter: grayscale(40%) sepia(20%) hue-rotate(50deg) saturate(140%) brightness(95%) drop-shadow(0 0 15px rgba(204, 255, 0, 0.15));
         }
-
-        /* 新番列表滚动条隐藏但可滚动 */
-        .anime-scroll::-webkit-scrollbar { width: 3px; }
-        .anime-scroll::-webkit-scrollbar-thumb { background: #ccff00; }
+        
+        /* 动漫更新条目动效 */
+        .anime-item:hover {
+            background: linear-gradient(90deg, rgba(204,255,0,0.1) 0%, transparent 100%);
+            border-left-color: #ccff00;
+            padding-left: 8px;
+        }
     </style>
 </head>
 <body class="antialiased overflow-x-hidden font-sans">
@@ -249,7 +252,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
             
             <!-- 侧边栏 -->
-            <aside class="lg:col-span-4 space-y-6 lg:sticky lg:top-24 h-fit">
+            <aside class="lg:col-span-5 space-y-6 lg:sticky lg:top-24 h-fit">
                 
                 <!-- AI 助手 Card -->
                 <div class="cyber-card rounded-xl p-0 overflow-hidden animate-float-heavy animate-breathe-glow relative group transition-shadow duration-500 border-acid/30">
@@ -272,7 +275,7 @@
                     </div>
                 </div>
 
-                <!-- 新增：每日新番放送窗口 (Live API) -->
+                <!-- 每日新番放送窗口 (Live API + Fallback) -->
                 <div class="cyber-card rounded-xl p-6 relative overflow-hidden group">
                     <!-- 装饰角标 -->
                     <div class="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-acid"></div>
@@ -323,7 +326,7 @@
             </aside>
 
             <!-- 文章流 -->
-            <div class="lg:col-span-8 space-y-8">
+            <div class="lg:col-span-7 space-y-8">
                 <div class="flex items-center justify-between border-b border-white/10 pb-4">
                     <h2 class="text-2xl md:text-3xl font-bold tracking-tighter">LATEST_FEEDS</h2>
                     <div class="flex items-center gap-2"><span class="w-2 h-2 bg-acid rounded-full animate-pulse"></span><span class="font-mono text-xs text-acid">[ ONLINE ]</span></div>
@@ -366,7 +369,6 @@
     </footer>
 
     <script>
-        // 6. 性能优化：mousemove 事件节流
         let ticking = false;
         document.addEventListener('mousemove', (e) => {
             if (!ticking) {
@@ -381,7 +383,6 @@
             }
         });
 
-        // 7. Bangumi API 逻辑 (Real API Fetch)
         async function loadAnimeData() {
             const container = document.getElementById('anime-list');
             const dateDisplay = document.getElementById('anime-date');
@@ -390,7 +391,32 @@
             const weekDays = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
             dateDisplay.innerText = `${today.getMonth()+1}/${today.getDate()} [${weekDays[today.getDay()]}]`;
 
-            // Bangumi 星期: Mon=1 ... Sat=6, Sun=7. JS: Sun=0.
+            // Fallback Data (Mock)
+            const mockData = [
+                { name: "胆大党", rating: { score: "8.2" } },
+                { name: "蓝色监狱 第二季", rating: { score: "7.8" } },
+                { name: "刀剑神域外传 GGO II", rating: { score: "7.5" } },
+                { name: "香格里拉·开拓异境", rating: { score: "8.1" } },
+                { name: "Re:从零开始的异世界生活 S3", rating: { score: "8.6" } }
+            ];
+
+            const renderList = (items) => {
+                 container.innerHTML = items.map(item => {
+                        const title = item.name_cn || item.name;
+                        const score = item.rating && item.rating.score ? '★'+item.rating.score : 'N/A';
+                        return `
+                        <div class="anime-item flex justify-between items-center group/item cursor-pointer transition-all duration-300 border-l-2 border-transparent py-1 hover:border-acid hover:pl-2 hover:bg-white/5">
+                             <span class="text-gray-300 flex-1 truncate mx-2 text-[10px] group-hover/item:text-acid transition-colors">
+                                ${title}
+                             </span>
+                             <span class="text-gray-600 border border-white/10 px-1 rounded text-[9px] font-mono group-hover/item:border-acid group-hover/item:text-acid">
+                                ${score}
+                             </span>
+                        </div>
+                        `;
+                    }).join('');
+            };
+
             let bangumiWeekday = today.getDay();
             if (bangumiWeekday === 0) bangumiWeekday = 7;
 
@@ -406,44 +432,23 @@
 
                 if (!response.ok) throw new Error('API_ERROR');
                 const data = await response.json();
-
-                // 找到今天的番剧列表
                 const todayData = data.find(day => day.weekday.id === bangumiWeekday);
                 
                 if (todayData && todayData.items.length > 0) {
-                    container.innerHTML = todayData.items.map(item => {
-                        // 有些条目可能没有中文名
-                        const title = item.name_cn || item.name;
-                        return `
-                        <div class="anime-item flex justify-between items-center group/item cursor-pointer transition-all duration-300 border-l-2 border-transparent py-1">
-                             <span class="text-gray-300 flex-1 truncate mx-2 text-[10px] group-hover/item:text-acid transition-colors">
-                                ${title}
-                             </span>
-                             <!-- Bangumi Calendar API 不直接返回具体时间，这里显示评分或排名作为替代 -->
-                             <span class="text-gray-600 border border-white/10 px-1 rounded text-[9px] font-mono group-hover/item:border-acid group-hover/item:text-acid">
-                                ${item.rating && item.rating.score ? '★'+item.rating.score : 'N/A'}
-                             </span>
-                        </div>
-                        `;
-                    }).join('');
+                    renderList(todayData.items);
                 } else {
-                    container.innerHTML = '<div class="text-center py-2 text-gray-500 text-xs">NO_DATA_TODAY</div>';
+                    renderList(mockData); 
                 }
-
             } catch (error) {
-                console.error(error);
-                container.innerHTML = `
-                    <div class="flex flex-col items-center justify-center py-2 text-red-400 text-xs font-mono">
-                        <span>[ERROR]</span>
-                        <span class="opacity-70">CONNECTION_LOST</span>
-                    </div>
-                `;
+                console.warn("Bangumi API failed, switching to OFFLINE CACHE:", error);
+                renderList(mockData);
+                dateDisplay.innerHTML += ' <span class="text-red-500 text-[8px] align-top">OFFLINE</span>';
             }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            loadAnimeData(); // 启动 API
-
+            loadAnimeData();
+            
             const music = document.getElementById('background-music');
             const storedState = localStorage.getItem('music_playing');
             const storedTime = localStorage.getItem('music_currentTime');
