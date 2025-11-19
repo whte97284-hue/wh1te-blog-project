@@ -29,15 +29,15 @@
                     animation: {
                         'spin-slow': 'spin 20s linear infinite',
                         'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'float-heavy': 'floatHeavy 5s ease-in-out infinite', 
-                        'glitch': 'glitch 2s linear infinite',
+                        'float-heavy': 'floatHeavy 6s ease-in-out infinite', 
+                        'glitch': 'glitch 3s linear infinite', 
                         'scan': 'scan 8s linear infinite', 
                         'breathe-glow': 'breatheGlow 4s ease-in-out infinite',
                     },
                     keyframes: {
                         floatHeavy: {
                             '0%, 100%': { transform: 'translateY(0) scale(1)' },
-                            '50%': { transform: 'translateY(-8px) scale(1.01)' }, 
+                            '50%': { transform: 'translateY(-10px) scale(1.02)' }, 
                         },
                         glitch: {
                             '2%, 64%': { transform: 'translate(1px,0) skew(0deg)' },
@@ -64,15 +64,17 @@
             --mouse-y: 50%;
         }
 
+        /* 1. 噪点层 */
         .noise-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 40; opacity: 0.09;
+            pointer-events: none; z-index: 40; opacity: 0.08;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
 
+        /* 2. 扫描线层 */
         .scanlines {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 41; opacity: 0.5;
+            pointer-events: none; z-index: 41; opacity: 0.3;
             background: linear-gradient(to bottom, 
                 rgba(255,255,255,0), 
                 rgba(255,255,255,0) 50%, 
@@ -82,12 +84,13 @@
             animation: scan 0.3s linear infinite;
         }
         
+        /* 3. 动态背景 */
         body {
             background-color: #050505;
             background-image: 
-                linear-gradient(rgba(204, 255, 0, 0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(204, 255, 0, 0.1) 1px, transparent 1px),
-                radial-gradient(circle 800px at var(--mouse-x) var(--mouse-y), rgba(204, 255, 0, 0.15) 0%, transparent 60%);
+                linear-gradient(rgba(204, 255, 0, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(204, 255, 0, 0.08) 1px, transparent 1px),
+                radial-gradient(circle 800px at var(--mouse-x) var(--mouse-y), rgba(204, 255, 0, 0.12) 0%, transparent 60%);
             background-size: 60px 60px, 60px 60px, 100% 100%;
             background-attachment: fixed;
             min-height: 100vh; color: white;
@@ -97,7 +100,7 @@
         }
 
         .cyber-card {
-            background: rgba(5, 5, 5, 0.6);
+            background: rgba(10, 10, 10, 0.65); 
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.12); 
@@ -105,43 +108,32 @@
             transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
         .cyber-card:hover {
-            background: rgba(5, 5, 5, 0.8);
+            background: rgba(15, 15, 15, 0.85);
             border-color: rgba(204, 255, 0, 0.6);
-            box-shadow: 0 12px 40px rgba(204, 255, 0, 0.2);
-            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(204, 255, 0, 0.15);
+            transform: translateY(-2px);
         }
+        
         .text-stroke-layer { -webkit-text-stroke: 1px rgba(255, 255, 255, 0.6); color: transparent; pointer-events: none; }
         .caret-acid { caret-color: #ccff00; }
-        ::-webkit-scrollbar { width: 5px; }
+        
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 2px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #ccff00; }
         ::selection { background: #ccff00; color: black; }
         
+        /* 动漫少女 1 (右侧背景) */
         .image-filter-acid-glitch {
-            filter: 
-                grayscale(100%) 
-                contrast(130%) 
-                brightness(110%) 
-                sepia(80%) 
-                hue-rotate(60deg) 
-                saturate(300%) 
-                drop-shadow(0 0 20px rgba(204, 255, 0, 0.4));
-            transform: scaleX(-1);
-            mix-blend-mode: screen;
-            opacity: 0.85;
-            mask-image: linear-gradient(to bottom, black 80%, transparent 100%); 
-            -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+            filter: grayscale(100%) contrast(120%) brightness(110%) sepia(50%) hue-rotate(60deg) saturate(300%) drop-shadow(0 0 20px rgba(204, 255, 0, 0.3));
+            transform: scaleX(-1); mix-blend-mode: screen; opacity: 0.6;
+            mask-image: linear-gradient(to bottom, black 60%, transparent 100%); 
+            -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
         }
 
+        /* 动漫少女 2 (左侧侧边栏) */
         .image-filter-acid-subtle {
-            filter: 
-                grayscale(50%)
-                sepia(30%)
-                hue-rotate(50deg)
-                saturate(150%)
-                brightness(90%)
-                drop-shadow(0 0 15px rgba(204, 255, 0, 0.2));
+            filter: grayscale(40%) sepia(20%) hue-rotate(50deg) saturate(140%) brightness(95%) drop-shadow(0 0 15px rgba(204, 255, 0, 0.15));
         }
     </style>
 </head>
@@ -154,8 +146,8 @@
         <source src="./audio/bgm.mp3" type="audio/mp3">
     </audio>
 
-    <!-- 1. 右侧 Hero 人物 (保持在背景) -->
-    <div class="fixed right-0 bottom-0 z-0 pointer-events-none w-[40vw] md:w-[30vw] lg:w-[25vw] max-h-[85vh] flex items-end justify-end animate-glitch">
+    <!-- 1. 右侧 Hero 人物 (背景层) -->
+    <div class="fixed right-0 bottom-0 z-0 pointer-events-none w-[45vw] max-w-[600px] flex items-end justify-end animate-glitch">
         <img 
             src="./images/hero-glitch.png" 
             alt="Cyberpunk Hero" 
@@ -165,11 +157,11 @@
 
     <!-- 音乐按钮 -->
     <button id="music-toggle-button" onclick="toggleMusic()" class="fixed bottom-6 left-6 z-50 flex items-center gap-0 group cursor-pointer hover:scale-105 transition-transform">
-        <div class="relative w-10 h-10 bg-black/60 border border-white/20 backdrop-blur-md rounded-full flex items-center justify-center group-hover:border-acid transition-colors duration-300 z-10">
+        <div class="relative w-10 h-10 bg-black/80 border border-white/20 backdrop-blur-md rounded-full flex items-center justify-center group-hover:border-acid transition-colors duration-300 z-10">
             <div id="music-wave" class="hidden absolute inset-0 rounded-full border border-acid opacity-60 animate-ping"></div>
             <svg id="music-icon" class="w-4 h-4 text-white group-hover:text-acid transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
         </div>
-        <div class="h-10 bg-black/60 border-y border-r border-white/20 backdrop-blur-md rounded-r-full flex items-center -ml-4 pl-6 pr-4 opacity-0 max-w-0 group-hover:max-w-[200px] group-hover:opacity-100 transition-all duration-500 overflow-hidden">
+        <div class="h-10 bg-black/80 border-y border-r border-white/20 backdrop-blur-md rounded-r-full flex items-center -ml-4 pl-6 pr-4 opacity-0 max-w-0 group-hover:max-w-[200px] group-hover:opacity-100 transition-all duration-500 overflow-hidden">
             <div class="flex flex-col leading-none">
                 <span class="text-[10px] text-gray-400 font-mono uppercase">NOW PLAYING</span>
                 <span class="text-xs text-acid font-bold font-mono whitespace-nowrap">SYSTEM_SOUNDTRACK</span>
@@ -177,17 +169,16 @@
         </div>
     </button>
 
+    <!-- 顶部装饰线 -->
     <div class="fixed top-0 left-0 w-full h-px bg-white/10 z-40"></div>
-    <div class="fixed top-0 left-6 md:left-12 w-px h-full bg-white/5 z-30 hidden md:block"></div>
-    <div class="fixed top-0 right-6 md:right-12 w-px h-full bg-white/5 z-30 hidden md:block"></div>
 
     <!-- 导航 -->
-    <nav class="fixed top-0 w-full z-40 px-6 md:px-12 py-5 flex justify-between items-center mix-blend-difference text-white">
+    <nav class="fixed top-0 w-full z-40 px-6 md:px-12 py-4 flex justify-between items-center mix-blend-difference text-white bg-gradient-to-b from-black/80 to-transparent">
         <a href="index.html" class="flex flex-col group">
-            <span class="text-lg font-black tracking-tighter leading-none group-hover:text-acid transition-colors">WH1TE.LOG</span>
+            <span class="text-xl font-black tracking-tighter leading-none group-hover:text-acid transition-colors">WH1TE.LOG</span>
             <span class="font-mono text-[9px] tracking-[0.2em] opacity-60 group-hover:opacity-100 transition-opacity">V2.0.5</span>
         </a>
-        <div class="hidden md:flex gap-10 font-mono text-[11px] tracking-widest">
+        <div class="hidden md:flex gap-8 font-mono text-[11px] tracking-widest">
             <a href="index.html" onclick="saveMusicState(event)" class="relative group py-2">
                 <span class="text-acid transition-colors">01_HOME</span>
                 <span class="absolute bottom-0 left-0 w-full h-[2px] bg-acid"></span>
@@ -205,74 +196,80 @@
     </nav>
 
     <!-- Hero Section -->
-    <header class="relative pt-40 pb-20 px-6 min-h-[80vh] flex flex-col justify-center items-center text-center z-20 overflow-hidden">
+    <!-- 布局变更：确保容器宽度与下方 Main 一致 (max-w-screen-xl) -->
+    <!-- 对齐变更：items-center -> items-start; text-center -> text-left -->
+    <header class="relative pt-40 pb-12 px-6 md:px-12 max-w-screen-xl mx-auto min-h-[calc(100vh-100px)] flex flex-col justify-center items-start text-left z-20 overflow-hidden">
         
-        <!-- 中间标题容器: 
-             max-w-[90vw] (小屏) -> xl:max-w-[50vw] (大屏缩窄，避让左右元素) 
-             transition-all 保证缩放平滑
-        -->
-        <div class="space-y-4 animate-fade-in-up w-full max-w-[90vw] xl:max-w-[50vw] mx-auto relative z-20 transition-all duration-500">
-             <!-- 装饰圆环 -->
-            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] md:w-[40vw] aspect-square border border-dashed border-white/10 rounded-full animate-spin-slow pointer-events-none z-0"></div>
+        <!-- 装饰圆环 (位置调整到右侧，作为平衡) -->
+        <div class="absolute top-1/2 right-0 translate-x-1/3 -translate-y-1/2 w-[60vw] aspect-square border border-dashed border-white/10 rounded-full animate-spin-slow pointer-events-none z-0"></div>
 
-            <div class="flex justify-center gap-3 mb-8 relative z-10">
+        <div class="space-y-8 animate-fade-in-up w-full relative z-20 transition-all duration-500">
+            <div class="flex justify-start gap-3 mb-4 relative z-10">
                 <span class="px-2 py-1 bg-acid text-black font-mono text-[10px] font-bold uppercase tracking-wider rounded-sm">System Ready</span>
                 <span class="px-2 py-1 border border-white/20 backdrop-blur-sm text-white/70 font-mono text-[10px] font-bold uppercase tracking-wider rounded-sm">Loc: Internet</span>
             </div>
             
             <div class="relative inline-block z-10">
-                <!-- 标题字号调整: 
-                     text-[12vw] (移动优先，够大) 
-                     xl:text-[7rem] (大屏锁定最大值，防止过大侵入侧边)
-                -->
-                <h1 class="text-[12vw] xl:text-[7rem] font-black tracking-tighter leading-none text-white mix-blend-overlay opacity-90 select-none">WH1TE</h1>
-                <h1 class="text-[12vw] xl:text-[7rem] font-black tracking-tighter leading-none text-stroke-layer absolute top-0 left-0 w-full h-full flex items-center justify-center translate-x-[3px] translate-y-[3px]">WH1TE</h1>
+                <h1 class="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-none text-white mix-blend-overlay opacity-90 select-none">WH1TE</h1>
+                <h1 class="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-none text-stroke-layer absolute top-0 left-0 w-full h-full flex items-center justify-center translate-x-[3px] translate-y-[3px]">WH1TE</h1>
             </div>
             
-            <div class="flex items-center justify-center gap-4 mt-2 relative z-10">
-                <div class="h-px w-8 md:w-16 bg-acid/50"></div>
-                <h2 class="text-xl md:text-3xl font-bold text-white tracking-tight">互联网<span class="text-acid">小屋</span></h2>
-                <div class="h-px w-8 md:w-16 bg-acid/50"></div>
+            <div class="flex items-center justify-start gap-4 mt-2 relative z-10">
+                <div class="h-px w-16 bg-acid/50"></div>
+                <h2 class="text-xl md:text-2xl font-bold text-white tracking-tight">互联网<span class="text-acid">小屋</span></h2>
             </div>
             
-            <div class="mt-16 relative max-w-lg mx-auto w-full group z-10">
+            <!-- 搜索框 Plus: max-w-3xl, py-5, text-xl, 左对齐 -->
+            <div class="mt-12 relative w-full max-w-3xl group z-10">
                 <div class="relative flex items-center">
-                    <div class="absolute left-0 pl-4 text-acid font-mono text-lg flex items-center h-full pb-1">></div>
-                    <input type="text" id="search-input" placeholder="INPUT_KEYWORD..." oninput="searchArticles()" class="w-full pl-10 pr-12 py-4 bg-black/30 backdrop-blur-xl border-b border-white/30 text-white font-mono text-sm md:text-base placeholder-white/20 focus:border-acid focus:bg-black/50 focus:outline-none transition-all caret-acid uppercase">
-                    <div class="absolute right-4 w-1.5 h-4 bg-acid animate-pulse-fast"></div>
+                    <div class="absolute left-0 pl-4 text-acid font-mono text-sm flex items-center h-full pb-1 tracking-widest">_SEARCH_QUERY ::</div>
+                    <input 
+                        type="text" 
+                        id="search-input" 
+                        placeholder="INPUT_KEYWORD..." 
+                        oninput="searchArticles()"
+                        class="w-full pl-48 pr-12 py-5 bg-black/40 backdrop-blur-xl border-b-2 border-white/20 text-white font-mono text-xl md:text-2xl placeholder-white/10 focus:border-acid focus:bg-black/60 focus:outline-none transition-all caret-acid uppercase"
+                    >
+                    <div class="absolute right-4 w-2 h-6 bg-acid animate-pulse-fast"></div>
                 </div>
                 <div id="search-status" class="absolute top-full left-0 mt-2 text-[10px] font-mono text-acid hidden">FILTERING_RESULTS...</div>
             </div>
         </div>
+        
+        <!-- 底部提示 -->
+        <div class="absolute bottom-8 left-6 md:left-12 text-gray-600 font-mono text-[10px] animate-bounce">
+            SCROLL_DOWN v
+        </div>
     </header>
 
     <!-- 主内容 -->
-    <main class="max-w-7xl mx-auto px-6 md:px-12 pb-32 relative z-20">
+    <main class="max-w-screen-xl mx-auto px-6 md:px-12 pb-24 relative z-20">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
             
-            <!-- 侧边栏 (宽度占比加大：col-span-5) -->
-            <aside class="lg:col-span-5 space-y-6 lg:sticky lg:top-24 h-fit">
+            <!-- 侧边栏 (与上方标题左对齐) -->
+            <aside class="lg:col-span-4 space-y-6 lg:sticky lg:top-24 h-fit">
                 
-                <!-- AI 助手 Card (大尺寸) -->
-                <div class="cyber-card rounded-xl p-0 overflow-hidden animate-float-heavy animate-breathe-glow relative group transition-shadow duration-500">
-                    <div class="w-full relative">
+                <!-- AI 助手 Card -->
+                <div class="cyber-card rounded-xl p-0 overflow-hidden animate-float-heavy animate-breathe-glow relative group transition-shadow duration-500 border-acid/30">
+                    <div class="w-full relative aspect-[4/5]">
                         <img 
                             src="./images/ai-assistant.jpg" 
                             alt="AI Assistant" 
-                            class="w-full h-auto object-cover image-filter-acid-subtle group-hover:scale-105 transition-transform duration-700"
+                            class="w-full h-full object-cover image-filter-acid-subtle group-hover:scale-105 transition-transform duration-700"
                         >
                         <div class="absolute bottom-0 left-0 w-full h-2/3 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
                     </div>
                     
-                    <div class="absolute bottom-0 left-0 w-full p-6 z-10">
-                        <h3 class="font-mono text-acid text-sm font-bold mb-2 tracking-wider border-b border-white/10 pb-2">:: AI_ASSISTANT</h3>
+                    <div class="absolute bottom-0 left-0 w-full p-5 z-10">
+                        <h3 class="font-mono text-acid text-sm font-bold mb-1 tracking-wider border-b border-white/10 pb-2">:: AI_ASSISTANT</h3>
                         <p class="text-gray-300 text-xs font-mono leading-relaxed">
                             STATUS: <span class="text-acid blink font-bold">ONLINE</span><br>
-                            <span class="opacity-70">"System ready. Waiting for your command, Commander."</span>
+                            <span class="opacity-70">System ready.</span>
                         </p>
                     </div>
                 </div>
 
+                <!-- 公告栏 -->
                 <div class="cyber-card rounded-xl p-6 relative overflow-hidden group">
                     <h3 class="font-mono text-acid text-xs font-bold mb-4 border-b border-white/10 pb-2 flex items-center gap-2">
                         <span class="w-1.5 h-1.5 bg-acid rounded-sm"></span>
@@ -283,50 +280,50 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-3 md:gap-4">
+                <div class="grid grid-cols-3 gap-3">
                     <a href="https://github.com/whte97284-hue/wh1te-blog-project/tree/main" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-white hover:text-black transition-all group relative overflow-hidden"><span class="font-mono text-[9px] font-bold uppercase relative z-10">Git</span></a>
                     <a href="https://space.bilibili.com/551898501" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-[#fb7299] hover:text-white transition-all group relative overflow-hidden"><span class="font-mono text-[9px] font-bold uppercase relative z-10">Bili</span></a>
                     <a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-black hover:text-white transition-all group relative overflow-hidden"><span class="font-mono text-[9px] font-bold uppercase relative z-10">TikTok</span></a>
                 </div>
 
                 <div class="cyber-card rounded-xl p-6">
-                    <h3 class="font-mono text-gray-400 text-[10px] mb-4 uppercase tracking-widest flex justify-between">:: TAGS_COLLECTION<span>[04]</span></h3>
+                    <h3 class="font-mono text-gray-400 text-[10px] mb-4 uppercase tracking-widest flex justify-between">:: TAGS<span>[04]</span></h3>
                     <div class="flex flex-wrap gap-2" id="tag-cloud">
-                         <button onclick="filterByTag('Python')" class="px-2 py-1.5 bg-white/5 border border-white/10 hover:bg-acid hover:border-acid hover:text-black text-[10px] font-mono uppercase transition-all rounded-md">#Python</button>
-                         <button onclick="filterByTag('Web')" class="px-2 py-1.5 bg-white/5 border border-white/10 hover:bg-acid hover:border-acid hover:text-black text-[10px] font-mono uppercase transition-all rounded-md">#Web</button>
-                         <button onclick="filterByTag('Automation')" class="px-2 py-1.5 bg-white/5 border border-white/10 hover:bg-acid hover:border-acid hover:text-black text-[10px] font-mono uppercase transition-all rounded-md">#Automation</button>
-                         <button onclick="filterByTag('Code')" class="px-2 py-1.5 bg-white/5 border border-white/10 hover:bg-acid hover:border-acid hover:text-black text-[10px] font-mono uppercase transition-all rounded-md">#Code</button>
+                         <button onclick="filterByTag('Python')" class="px-2 py-1 bg-white/5 border border-white/10 hover:bg-acid hover:border-acid hover:text-black text-[10px] font-mono uppercase transition-all rounded-sm">#Python</button>
+                         <button onclick="filterByTag('Web')" class="px-2 py-1 bg-white/5 border border-white/10 hover:bg-acid hover:border-acid hover:text-black text-[10px] font-mono uppercase transition-all rounded-sm">#Web</button>
+                         <button onclick="filterByTag('Automation')" class="px-2 py-1 bg-white/5 border border-white/10 hover:bg-acid hover:border-acid hover:text-black text-[10px] font-mono uppercase transition-all rounded-sm">#Auto</button>
+                         <button onclick="filterByTag('Code')" class="px-2 py-1 bg-white/5 border border-white/10 hover:bg-acid hover:border-acid hover:text-black text-[10px] font-mono uppercase transition-all rounded-sm">#Code</button>
                     </div>
                 </div>
             </aside>
 
-            <!-- 文章流 (宽度占比减小：col-span-7) -->
-            <div class="lg:col-span-7 space-y-8">
+            <!-- 文章流 -->
+            <div class="lg:col-span-8 space-y-8">
                 <div class="flex items-center justify-between border-b border-white/10 pb-4">
                     <h2 class="text-2xl md:text-3xl font-bold tracking-tighter">LATEST_FEEDS</h2>
                     <div class="flex items-center gap-2"><span class="w-2 h-2 bg-acid rounded-full animate-pulse"></span><span class="font-mono text-xs text-acid">[ ONLINE ]</span></div>
                 </div>
                 <div id="article-list-container" class="space-y-6">
-                    <article class="article-card cyber-card rounded-2xl p-6 md:p-8 relative group hover:bg-black/80 overflow-hidden" data-tags="Code Reflection Appium">
-                        <div class="absolute top-0 right-0 w-32 h-32 bg-acid/20 blur-[60px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                    <article class="article-card cyber-card rounded-xl p-6 md:p-8 relative group hover:bg-black/80 overflow-hidden border-l-4 border-l-transparent hover:border-l-acid transition-all" data-tags="Code Reflection Appium">
+                        <div class="absolute top-0 right-0 w-48 h-48 bg-acid/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                         <div class="flex flex-col gap-4 relative z-10">
                             <div class="flex justify-between items-start">
                                 <div class="flex gap-2"><span class="text-[10px] font-mono uppercase text-black bg-acid px-2 py-1 font-bold">Code</span><span class="text-[10px] font-mono uppercase text-white/60 border border-white/20 px-2 py-1">Reflection</span></div>
                                 <span class="font-mono text-xs text-gray-500 border border-white/10 px-2 py-1 rounded-sm">2025.10.02</span>
                             </div>
-                            <h3 class="text-2xl md:text-3xl font-bold leading-tight max-w-lg"><a href="article-1.html" onclick="saveMusicState(event)" class="hover:text-acid transition-colors">从 Appium 到网站：我与代码的旅程初探</a></h3>
+                            <h3 class="text-2xl md:text-3xl font-bold leading-tight max-w-xl"><a href="article-1.html" onclick="saveMusicState(event)" class="hover:text-acid transition-colors">从 Appium 到网站：我与代码的旅程初探</a></h3>
                             <p class="text-gray-400 font-light leading-relaxed text-sm md:text-base border-l border-white/10 pl-4 article-summary">起初我以为编程就是找个工具抢票，最终却被安全机制所阻止。这次经历让我明白：真正的编程价值在于构建思维框架。</p>
                             <div class="flex items-center justify-end mt-2"><a href="article-1.html" onclick="saveMusicState(event)" class="group-hover:translate-x-1 transition-transform flex items-center text-acid font-mono text-xs md:text-sm font-bold bg-white/5 px-4 py-2 rounded-full hover:bg-acid hover:text-black">READ_FULL <span class="ml-2">→</span></a></div>
                         </div>
                     </article>
-                    <article class="article-card cyber-card rounded-2xl p-6 md:p-8 relative group hover:bg-black/80 overflow-hidden" data-tags="Python Automation Web">
-                        <div class="absolute top-0 right-0 w-32 h-32 bg-acid/20 blur-[60px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                    <article class="article-card cyber-card rounded-xl p-6 md:p-8 relative group hover:bg-black/80 overflow-hidden border-l-4 border-l-transparent hover:border-l-acid transition-all" data-tags="Python Automation Web">
+                        <div class="absolute top-0 right-0 w-48 h-48 bg-acid/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                         <div class="flex flex-col gap-4 relative z-10">
                              <div class="flex justify-between items-start">
                                 <div class="flex gap-2"><span class="text-[10px] font-mono uppercase text-black bg-acid px-2 py-1 font-bold">Python</span><span class="text-[10px] font-mono uppercase text-white/60 border border-white/20 px-2 py-1">Automation</span></div>
                                 <span class="font-mono text-xs text-gray-500 border border-white/10 px-2 py-1 rounded-sm">2025.10.03</span>
                             </div>
-                            <h3 class="text-2xl md:text-3xl font-bold leading-tight max-w-lg"><a href="#" class="hover:text-acid transition-colors">Python 主页自动生成脚本测试</a></h3>
+                            <h3 class="text-2xl md:text-3xl font-bold leading-tight max-w-xl"><a href="#" class="hover:text-acid transition-colors">Python 主页自动生成脚本测试</a></h3>
                              <p class="text-gray-400 font-light leading-relaxed text-sm md:text-base border-l border-white/10 pl-4 article-summary">辅助静态页面更新的自动化生成脚本第一次测试，探索如何高效管理我的数字花园。</p>
                             <div class="flex items-center justify-end mt-2"><a href="#" class="group-hover:translate-x-1 transition-transform flex items-center text-acid font-mono text-xs md:text-sm font-bold bg-white/5 px-4 py-2 rounded-full hover:bg-acid hover:text-black">READ_FULL <span class="ml-2">→</span></a></div>
                         </div>
@@ -344,7 +341,7 @@
     </footer>
 
     <script>
-        // --- 动态背景核心逻辑 ---
+        // 保持 JavaScript 逻辑不变
         document.addEventListener('mousemove', (e) => {
             const x = (e.clientX / window.innerWidth) * 100;
             const y = (e.clientY / window.innerHeight) * 100;
