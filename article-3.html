@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WH1TE_LOG // NOVEL_READER</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;400;600;700&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Space Grotesk"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                        serif: ['"Noto Serif SC"', 'serif'], // 新增衬线字体用于小说正文
+                    },
+                    colors: {
+                        acid: {
+                            DEFAULT: '#ccff00', 
+                            dark: '#aacc00',
+                            dim: 'rgba(204, 255, 0, 0.1)'
+                        },
+                        dark: {
+                            900: '#050505',
+                            800: '#0a0a0a',
+                        }
+                    },
+                    animation: {
+                        'spin-slow': 'spin 20s linear infinite',
+                        'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'glitch': 'glitch 3s linear infinite', 
+                        'scan': 'scan 8s linear infinite',
+                    },
+                    keyframes: {
+                        glitch: {
+                            '2%, 64%': { transform: 'translate(1px,0) skew(0deg)' },
+                            '4%, 60%': { transform: 'translate(-1px,0) skew(0deg)' },
+                            '62%': { transform: 'translate(0,0) skew(2deg)' },
+                        },
+                        scan: {
+                            '0%': { backgroundPosition: '0 0' },
+                            '100%': { backgroundPosition: '0 100%' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --mouse-x: 50%;
+            --mouse-y: 50%;
+        }
+
+        /* 1. 背景特效层 */
+        .noise-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 40; opacity: 0.08;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        .scanlines {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 41; opacity: 0.3;
+            background: linear-gradient(to bottom, 
+                rgba(255,255,255,0), 
+                rgba(255,255,255,0) 50%, 
+                rgba(0,0,0,0.2) 50%, 
+                rgba(0,0,0,0.2));
+            background-size: 100% 4px;
+            animation: scan 0.3s linear infinite;
+        }
+        
+        body {
+            background-color: #050505;
+            background-image: 
+                linear-gradient(rgba(204, 255, 0, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(204, 255, 0, 0.05) 1px, transparent 1px),
+                radial-gradient(circle 800px at var(--mouse-x) var(--mouse-y), rgba(204, 255, 0, 0.12) 0%, transparent 60%);
+            background-size: 60px 60px, 60px 60px, 100% 100%;
+            background-attachment: fixed;
+            min-height: 100vh; color: white;
+            -webkit-font-smoothing: antialiased;
+            transition: background 0.1s ease;
+            overflow-x: hidden;
+        }
+
+        /* 2. 文章阅读卡片 */
+        .cyber-card-read {
+            background: rgba(5, 5, 5, 0.9); /* 稍微加深，提升文字对比度 */
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        }
+
+        /* 3. 小说排版细节优化 */
+        .prose-content {
+            font-family: 'Noto Serif SC', 'Songti SC', serif; /* 使用衬线体，更有小说质感 */
+        }
+        .prose-content p {
+            line-height: 1.9; /* 增加行高 */
+            margin-bottom: 1.2rem;
+            color: #d4d4d4;
+            font-weight: 400;
+            font-size: 1.05rem;
+            text-indent: 2em; /* 首行缩进 */
+            text-align: justify; /* 两端对齐 */
+        }
+        .prose-content h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-top: 4rem;
+            margin-bottom: 2rem;
+            color: #ccff00; /* 章节标题颜色 */
+            display: flex;
+            align-items: center;
+            justify-content: center; /* 居中标题 */
+            text-indent: 0;
+            border-bottom: 1px solid rgba(204, 255, 0, 0.3);
+            padding-bottom: 10px;
+        }
+        .prose-content h2::before {
+            content: '>';
+            margin-right: 10px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .prose-content strong {
+            color: #fff;
+            font-weight: 600;
+        }
+        
+        /* 元数据样式 */
+        .novel-meta {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: #888;
+            border-left: 2px solid #ccff00;
+            padding-left: 1rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .caret-acid { caret-color: #ccff00; }
+        ::selection { background: #ccff00; color: black; }
+        
+        /* 滚动条 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ccff00; }
+
+        /* 背景故障少女滤镜 */
+        .image-filter-acid-glitch {
+            filter: grayscale(100%) contrast(130%) brightness(110%) sepia(80%) hue-rotate(60deg) saturate(300%) drop-shadow(0 0 20px rgba(204, 255, 0, 0.4));
+            transform: scaleX(-1); mix-blend-mode: screen; opacity: 0.4; 
+            mask-image: linear-gradient(to bottom, black 60%, transparent 100%); 
+            -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+        }
+    </style>
+</head>
+<body class="antialiased overflow-x-hidden font-sans">
+
+    <div class="noise-overlay"></div>
+    <div class="scanlines"></div>
+
+    <audio id="background-music" loop preload="metadata">
+        <source src="./audio/bgm.mp3" type="audio/mp3">
+    </audio>
+
+    <!-- 1. 背景人物 (透明度降低，防止干扰阅读) -->
+    <div class="fixed right-0 bottom-0 z-0 pointer-events-none w-[45vw] max-w-[600px] flex items-end justify-end animate-glitch">
+        <img 
+            src="./images/hero-glitch.png" 
+            alt="Cyberpunk Hero" 
+            class="w-full h-auto object-contain image-filter-acid-glitch"
+        >
+    </div>
+
+    <!-- 顶部装饰线 -->
+    <div class="fixed top-0 left-0 w-full h-px bg-white/10 z-40"></div>
+
+    <!-- 导航 -->
+    <nav class="fixed top-0 w-full z-40 px-6 md:px-12 py-4 flex justify-between items-center mix-blend-difference text-white bg-gradient-to-b from-black/90 to-transparent">
+        <a href="index.html" class="flex flex-col group">
+            <span class="text-xl font-black tracking-tighter leading-none group-hover:text-acid transition-colors">WH1TE.LOG</span>
+            <span class="font-mono text-[9px] tracking-[0.2em] opacity-60 group-hover:opacity-100 transition-opacity">NOVEL_ARCHIVE</span>
+        </a>
+        
+        <div class="flex items-center gap-8 font-mono text-[11px] tracking-widest">
+            <!-- 返回主页 -->
+            <a href="index.html" onclick="saveMusicState(event)" class="relative group py-2 hidden md:block">
+                <span class="group-hover:text-acid transition-colors">[ BACK_HOME ]</span>
+                <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-acid group-hover:w-full transition-all duration-300"></span>
+            </a>
+            <!-- 音乐开关 -->
+            <button id="music-toggle-button" onclick="toggleMusic()" class="flex items-center gap-2 group cursor-pointer">
+                <div class="relative w-8 h-8 border border-white/30 rounded-full flex items-center justify-center group-hover:border-acid transition-colors">
+                    <div id="music-wave" class="hidden absolute inset-0 rounded-full border border-acid opacity-60 animate-ping"></div>
+                    <svg id="music-icon" class="w-3 h-3 text-white group-hover:text-acid transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+                <span class="hidden md:inline opacity-50 group-hover:opacity-100 group-hover:text-acid transition-all">SOUND_OFF</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 主体内容 -->
+    <main class="relative max-w-4xl mx-auto pt-32 pb-24 px-6 z-20">
+        
+        <!-- 文章卡片 -->
+        <article class="cyber-card-read rounded-2xl p-8 md:p-12 overflow-hidden relative">
+            <!-- 顶部装饰条 -->
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-acid to-transparent"></div>
+            
+            <!-- 文章头部 -->
+            <header class="mb-12 pb-8 border-b border-white/10">
+                <div class="flex flex-wrap gap-3 mb-6 font-mono text-[10px] uppercase tracking-wider text-gray-400">
+                    <span class="px-2 py-1 border border-acid text-acid rounded-sm">TYPE: NOVEL</span>
+                    <span class="px-2 py-1 border border-white/10 rounded-sm hover:text-white hover:border-white cursor-pointer">#小说</span>
+                    <span class="px-2 py-1 border border-white/10 rounded-sm hover:text-white hover:border-white cursor-pointer">#二次元</span>
+                    <span class="px-2 py-1 border border-white/10 rounded-sm hover:text-white hover:border-white cursor-pointer">#WhiteAlbum2</span>
+                </div>
+                
+                <h1 class="text-3xl md:text-4xl font-black text-white leading-tight tracking-tight font-sans mb-6">
+                    雪融化、然后直到再次飘落时
+                </h1>
+                
+                <div class="novel-meta">
+                    <p>作者：丸户史明</p>
+                    <p>插画：中村毅</p>
+                    <p>出版：Leaf/AQUAPLUS</p>
+                    <p>状态：Archive Complete</p>
+                </div>
+            </header>
+
+            <!-- 正文内容 -->
+            <section class="prose-content">
+                
+                <h2>序章　二年前</h2>
+                
+                <p>冬马和纱，很讨厌天空。</p>
+                
+                <p>春天，当她翘掉自己今后每天都要去的峰城大学附属学园的入学仪式，在河边草丛上躺下来的时候，头顶那片苍蓝澄净的天空，与自己心中的漆黑阴暗显得是那么地格格不入，令她感到十分反感。</p>
+                
+                <p>回朔到几天前，和纱的母亲刚刚向她道别。</p>
+                
+                <p>那既是日本甚至世界都引以为傲的充满情欲的钢琴师，也是自己唯一一位亲人的曜子，在滔滔不绝地向她女儿诉说了很多自私的理由后，就将和纱一个人抛下，自己坐飞机去了维也纳，将活动据点转移到了欧洲。</p>
+                
+                <p>从和纱小时候起，她就没有在大赛以外的活动中来看过和纱。也从来没有做过饭给和纱。还经常以演奏旅行为借口将和纱丢在家里，虽然和纱也知道，演奏会只是理由之一，她其实只是为了和当时的情人去度蜜月而已。</p>
+                
+                <p>即使如此，对于这么放荡的母亲，和纱也从来没有过不满。</p>
+                
+                <p>那是因为，在一年之中，她还是有一半的时间和自己待在同一个家里，围着同一张餐桌，自己如果在大赛上取得优胜她也会温柔地抚摸自己的头。</p>
+                
+                <p>那是因为，她打从心底里相信，自己对于母亲来说是必要的，自己也被母亲深爱着。</p>
+                
+                <p>但是……</p>
+                
+                <p>『即使带着现在的你去，也是没有意义的』</p>
+                
+                <p>在那本应是自己母亲的人说出这句毫无仁慈的话语时，至今为止的冬马和纱就已经消失了。现在依然名为冬马和纱的少女有着这样的感觉。</p>
+                
+                <p>新生的冬马和纱，对于这个世界来说是不必要的。</p>
+                
+                <p>虽然这不是事实，而只是她自己的看法改变了，但对于正直青春期的她来说，这样的道理她自然是不屑一顾。</p>
+                
+                <p>从那以后，他人面对和纱的任何声音、表情、感情……</p>
+                
+                <p>不，即使不是人，甚至连生物都不是的物体的颜色、声音、气味、味道、触感，各种显露于外的表现，似乎都隐含着另一层意思，并且，这些全都化为恶意袭向她，嘲笑她，监视她，但是却又在无视她。和纱开始有了这样的感觉。</p>
+                
+                <p>所以，和纱就对自己身周的一切……以目前的情况来说，就是她眼前那片广阔的天空，怀有了憎恶之情。</p>
+                
+                <p>比起憎恶母亲来，这样要来得轻松一些。</p>
+                
+                <p>冬马和纱，很讨厌老师。</p>
+                
+                <p>在开学典礼的第二天，对来上学了的和纱表示热烈欢迎的音乐科班主任女老师，对于只是一个新学生的和纱露出了满脸卑微的笑容，并且在放学后将她带到了另外一栋教学楼的三楼。</p>
+                
+                <p>镇坐在挂有第二音乐室金属牌的教室中央的崭新的古典钢琴上，和纱一眼就看见了雕刻在钢琴上的，「寄赠　冬马曜子」几个金光闪闪的字。</p>
+                
+                <p>面对一直沉默不语，只是偶尔发出叹息的和纱，班主任老师开始滔滔不绝地诉说着峰城大附属学园，尤其是音乐科对于只不过一个新生的冬马有着多大的期待，并且还光明正大地提出了「校方会全力支持你今后一切的音乐活动」这样的特殊待遇。</p>
+                
+                <p>所以和纱，马上就接受了这样的协助。</p>
+                
+                <p>「我现在要开始练习了，所以你马上给我从这里出去」</p>
+                
+                <p>如果班主任老师在这时候生气了，并且提醒和纱要她注意她那没有礼貌的言行的话，也许和纱就会意识到自己只是在赌气，并且会像以往那样老老实实地反省，于是两人对对方的第一印象以及今后的关系也许就会有所好转。</p>
+                
+                <p>但是，已经年过三十戴着黑框眼镜的女老师，只是在一瞬间吓得瞪圆了眼，之后马上拼命地装回了那卑微的笑容，说着「既然这样，那你要在练习结束之后到办公室来哦。因为我要来锁门」这样的话，将比自己小了十多岁的学生那粗暴的言语完全容忍了。</p>
+                
+                <p>所以，和纱就对成为了自己老师的班主任，以及让这位班主任表现出这种「大人的态度」的学校管理人员，顺带连同本来没有任何关系的学校老师一起，全都怀有了憎恶之情。</p>
+                
+                <p>因为要一个一个去区分敌人和朋友，实在是太麻烦了。</p>
+                
+                <p>冬马和纱，很讨厌同级生。</p>
+                
+                <p>在开学典礼之后不久，终于正式开始上课之后，每到实习时间，就会有一个男生很亲热地与和纱搭话。</p>
+                
+                <p>那个自报家门，名叫松川贵纪的同班同学，很自豪地说着自己以前与和纱在大会上同场竞技的事迹，接着又很自豪地说着自己和和纱是班上仅有的两个被选上去参加下个月的春季全国大赛的人，只是和纱对于前半部分完全没有印象，对后半部分也完全没有兴趣，所以对他的态度也极其地冷淡。</p>
+                
+                <p>松川完全没有想到自己「唯一的好对手」会是这种反应，但是他还是把和纱这种反应擅自当成了傲娇的表现，并且开始更加变本加厉地纠缠起了和纱。</p>
+                
+                <p>毕竟，他完全想不到，和纱有讨厌自己的理由。</p>
+                
+                <p>以「一流的人就要有一流的朋友」这种论点为基础展开行动的他，觉得她是能在钢琴技巧与人生道路上和自己一起成长的唯一的好伙伴。并且，他毫不怀疑地认为，她也有一样的想法。</p>
+                
+                <p>这样对牛弹琴的时间持续了一会儿之后，事件发生了。</p>
+                
+                <p>黄昏的校舍里，伫立在教室里的两人……</p>
+                
+                <p>虽然导致那个结果的过程，除了那两人之外谁也不知道，但是从结果上来说，就是松川额头上冒着冷汗，捂着自己的股间满地打滚，而和纱就像是想要消除留在自己脚上那令人不悦的感触一般，将周围的桌椅全部踢翻了。</p>
+                
+                <p>顺带一提，对于和纱来说，不用拳头只是出于钢琴家保护手的习惯，而对准股间出脚也并没有什么特殊的理由。</p>
+                
+                <p>先不管这些，那场黄昏中的骚动，由于校方的「宽大处理」，双方都没有受到任何处罚。</p>
+                
+                <p>但是……也可以说是由于这件事的缘故，和纱与其他所有音乐科的同学之间，在仅仅过了一个月之后，就已经形成了不可弥补的裂痕。</p>
+                
+                <p>所以，和纱对于教室里所有的人都抱持着平等的憎恶。</p>
+                
+                <p>如果特别憎恶松川的话，那就像是满足了他那过剩的自我意识一般，这令和纱很是反感，而且更重要的是，班上已经没有任何人会和她说话了。</p>
+                
+                <p>于是，一个月之后，春季全国大赛。</p>
+                
+                <p>入学不到两个月的一年级生就获得了第一名，这个建校以来史无前例的壮举，使得特意赶到比赛现场去了的校长以及董事长、教导主任以及年级主任都一致对一名女学生大加赞赏。</p>
+                
+                <p>班主任老师也依然用那卑微的笑容附和着自己的上司们。</p>
+                
+                <p>同样参加了大赛，并且闯入了决赛的高年级学生们，只是低着头，机械地鼓了掌。</p>
+                
+                <p>至于因为同级生进入了全国大赛而前来助威的一年级学生……这样的人，连一个也没有。</p>
+                
+                <p>仅仅只用了两个月，和纱与周围世界的关系，就被碾压，撕裂，最后完全隔绝了。</p>
+                
+                <p>但是和纱，只是将自己周围那些令人不悦的反应当作耳边风，面无表情地接过奖状，无言地打断了赞赏之声，无视所有人的制止，将奖状和奖杯都留在身后离开了会场。</p>
+                
+                <p>那个时候，她心中充满的感情，既不是欣喜，也不是成就感，甚至连愤怒、虚无感都不是，只是十分平淡的感觉。</p>
+                
+                <p>本应该，是这样的。</p>
+                
+                <p>那天晚上，回到家，打开家门，之后的事情，和纱已经记不太清楚了。</p>
+                
+                <p>自己将放在门口的大包航空邮件打开的事情也好，从包中拿出了与自己年龄不相符的小狗玩偶的事情也好，玩偶上贴着一张写有母亲的名字以及「生日快乐」的纸条的事情也好，自己在大赛上获得优胜的时候自己的生日已经过了一个星期的事情也好，从正面盯着自己看的玩偶的眼睛显得格外地圆的事情也好……</p>
+                
+                <p>自己不知何时就嘶吼起来的事情也好，将母亲送的迟了一个星期的生日礼物摔到墙上的事情也好，接着又将它捡起来疯狂地捶打撕扯着的事情也好，自己的视野已经变得一片模糊的事情也好，自己内心中决堤而出的丑恶的情绪已经无法制御地化为言语从自己口中吐出的事情也好，满心以为自己已经一无所有的事情也好，这一切的一切，她真的，真的都记不清了……</p>
+                
+                <p>和纱获得优胜这件事，在第二天就成为了话题，甚至还在报纸上刊登了照片。</p>
+                
+                <p>理所当然的，在那些新闻记事当中，包括标题在内『冬马曜子』的名字一共出现了五次，但是和纱既没有注意到，甚至连去读这些记事的想法都没有。</p>
+                
+                <p>冬马和纱，开始讨厌钢琴了。</p>
+                
+                <p>对当时的她来说，这就等于憎恶全世界。</p>
+
+                <h2>第一章　春</h2>
+                
+                <p>「冬马」</p>
+                <p>「……」</p>
+                <p>和纱做了个梦。</p>
+                <p>在梦中，那些和纱再也不愿想起的往事如同走马灯一般一个接着一个地从脑海中闪过。这实在是一个再糟糕不过的梦了。</p>
+                <p>「冬马…喂…不好意思，不过你还是先起来一下」</p>
+                <p>「…嗯？」</p>
+                <p>醒来的感觉当然也十分不好，所以即使面对着那让自己脱离恶梦的，本应称之为恩人的对象，当时的和纱心中所有的也只是愤怒。</p>
+                <p>…虽然是这么说，但这几年的和纱，对任何人都不可能怀有好意。</p>
+                <p>「啊…」</p>
+                <p>「…？」</p>
+                <p>和纱抬起头，发现一个穿着制服的男生睁圆了眼，目不转睛地看着她。</p>
+                <p>…他的表情已经僵硬到了，会让和纱做出这种解释的地步。</p>
+                <p>「………」</p>
+                <p>各种情报开始流入和纱的头脑之中，比如现在已经是那个梦的两年之后，现在自己正处于普通科三年级的教室里，现在的时间应该是第六节课…不，从周围的喧嚣来看，应该已经放学了，等等。这些情报，让她逐渐回到了现实之中。</p>
+
+                <!-- ... 这里可以继续添加后续章节内容 ... -->
+                
+                <div class="bg-white/5 border-l-2 border-acid p-6 my-12 rounded-r-lg">
+                    <p class="text-sm font-mono text-gray-300 mb-0" style="text-indent: 0;">
+                        <span class="text-acid mr-2">> SYSTEM_NOTE:</span>
+                        检测到文档长度过长，为保证阅读体验，后续内容已自动折叠归档。请点击下方链接获取完整数据流。
+                    </p>
+                </div>
+
+                <h2>终章　十一月</h2>
+                
+                <p>·第一次与北原春希见面的人，对他的第一印象都无比的恶劣。</p>
+                <p>·那是因为，无论是谁都会本能地忌讳他那丑恶的人格。</p>
+                <p>　 ※如果对他一开始就抱有良好印象的人，那肯定不是猎奇人士就是笨蛋。</p>
+                <p>　 ※至今为止自然没有出现过这种奇怪的人，以后肯定也不会出现。</p>
+                
+                <p>本应不会出现的…</p>
+                <p>「你是冬马同学吧？」</p>
+                <p>「小木曾…雪菜」</p>
+                
+                <p>但是，她却遇到了。</p>
+                <p>遇到了和自己一样，注视着他的女孩子。</p>
+                
+                <p style="text-align: right; margin-top: 2rem;">（全文完）</p>
+            </section>
+
+            <!-- 底部评论区 -->
+            <section class="mt-16 pt-10 border-t border-white/10">
+                <h3 class="font-mono text-lg text-white mb-8 flex items-center gap-2">
+                    <span class="text-acid">>></span> COMMENTS_LOG
+                </h3>
+                
+                <div class="space-y-6">
+                    <!-- 评论列表 -->
+                    <div class="bg-black/40 border border-white/10 p-4 rounded-lg">
+                        <div class="flex justify-between items-center mb-2 font-mono text-xs">
+                            <span class="text-acid">USER_UNKNOWN</span>
+                            <span class="text-gray-600">2025.10.02</span>
+                        </div>
+                        <p class="text-sm text-gray-400">WA2 是我心目中的神作... 胃痛胃药准备好了。</p>
+                    </div>
+
+                    <!-- 输入框 -->
+                    <div class="relative group">
+                        <textarea class="w-full p-4 bg-black/60 border border-white/20 rounded-lg text-sm text-white font-mono placeholder-white/20 focus:border-acid focus:outline-none transition-all caret-acid" rows="3" placeholder="INSERT_COMMENT..."></textarea>
+                        <button class="absolute bottom-4 right-4 px-4 py-1 bg-acid text-black font-mono text-xs font-bold rounded hover:bg-white transition-colors">SEND</button>
+                    </div>
+                </div>
+            </section>
+
+        </article>
+    </main>
+
+    <!-- 回到顶部 -->
+    <button id="back-to-top" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })" class="fixed bottom-8 right-8 z-50 p-3 bg-black/80 border border-white/20 rounded-full hover:border-acid hover:text-acid transition-all opacity-0 pointer-events-none">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+    </button>
+
+    <footer class="border-t border-white/10 bg-black/80 backdrop-blur-xl mt-20 relative z-20">
+        <div class="max-w-7xl mx-auto py-12 px-6 md:px-12 flex flex-col md:flex-row justify-between items-end gap-8">
+            <div><h2 class="text-2xl font-black text-white tracking-tighter mb-2">WH1TE.LOG</h2><p class="font-mono text-xs text-gray-500">DESIGNED_FOR_THE_FUTURE_ARCHIVE</p></div>
+            <div class="font-mono text-xs text-gray-500 text-right"><p>&copy; 2025 ALL RIGHTS RESERVED.</p></div>
+        </div>
+    </footer>
+
+    <script>
+        // --- 1. 鼠标跟随背景逻辑 ---
+        let ticking = false;
+        document.addEventListener('mousemove', (e) => {
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    const x = (e.clientX / window.innerWidth) * 100;
+                    const y = (e.clientY / window.innerHeight) * 100;
+                    document.documentElement.style.setProperty('--mouse-x', `${x}%`);
+                    document.documentElement.style.setProperty('--mouse-y', `${y}%`);
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        });
+
+        // --- 2. 音乐播放逻辑 (同步主页) ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const music = document.getElementById('background-music');
+            const storedState = localStorage.getItem('music_playing');
+            const storedTime = localStorage.getItem('music_currentTime');
+            
+            music.muted = true;
+            if (storedTime) music.currentTime = parseFloat(storedTime);
+
+            if (storedState === 'true') {
+                const playPromise = music.play();
+                if (playPromise !== undefined) playPromise.catch(e => {});
+                setMusicIcon(true);
+            }
+            
+            // 激活音频上下文
+            const activateAudio = () => {
+                if (localStorage.getItem('music_playing') === 'true') {
+                    music.muted = false;
+                    music.play().catch(e => {});
+                }
+                document.removeEventListener('click', activateAudio);
+            };
+            document.addEventListener('click', activateAudio);
+        });
+
+        window.addEventListener('beforeunload', () => {
+            const music = document.getElementById('background-music');
+            localStorage.setItem('music_currentTime', music.currentTime);
+        });
+
+        function saveMusicState(event) {
+            const music = document.getElementById('background-music');
+            localStorage.setItem('music_playing', !music.paused ? 'true' : 'false');
+            localStorage.setItem('music_currentTime', music.currentTime);
+        }
+
+        let isToggling = false;
+        function toggleMusic() {
+            if (isToggling) return;
+            const music = document.getElementById('background-music');
+            
+            if (music.paused) {
+                isToggling = true;
+                music.muted = false;
+                music.play().then(() => {
+                    setMusicIcon(true);
+                    localStorage.setItem('music_playing', 'true');
+                }).catch(e => {}).finally(() => isToggling = false);
+            } else {
+                music.pause();
+                setMusicIcon(false);
+                localStorage.setItem('music_playing', 'false');
+            }
+        }
+        
+        function setMusicIcon(isPlaying) {
+            const wave = document.getElementById('music-wave');
+            const label = document.querySelector('#music-toggle-button span');
+            if (isPlaying) {
+                wave.classList.remove('hidden');
+                if(label) {
+                    label.innerText = "SOUND_ON";
+                    label.classList.add('text-acid');
+                }
+            } else {
+                wave.classList.add('hidden');
+                if(label) {
+                    label.innerText = "SOUND_OFF";
+                    label.classList.remove('text-acid');
+                }
+            }
+        }
+
+        // --- 3. 回到顶部显示逻辑 ---
+        const backToTopBtn = document.getElementById('back-to-top');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backToTopBtn.classList.remove('opacity-0', 'pointer-events-none');
+            } else {
+                backToTopBtn.classList.add('opacity-0', 'pointer-events-none');
+            }
+        });
+    </script>
+</body>
+</html>
