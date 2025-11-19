@@ -29,14 +29,16 @@
                     animation: {
                         'spin-slow': 'spin 20s linear infinite',
                         'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'float': 'float 6s ease-in-out infinite',
+                        /* 增强版浮动：幅度更大，带缩放 */
+                        'float-heavy': 'floatHeavy 5s ease-in-out infinite', 
                         'glitch': 'glitch 2s linear infinite',
-                        'scan': 'scan 8s linear infinite',
+                        'scan': 'scan 6s linear infinite', /* 扫描线加快 */
+                        'breathe-glow': 'breatheGlow 4s ease-in-out infinite', /* 新增呼吸光晕 */
                     },
                     keyframes: {
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-6px)' },
+                        floatHeavy: {
+                            '0%, 100%': { transform: 'translateY(0) scale(1)' },
+                            '50%': { transform: 'translateY(-12px) scale(1.02)' }, /* 动效更明显 */
                         },
                         glitch: {
                             '2%, 64%': { transform: 'translate(1px,0) skew(0deg)' },
@@ -46,6 +48,10 @@
                         scan: {
                             '0%': { backgroundPosition: '0 0' },
                             '100%': { backgroundPosition: '0 100%' },
+                        },
+                        breatheGlow: {
+                            '0%, 100%': { boxShadow: '0 0 15px rgba(204, 255, 0, 0.1)' },
+                            '50%': { boxShadow: '0 0 30px rgba(204, 255, 0, 0.3)' },
                         }
                     }
                 }
@@ -59,26 +65,35 @@
             --mouse-y: 50%;
         }
 
+        /* 1. 噪点层 - 透明度增加 (0.06 -> 0.09) */
         .noise-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 40; opacity: 0.06;
+            pointer-events: none; z-index: 40; opacity: 0.09;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
 
+        /* 2. 扫描线层 - 动效更明显 (Opacity 0.4 -> 0.5, 渐变更锐利) */
         .scanlines {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 41; opacity: 0.4;
-            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
+            pointer-events: none; z-index: 41; opacity: 0.5;
+            background: linear-gradient(to bottom, 
+                rgba(255,255,255,0), 
+                rgba(255,255,255,0) 50%, 
+                rgba(0,0,0,0.2) 50%, 
+                rgba(0,0,0,0.2));
             background-size: 100% 4px;
-            animation: scan 0.5s linear infinite;
+            animation: scan 0.3s linear infinite; /* 极速闪烁，更有CRT感 */
         }
         
+        /* 3. 动态背景 - 网格线条更亮 */
         body {
             background-color: #050505;
             background-image: 
-                linear-gradient(rgba(204, 255, 0, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(204, 255, 0, 0.03) 1px, transparent 1px),
-                radial-gradient(circle 800px at var(--mouse-x) var(--mouse-y), rgba(204, 255, 0, 0.08) 0%, transparent 60%);
+                /* 线条透明度 0.05 -> 0.1，更清晰 */
+                linear-gradient(rgba(204, 255, 0, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(204, 255, 0, 0.1) 1px, transparent 1px),
+                /* 鼠标光晕 */
+                radial-gradient(circle 800px at var(--mouse-x) var(--mouse-y), rgba(204, 255, 0, 0.15) 0%, transparent 60%);
             background-size: 60px 60px, 60px 60px, 100% 100%;
             background-attachment: fixed;
             min-height: 100vh; color: white;
@@ -119,22 +134,24 @@
                 hue-rotate(60deg) 
                 saturate(300%) 
                 drop-shadow(0 0 20px rgba(204, 255, 0, 0.4));
-            transform: scaleX(-1); 
-            mix-blend-mode: screen; 
+            transform: scaleX(-1);
+            mix-blend-mode: screen;
             opacity: 0.85;
-            mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
-            -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+            mask-image: linear-gradient(to bottom, black 80%, transparent 100%); 
+            -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
         }
 
         /* 动漫少女 2 (左侧 AI 助手) */
         .image-filter-acid-subtle {
             filter: 
-                grayscale(30%) /* 稍微保留一点彩色 */
-                sepia(20%)
-                hue-rotate(30deg)
-                saturate(120%)
-                brightness(95%)
-                drop-shadow(0 0 15px rgba(204, 255, 0, 0.1));
+                grayscale(50%)
+                sepia(30%)
+                hue-rotate(50deg)
+                saturate(150%)
+                brightness(90%)
+                drop-shadow(0 0 15px rgba(204, 255, 0, 0.2));
+            mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
         }
     </style>
 </head>
@@ -147,10 +164,11 @@
         <source src="./audio/bgm.mp3" type="audio/mp3">
     </audio>
 
-    <!-- ================== 背景固定人物层 (Z-INDEX: 0) ================== -->
+    <!-- 背景固定人物层 (Z-INDEX: 0) -->
     
-    <!-- 1. 右侧 Hero 人物 (黑白故障风) - 保持在背景，大尺寸 -->
-    <div class="fixed right-0 bottom-0 z-0 pointer-events-none w-[50vw] md:w-[40vw] lg:w-[35vw] max-h-[90vh] flex items-end justify-end animate-glitch">
+    <!-- 1. 右侧 Hero 人物 -->
+    <!-- 调整：w减小 (40vw/25vw)，max-h减小 (85vh)，位置微调，确保露出额头 -->
+    <div class="fixed right-0 bottom-0 z-0 pointer-events-none w-[40vw] md:w-[30vw] lg:w-[25vw] max-h-[85vh] flex items-end justify-end animate-glitch">
         <img 
             src="./images/hero-glitch.png" 
             alt="Cyberpunk Hero" 
@@ -158,11 +176,8 @@
         >
     </div>
 
-    <!-- 2. 左侧 AI 助手 - 已移动回 Sidebar (见下文) -->
+    <!-- 页面主体内容层 (Z-INDEX: 10) -->
 
-    <!-- ================== 页面主体内容层 (Z-INDEX: 10) ================== -->
-
-    <!-- 音乐按钮 -->
     <button id="music-toggle-button" onclick="toggleMusic()" class="fixed bottom-6 left-6 z-50 flex items-center gap-0 group cursor-pointer hover:scale-105 transition-transform">
         <div class="relative w-10 h-10 bg-black/60 border border-white/20 backdrop-blur-md rounded-full flex items-center justify-center group-hover:border-acid transition-colors duration-300 z-10">
             <div id="music-wave" class="hidden absolute inset-0 rounded-full border border-acid opacity-60 animate-ping"></div>
@@ -176,12 +191,10 @@
         </div>
     </button>
 
-    <!-- Grid 线 -->
     <div class="fixed top-0 left-0 w-full h-px bg-white/10 z-40"></div>
     <div class="fixed top-0 left-6 md:left-12 w-px h-full bg-white/5 z-30 hidden md:block"></div>
     <div class="fixed top-0 right-6 md:right-12 w-px h-full bg-white/5 z-30 hidden md:block"></div>
 
-    <!-- 导航 -->
     <nav class="fixed top-0 w-full z-40 px-6 md:px-12 py-5 flex justify-between items-center mix-blend-difference text-white">
         <a href="index.html" class="flex flex-col group">
             <span class="text-lg font-black tracking-tighter leading-none group-hover:text-acid transition-colors">WH1TE.LOG</span>
@@ -206,10 +219,7 @@
 
     <!-- Hero Section -->
     <header class="relative pt-40 pb-20 px-6 min-h-[80vh] flex flex-col justify-center items-center text-center z-20">
-        
-        <!-- 装饰圆环 -->
         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] md:w-[40vw] aspect-square border border-dashed border-white/10 rounded-full animate-spin-slow pointer-events-none"></div>
-        
         <div class="space-y-4 animate-fade-in-up max-w-3xl mx-auto">
             <div class="flex justify-center gap-3 mb-8">
                 <span class="px-2 py-1 bg-acid text-black font-mono text-[10px] font-bold uppercase tracking-wider rounded-sm">System Ready</span>
@@ -238,27 +248,20 @@
     <!-- 主内容 -->
     <main class="max-w-7xl mx-auto px-6 md:px-12 pb-32 relative z-20">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
-            
-            <!-- 侧边栏 -->
             <aside class="lg:col-span-4 space-y-6 lg:sticky lg:top-24 h-fit">
                 
-                <!-- === 2. AI 助手 (已放回框里，且尺寸变大) === 
-                     修改：p-0 去除内边距，w-full 让图片撑满，relative group 增加互动
+                <!-- === 2. AI 助手 (Side Bar) === 
+                     动效升级：animate-float-heavy (大幅度浮动+缩放) + animate-breathe-glow (呼吸光晕)
                 -->
-                <div class="cyber-card rounded-xl p-0 overflow-hidden animate-float relative group shadow-2xl hover:shadow-acid/20 transition-shadow duration-500">
-                    <!-- 图片容器：设置为全宽 -->
+                <div class="cyber-card rounded-xl p-0 overflow-hidden animate-float-heavy animate-breathe-glow relative group transition-shadow duration-500">
                     <div class="w-full relative">
-                        <!-- 图片：w-full 撑满，object-cover 保持比例 -->
                         <img 
                             src="./images/ai-assistant.jpg" 
                             alt="AI Assistant" 
                             class="w-full h-auto object-cover image-filter-acid-subtle"
                         >
-                        <!-- 底部渐变遮罩，让文字更清晰 -->
                         <div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
                     </div>
-                    
-                    <!-- 覆盖在图片底部的文字信息 -->
                     <div class="absolute bottom-0 left-0 w-full p-5 z-10">
                         <h3 class="font-mono text-acid text-sm font-bold mb-1 tracking-wider">:: AI_ASSISTANT</h3>
                         <p class="text-gray-300 text-xs font-mono">
