@@ -84,6 +84,7 @@
             min-height: 100vh; color: white;
             -webkit-font-smoothing: antialiased;
             transition: background 0.1s ease;
+            overflow-x: hidden; /* 防止图片过大导致横向滚动 */
         }
 
         .cyber-card {
@@ -108,7 +109,7 @@
         ::-webkit-scrollbar-thumb:hover { background: #ccff00; }
         ::selection { background: #ccff00; color: black; }
         
-        /* 动漫少女 1 (Hero 背景 - 故障风) */
+        /* 图片滤镜 */
         .image-filter-acid-glitch {
             filter: 
                 grayscale(100%) 
@@ -118,12 +119,11 @@
                 hue-rotate(60deg) 
                 saturate(400%) 
                 drop-shadow(0 0 15px rgba(204, 255, 0, 0.6));
-            transform: scaleX(-1); /* 镜像翻转 */
-            mix-blend-mode: screen; /* 混合模式，让黑色背景变透明 */
-            opacity: 0.8;
+            transform: scaleX(-1);
+            mix-blend-mode: screen;
+            opacity: 0.9; /* 提高一点不透明度 */
         }
 
-        /* 动漫少女 2 (AI 助手 - 柔和风) */
         .image-filter-acid-subtle {
             filter: 
                 grayscale(80%)
@@ -135,7 +135,7 @@
         }
     </style>
 </head>
-<body class="antialiased overflow-x-hidden font-sans">
+<body class="antialiased font-sans">
 
     <div class="noise-overlay"></div>
     <div class="scanlines"></div>
@@ -184,21 +184,26 @@
         <div class="md:hidden text-acid font-mono text-xs border border-acid/50 px-2 py-1 rounded cursor-pointer hover:bg-acid hover:text-black transition-colors">MENU::OPEN</div>
     </nav>
 
-    <header class="relative pt-32 pb-16 px-6 min-h-[75vh] flex flex-col justify-center items-center text-center z-10 overflow-hidden">
+    <!-- Hero Section - 布局调整以适应大图 -->
+    <header class="relative pt-32 pb-16 px-6 min-h-[85vh] flex flex-col justify-center items-center text-center z-10 overflow-hidden">
         
-        <!-- === 核心修改：本地图片路径 === -->
-        <div class="absolute right-0 bottom-0 md:right-[10%] md:bottom-[5%] w-64 md:w-96 pointer-events-none z-0 animate-glitch">
-            <!-- 请确保你已将黑白漫画少女图片重命名为 hero-glitch.png 并放在 images 文件夹 -->
+        <!-- === 1. Hero 大图 (Hero Glitch) === 
+             调整：w-[50vw] 甚至更大，position fixed/absolute right-0 bottom-0
+             利用右侧冗余空间
+        -->
+        <div class="absolute right-0 bottom-0 w-[80vw] md:w-[50vw] lg:w-[45vw] max-w-[1000px] pointer-events-none z-0 animate-glitch origin-bottom-right">
             <img 
                 src="./images/hero-glitch.png"
                 alt="Cyberpunk Girl Glitch" 
-                class="w-full h-auto image-filter-acid-glitch"
+                class="w-full h-auto image-filter-acid-glitch object-contain"
             >
         </div>
 
+        <!-- 装饰圆环 -->
         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120vw] md:w-[50vw] aspect-square border border-dashed border-white/10 rounded-full animate-spin-slow pointer-events-none"></div>
         
-        <div class="relative z-20 space-y-4 animate-fade-in-up">
+        <!-- 文本内容 - 稍微向左偏移一点，避开右侧大图 -->
+        <div class="relative z-20 space-y-4 animate-fade-in-up md:mr-[20vw]">
             <div class="flex justify-center gap-3 mb-8">
                 <span class="px-2 py-1 bg-acid text-black font-mono text-[10px] font-bold uppercase tracking-wider rounded-sm">System Ready</span>
                 <span class="px-2 py-1 border border-white/20 backdrop-blur-sm text-white/70 font-mono text-[10px] font-bold uppercase tracking-wider rounded-sm">Loc: Internet</span>
@@ -227,19 +232,28 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
             <aside class="lg:col-span-4 space-y-6 lg:sticky lg:top-24 h-fit">
                 
-                <!-- === 核心修改：本地图片路径 === -->
-                <div class="cyber-card rounded-xl p-4 flex flex-col items-center justify-center animate-float">
-                    <!-- 请确保你已将彩色动漫少女图片重命名为 ai-assistant.jpg 并放在 images 文件夹 -->
-                    <img 
-                        src="./images/ai-assistant.jpg" 
-                        alt="AI Assistant" 
-                        class="w-32 h-auto rounded-lg image-filter-acid-subtle mb-3"
-                    >
-                    <h3 class="font-mono text-acid text-xs font-bold mb-2">:: AI_ASSISTANT_STATUS</h3>
-                    <p class="text-gray-400 text-xs font-mono leading-relaxed text-center">
-                        在线并待命。有什么可以帮助你的吗？<br>
-                        DATA: <span class="text-acid">READY</span>
-                    </p>
+                <!-- === 2. AI 助手 (AI Assistant) ===
+                     调整：w-full 撑满侧边栏，去除多余 padding，视觉冲击力更强
+                -->
+                <div class="cyber-card rounded-xl p-0 overflow-hidden animate-float relative group">
+                    <!-- 图片 -->
+                    <div class="relative w-full aspect-[4/3] overflow-hidden">
+                        <img 
+                            src="./images/ai-assistant.jpg" 
+                            alt="AI Assistant" 
+                            class="w-full h-full object-cover image-filter-acid-subtle group-hover:scale-110 transition-transform duration-700"
+                        >
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                    </div>
+                    
+                    <!-- 文字信息覆盖在图片下方 -->
+                    <div class="absolute bottom-0 left-0 w-full p-4">
+                        <h3 class="font-mono text-acid text-xs font-bold mb-1">:: AI_ASSISTANT_STATUS</h3>
+                        <p class="text-gray-300 text-[10px] font-mono">
+                            System Online. Awaiting input.<br>
+                            DATA: <span class="text-acid blink">READY</span>
+                        </p>
+                    </div>
                 </div>
 
                 <div class="cyber-card rounded-xl p-6 relative overflow-hidden group">
@@ -248,13 +262,11 @@
                         <div class="flex gap-2"><span class="text-acid min-w-[14px]">>></span><p>成功配置 Python 环境，下一步专注博客维护脚本开发。</p></div>
                     </div>
                 </div>
-                <!-- 社交按钮 -->
                 <div class="grid grid-cols-3 gap-3 md:gap-4">
                     <a href="https://github.com/whte97284-hue/wh1te-blog-project/tree/main" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-white hover:text-black transition-all group relative overflow-hidden"><span class="font-mono text-[9px] font-bold uppercase relative z-10">Git</span></a>
                     <a href="https://space.bilibili.com/551898501" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-[#fb7299] hover:text-white transition-all group relative overflow-hidden"><span class="font-mono text-[9px] font-bold uppercase relative z-10">Bili</span></a>
                     <a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-black hover:text-white transition-all group relative overflow-hidden"><span class="font-mono text-[9px] font-bold uppercase relative z-10">TikTok</span></a>
                 </div>
-                <!-- 标签云 -->
                 <div class="cyber-card rounded-xl p-6">
                     <h3 class="font-mono text-gray-400 text-[10px] mb-4 uppercase tracking-widest flex justify-between">:: TAGS_COLLECTION<span>[04]</span></h3>
                     <div class="flex flex-wrap gap-2" id="tag-cloud">
