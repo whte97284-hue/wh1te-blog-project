@@ -48,12 +48,14 @@
                             '0%': { opacity: 0, transform: 'scale(0.9) translateY(20px)' },
                             '100%': { opacity: 1, transform: 'scale(1) translateY(0)' },
                         },
-                        cyberSwap: {
-                            '0%': { opacity: 0.8, transform: 'translateX(0)' },
-                            '25%': { opacity: 0.6, transform: 'translateX(-5px) skewX(10deg)' },
-                            '50%': { opacity: 0.9, transform: 'translateX(5px) skewX(-10deg)' },
-                            '75%': { opacity: 0.4, transform: 'translateX(0)' },
-                            '100%': { opacity: 0.8, transform: 'translateX(0)' },
+                        /* 增强版故障动画：使用 clip-path 切割 */
+                        cyberGlitch: {
+                            '0%': { clipPath: 'inset(50% 0 30% 0)', transform: 'translate(-5px, 0)' },
+                            '20%': { clipPath: 'inset(10% 0 60% 0)', transform: 'translate(5px, 0)' },
+                            '40%': { clipPath: 'inset(40% 0 40% 0)', transform: 'translate(-5px, 0)' },
+                            '60%': { clipPath: 'inset(80% 0 5% 0)', transform: 'translate(5px, 0)' },
+                            '80%': { clipPath: 'inset(10% 0 80% 0)', transform: 'translate(-5px, 0)' },
+                            '100%': { clipPath: 'inset(50% 0 30% 0)', transform: 'translate(0, 0)' },
                         }
                     }
                 }
@@ -127,43 +129,67 @@
             transform: translateY(-4px); 
         }
 
-        /* === 人物图片样式核心修改 === */
+        /* === 人物图片样式 (带全息故障特效) === */
         .hero-character-container {
-            position: fixed; 
-            right: 0; 
-            /* 改为 top: 0, 确保从顶部开始布局 */
-            top: 0; 
-            bottom: 0;
-            z-index: 0; 
-            width: 50vw; 
-            max-width: 900px; 
-            height: 100vh; 
-            display: flex; 
-            /* 改为顶部对齐 (默认就是 flex-start，但明确写出来比较好) */
-            align-items: flex-start; 
-            justify-content: flex-end; 
-            pointer-events: none; 
-            overflow: hidden;
+            position: fixed; right: 0; top: 0; bottom: 0; z-index: 0; 
+            width: 50vw; max-width: 900px; height: 100vh; 
+            display: flex; align-items: flex-start; justify-content: flex-end; 
+            pointer-events: none; overflow: hidden;
         }
+
+        /* 持续的轻微全息干扰动画 */
+        @keyframes hologram-noise {
+            0% { opacity: 0.95; transform: translateX(0); filter: drop-shadow(2px 0 0 rgba(255,0,0,0.4)) drop-shadow(-2px 0 0 rgba(0,255,255,0.4)); }
+            20% { opacity: 0.9; transform: translateX(1px); }
+            40% { opacity: 0.95; transform: translateX(-1px); filter: drop-shadow(-2px 0 0 rgba(255,0,0,0.3)) drop-shadow(2px 0 0 rgba(0,255,255,0.3)); }
+            60% { opacity: 0.9; transform: translateX(0); }
+            80% { opacity: 0.95; transform: translateX(1px); }
+            100% { opacity: 0.9; transform: translateX(0); filter: drop-shadow(2px 0 0 rgba(255,0,0,0.4)) drop-shadow(-2px 0 0 rgba(0,255,255,0.4)); }
+        }
+
         .hero-character-image { 
-            width: 100%; 
-            /* 强制高度撑满屏幕 */
-            height: 100%; 
-            /* 使用 cover 填充，多余部分裁切 */
-            object-fit: cover; 
-            /* 关键：定位在顶部中心。这样裁切时会优先保留头部，裁掉脚部 */
-            object-position: center top;
-            
-            filter: none; 
-            mix-blend-mode: normal; 
-            opacity: 1;
+            width: 100%; height: 100%; object-fit: cover; object-position: center top;
             background: transparent !important; 
-            will-change: transform, opacity; 
+            will-change: transform, opacity, clip-path; 
+            /* 应用持续的全息动画 */
+            animation: hologram-noise 6s infinite linear alternate-reverse;
             transition: opacity 0.5s ease; 
         }
         
-        /* 故障动画 */
-        .cyber-swap-active { animation: cyberSwap 0.4s steps(4) forwards; }
+        /* 剧烈故障状态 (通过JS触发) */
+        .cyber-swap-active { 
+            animation: cyberGlitch 0.2s steps(2) infinite !important; 
+            filter: brightness(1.5) contrast(1.5) hue-rotate(90deg) !important;
+            opacity: 0.7 !important;
+        }
+
+        /* === AI 助手赛博朋克滤镜 === */
+        .ai-terminal-filter {
+            position: relative;
+            overflow: hidden;
+        }
+        /* CRT 扫描线遮罩 */
+        .ai-terminal-filter::after {
+            content: "";
+            position: absolute; inset: 0; z-index: 10;
+            background: repeating-linear-gradient(
+                to bottom,
+                transparent 0px,
+                transparent 2px,
+                rgba(0, 0, 0, 0.3) 3px
+            );
+            pointer-events: none;
+        }
+        /* 图片本身的单色荧光滤镜 */
+        .ai-avatar-img {
+            filter: grayscale(100%) sepia(100%) hue-rotate(var(--hue-rotate)) brightness(0.8) contrast(1.5);
+            mix-blend-mode: luminosity;
+            transition: all 0.5s;
+        }
+        .ai-card-container:hover .ai-avatar-img {
+            filter: grayscale(0%) sepia(0%) brightness(1.1) contrast(1.1); /* 悬停时恢复彩色 */
+            mix-blend-mode: normal;
+        }
 
         /* 警告条 */
         .eva-warning-strip {
@@ -331,8 +357,9 @@
                              <div class="absolute -bottom-2 left-8 w-4 h-4 bg-bg border-r border-b border-primary transform rotate-45"></div>
                         </div>
                     </div>
-                    <div class="w-full relative aspect-[4/5] overflow-hidden bg-black/40">
-                        <img src="./images/ai-assistant.jpg" onerror="this.style.display='none'" alt="AI" class="w-full h-full object-cover opacity-90 mix-blend-lighten group-hover:scale-105 transition-transform duration-500 filter contrast-125">
+                    <div class="w-full relative aspect-[4/5] overflow-hidden bg-black/40 ai-terminal-filter">
+                        <!-- 应用 AI 滤镜类 -->
+                        <img src="./images/ai-assistant.jpg" onerror="this.style.display='none'" alt="AI" class="w-full h-full object-cover ai-avatar-img">
                         <div class="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent"></div>
                         <div class="absolute top-2 right-2 text-[9px] font-mono text-black bg-secondary px-1 font-bold">LIVE</div>
                     </div>
@@ -516,8 +543,8 @@
             if(!heroImg) return;
             setInterval(() => {
                 heroImg.classList.add('cyber-swap-active');
-                setTimeout(() => { heroImg.classList.remove('cyber-swap-active'); }, 400);
-            }, 5000); 
+                setTimeout(() => { heroImg.classList.remove('cyber-swap-active'); }, 200);
+            }, 3000); // 每3秒触发一次剧烈故障
         }
 
         const characterMap = {
@@ -538,6 +565,7 @@
             
             const heroImg = document.getElementById('hero-character');
             if (heroImg && characterMap[themeName]) {
+                 // 切换时先隐藏，然后加载新图
                  heroImg.style.opacity = 0;
                  setTimeout(() => {
                      heroImg.src = characterMap[themeName];
@@ -548,7 +576,7 @@
         const savedTheme = localStorage.getItem('theme') || 'default';
         setTheme(savedTheme);
 
-        // AI 逻辑 (修复：重新添加 triggerAiSpeech)
+        // AI 逻辑
         const eririLines = ["哼，才不是特意等你的！", "检测到不明入侵... 啊，是你啊。", "笨蛋！AT立场要全开啊！", "MAGI 正在通过提案...", "不要盯着我看！变态！", "Code 404: Tsundere not found."];
         let aiSpeechInterval = null;
         function triggerAiSpeech() {
