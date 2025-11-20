@@ -127,37 +127,39 @@
             transform: translateY(-4px); 
         }
 
-        /* 人物图片容器和图片本身样式优化 */
+        /* === 人物图片样式核心修改 === */
         .hero-character-container {
             position: fixed; 
             right: 0; 
-            bottom: 0; 
+            /* 改为 top: 0, 确保从顶部开始布局 */
+            top: 0; 
+            bottom: 0;
             z-index: 0; 
-            /* 增加宽度 */
             width: 50vw; 
-            /* 允许更大 */
             max-width: 900px; 
-            height: 100vh; /* 确保容器足够高，以便调整图片位置 */
+            height: 100vh; 
             display: flex; 
-            align-items: flex-end; /* 底部对齐 */
+            /* 改为顶部对齐 (默认就是 flex-start，但明确写出来比较好) */
+            align-items: flex-start; 
             justify-content: flex-end; 
             pointer-events: none; 
-            overflow: hidden; /* 防止图片溢出容器 */
+            overflow: hidden;
         }
         .hero-character-image { 
             width: 100%; 
-            /* 调整 height 为 auto，并使用 object-fit: cover */
-            height: auto; 
-            object-fit: cover; /* 填充容器，可能会裁剪边缘 */
-            /* 移除所有滤镜和蒙版，直接显示抠图效果 */
+            /* 强制高度撑满屏幕 */
+            height: 100%; 
+            /* 使用 cover 填充，多余部分裁切 */
+            object-fit: cover; 
+            /* 关键：定位在顶部中心。这样裁切时会优先保留头部，裁掉脚部 */
+            object-position: center top;
+            
             filter: none; 
             mix-blend-mode: normal; 
-            opacity: 1; /* 默认完全显示 */
+            opacity: 1;
             background: transparent !important; 
             will-change: transform, opacity; 
             transition: opacity 0.5s ease; 
-            /* 调整图片在容器中的位置，使其上半身更完整 */
-            transform: translateY(0%); /* 向上微调 */
         }
         
         /* 故障动画 */
@@ -308,7 +310,7 @@
         </div>
     </header>
 
-    <!-- 人物图片容器 - 新增 class 来控制 -->
+    <!-- 人物图片容器 - 使用 top-0 确保头部可见 -->
     <div class="hero-character-container">
         <img 
             id="hero-character"
