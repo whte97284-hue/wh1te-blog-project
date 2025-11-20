@@ -3,44 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WH1TE_LOG // IDENTITY</title>
+    <title>WH1TE_LOG // IDENTITY_DATA</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@300;500;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['"Space Grotesk"', 'sans-serif'],
-                        mono: ['"JetBrains Mono"', 'monospace'],
+                        sans: ['"Space Grotesk"', '"Noto Sans JP"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', '"Noto Sans JP"', 'monospace'],
                     },
                     colors: {
-                        acid: {
-                            DEFAULT: '#ccff00', 
-                            dark: '#aacc00',
-                            dim: 'rgba(204, 255, 0, 0.1)'
-                        },
-                        dark: {
-                            900: '#050505',
-                            800: '#0a0a0a',
-                        }
+                        primary: 'var(--primary-color)',
+                        secondary: 'var(--secondary-color)',
+                        bg: 'var(--bg-color)',
+                        surface: 'var(--surface-color)',
                     },
                     animation: {
-                        'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'glitch': 'glitch 3s linear infinite', 
-                        'scan': 'scan 8s linear infinite',
+                        'spin-slow': 'spin 30s linear infinite',
+                        'scan': 'scan 4s linear infinite',
+                        'glitch': 'glitch 2s infinite',
                         'load-bar': 'loadBar 1.5s ease-out forwards',
                     },
                     keyframes: {
-                        glitch: {
-                            '2%, 64%': { transform: 'translate(1px,0) skew(0deg)' },
-                            '4%, 60%': { transform: 'translate(-1px,0) skew(0deg)' },
-                            '62%': { transform: 'translate(0,0) skew(2deg)' },
-                        },
                         scan: {
                             '0%': { backgroundPosition: '0 0' },
                             '100%': { backgroundPosition: '0 100%' },
+                        },
+                        glitch: {
+                            '0%': { transform: 'translate(0)' },
+                            '20%': { transform: 'translate(-2px, 2px)' },
+                            '40%': { transform: 'translate(-2px, -2px)' },
+                            '60%': { transform: 'translate(2px, 2px)' },
+                            '80%': { transform: 'translate(2px, -2px)' },
+                            '100%': { transform: 'translate(0)' },
                         },
                         loadBar: {
                             '0%': { width: '0%' },
@@ -54,194 +53,149 @@
 
     <style>
         :root {
-            --mouse-x: 50%;
-            --mouse-y: 50%;
-        }
-
-        /* 1. 背景特效 */
-        .noise-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 40; opacity: 0.08;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-        }
-
-        .scanlines {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 41; opacity: 0.3;
-            background: linear-gradient(to bottom, 
-                rgba(255,255,255,0), 
-                rgba(255,255,255,0) 50%, 
-                rgba(0,0,0,0.2) 50%, 
-                rgba(0,0,0,0.2));
-            background-size: 100% 4px;
-            animation: scan 0.3s linear infinite;
+            /* 默认: 初号机 */
+            --primary-color: #b15dff;
+            --secondary-color: #39ff14;
+            --bg-color: #0f0518;
+            --surface-color: rgba(26, 11, 46, 0.85);
+            --hue-rotate: 260deg;
         }
         
-        body {
-            background-color: #050505;
-            background-image: 
-                linear-gradient(rgba(204, 255, 0, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(204, 255, 0, 0.05) 1px, transparent 1px),
-                radial-gradient(circle 800px at var(--mouse-x) var(--mouse-y), rgba(204, 255, 0, 0.12) 0%, transparent 60%);
-            background-size: 60px 60px, 60px 60px, 100% 100%;
-            background-attachment: fixed;
-            min-height: 100vh; color: white;
-            -webkit-font-smoothing: antialiased;
-            transition: background 0.1s ease;
-            overflow-x: hidden;
+        [data-theme="unit-02"] { --primary-color: #ffae00; --secondary-color: #ff0000; --bg-color: #140202; --surface-color: rgba(46, 11, 11, 0.85); --hue-rotate: 0deg; }
+        [data-theme="unit-00"] { --primary-color: #ffffff; --secondary-color: #0091ff; --bg-color: #020a14; --surface-color: rgba(11, 20, 46, 0.85); --hue-rotate: 180deg; }
+        [data-theme="unit-08"] { --primary-color: #ff5cab; --secondary-color: #50c878; --bg-color: #14020d; --surface-color: rgba(46, 11, 29, 0.85); --hue-rotate: 300deg; }
+
+        body { background-color: var(--bg-color); color: white; transition: background-color 0.6s ease; overflow-x: hidden; }
+
+        /* 背景特效 */
+        .hex-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -2;
+            background-image: radial-gradient(circle at center, transparent 0%, var(--bg-color) 80%),
+                url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ffffff' stroke-opacity='0.05' stroke-width='1'/%3E%3C/svg%3E");
+        }
+        .crt-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; pointer-events: none;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 6px 100%;
+            opacity: 0.2; mix-blend-mode: overlay;
         }
 
-        /* 2. Cyber Card */
+        /* Cyber Card */
         .cyber-card {
-            background: rgba(10, 10, 10, 0.75); 
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.12); 
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-            transition: all 0.3s ease;
-        }
-        .cyber-card:hover {
-            border-color: rgba(204, 255, 0, 0.5);
-            box-shadow: 0 0 20px rgba(204, 255, 0, 0.1);
-        }
-        
-        .caret-acid { caret-color: #ccff00; }
-        ::selection { background: #ccff00; color: black; }
-
-        /* 背景故障少女 - 调低透明度作为氛围 */
-        .image-filter-acid-glitch {
-            filter: grayscale(100%) contrast(130%) brightness(110%) sepia(80%) hue-rotate(60deg) saturate(300%) drop-shadow(0 0 20px rgba(204, 255, 0, 0.4));
-            transform: scaleX(-1); mix-blend-mode: screen; opacity: 0.5;
-            mask-image: linear-gradient(to bottom, black 60%, transparent 100%); 
-            -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+            background: var(--surface-color); 
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--secondary-color); 
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
         }
 
-        /* 头像边框特效 */
-        .avatar-container::before {
-            content: '';
-            position: absolute; inset: -2px;
-            background: linear-gradient(45deg, #ccff00, transparent, #ccff00);
-            z-index: -1;
-            animation: spin-slow 4s linear infinite;
+        /* 头像故障效果 */
+        .avatar-glitch {
+            position: relative; overflow: hidden;
         }
+        .avatar-glitch::before {
+            content: ''; position: absolute; inset: 0; background: var(--secondary-color); mix-blend-mode: hard-light; opacity: 0;
+        }
+        .avatar-glitch:hover::before { opacity: 0.2; animation: glitch 0.3s cubic-bezier(.25, .46, .45, .94) both infinite; }
+
+        /* 滚动条 */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: var(--secondary-color); border-radius: 2px; }
     </style>
 </head>
-<body class="antialiased overflow-x-hidden font-sans">
+<body class="antialiased font-sans">
 
-    <div class="noise-overlay"></div>
-    <div class="scanlines"></div>
+    <div class="crt-overlay"></div>
+    <div class="hex-bg"></div>
 
-    <audio id="background-music" loop preload="metadata">
-        <source src="./audio/bgm.mp3" type="audio/mp3">
-    </audio>
-
-    <!-- 1. 背景人物 -->
-    <div class="fixed right-0 bottom-0 z-0 pointer-events-none w-[45vw] max-w-[600px] flex items-end justify-end animate-glitch">
-        <img 
-            src="./images/hero-glitch.png" 
-            alt="Cyberpunk Hero" 
-            class="w-full h-auto object-contain image-filter-acid-glitch"
-        >
-    </div>
-
-    <!-- 音乐按钮 -->
-    <button id="music-toggle-button" onclick="toggleMusic()" class="fixed bottom-6 left-6 z-50 flex items-center gap-0 group cursor-pointer hover:scale-105 transition-transform">
-        <div class="relative w-10 h-10 bg-black/80 border border-white/20 backdrop-blur-md rounded-full flex items-center justify-center group-hover:border-acid transition-colors duration-300 z-10">
-            <div id="music-wave" class="hidden absolute inset-0 rounded-full border border-acid opacity-60 animate-ping"></div>
-            <svg id="music-icon" class="w-4 h-4 text-white group-hover:text-acid transition-colors" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-        </div>
-        <div class="h-10 bg-black/80 border-y border-r border-white/20 backdrop-blur-md rounded-r-full flex items-center -ml-4 pl-6 pr-4 opacity-0 max-w-0 group-hover:max-w-[200px] group-hover:opacity-100 transition-all duration-500 overflow-hidden">
-            <div class="flex flex-col leading-none">
-                <span class="text-[10px] text-gray-400 font-mono uppercase">NOW PLAYING</span>
-                <span class="text-xs text-acid font-bold font-mono whitespace-nowrap">SYSTEM_SOUNDTRACK</span>
-            </div>
-        </div>
-    </button>
-
-    <!-- 顶部线 -->
-    <div class="fixed top-0 left-0 w-full h-px bg-white/10 z-40"></div>
-    <div class="fixed top-0 left-6 md:left-12 w-px h-full bg-white/5 z-30 hidden md:block"></div>
-    <div class="fixed top-0 right-6 md:right-12 w-px h-full bg-white/5 z-30 hidden md:block"></div>
-
-    <!-- 导航 -->
-    <nav class="fixed top-0 w-full z-40 px-6 md:px-12 py-4 flex justify-between items-center mix-blend-difference text-white bg-gradient-to-b from-black/90 to-transparent">
-        <a href="index.html" class="flex flex-col group">
-            <span class="text-xl font-black tracking-tighter leading-none group-hover:text-acid transition-colors">WH1TE.LOG</span>
-            <span class="font-mono text-[9px] tracking-[0.2em] opacity-60 group-hover:opacity-100 transition-opacity">IDENTITY_VIEW</span>
-        </a>
-        <div class="hidden md:flex gap-8 font-mono text-[11px] tracking-widest">
-            <a href="index.html" onclick="saveMusicState(event)" class="relative group py-2">
-                <span class="text-gray-400 group-hover:text-acid transition-colors">01_HOME</span>
-                <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-acid group-hover:w-full transition-all duration-300"></span>
-            </a>
-            <a href="article-1.html" onclick="saveMusicState(event)" class="relative group py-2">
-                <span class="text-gray-400 group-hover:text-acid transition-colors">02_LATEST</span>
-                <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-acid group-hover:w-full transition-all duration-300"></span>
-            </a>
-            <a href="about.html" onclick="saveMusicState(event)" class="relative group py-2">
-                <span class="text-acid transition-colors">03_ABOUT</span>
-                <span class="absolute bottom-0 left-0 w-full h-[2px] bg-acid"></span>
+    <!-- 导航栏 -->
+    <nav class="fixed top-0 w-full z-40 px-6 md:px-12 py-6 flex justify-between items-center bg-gradient-to-b from-bg to-transparent select-none">
+        <div class="flex items-center gap-6">
+            <a href="index.html" class="group flex flex-col">
+                <span class="text-2xl font-black tracking-tighter leading-none text-white group-hover:text-primary transition-colors italic" style="font-family: 'Space Grotesk'">WH1TE.LOG</span>
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="w-2 h-2 bg-secondary animate-pulse"></span>
+                    <span class="font-mono text-[9px] tracking-[0.3em] text-secondary">IDENTITY_DATA</span>
+                </div>
             </a>
         </div>
-        <div class="md:hidden text-acid font-mono text-xs border border-acid/50 px-2 py-1 rounded cursor-pointer hover:bg-acid hover:text-black transition-colors">MENU::OPEN</div>
+        
+        <div class="hidden md:flex gap-8 font-mono text-xs tracking-widest font-bold">
+            <a href="index.html" class="text-gray-500 hover:text-primary transition-colors">01_HOME</a>
+            <a href="#" class="text-gray-500 hover:text-primary transition-colors">02_ARCHIVES</a>
+            <a href="about.html" class="text-secondary border-b-2 border-secondary pb-1">03_ABOUT</a>
+        </div>
     </nav>
 
-    <!-- 主体内容 -->
+    <!-- 音乐播放器 (Sonic Deck) -->
+    <audio id="background-music" crossorigin="anonymous" loop>
+        <source src="./audio/bgm.mp3" type="audio/mp3">
+    </audio>
+    <div id="sonic-deck" class="fixed bottom-8 left-8 z-50 flex items-center gap-3 bg-black/80 border border-secondary p-2 pr-4 group hover:shadow-[0_0_20px_var(--secondary-color)] transition-all duration-300" style="clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);">
+        <div class="w-12 h-12 flex items-center justify-center cursor-pointer bg-secondary/10 hover:bg-secondary/20 transition-colors border border-secondary/30" onclick="toggleMusic()">
+            <i data-lucide="disc" class="w-6 h-6 text-secondary animate-spin-slow"></i>
+        </div>
+        <div class="flex flex-col">
+            <div class="text-[10px] font-mono text-primary font-bold">SOUND_ONLY</div>
+            <input type="range" class="w-20 h-1 bg-white/20 appearance-none cursor-pointer mt-1" min="0" max="1" step="0.1" oninput="document.getElementById('background-music').volume = this.value">
+        </div>
+    </div>
+
     <main class="max-w-5xl mx-auto pt-40 pb-20 px-6 relative z-20">
         
         <!-- 个人档案卡 -->
-        <div class="cyber-card rounded-2xl p-8 md:p-12 relative overflow-hidden">
+        <div class="cyber-card p-8 md:p-12 relative">
             <!-- 装饰角标 -->
-            <div class="absolute top-0 left-0 w-16 h-16 border-t-2 border-l-2 border-acid rounded-tl-xl"></div>
-            <div class="absolute bottom-0 right-0 w-16 h-16 border-b-2 border-r-2 border-acid rounded-br-xl"></div>
+            <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-secondary"></div>
+            <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-secondary"></div>
+            <div class="absolute top-4 right-4 font-mono text-[9px] text-secondary border border-secondary px-2 py-0.5">PERSONNEL_FILE: W-01</div>
 
             <div class="flex flex-col md:flex-row gap-12 items-start">
                 
                 <!-- 头像区 -->
                 <div class="relative flex-shrink-0 mx-auto md:mx-0">
-                    <div class="w-40 h-40 avatar-container relative rounded-xl overflow-hidden bg-black flex items-center justify-center">
-                        <!-- 这里的W可以是图片 -->
-                        <span class="text-6xl font-black text-acid select-none">W</span>
+                    <div class="w-40 h-40 avatar-glitch border-2 border-primary bg-black/50 flex items-center justify-center">
+                        <span class="text-6xl font-black text-primary select-none">W</span>
                     </div>
-                    <div class="mt-4 flex justify-center gap-2">
-                        <div class="w-2 h-2 bg-acid rounded-full animate-pulse"></div>
-                        <span class="font-mono text-[10px] text-acid tracking-widest">STATUS: ONLINE</span>
+                    <div class="mt-4 flex justify-between items-center border-t border-white/10 pt-2">
+                        <span class="font-mono text-[10px] text-gray-400">SYNC_RATE</span>
+                        <span class="font-mono text-xs text-secondary font-bold">400%</span>
                     </div>
                 </div>
 
                 <!-- 信息区 -->
                 <div class="flex-1 space-y-6">
                     <div>
-                        <h1 class="text-4xl md:text-6xl font-black text-white mb-2 tracking-tighter">WHO_AM_I</h1>
-                        <p class="font-mono text-sm text-acid border-b border-white/10 pb-4 inline-block">
-                            // DIGITAL_NOMAD // PYTHON_LEARNER
+                        <h1 class="text-4xl md:text-5xl font-black text-white mb-2 tracking-tighter uppercase">Wh1te<span class="text-secondary">.log</span></h1>
+                        <p class="font-mono text-sm text-primary inline-block border-b border-primary/30 pb-1">
+                            // DIGITAL_NOMAD // MAGI_SYSTEM_ADMIN
                         </p>
                     </div>
                     
-                    <p class="text-gray-300 leading-relaxed font-light">
+                    <p class="text-gray-300 leading-relaxed font-mono text-sm">
                         你好，我是 <strong class="text-white">Wh1te</strong>。一名扭曲病娇姐系爱好者。<br>
-                        这里是我的树屋，记录着从 <span class="text-acid font-mono">AI</span> 代码开发到 <span class="text-acid font-mono">Web</span> 。
-                        最近在看白色相簿被冬马和纱迷晕过去了，特典小说都看了几十遍。
+                        这里是我的树屋，记录着从 <span class="text-secondary">AI</span> 代码开发到 <span class="text-secondary">Web</span> 构建的全过程。
+                        最近沉迷《白色相簿2》，冬马和纱是绝对的信仰。
                     </p>
 
                     <!-- 技能矩阵 -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-                        <div class="bg-white/5 border border-white/10 p-4 rounded hover:border-acid/50 transition-colors">
-                            <div class="flex justify-between text-xs font-mono mb-2 text-gray-400">
-                                <span>PYTHON</span>
+                        <div class="bg-black/20 border border-white/10 p-4 hover:border-secondary transition-colors group">
+                            <div class="flex justify-between text-xs font-mono mb-2 text-gray-400 group-hover:text-secondary">
+                                <span>PYTHON_CORE</span>
                                 <span>65%</span>
                             </div>
-                            <div class="w-full h-1.5 bg-black rounded-full overflow-hidden">
-                                <div class="h-full bg-acid animate-load-bar" style="--target-width: 65%"></div>
+                            <div class="w-full h-1 bg-gray-800">
+                                <div class="h-full bg-secondary animate-load-bar shadow-[0_0_10px_var(--secondary-color)]" style="--target-width: 65%"></div>
                             </div>
                         </div>
-                        <div class="bg-white/5 border border-white/10 p-4 rounded hover:border-acid/50 transition-colors">
-                            <div class="flex justify-between text-xs font-mono mb-2 text-gray-400">
+                        <div class="bg-black/20 border border-white/10 p-4 hover:border-secondary transition-colors group">
+                            <div class="flex justify-between text-xs font-mono mb-2 text-gray-400 group-hover:text-secondary">
                                 <span>WEB_DEV</span>
                                 <span>40%</span>
                             </div>
-                            <div class="w-full h-1.5 bg-black rounded-full overflow-hidden">
-                                <div class="h-full bg-acid animate-load-bar" style="--target-width: 40%"></div>
+                            <div class="w-full h-1 bg-gray-800">
+                                <div class="h-full bg-secondary animate-load-bar shadow-[0_0_10px_var(--secondary-color)]" style="--target-width: 40%"></div>
                             </div>
                         </div>
                     </div>
@@ -251,29 +205,29 @@
 
         <!-- 时间轴 -->
         <div class="mt-16 max-w-3xl mx-auto">
-            <h2 class="font-mono text-xl text-acid mb-12 flex items-center gap-4">
-                <span class="w-8 h-px bg-acid"></span>
-                :: SYSTEM_LOGS
+            <h2 class="font-mono text-lg text-secondary mb-8 flex items-center gap-4">
+                <span class="w-2 h-2 bg-secondary"></span>
+                :: CHRONICLE_LOGS
             </h2>
             
-            <div class="space-y-12 border-l border-white/10 ml-4 pl-8 relative">
+            <div class="space-y-8 border-l-2 border-white/10 ml-3 pl-8 relative">
                 <!-- 节点 1 -->
                 <div class="relative group">
-                    <div class="absolute -left-[37px] top-1.5 w-4 h-4 bg-black border-2 border-acid rounded-full group-hover:bg-acid transition-colors"></div>
-                    <span class="font-mono text-xs text-gray-500 mb-1 block">2025.10</span>
-                    <h3 class="text-xl font-bold text-white mb-2">构建互联网小屋</h3>
-                    <p class="text-sm text-gray-400 leading-relaxed">
-                        放弃了对抢票脚本的执念，转向更有创造力的 Web 开发。利用 Python 自动化维护这个博客。
+                    <div class="absolute -left-[39px] top-1 w-5 h-5 bg-bg border-2 border-primary rounded-full group-hover:bg-primary group-hover:shadow-[0_0_15px_var(--primary-color)] transition-all"></div>
+                    <span class="font-mono text-xs text-gray-500 mb-1 block">2025.10 // CURRENT</span>
+                    <h3 class="text-lg font-bold text-white mb-2">互联网补完计划</h3>
+                    <p class="text-xs text-gray-400 leading-relaxed font-mono">
+                        放弃了对抢票脚本的执念，转向构建数字花园。EVA 风格重构完成。
                     </p>
                 </div>
                 
                 <!-- 节点 2 -->
                 <div class="relative group">
-                    <div class="absolute -left-[37px] top-1.5 w-4 h-4 bg-black border-2 border-gray-600 rounded-full group-hover:border-acid transition-colors"></div>
-                    <span class="font-mono text-xs text-gray-500 mb-1 block">2025.09</span>
-                    <h3 class="text-xl font-bold text-gray-300 mb-2">初探自动化</h3>
-                    <p class="text-sm text-gray-400 leading-relaxed">
-                        接触 ADB 和 Appium，试图与安卓底层通信。虽然项目未达预期，但理解了“工具”的本质。
+                    <div class="absolute -left-[39px] top-1 w-5 h-5 bg-bg border-2 border-white/30 rounded-full group-hover:border-secondary transition-all"></div>
+                    <span class="font-mono text-xs text-gray-500 mb-1 block">2025.09 // ARCHIVED</span>
+                    <h3 class="text-lg font-bold text-gray-300 mb-2">初探自动化</h3>
+                    <p class="text-xs text-gray-400 leading-relaxed font-mono">
+                        接触 ADB 和 Appium，试图与安卓底层通信。项目未达预期，但理解了“工具”的本质。
                     </p>
                 </div>
             </div>
@@ -281,101 +235,51 @@
 
     </main>
 
-    <footer class="border-t border-white/10 bg-black/80 backdrop-blur-xl mt-20 relative z-20">
-        <div class="max-w-7xl mx-auto py-12 px-6 md:px-12 flex flex-col md:flex-row justify-between items-end gap-8">
-            <div><h2 class="text-2xl font-black text-white tracking-tighter mb-2">WH1TE.LOG</h2><p class="font-mono text-xs text-gray-500">DESIGNED_FOR_THE_FUTURE_ARCHIVE</p></div>
-            <div class="font-mono text-xs text-gray-500 text-right"><p>&copy; 2025 ALL RIGHTS RESERVED.</p></div>
+    <footer class="border-t border-white/10 bg-surface backdrop-blur-xl mt-20 relative z-20 py-12">
+        <div class="max-w-screen-xl mx-auto px-6 flex flex-col md:flex-row justify-between gap-4">
+            <div>
+                <h2 class="text-2xl font-black text-white tracking-tighter" style="font-family: 'Space Grotesk'">WH1TE.LOG</h2>
+                <p class="font-mono text-[10px] text-gray-500 mt-1">HUMAN INSTRUMENTALITY PROJECT</p>
+            </div>
+            <div class="font-mono text-[10px] text-gray-600 text-right">
+                <p>&copy; 2025 NERV. ALL RIGHTS RESERVED.</p>
+                <p class="mt-1 uppercase tracking-wider">God's in his heaven. All's right with the world.</p>
+            </div>
         </div>
     </footer>
 
     <script>
-        // --- 1. 鼠标跟随背景逻辑 ---
-        let ticking = false;
-        document.addEventListener('mousemove', (e) => {
-            if (!ticking) {
-                window.requestAnimationFrame(() => {
-                    const x = (e.clientX / window.innerWidth) * 100;
-                    const y = (e.clientY / window.innerHeight) * 100;
-                    document.documentElement.style.setProperty('--mouse-x', `${x}%`);
-                    document.documentElement.style.setProperty('--mouse-y', `${y}%`);
-                    ticking = false;
-                });
-                ticking = true;
-            }
-        });
+        lucide.createIcons();
 
-        // --- 2. 音乐播放逻辑 (同步主页) ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const music = document.getElementById('background-music');
-            const storedState = localStorage.getItem('music_playing');
-            const storedTime = localStorage.getItem('music_currentTime');
-            
-            music.muted = true;
-            if (storedTime) music.currentTime = parseFloat(storedTime);
-
-            if (storedState === 'true') {
-                const playPromise = music.play();
-                if (playPromise !== undefined) playPromise.catch(e => {});
-                setMusicIcon(true);
-            }
-            
-            const activateAudio = () => {
-                if (localStorage.getItem('music_playing') === 'true') {
-                    music.muted = false;
-                    music.play().catch(e => {});
-                }
-                document.removeEventListener('click', activateAudio);
-            };
-            document.addEventListener('click', activateAudio);
-        });
-
-        window.addEventListener('beforeunload', () => {
-            const music = document.getElementById('background-music');
-            localStorage.setItem('music_currentTime', music.currentTime);
-        });
-
-        function saveMusicState(event) {
-            const music = document.getElementById('background-music');
-            localStorage.setItem('music_playing', !music.paused ? 'true' : 'false');
-            localStorage.setItem('music_currentTime', music.currentTime);
+        // === 主题同步逻辑 ===
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'default';
+            document.documentElement.setAttribute('data-theme', savedTheme);
         }
+        loadTheme();
 
-        let isToggling = false;
+        // === 音乐播放逻辑 ===
+        const audioEl = document.getElementById('background-music');
+        const icon = document.querySelector('#sonic-deck i');
+        let isPlaying = false;
+
         function toggleMusic() {
-            if (isToggling) return;
-            const music = document.getElementById('background-music');
-            
-            if (music.paused) {
-                isToggling = true;
-                music.muted = false;
-                music.play().then(() => {
-                    setMusicIcon(true);
-                    localStorage.setItem('music_playing', 'true');
-                }).catch(e => {}).finally(() => isToggling = false);
+            if(isPlaying) {
+                audioEl.pause();
+                icon.setAttribute('data-lucide', 'disc');
             } else {
-                music.pause();
-                setMusicIcon(false);
-                localStorage.setItem('music_playing', 'false');
+                audioEl.play().catch(e => console.log("Audio play failed", e));
+                icon.setAttribute('data-lucide', 'pause');
             }
+            isPlaying = !isPlaying;
+            lucide.createIcons();
         }
-        
-        function setMusicIcon(isPlaying) {
-            const wave = document.getElementById('music-wave');
-            const label = document.querySelector('#music-toggle-button span');
-            if (isPlaying) {
-                wave.classList.remove('hidden');
-                if(label) {
-                    label.innerText = "SOUND_ON";
-                    label.classList.add('text-acid');
-                }
-            } else {
-                wave.classList.add('hidden');
-                if(label) {
-                    label.innerText = "SOUND_OFF";
-                    label.classList.remove('text-acid');
-                }
-            }
-        }
+
+        // 尝试自动恢复播放状态 (简单版)
+        window.addEventListener('load', () => {
+            // 实际浏览器策略通常禁止自动播放，这里仅作占位
+            // 若主页已播放，这里可以尝试继续，但通常需要用户交互
+        });
     </script>
 </body>
 </html>
