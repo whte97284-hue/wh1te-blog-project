@@ -9,7 +9,10 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <script>
-        tailwind.config = {
+        // 安全检查：防止 tailwind 未定义报错
+        window.tailwind = window.tailwind || {};
+        
+        window.tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: {
@@ -87,18 +90,27 @@
             transition: background-color 0.6s ease, color 0.6s ease; 
             overflow-x: hidden; 
             cursor: crosshair; 
+            /* 添加一个更明显的径向渐变背景，增强中间亮四周暗的效果 */
+            background: radial-gradient(circle at 50% 30%, rgba(40,40,40,0.1) 0%, var(--bg-color) 80%);
         }
 
-        /* 背景装饰 */
+        /* --- 1. 动态蜂巢背景 (增强版) --- */
         .hex-bg {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -2;
+            /* 提高 stroke-opacity 到 0.15 让网格更明显 */
             background-image: 
-                radial-gradient(circle at center, transparent 0%, var(--bg-color) 80%),
-                url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ffffff' stroke-opacity='0.05' stroke-width='1'/%3E%3C/svg%3E");
-            mask-image: linear-gradient(to bottom, black, transparent);
+                url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ffffff' stroke-opacity='0.15' stroke-width='1'/%3E%3C/svg%3E");
+            background-size: 60px 104px;
+            mask-image: linear-gradient(to bottom, black 20%, transparent 90%);
+            /* 添加背景滚动动画 */
+            animation: bg-scroll 40s linear infinite;
+        }
+        @keyframes bg-scroll {
+            0% { background-position: 0 0; }
+            100% { background-position: 60px 104px; }
         }
         
-        /* 随机闪烁 */
+        /* 随机闪烁的六边形 (保持不变) */
         .hex-flash {
             position: absolute; width: 60px; height: 104px;
             background: var(--secondary-color);
@@ -106,7 +118,41 @@
             opacity: 0;
             animation: hexFlash 4s infinite;
         }
-        @keyframes hexFlash { 0%, 90% { opacity: 0; } 92% { opacity: 0.1; } 94% { opacity: 0; } }
+        @keyframes hexFlash { 0%, 90% { opacity: 0; } 92% { opacity: 0.15; } 94% { opacity: 0; } }
+
+        /* --- 2. 数据粒子 (新功能) --- */
+        #particles-container {
+            position: fixed; inset: 0; pointer-events: none; z-index: -1;
+        }
+        .particle {
+            position: absolute;
+            background: var(--secondary-color);
+            opacity: 0;
+            animation: floatUp linear infinite;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            20% { opacity: 0.4; }
+            80% { opacity: 0.4; }
+            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+        }
+
+        /* --- 3. 高亮扫描线 (新功能) --- */
+        .scan-bar {
+            position: fixed; top: -10%; left: 0; width: 100%; height: 10px;
+            background: var(--secondary-color);
+            opacity: 0;
+            box-shadow: 0 0 15px var(--secondary-color);
+            z-index: 40;
+            pointer-events: none;
+            animation: scanDown 6s ease-in-out infinite;
+        }
+        @keyframes scanDown {
+            0% { top: -10%; opacity: 0; }
+            10% { opacity: 0.2; }
+            90% { opacity: 0.2; }
+            100% { top: 110%; opacity: 0; }
+        }
 
         /* 鼠标光晕 */
         #cursor-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; background-image: radial-gradient(circle var(--cursor-size) at var(--mouse-x) var(--mouse-y), var(--grid-color) 0%, transparent 60%); transition: --cursor-size 0.1s ease; will-change: background-image; mix-blend-mode: screen; }
@@ -121,12 +167,12 @@
         }
         .cyber-card:hover { 
             background: rgba(255, 255, 255, 0.03); 
-            box-shadow: 0 0 15px var(--secondary-color); 
+            box-shadow: 0 0 20px var(--secondary-color); /* 增强光晕 */
             border-color: var(--primary-color);
             transform: translateY(-4px); 
         }
 
-        /* === 人物图片样式 (顶部对齐) === */
+        /* 人物图片容器和图片本身样式优化 */
         .hero-character-container {
             position: fixed; 
             right: 0; top: 0; bottom: 0; z-index: 0; 
@@ -142,7 +188,7 @@
             transition: opacity 0.5s ease; 
         }
         
-        /* === 还原经典的赛博朋克故障动画 (Fault Effect) === */
+        /* 故障动画 */
         @keyframes cyberSwap {
             0% { opacity: 1; transform: translateX(0) skewX(0deg); filter: hue-rotate(0deg); }
             20% { opacity: 0.8; transform: translateX(-5px) skewX(10deg); filter: hue-rotate(90deg) contrast(1.5); clip-path: inset(10% 0 60% 0); }
@@ -155,23 +201,21 @@
             animation: cyberSwap 0.4s steps(5) forwards; 
         }
 
-        /* === AI 助手赛博朋克滤镜特效 === */
+        /* AI 助手赛博朋克滤镜特效 */
         .ai-card-container {
             background: var(--surface-color);
             backdrop-filter: blur(12px);
             border: 1px solid var(--secondary-color);
             position: relative;
             transition: all 0.4s ease;
-            overflow: hidden; /* 保留 overflow: hidden 以限制内部扫描线 */
+            overflow: hidden;
         }
-        /* 静态扫描线装饰 */
         .ai-scanlines {
             position: absolute; inset: 0; pointer-events: none; z-index: 10;
             background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2));
             background-size: 100% 4px;
             opacity: 0.6;
         }
-        /* 对话时的剧烈抖动动画 */
         @keyframes ai-talking-glitch {
             0% { transform: translate(0); filter: hue-rotate(0deg); }
             20% { transform: translate(-2px, 1px); filter: hue-rotate(10deg) brightness(1.2); }
@@ -206,7 +250,7 @@
         ::-webkit-scrollbar-thumb { background: var(--secondary-color); border-radius: 2px; }
 
         /* HUD 角落 */
-        .hud-corner { position: fixed; width: 40px; height: 40px; border: 2px solid var(--secondary-color); z-index: 50; pointer-events: none; opacity: 0.6; }
+        .hud-corner { position: fixed; width: 40px; height: 40px; border: 2px solid var(--secondary-color); z-index: 50; pointer-events: none; opacity: 0.8; } /* 增加不透明度 */
         .hud-tl { top: 20px; left: 20px; border-right: 0; border-bottom: 0; }
         .hud-tr { top: 20px; right: 20px; border-left: 0; border-bottom: 0; }
         .hud-bl { bottom: 20px; left: 20px; border-right: 0; border-top: 0; }
@@ -233,7 +277,9 @@
 
     <!-- 特效层 -->
     <div class="crt-overlay"></div>
+    <div class="scan-bar"></div> <!-- 新增：移动扫描线 -->
     <div id="boot-sequence" style="display: none;"></div>
+    <div id="particles-container"></div> <!-- 新增：粒子容器 -->
 
     <!-- 背景装饰 -->
     <div class="hex-bg"></div>
@@ -290,7 +336,7 @@
         </div>
         
         <div class="hidden md:flex gap-8 font-mono text-xs tracking-widest font-bold">
-            <a href="index.html" class="text-secondary border-b-2 border-secondary pb-1">01_HOME</a>
+            <a href="#" class="text-secondary border-b-2 border-secondary pb-1">01_HOME</a>
             <a href="#" class="text-gray-500 hover:text-primary transition-colors">02_ARCHIVES</a>
             <a href="about.html" class="text-gray-500 hover:text-primary transition-colors">03_ABOUT</a>
         </div>
@@ -299,10 +345,10 @@
     <!-- Hero 区域 -->
     <header class="relative pt-48 pb-12 max-w-screen-xl mx-auto px-6 md:px-12 flex flex-col justify-center items-start text-left z-20 min-h-[65vh]">
         <!-- MAGI 装饰 -->
-        <div class="absolute top-24 right-[20%] opacity-30 pointer-events-none z-0 hidden lg:flex flex-col gap-3 scale-90 origin-top-right">
-            <div class="magi-node w-56 h-12 skew-x-12 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold">MELCHIOR - 1</div>
-            <div class="magi-node w-56 h-12 skew-x-12 ml-12 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold" style="animation-delay: 1s;">BALTHASAR - 2</div>
-            <div class="magi-node w-56 h-12 skew-x-12 ml-24 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold" style="animation-delay: 2s;">CASPER - 3</div>
+        <div class="absolute top-24 right-[20%] opacity-60 pointer-events-none z-0 hidden lg:flex flex-col gap-3 scale-90 origin-top-right">
+            <div class="magi-node w-56 h-12 skew-x-12 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold shadow-[0_0_10px_var(--secondary-color)] bg-black/30">MELCHIOR - 1</div>
+            <div class="magi-node w-56 h-12 skew-x-12 ml-12 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold shadow-[0_0_10px_var(--secondary-color)] bg-black/30" style="animation-delay: 1s;">BALTHASAR - 2</div>
+            <div class="magi-node w-56 h-12 skew-x-12 ml-24 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold shadow-[0_0_10px_var(--secondary-color)] bg-black/30" style="animation-delay: 2s;">CASPER - 3</div>
         </div>
 
         <div class="space-y-8 animate-pop-in w-full relative z-10 max-w-3xl">
@@ -344,9 +390,8 @@
             <!-- 左侧边栏 -->
             <aside class="lg:col-span-4 space-y-10 lg:sticky lg:top-32 h-fit">
                 
-                <!-- AI 卡片 修复版结构：使用 wrapper 容器来包裹气泡和卡片 -->
+                <!-- AI 卡片 -->
                 <div class="relative z-50">
-                    <!-- 1. 气泡对话框 (移动到容器外部，避免被 overflow:hidden 裁剪) -->
                     <div id="ai-speech-bubble" class="hidden absolute -top-24 left-0 w-full z-50 animate-pop-in pointer-events-none">
                         <div class="bg-bg/95 border border-primary p-4 relative shadow-[4px_4px_0_var(--secondary-color)]">
                              <p id="ai-speech-text" class="text-xs font-bold font-mono text-primary leading-relaxed"></p>
@@ -354,17 +399,13 @@
                         </div>
                     </div>
 
-                    <!-- 2. 卡片主体 (保留 overflow:hidden 用于内部特效) -->
                     <div id="ai-card" class="ai-card-container cursor-pointer group" onclick="triggerAiSpeech()">
-                        <div class="ai-scanlines"></div> <!-- 扫描线叠加层 -->
-                        
+                        <div class="ai-scanlines"></div>
                         <div class="w-full relative aspect-[4/5] overflow-hidden bg-black/40">
-                            <!-- AI 头像 -->
                             <img src="./images/ai-assistant.jpg" onerror="this.style.display='none'" alt="AI" class="ai-avatar-img w-full h-full object-cover opacity-90 mix-blend-lighten group-hover:scale-105 transition-transform duration-500 filter contrast-125">
                             <div class="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent"></div>
                             <div class="absolute top-2 right-2 text-[9px] font-mono text-black bg-secondary px-1 font-bold">LIVE</div>
                         </div>
-                        
                         <div class="p-5 border-t border-secondary/30 relative overflow-hidden">
                             <div class="absolute top-0 right-0 w-full h-full bg-secondary/5 -skew-x-12 transform translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
                             <div class="flex items-center justify-between mb-2 relative z-10">
@@ -562,10 +603,40 @@
                 setTimeout(() => { heroImg.classList.remove('cyber-swap-active'); }, 400);
             }, 5000); 
         }
+        
+        // --- 增加粒子效果 ---
+        function createParticles() {
+            const container = document.getElementById('particles-container');
+            const particleCount = 15;
+            
+            for (let i = 0; i < particleCount; i++) {
+                spawnParticle(container);
+            }
+            
+            setInterval(() => {
+                spawnParticle(container);
+            }, 2000);
+        }
+        
+        function spawnParticle(container) {
+            const p = document.createElement('div');
+            p.classList.add('particle');
+            const size = Math.random() * 4 + 2;
+            p.style.width = `${size}px`;
+            p.style.height = `${size}px`;
+            p.style.left = `${Math.random() * 100}vw`;
+            p.style.animationDuration = `${Math.random() * 10 + 10}s`; // 10-20s float time
+            p.style.opacity = Math.random() * 0.5;
+            
+            container.appendChild(p);
+            
+            // Remove after animation
+            setTimeout(() => {
+                p.remove();
+            }, 20000);
+        }
 
         /* === 角色图片映射表 (请确保 images 目录下有对应的文件) === */
-        // 注意：这里假设您已经将新上传的文件重命名为 mari.png 和 rei.png
-        // 否则您可以直接替换为您上传的原始文件名
         const characterMap = {
             'default': './images/shinji.png',
             'unit-02': './images/asuka.png',
@@ -745,6 +816,7 @@
         startHeroGlitch();
         loadAnimeData();
         window.addEventListener('load', runBootSequence);
+        createParticles(); // Start particle system
 
     </script>
 </body>
