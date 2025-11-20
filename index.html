@@ -85,22 +85,23 @@
             --primary-color: #b15dff;
             --secondary-color: #39ff14;
             --bg-color: #0f0518;
-            --surface-color: rgba(26, 11, 46, 0.85);
+            /* 调整 Surface 颜色，更透明，融入背景 */
+            --surface-color: rgba(15, 5, 24, 0.4); 
             --grid-color: rgba(125, 42, 232, 0.15);
             --hue-rotate: 260deg;
         }
         
         /* === THEMES === */
-        [data-theme="unit-02"] { --primary-color: #ffae00; --secondary-color: #ff0000; --bg-color: #140202; --surface-color: rgba(46, 11, 11, 0.85); --grid-color: rgba(255, 0, 0, 0.15); --hue-rotate: 0deg; }
-        [data-theme="unit-00"] { --primary-color: #ffffff; --secondary-color: #0091ff; --bg-color: #020a14; --surface-color: rgba(11, 20, 46, 0.85); --grid-color: rgba(0, 145, 255, 0.15); --hue-rotate: 180deg; }
-        [data-theme="unit-08"] { --primary-color: #ff5cab; --secondary-color: #50c878; --bg-color: #14020d; --surface-color: rgba(46, 11, 29, 0.85); --grid-color: rgba(255, 0, 153, 0.15); --hue-rotate: 300deg; }
+        [data-theme="unit-02"] { --primary-color: #ffae00; --secondary-color: #ff0000; --bg-color: #140202; --surface-color: rgba(20, 2, 2, 0.4); --grid-color: rgba(255, 0, 0, 0.15); --hue-rotate: 0deg; }
+        [data-theme="unit-00"] { --primary-color: #ffffff; --secondary-color: #0091ff; --bg-color: #020a14; --surface-color: rgba(2, 10, 20, 0.4); --grid-color: rgba(0, 145, 255, 0.15); --hue-rotate: 180deg; }
+        [data-theme="unit-08"] { --primary-color: #ff5cab; --secondary-color: #50c878; --bg-color: #14020d; --surface-color: rgba(20, 2, 13, 0.4); --grid-color: rgba(255, 0, 153, 0.15); --hue-rotate: 300deg; }
 
         /* === 紧急事态模式 (EMERGENCY MODE) - 优化版 === */
         body.emergency-mode {
             --primary-color: #ff0000 !important;
             --secondary-color: #ff0000 !important;
             --bg-color: #1a0505 !important; /* 深红黑，不是纯黑，避免死机感 */
-            --surface-color: rgba(40, 0, 0, 0.9) !important;
+            --surface-color: rgba(40, 0, 0, 0.6) !important;
             --grid-color: rgba(255, 0, 0, 0.3) !important;
             --hue-rotate: 0deg !important;
         }
@@ -270,19 +271,29 @@
         /* 鼠标光晕 */
         #cursor-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; background-image: radial-gradient(circle var(--cursor-size) at var(--mouse-x) var(--mouse-y), var(--grid-color) 0%, transparent 60%); transition: --cursor-size 0.1s ease; will-change: background-image; mix-blend-mode: screen; }
 
-        /* UI 卡片 */
+        /* UI 卡片 (高度融合版) */
         .cyber-card {
             background: var(--surface-color); 
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--secondary-color); 
-            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
+            backdrop-filter: blur(8px); /* 稍微减少模糊，让背景更清晰 */
+            border: 1px solid rgba(255,255,255,0.1); /* 默认边框更淡 */
+            /* 仅保留左侧和底部的亮色边框暗示，模拟浮动窗口 */
+            border-left: 2px solid var(--secondary-color);
+            clip-path: polygon(
+                0 0, 
+                100% 0, 
+                100% calc(100% - 15px), 
+                calc(100% - 15px) 100%, 
+                0 100%
+            );
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            /* 内部渐变，增加全息感 */
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%);
         }
         .cyber-card:hover { 
-            background: rgba(255, 255, 255, 0.03); 
-            box-shadow: 0 0 20px var(--secondary-color);
+            background: rgba(255, 255, 255, 0.08); 
+            box-shadow: 0 0 30px rgba(var(--secondary-color), 0.2); /* 柔和光晕 */
             border-color: var(--primary-color);
-            transform: translateY(-4px); 
+            transform: translateY(-2px); 
         }
 
         /* 人物图片容器 */
@@ -314,7 +325,7 @@
             animation: cyberSwap 0.4s steps(5) forwards; 
         }
 
-        /* AI 助手 */
+        /* AI 助手 (优化透明感) */
         .ai-card-container {
             background: var(--surface-color);
             backdrop-filter: blur(12px);
@@ -322,12 +333,13 @@
             position: relative;
             transition: all 0.4s ease;
             overflow: hidden;
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
         }
         .ai-scanlines {
             position: absolute; inset: 0; pointer-events: none; z-index: 10;
             background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2));
             background-size: 100% 4px;
-            opacity: 0.6;
+            opacity: 0.4; /* 稍微降低不透明度 */
         }
         @keyframes ai-talking-glitch {
             0% { transform: translate(0); filter: hue-rotate(0deg); }
@@ -396,7 +408,7 @@
         ::-webkit-scrollbar-thumb { background: var(--secondary-color); border-radius: 2px; }
 
         /* HUD 角落 */
-        .hud-corner { position: fixed; width: 40px; height: 40px; border: 2px solid var(--secondary-color); z-index: 50; pointer-events: none; opacity: 0.8; } 
+        .hud-corner { position: fixed; width: 40px; height: 40px; border: 2px solid var(--secondary-color); z-index: 50; pointer-events: none; opacity: 0.6; } /* 降低不透明度，更融合 */
         .hud-tl { top: 20px; left: 20px; border-right: 0; border-bottom: 0; }
         .hud-tr { top: 20px; right: 20px; border-left: 0; border-bottom: 0; }
         .hud-bl { bottom: 20px; left: 20px; border-right: 0; border-top: 0; }
@@ -460,7 +472,7 @@
         <source src="./audio/bgm.mp3" type="audio/mp3">
     </audio>
 
-    <div id="sonic-deck" class="fixed bottom-8 left-8 z-50 flex items-center gap-3 bg-black/80 border border-secondary p-2 pr-4 group hover:shadow-[0_0_20px_var(--secondary-color)] transition-all duration-300" style="clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);">
+    <div id="sonic-deck" class="fixed bottom-8 left-8 z-50 flex items-center gap-3 bg-black/60 border border-secondary p-2 pr-4 group hover:shadow-[0_0_20px_var(--secondary-color)] transition-all duration-300 backdrop-blur-md" style="clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);">
         <canvas id="audio-visualizer" class="absolute bottom-0 left-0 w-full h-full opacity-30 pointer-events-none"></canvas>
         <div class="w-12 h-12 flex items-center justify-center cursor-pointer bg-secondary/10 hover:bg-secondary/20 transition-colors border border-secondary/30" onclick="toggleMusic()">
             <div id="deck-wave" class="absolute border border-secondary w-full h-full animate-ping hidden"></div>
@@ -514,7 +526,7 @@
 
         <div class="space-y-8 animate-pop-in w-full relative z-10 max-w-3xl">
             <div class="flex items-center gap-3 mb-2">
-                <span class="px-3 py-1 bg-secondary text-black font-mono text-[10px] font-black uppercase tracking-widest">System Ready</span>
+                <span class="px-3 py-1 bg-secondary text-black font-mono text-[10px] font-black uppercase tracking-widest border border-secondary/50">System Ready</span>
                 <span class="w-24 h-px bg-secondary/50"></span>
                 <span class="font-mono text-[10px] text-primary">SYNC RATE: 400%</span>
             </div>
@@ -611,7 +623,7 @@
                     <article class="article-card cyber-card p-8 group hover:bg-white/5 cursor-pointer relative overflow-hidden" 
                              data-tags="Novel ACG WhiteAlbum2"
                              onclick="window.location.href='article-3.html'">
-                        <div class="absolute -right-10 -top-10 w-40 h-40 bg-secondary/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <!-- 移除不必要的绝对定位发光背景，用 clip-path 裁剪卡片 -->
                         <div class="flex flex-col gap-4 relative z-10">
                             <div class="flex justify-between items-start font-mono text-[10px]">
                                 <div class="flex gap-2">
@@ -632,7 +644,6 @@
                     <article class="article-card cyber-card p-8 group hover:bg-white/5 cursor-pointer relative overflow-hidden" 
                              data-tags="Python Automation"
                              onclick="window.location.href='article-2.html'">
-                        <div class="absolute -right-10 -top-10 w-40 h-40 bg-secondary/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         <div class="flex flex-col gap-4 relative z-10">
                             <div class="flex justify-between items-start font-mono text-[10px]">
                                 <div class="flex gap-2">
@@ -653,7 +664,6 @@
                     <article class="article-card cyber-card p-8 group hover:bg-white/5 cursor-pointer relative overflow-hidden" 
                              data-tags="Code Reflection"
                              onclick="window.location.href='article-1.html'">
-                         <div class="absolute -right-10 -top-10 w-40 h-40 bg-secondary/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         <div class="flex flex-col gap-4 relative z-10">
                             <div class="flex justify-between items-start font-mono text-[10px]">
                                 <div class="flex gap-2">
