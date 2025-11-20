@@ -143,7 +143,6 @@
         }
         
         /* === 还原经典的赛博朋克故障动画 (Fault Effect) === */
-        /* 这个动画模拟信号丢失和画面撕裂 */
         @keyframes cyberSwap {
             0% { opacity: 1; transform: translateX(0) skewX(0deg); filter: hue-rotate(0deg); }
             20% { opacity: 0.8; transform: translateX(-5px) skewX(10deg); filter: hue-rotate(90deg) contrast(1.5); clip-path: inset(10% 0 60% 0); }
@@ -291,7 +290,7 @@
         </div>
         
         <div class="hidden md:flex gap-8 font-mono text-xs tracking-widest font-bold">
-            <a href="#" class="text-secondary border-b-2 border-secondary pb-1">01_HOME</a>
+            <a href="index.html" class="text-secondary border-b-2 border-secondary pb-1">01_HOME</a>
             <a href="#" class="text-gray-500 hover:text-primary transition-colors">02_ARCHIVES</a>
             <a href="about.html" class="text-gray-500 hover:text-primary transition-colors">03_ABOUT</a>
         </div>
@@ -406,7 +405,7 @@
                     </div>
                 </div>
                 <div id="article-list-container" class="space-y-8">
-                    <!-- 文章 1: WA2 Novel -->
+                    <!-- 文章 1: WA2 Novel -> article-3.html -->
                     <article class="article-card cyber-card p-8 group hover:bg-white/5 cursor-pointer relative overflow-hidden" 
                              data-tags="Novel ACG WhiteAlbum2"
                              onclick="window.location.href='article-3.html'">
@@ -427,7 +426,7 @@
                         </div>
                     </article>
                     
-                    <!-- 文章 2: Python Automation -->
+                    <!-- 文章 2: Python Automation -> article-2.html -->
                     <article class="article-card cyber-card p-8 group hover:bg-white/5 cursor-pointer relative overflow-hidden" 
                              data-tags="Python Automation"
                              onclick="window.location.href='article-2.html'">
@@ -448,7 +447,7 @@
                         </div>
                     </article>
                     
-                    <!-- 文章 3: Code Reflection -->
+                    <!-- 文章 3: Code Reflection -> article-1.html -->
                     <article class="article-card cyber-card p-8 group hover:bg-white/5 cursor-pointer relative overflow-hidden" 
                              data-tags="Code Reflection"
                              onclick="window.location.href='article-1.html'">
@@ -565,6 +564,8 @@
         }
 
         /* === 角色图片映射表 (请确保 images 目录下有对应的文件) === */
+        // 注意：这里假设您已经将新上传的文件重命名为 mari.png 和 rei.png
+        // 否则您可以直接替换为您上传的原始文件名
         const characterMap = {
             'default': './images/shinji.png',
             'unit-02': './images/asuka.png',
