@@ -24,6 +24,8 @@
                         secondary: 'var(--secondary-color)',
                         bg: 'var(--bg-color)',
                         surface: 'var(--surface-color)',
+                        // 紧急模式专用红
+                        emergency: '#ff0000',
                     },
                     animation: {
                         'spin-slow': 'spin 30s linear infinite',
@@ -33,6 +35,7 @@
                         'magi-pulse': 'magiPulse 4s ease-in-out infinite',
                         'pop-in': 'popIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
                         'hazard-scroll': 'hazardScroll 2s linear infinite',
+                        'marquee': 'marquee 20s linear infinite',
                     },
                     keyframes: {
                         scan: {
@@ -57,6 +60,10 @@
                             '50%': { opacity: 0.9, transform: 'translateX(5px) skewX(-10deg)' },
                             '75%': { opacity: 0.4, transform: 'translateX(0)' },
                             '100%': { opacity: 0.8, transform: 'translateX(0)' },
+                        },
+                        marquee: {
+                            '0%': { transform: 'translateX(100%)' },
+                            '100%': { transform: 'translateX(-100%)' }
                         }
                     }
                 }
@@ -84,14 +91,31 @@
         [data-theme="unit-00"] { --primary-color: #ffffff; --secondary-color: #0091ff; --bg-color: #020a14; --surface-color: rgba(11, 20, 46, 0.85); --grid-color: rgba(0, 145, 255, 0.15); --hue-rotate: 180deg; }
         [data-theme="unit-08"] { --primary-color: #ff5cab; --secondary-color: #50c878; --bg-color: #14020d; --surface-color: rgba(46, 11, 29, 0.85); --grid-color: rgba(255, 0, 153, 0.15); --hue-rotate: 300deg; }
 
+        /* === 紧急事态模式 (EMERGENCY MODE) === */
+        body.emergency-mode {
+            --primary-color: #ff0000 !important;
+            --secondary-color: #ff0000 !important;
+            --bg-color: #050000 !important; /* 稍微提亮一点点背景，避免纯黑死机感 */
+            --surface-color: rgba(40, 0, 0, 0.9) !important;
+            --grid-color: rgba(255, 0, 0, 0.3) !important;
+            --hue-rotate: 0deg !important;
+        }
+        body.emergency-mode .hex-bg {
+            animation: none; /* 停止滚动，改为静态或微动 */
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ff0000' stroke-opacity='0.3' stroke-width='2'/%3E%3C/svg%3E");
+        }
+        /* 移除了 emergency-overlay 的显示 */
+        /* body.emergency-mode .emergency-overlay {
+            display: flex !important;
+        } */
+
         body { 
             background-color: var(--bg-color); 
             min-height: 100vh; 
             color: white; 
-            transition: background-color 0.6s ease, color 0.6s ease; 
+            transition: background-color 0.3s ease, color 0.3s ease; 
             overflow-x: hidden; 
             cursor: crosshair; 
-            /* 基础暗色背景 */
             background: radial-gradient(circle at 50% 40%, rgba(40,40,40,0.05) 0%, var(--bg-color) 90%);
         }
 
@@ -99,10 +123,11 @@
         .hex-bg {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -2;
             background-image: 
-                url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ffffff' stroke-opacity='0.1' stroke-width='1'/%3E%3C/svg%3E");
+                url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ffffff' stroke-opacity='0.15' stroke-width='1'/%3E%3C/svg%3E");
             background-size: 60px 104px;
             mask-image: linear-gradient(to bottom, black 20%, transparent 90%);
             animation: bg-scroll 60s linear infinite;
+            transition: background-image 0.3s;
         }
         @keyframes bg-scroll {
             0% { background-position: 0 0; }
@@ -117,7 +142,7 @@
             opacity: 0;
             animation: hexFlash 4s infinite;
         }
-        @keyframes hexFlash { 0%, 90% { opacity: 0; } 92% { opacity: 0.1; } 94% { opacity: 0; } }
+        @keyframes hexFlash { 0%, 90% { opacity: 0; } 92% { opacity: 0.15; } 94% { opacity: 0; } }
 
         /* --- 2. 沉浸式 LCL 粒子系统 --- */
         #particles-container {
@@ -147,7 +172,7 @@
             100% { transform: translateY(-120vh) scale(var(--p-scale)); opacity: 0; }
         }
 
-        /* --- 3. 扫描线 (周期60s，动作3s) --- */
+        /* --- 3. 扫描线 (60s周期, 3s动作) --- */
         .scan-bar {
             position: fixed; top: -10%; left: 0; width: 100%; height: 15px; 
             background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent);
@@ -155,39 +180,32 @@
             box-shadow: 0 0 30px var(--secondary-color);
             z-index: 40;
             pointer-events: none;
-            /* 60秒一次循环 */
             animation: scanDown 60s linear infinite;
         }
         @keyframes scanDown {
             0% { top: -10%; opacity: 0; }
-            1% { opacity: 0.4; } /* 显现 */
-            6% { top: 110%; opacity: 0.4; } /* 约3秒钟从顶扫到底 */
-            7% { top: 110%; opacity: 0; }   /* 消失 */
-            100% { top: 110%; opacity: 0; } /* 等待下一轮 */
+            0.1% { opacity: 0.3; } 
+            5% { top: 110%; opacity: 0.3; } /* 约3秒下落 */
+            5.1% { top: 110%; opacity: 0; }
+            100% { top: 110%; opacity: 0; }
         }
         
         /* --- 4. 驾驶舱视觉增强 --- */
-        /* 暗角层 - 调整透明度减少遮挡 */
         .cockpit-overlay {
             position: fixed; inset: 0; pointer-events: none; z-index: 90;
             background: radial-gradient(circle at center, transparent 65%, rgba(0,0,0,0.5) 100%);
             box-shadow: inset 0 0 80px rgba(0,0,0,0.3);
         }
         
-        /* 中央准星 (HUD) */
+        /* 中央准星 */
         .cockpit-reticle {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 600px; height: 600px; border: 1px dashed var(--secondary-color);
             border-radius: 50%; opacity: 0.05; pointer-events: none; z-index: -1;
             animation: spin-slower 120s linear infinite;
         }
-        .cockpit-reticle::before {
-            content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 580px; height: 580px; border: 1px solid var(--secondary-color);
-            border-radius: 50%; opacity: 0.1; clip-path: polygon(0 0, 100% 0, 100% 20%, 0 20%, 0 80%, 100% 80%, 100% 100%, 0 100%);
-        }
         
-        /* 侧边仪表装饰 */
+        /* 侧边仪表 */
         .cockpit-side-meter {
             position: fixed; top: 20%; bottom: 20%; width: 4px; z-index: 80; pointer-events: none;
             background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent);
@@ -195,6 +213,44 @@
         }
         .meter-left { left: 40px; }
         .meter-right { right: 40px; }
+
+        /* --- 5. 紧急事态全屏覆盖层 (静态修正版 - 默认隐藏) --- */
+        .emergency-overlay {
+            display: none; /* 默认隐藏，仅在需要时通过JS控制，或完全移除 */
+            position: fixed; inset: 0; z-index: 1000;
+            background: rgba(0,0,0,0.3); /* 降低不透明度，避免纯黑 */
+            align-items: center; justify-content: center;
+            pointer-events: none;
+        }
+        /* 紧急六边形 */
+        .emergency-hex {
+            width: 400px; height: 460px;
+            background: rgba(255, 0, 0, 0.05);
+            border: 6px solid #ff0000;
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            text-align: center;
+            box-shadow: 0 0 40px #ff0000, inset 0 0 20px #ff0000;
+            color: #ff0000;
+        }
+        .emergency-text-big {
+            font-family: 'Times New Roman', serif;
+            font-weight: 900;
+            font-size: 3rem;
+            letter-spacing: 0.1em;
+            transform: scaleY(1.2);
+            margin-bottom: 1rem;
+            text-shadow: 0 0 10px #ff0000;
+        }
+        .emergency-text-sub {
+            font-family: 'Arial Black', sans-serif;
+            font-size: 1rem;
+            letter-spacing: 0.5em;
+            border-top: 2px solid #ff0000;
+            border-bottom: 2px solid #ff0000;
+            padding: 0.5rem 0;
+        }
 
         /* 鼠标光晕 */
         #cursor-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; background-image: radial-gradient(circle var(--cursor-size) at var(--mouse-x) var(--mouse-y), var(--grid-color) 0%, transparent 60%); transition: --cursor-size 0.1s ease; will-change: background-image; mix-blend-mode: screen; }
@@ -243,7 +299,7 @@
             animation: cyberSwap 0.4s steps(5) forwards; 
         }
 
-        /* AI 助手赛博朋克滤镜特效 */
+        /* AI 助手 */
         .ai-card-container {
             background: var(--surface-color);
             backdrop-filter: blur(12px);
@@ -270,10 +326,9 @@
             animation: ai-talking-glitch 0.2s infinite;
         }
 
-        /* --- 5. 新版警戒条 (Hazard Strip) --- */
+        /* --- 警戒条 (NERV 战术样式) --- */
         .eva-warning-strip {
             position: fixed; bottom: 0; left: 0; width: 100%; height: 28px; z-index: 999; pointer-events: none;
-            /* 经典的 NERV 警示斜纹背景 */
             background: repeating-linear-gradient(
                 45deg,
                 #000,
@@ -285,13 +340,12 @@
             display: flex; align-items: center;
             box-shadow: 0 -4px 10px rgba(0,0,0,0.5);
             opacity: 0.9;
-            /* 斜纹滚动动画 */
             animation: hazardScroll 2s linear infinite;
         }
         
         .warning-content-overlay {
             position: absolute; inset: 0;
-            background: rgba(0,0,0,0.7); /* 压暗斜纹以便显示文字 */
+            background: rgba(0,0,0,0.7); 
             display: flex; align-items: center;
         }
         
@@ -300,11 +354,10 @@
             display: flex;
             font-family: 'JetBrains Mono', monospace;
             font-size: 12px;
-            color: #fff; /* 警示条文字通常为白色 */
+            color: #fff; 
             font-weight: 900;
             letter-spacing: 0.15em;
             text-shadow: 0 0 4px var(--secondary-color);
-            /* 文字滚动动画 */
             animation: marquee 30s linear infinite;
             padding-left: 100vw;
         }
@@ -334,24 +387,20 @@
         .hud-bl { bottom: 20px; left: 20px; border-right: 0; border-top: 0; }
         .hud-br { bottom: 20px; right: 20px; border-left: 0; border-top: 0; }
 
-        /* 开机终端 */
-        .crt-overlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; pointer-events: none;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 2px, 6px 100%;
-            opacity: 0.2; mix-blend-mode: overlay;
-        }
-        #boot-sequence {
-            position: fixed; inset: 0; background: #000; z-index: 10000;
-            display: flex; flex-direction: column; justify-content: flex-end; padding: 40px;
-            font-family: 'JetBrains Mono', monospace; color: var(--primary-color); font-size: 14px;
-            transition: opacity 1s ease-out;
-        }
-        .boot-line { opacity: 0; animation: type-line 0.1s forwards; white-space: pre-wrap; margin-bottom: 4px; }
-        @keyframes type-line { to { opacity: 1; } }
+        /* 开机终端 (已隐藏，仅保留样式防报错) */
+        #boot-sequence { display: none !important; }
     </style>
 </head>
 <body class="antialiased overflow-x-hidden font-sans">
+
+    <!-- 紧急事态覆盖层 (已移除动画，仅静态显示) -->
+    <div class="emergency-overlay">
+        <div class="emergency-hex">
+            <div class="emergency-text-big">EMERGENCY</div>
+            <div class="emergency-text-sub">HEX: PATTERN BLUE</div>
+            <div class="mt-8 font-mono text-xs tracking-widest">ANGEL DETECTED</div>
+        </div>
+    </div>
 
     <!-- 驾驶舱视觉增强层 (暗角 + 准星) -->
     <div class="cockpit-overlay"></div>
@@ -419,10 +468,11 @@
         <div class="flex items-center gap-6">
             <a href="index.html" class="group flex flex-col">
                 <span class="text-2xl font-black tracking-tighter leading-none text-white group-hover:text-primary transition-colors italic magi-font">WH1TE.LOG</span>
-                <div class="flex items-center gap-2 mt-1">
-                    <span class="w-2 h-2 bg-secondary animate-pulse"></span>
-                    <span class="font-mono text-[9px] tracking-[0.3em] opacity-60 group-hover:opacity-100 text-secondary">VER.2.0.5</span>
-                </div>
+                
+                <!-- 紧急事态按钮 (放在标题下方) -->
+                <button onclick="toggleEmergency()" class="mt-1 border border-secondary/50 px-2 py-0.5 text-[9px] font-mono text-secondary/70 hover:bg-secondary hover:text-black hover:border-secondary transition-all tracking-widest uppercase">
+                    [ EMERGENCY ]
+                </button>
             </a>
             
             <!-- EVA 机体主题切换器 -->
@@ -787,6 +837,12 @@
         const savedTheme = localStorage.getItem('theme') || 'default';
         setTheme(savedTheme);
 
+        /* === 紧急事态模式切换 === */
+        function toggleEmergency() {
+            document.body.classList.toggle('emergency-mode');
+            // 触发紧急事态时的音效或额外逻辑可以在这里添加
+        }
+
         // AI 逻辑
         const eririLines = ["哼，才不是特意等你的！", "检测到不明入侵... 啊，是你啊。", "笨蛋！AT立场要全开啊！", "MAGI 正在通过提案...", "不要盯着我看！变态！", "Code 404: Tsundere not found."];
         let aiSpeechInterval = null;
@@ -937,7 +993,6 @@
 
         startHeroGlitch();
         loadAnimeData();
-        window.addEventListener('load', runBootSequence);
         createParticles(); // Start particle system
 
     </script>
