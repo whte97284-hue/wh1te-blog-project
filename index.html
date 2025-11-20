@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WH1TE_LOG // SYSTEM_ONLINE</title>
+    <title>WH1TE_LOG // HUMAN_INSTRUMENTALITY</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@300;500;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['"Space Grotesk"', 'sans-serif'],
-                        mono: ['"JetBrains Mono"', 'monospace'],
+                        sans: ['"Space Grotesk"', '"Noto Sans JP"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', '"Noto Sans JP"', 'monospace'],
                     },
                     colors: {
                         primary: 'var(--primary-color)',
@@ -22,22 +23,18 @@
                         surface: 'var(--surface-color)',
                     },
                     animation: {
-                        'spin-slow': 'spin 20s linear infinite',
+                        'spin-slow': 'spin 30s linear infinite',
                         'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'float-heavy': 'floatHeavy 6s ease-in-out infinite', 
                         'glitch': 'glitch 3s linear infinite', 
-                        'scan': 'scan 8s linear infinite', 
-                        'breathe-glow': 'breatheGlow 4s ease-in-out infinite',
-                        'cyber-slash': 'cyberSlash 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards',
-                        'glitch-img': 'glitchImg 5s infinite',
-                        'pulse-ring': 'pulseRing 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite',
+                        'scan': 'scan 4s linear infinite', 
                         'scan-vertical': 'scanVertical 2s linear infinite',
+                        'warning-scroll': 'warningScroll 2s linear infinite',
+                        'magi-pulse': 'magiPulse 4s ease-in-out infinite',
+                        'pop-in': 'popIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'float': 'float 6s ease-in-out infinite',
+                        'data-stream': 'dataStream 20s linear infinite',
                     },
                     keyframes: {
-                        floatHeavy: {
-                            '0%, 100%': { transform: 'translateY(0) scale(1)' },
-                            '50%': { transform: 'translateY(-10px) scale(1.02)' }, 
-                        },
                         glitch: {
                             '2%, 64%': { transform: 'translate(1px,0) skew(0deg)' },
                             '4%, 60%': { transform: 'translate(-1px,0) skew(0deg)' },
@@ -47,31 +44,31 @@
                             '0%': { backgroundPosition: '0 0' },
                             '100%': { backgroundPosition: '0 100%' },
                         },
-                        breatheGlow: {
-                            '0%, 100%': { boxShadow: '0 0 15px var(--primary-dim)' },
-                            '50%': { boxShadow: '0 0 30px var(--primary-glow)' },
-                        },
-                        cyberSlash: {
-                            '0%': { clipPath: 'inset(50% 0 50% 0)', opacity: 0 },
-                            '100%': { clipPath: 'inset(0 0 0 0)', opacity: 1 },
-                        },
-                        glitchImg: {
-                            '0%, 92%': { transform: 'translate(0)', filter: 'none' },
-                            '93%': { transform: 'translate(-2px, 2px)', filter: 'hue-rotate(90deg) contrast(1.2)' },
-                            '94%': { transform: 'translate(2px, -1px)', filter: 'none' },
-                            '95%': { transform: 'translate(-1px, -2px)', filter: 'hue-rotate(-90deg)' },
-                            '96%': { transform: 'translate(0, 2px)', filter: 'none' },
-                            '100%': { transform: 'translate(0)', filter: 'none' }
-                        },
-                         pulseRing: {
-                            '0%': { transform: 'scale(0.33)', opacity: '1' },
-                            '80%, 100%': { transform: 'scale(1)', opacity: '0' },
-                        },
                         scanVertical: {
                             '0%': { top: '-10%', opacity: 0 },
                             '10%': { opacity: 1 },
                             '90%': { opacity: 1 },
                             '100%': { top: '110%', opacity: 0 },
+                        },
+                        warningScroll: {
+                            '0%': { backgroundPosition: '0 0' },
+                            '100%': { backgroundPosition: '40px 0' },
+                        },
+                        magiPulse: {
+                            '0%, 100%': { opacity: 0.3, boxShadow: '0 0 10px var(--secondary-color)' },
+                            '50%': { opacity: 0.8, boxShadow: '0 0 20px var(--secondary-color)' },
+                        },
+                        popIn: {
+                            '0%': { opacity: 0, transform: 'scale(0.9) translateY(20px)' },
+                            '100%': { opacity: 1, transform: 'scale(1) translateY(0)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        dataStream: {
+                            '0%': { transform: 'translateY(0)' },
+                            '100%': { transform: 'translateY(-100%)' },
                         }
                     }
                 }
@@ -85,362 +82,500 @@
             --mouse-y: 50%;
             --cursor-size: 800px;
 
-            --primary-color: #ccff00;
-            --primary-dim: rgba(204, 255, 0, 0.1);
-            --primary-glow: rgba(204, 255, 0, 0.25);
-            --secondary-color: #aacc00;
-            --bg-color: #050505;
-            --surface-color: rgba(10, 10, 10, 0.65);
-            --grid-color: rgba(204, 255, 0, 0.08);
-            --scanline-opacity: 0.3;
-            --hue-rotate: 0deg;
+            /* === 默认: 初号机 (UNIT-01 TEST TYPE) === */
+            /* Shinji: 核心紫，辅色绿 */
+            --primary-color: #b15dff;       /* 浅紫 (Text/Glow) */
+            --secondary-color: #39ff14;     /* 荧光绿 (Accents/Borders) */
+            --bg-color: #0f0518;            /* 深紫黑背景 */
+            --surface-color: rgba(26, 11, 46, 0.85);
+            --grid-color: rgba(125, 42, 232, 0.15);
+            --hue-rotate: 260deg;           /* 紫色滤镜 */
         }
         
-        [data-theme="neon-pink"] { --primary-color: #ff00ff; --primary-dim: rgba(255, 0, 255, 0.1); --primary-glow: rgba(255, 0, 255, 0.3); --secondary-color: #00ffff; --bg-color: #0a000a; --surface-color: rgba(20, 0, 20, 0.65); --grid-color: rgba(255, 0, 255, 0.08); --hue-rotate: 290deg; }
-        [data-theme="cyber-blue"] { --primary-color: #00f3ff; --primary-dim: rgba(0, 243, 255, 0.1); --primary-glow: rgba(0, 243, 255, 0.3); --secondary-color: #0066ff; --bg-color: #00050a; --surface-color: rgba(0, 10, 20, 0.65); --grid-color: rgba(0, 243, 255, 0.08); --hue-rotate: 180deg; }
-        [data-theme="solar-orange"] { --primary-color: #ff5f00; --primary-dim: rgba(255, 95, 0, 0.1); --primary-glow: rgba(255, 95, 0, 0.3); --secondary-color: #ffaa00; --bg-color: #0a0200; --surface-color: rgba(20, 5, 0, 0.65); --grid-color: rgba(255, 95, 0, 0.08); --hue-rotate: 45deg; }
+        /* === THEMES (EVA UNITS) === */
+        
+        /* 二号机 (UNIT-02 PRODUCTION MODEL) - Asuka */
+        /* 红色主调，橙黄辅助 */
+        [data-theme="unit-02"] { 
+            --primary-color: #ffae00;       /* 琥珀橙 */
+            --secondary-color: #ff0000;     /* 正红 */
+            --bg-color: #140202;            /* 深红黑 */
+            --surface-color: rgba(46, 11, 11, 0.85);
+            --grid-color: rgba(255, 0, 0, 0.15);
+            --hue-rotate: 0deg;             /* 红色滤镜 */
+        }
+        
+        /* 零号机 (UNIT-00 PROTOTYPE) - Rei */
+        /* 蓝色主调，白色/银色辅助 */
+        [data-theme="unit-00"] { 
+            --primary-color: #ffffff;       /* 纯白 */
+            --secondary-color: #0091ff;     /* 绫波蓝 */
+            --bg-color: #020a14;            /* 深蓝黑 */
+            --surface-color: rgba(11, 20, 46, 0.85);
+            --grid-color: rgba(0, 145, 255, 0.15);
+            --hue-rotate: 180deg;           /* 蓝色滤镜 */
+        }
 
-        .noise-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 40; opacity: 0.08; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"); }
-        .scanlines { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 41; opacity: var(--scanline-opacity); background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2)); background-size: 100% 4px; animation: scan 0.3s linear infinite; }
-        body { background-color: var(--bg-color); background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); background-size: 60px 60px; background-attachment: fixed; min-height: 100vh; color: white; -webkit-font-smoothing: antialiased; transition: background-color 0.5s ease; overflow-x: hidden; cursor: none; }
-        #cursor-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; background-image: radial-gradient(circle var(--cursor-size) at var(--mouse-x) var(--mouse-y), var(--primary-dim) 0%, transparent 60%); transition: --cursor-size 0.1s ease; will-change: background-image; }
-        
-        .click-wave { position: fixed; border-radius: 50%; border: 2px solid var(--primary-color); background: transparent; opacity: 0; pointer-events: none; z-index: 9998; transform: translate(-50%, -50%); animation: pulse-ring 0.6s cubic-bezier(0.215, 0.61, 0.355, 1) forwards; }
-        .cyber-card { background: var(--surface-color); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 8px 32px rgba(0,0,0,0.5); transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
-        .cyber-card:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--primary-color); box-shadow: 0 0 20px var(--primary-dim); transform: translateY(-2px); }
-        
-        .text-stroke-layer { -webkit-text-stroke: 1px rgba(255, 255, 255, 0.6); color: transparent; pointer-events: none; }
-        .caret-primary { caret-color: var(--primary-color); }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--primary-color); }
-        ::selection { background: var(--primary-color); color: black; }
-        
-        .image-filter-acid-glitch { filter: grayscale(100%) contrast(120%) brightness(110%) sepia(50%) hue-rotate(var(--hue-rotate)) saturate(300%) drop-shadow(0 0 20px var(--primary-dim)); transform: scaleX(-1); mix-blend-mode: screen; opacity: 0.6; mask-image: linear-gradient(to bottom, black 60%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%); will-change: transform, filter, opacity; transition: opacity 0.3s ease, filter 0.5s ease; }
-        .image-filter-acid-subtle { mix-blend-mode: lighten; filter: contrast(1.3) brightness(1.2) saturate(1.2) hue-rotate(calc(var(--hue-rotate) * 0.5)); mask-image: linear-gradient(to bottom, black 70%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%); opacity: 0.9; transition: filter 0.5s ease; }
+        /* 八号机 (UNIT-08 PRODUCTION MODEL) - Mari */
+        /* 粉色主调，绿色辅助 */
+        [data-theme="unit-08"] { 
+            --primary-color: #ff5cab;       /* 亮粉 */
+            --secondary-color: #50c878;     /* 翠绿 */
+            --bg-color: #14020d;            /* 深粉黑 */
+            --surface-color: rgba(46, 11, 29, 0.85);
+            --grid-color: rgba(255, 0, 153, 0.15);
+            --hue-rotate: 300deg;           /* 粉色滤镜 */
+        }
 
-        .cyber-swap-active { animation: cyber-swap 0.6s steps(3) forwards; }
+        /* === 全局过渡 === */
+        body { 
+            background-color: var(--bg-color); 
+            min-height: 100vh; 
+            color: white; 
+            transition: background-color 0.6s cubic-bezier(0.16, 1, 0.3, 1), color 0.6s ease; 
+            overflow-x: hidden; 
+            cursor: crosshair; 
+        }
+
+        /* === 背景装饰层 === */
+        /* 蜂巢背景 (增强版) */
+        .hex-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -2;
+            background-image: 
+                radial-gradient(circle at center, transparent 0%, var(--bg-color) 80%),
+                url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ffffff' stroke-opacity='0.05' stroke-width='1'/%3E%3C/svg%3E");
+            mask-image: linear-gradient(to bottom, black, transparent);
+        }
+        
+        /* 随机闪烁的六边形 */
+        .hex-flash {
+            position: absolute; width: 60px; height: 104px;
+            background: var(--secondary-color);
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+            opacity: 0;
+            animation: hexFlash 4s infinite;
+        }
+        @keyframes hexFlash { 0%, 90% { opacity: 0; } 92% { opacity: 0.1; } 94% { opacity: 0; } }
+
+        /* 竖向代码流 */
+        .data-column {
+            position: fixed; top: 0; bottom: 0; width: 1px;
+            background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent);
+            opacity: 0.2; z-index: -1;
+        }
+        .data-text {
+            position: fixed; top: 0; font-family: 'JetBrains Mono'; font-size: 10px; color: var(--secondary-color);
+            writing-mode: vertical-rl; opacity: 0.15; white-space: nowrap;
+            animation: dataStream 30s linear infinite;
+        }
+
+        /* 旋转 HUD 圆环 */
+        .hud-ring {
+            position: fixed; border-radius: 50%; border: 1px dashed var(--secondary-color);
+            opacity: 0.1; pointer-events: none; z-index: -1;
+            animation: spin-slow 60s linear infinite;
+        }
+        .hud-ring::after {
+            content: ''; position: absolute; top: -5px; left: 50%; width: 10px; height: 10px;
+            background: var(--primary-color); border-radius: 50%; box-shadow: 0 0 10px var(--primary-color);
+        }
+
+        /* 鼠标光晕 */
+        #cursor-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; background-image: radial-gradient(circle var(--cursor-size) at var(--mouse-x) var(--mouse-y), var(--grid-color) 0%, transparent 60%); transition: --cursor-size 0.1s ease; will-change: background-image; mix-blend-mode: screen; }
+
+        /* === UI 组件 === */
+        .cyber-card {
+            background: var(--surface-color); 
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--secondary-color); 
+            box-shadow: 0 0 0px var(--secondary-color);
+            /* EVA 风格切角：更硬朗 */
+            clip-path: polygon(
+                0 0, 
+                100% 0, 
+                100% calc(100% - 20px), 
+                calc(100% - 20px) 100%, 
+                0 100%
+            );
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .cyber-card:hover { 
+            background: rgba(255, 255, 255, 0.03); 
+            box-shadow: 0 0 15px var(--secondary-color); 
+            border-color: var(--primary-color);
+            transform: translateY(-4px) scale(1.01); 
+        }
+
+        /* AI 卡片容器 (不切角以防气泡被切) */
+        .ai-card-container {
+            background: var(--surface-color);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--secondary-color);
+            position: relative;
+            transition: all 0.4s ease;
+        }
+        .ai-card-container:hover { box-shadow: 0 0 20px var(--secondary-color); border-color: var(--primary-color); }
+
+        /* 人物滤镜 */
+        .image-filter-acid-glitch { 
+            filter: grayscale(100%) contrast(110%) brightness(110%) sepia(20%) hue-rotate(var(--hue-rotate)) saturate(200%) drop-shadow(0 0 10px var(--secondary-color)); 
+            /* 移除 scaleX(-1) 因为你提供的图片方向似乎已经是正确的，或者如果需要翻转可以加回来 */
+            /* transform: scaleX(-1); */
+            mix-blend-mode: normal; 
+            opacity: 0.8;
+            mask-image: linear-gradient(to bottom, black 70%, transparent 100%); 
+            will-change: transform, filter; 
+            transition: all 0.5s ease; 
+        }
+        
+        /* 故障动画 */
+        .cyber-swap-active { animation: cyber-swap 0.4s steps(4) forwards; }
         @keyframes cyber-swap {
-            0% { opacity: 0.6; transform: scaleX(-1) translateX(0); }
-            10% { opacity: 0.8; transform: scaleX(-1) translateX(-10px) skewX(20deg); clip-path: inset(10% 0 40% 0); filter: hue-rotate(90deg); }
-            30% { opacity: 0.2; transform: scaleX(-1) translateX(10px) skewX(-10deg); clip-path: inset(40% 0 10% 0); }
-            50% { opacity: 0.1; filter: invert(1); }
-            60% { opacity: 0.4; transform: scaleX(-1) translateX(-5px) skewX(5deg); clip-path: inset(0 0 0 0); }
-            80% { opacity: 0.7; transform: scaleX(-1) translateX(2px); }
-            100% { opacity: 0.6; transform: scaleX(-1) translateX(0); }
+            0% { opacity: 0.8; transform: translateX(0); filter: hue-rotate(0deg); }
+            25% { opacity: 0.6; transform: translateX(-5px) skewX(10deg); filter: hue-rotate(90deg) invert(1); clip-path: inset(0 0 50% 0); }
+            50% { opacity: 0.9; transform: translateX(5px) skewX(-10deg); filter: hue-rotate(-90deg); clip-path: inset(50% 0 0 0); }
+            75% { opacity: 0.4; transform: translateX(0); }
+            100% { opacity: 0.8; transform: translateX(0); }
         }
 
-        .anime-item:hover { background: linear-gradient(90deg, var(--primary-dim) 0%, transparent 100%); border-left-color: var(--primary-color); padding-left: 8px; }
-        #anime-modal.active { display: flex; animation: cyber-slash 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
-        .rgb-split { text-shadow: 2px 0 var(--secondary-color), -2px 0 var(--primary-color); animation: glitch 3s infinite; }
-        .auto-glitch { animation: glitch-img 5s infinite; }
+        /* EVA 警示条纹 */
+        .eva-warning-strip {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 12px; z-index: 999; pointer-events: none;
+            background: repeating-linear-gradient(
+                -45deg,
+                #000,
+                #000 10px,
+                var(--secondary-color) 10px,
+                var(--secondary-color) 20px
+            );
+            border-top: 2px solid black;
+            opacity: 1;
+            animation: warningScroll 4s linear infinite;
+        }
+
+        /* MAGI 字体 */
+        .magi-font { font-family: 'Space Grotesk', sans-serif; font-weight: 900; letter-spacing: -0.05em; }
+
+        /* 主题按钮 */
+        .theme-btn { 
+            width: 30px; height: 6px; 
+            transform: skewX(-30deg); 
+            cursor: pointer; 
+            border: 1px solid rgba(255,255,255,0.2); 
+            transition: all 0.3s; 
+            margin-right: 4px;
+        }
+        .theme-btn:hover { transform: skewX(-30deg) scale(1.2); border-color: white; box-shadow: 0 0 8px currentColor; }
+        .theme-btn.active { border-color: white; box-shadow: 0 0 15px currentColor; background-color: currentColor !important; opacity: 1; }
+
+        /* 滚动条 */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: var(--secondary-color); border-radius: 2px; }
+
+        /* HUD 角落装饰 */
+        .hud-corner { position: fixed; width: 40px; height: 40px; border: 2px solid var(--secondary-color); z-index: 50; pointer-events: none; opacity: 0.6; transition: border-color 0.5s; }
+        .hud-tl { top: 20px; left: 20px; border-right: 0; border-bottom: 0; clip-path: polygon(0 0, 100% 0, 0 100%); }
+        .hud-tr { top: 20px; right: 20px; border-left: 0; border-bottom: 0; clip-path: polygon(100% 0, 0 0, 100% 100%); }
+        .hud-bl { bottom: 20px; left: 20px; border-right: 0; border-top: 0; clip-path: polygon(0 100%, 0 0, 100% 100%); }
+        .hud-br { bottom: 20px; right: 20px; border-left: 0; border-top: 0; clip-path: polygon(100% 100%, 100% 0, 0 100%); }
+
+        /* Sound Only 石碑 */
+        .seele-monolith {
+            position: fixed; top: 20%; left: 5%; width: 100px; height: 200px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,0.8));
+            border: 1px solid var(--primary-color);
+            opacity: 0.05; transform: perspective(500px) rotateY(20deg);
+            pointer-events: none; z-index: -1;
+            display: flex; align-items: center; justify-content: center;
+            font-family: "Times New Roman", serif; font-weight: bold; color: var(--primary-color);
+            font-size: 12px; text-align: center;
+        }
+        .seele-monolith::after { content: "SOUND\A ONLY"; white-space: pre; }
+
+        /* === 增强特效: CRT 屏幕 & 开机终端 === */
+        .crt-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; pointer-events: none;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 6px 100%;
+            animation: crt-flicker 0.15s infinite;
+            opacity: 0.3;
+            mix-blend-mode: overlay;
+        }
+        @keyframes crt-flicker {
+            0% { opacity: 0.3; }
+            50% { opacity: 0.35; }
+            100% { opacity: 0.3; }
+        }
         
-        .cp2077-bubble { background-color: rgba(10, 10, 10, 0.95); border: 1px solid var(--primary-color); color: var(--primary-color); font-family: 'JetBrains Mono', monospace; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 20px 100%, 0 calc(100% - 20px)); box-shadow: 4px 4px 0 var(--primary-dim); }
-        .cp2077-bubble::before { content: 'ERIRI_SYS'; position: absolute; top: 0; left: 0; background: var(--primary-color); color: black; font-size: 8px; padding: 2px 6px; font-weight: bold; }
-
-        .nav-theme-switcher { display: flex; gap: 8px; padding: 4px 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; align-items: center; margin-left: 16px; pointer-events: auto; }
-        .theme-btn { width: 14px; height: 14px; border-radius: 2px; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; position: relative; }
-        .theme-btn:hover { transform: scale(1.2); box-shadow: 0 0 8px currentColor; }
-        .theme-btn.active { border-color: white; box-shadow: 0 0 10px currentColor; transform: scale(1.1); }
-
-        #sonic-deck { position: fixed; bottom: 20px; left: 20px; z-index: 50; display: flex; align-items: center; gap: 10px; background: rgba(10, 10, 10, 0.85); backdrop-filter: blur(20px); border: 1px solid var(--primary-dim); border-radius: 40px; padding: 5px; width: 50px; height: 50px; overflow: hidden; transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        #sonic-deck:hover { width: 340px; border-color: var(--primary-color); box-shadow: 0 0 20px var(--primary-dim); }
-        .deck-toggle { flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: transparent; cursor: pointer; transition: transform 0.2s; position: relative; z-index: 2; }
-        .deck-toggle:hover { transform: scale(1.1); }
-        .deck-toggle svg { width: 20px; height: 20px; fill: white; transition: fill 0.3s; }
-        #sonic-deck:hover .deck-toggle svg { fill: var(--primary-color); }
-        .deck-controls { display: flex; flex-direction: column; flex-grow: 1; opacity: 0; transition: opacity 0.3s ease 0.1s; width: 260px; pointer-events: none; }
-        #sonic-deck:hover .deck-controls { opacity: 1; pointer-events: auto; }
-        .track-info { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--primary-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; letter-spacing: 1px; }
-        .control-row { display: flex; align-items: center; gap: 12px; }
-        .mini-btn { cursor: pointer; color: white; transition: color 0.2s; }
-        .mini-btn:hover { color: var(--primary-color); }
-        .volume-slider { -webkit-appearance: none; width: 80px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; outline: none; }
-        .volume-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; border-radius: 50%; background: var(--primary-color); cursor: pointer; box-shadow: 0 0 10px var(--primary-color); }
-        #audio-visualizer { position: absolute; bottom: 0; left: 50px; right: 0; height: 100%; width: 280px; z-index: 0; opacity: 0.3; pointer-events: none; mix-blend-mode: screen; }
-
-        /* === AI 助手扫描特效 === */
-        .cyber-scan-line {
-            position: absolute; top: 0; left: 0; width: 100%; height: 2px;
-            background: var(--primary-color);
-            box-shadow: 0 0 10px var(--primary-color);
-            animation: scanVertical 2s linear infinite;
-            opacity: 0; transition: opacity 0.3s; pointer-events: none;
+        #boot-sequence {
+            position: fixed; inset: 0; background: #000; z-index: 10000;
+            display: flex; flex-direction: column; justify-content: flex-end; padding: 40px;
+            font-family: 'JetBrains Mono', monospace; color: var(--primary-color); font-size: 14px;
+            transition: opacity 1s ease-out;
         }
-        .cyber-scan-data {
-            position: absolute; top: 10%; right: -20px;
-            background: rgba(0,0,0,0.8); border: 1px solid var(--primary-color);
-            color: var(--primary-color); font-family: 'JetBrains Mono', monospace;
-            font-size: 8px; padding: 4px; pointer-events: none;
-            opacity: 0; transform: translateX(10px); transition: all 0.3s;
-        }
-        .cyber-card:hover .cyber-scan-line { opacity: 0.5; }
-        .cyber-card:hover .cyber-scan-data { opacity: 1; transform: translateX(0); }
+        .boot-line { opacity: 0; animation: type-line 0.1s forwards; white-space: pre-wrap; margin-bottom: 4px; }
+        @keyframes type-line { to { opacity: 1; } }
+        
     </style>
 </head>
 <body class="antialiased overflow-x-hidden font-sans">
 
-    <div class="noise-overlay"></div>
-    <div class="scanlines"></div>
-    <div id="cursor-glow"></div>
+    <!-- 特效层 -->
+    <div class="crt-overlay"></div>
+    <div id="boot-sequence" style="display: none;"></div>
 
+    <!-- 背景装饰层 -->
+    <div class="hex-bg"></div>
+    <div class="hex-flash" style="top: 20%; left: 10%;"></div>
+    <div class="hex-flash" style="top: 60%; right: 15%; animation-delay: 2s;"></div>
+    
+    <!-- 动态数据流装饰 -->
+    <div class="data-column" style="left: 8%;"></div>
+    <div class="data-text" style="left: 7%; top: 10%;">INTERNAL_STATUS_NORMAL_SYNC_RATE_400%_EVA_SYSTEM_ACTIVE</div>
+    
+    <div class="data-column" style="right: 8%;"></div>
+    <div class="data-text" style="right: 7%; top: 30%;">AT_FIELD_DEPLOYED_PATTERN_BLUE_ANGEL_DETECTED</div>
+
+    <!-- 旋转 HUD 圆环 -->
+    <div class="hud-ring" style="top: -10%; left: -10%; width: 40vw; height: 40vw;"></div>
+    <div class="hud-ring" style="bottom: -10%; right: -10%; width: 30vw; height: 30vw; animation-direction: reverse;"></div>
+
+    <!-- SEELE 石碑装饰 -->
+    <div class="seele-monolith"></div>
+
+    <div id="cursor-glow"></div>
+    <div class="eva-warning-strip"></div>
+
+    <!-- HUD 角落 -->
+    <div class="hud-corner hud-tl"></div>
+    <div class="hud-corner hud-tr"></div>
+    <div class="hud-corner hud-bl"></div>
+    <div class="hud-corner hud-br"></div>
+
+    <!-- 音乐播放器 -->
     <audio id="background-music" crossorigin="anonymous" loop>
         <source src="./audio/bgm.mp3" type="audio/mp3">
     </audio>
 
-    <div id="sonic-deck">
-        <canvas id="audio-visualizer"></canvas>
-        <div class="deck-toggle" onclick="toggleMusic()">
-            <div id="deck-wave" class="hidden absolute inset-0 rounded-full border border-primary opacity-60 animate-ping"></div>
-            <svg id="deck-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    <div id="sonic-deck" class="fixed bottom-8 left-8 z-50 flex items-center gap-3 bg-black/80 border border-secondary p-2 pr-4 group hover:shadow-[0_0_20px_var(--secondary-color)] transition-all duration-300" style="clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);">
+        <canvas id="audio-visualizer" class="absolute bottom-0 left-0 w-full h-full opacity-30 pointer-events-none"></canvas>
+        <div class="w-12 h-12 flex items-center justify-center cursor-pointer bg-secondary/10 hover:bg-secondary/20 transition-colors border border-secondary/30" onclick="toggleMusic()">
+            <div id="deck-wave" class="absolute border border-secondary w-full h-full animate-ping hidden"></div>
+            <i data-lucide="disc" class="w-6 h-6 text-secondary animate-spin-slow"></i>
         </div>
-        <div class="deck-controls">
-            <div class="track-info" id="track-title">SYSTEM_SOUNDTRACK</div>
-            <div class="control-row">
-                <div class="mini-btn" onclick="changeTrack(-1)"><svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></div>
-                <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24" class="text-gray-500 ml-2"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
-                <input type="range" class="volume-slider" min="0" max="1" step="0.01" value="0.5" oninput="setVolume(this.value)">
-                <div class="mini-btn ml-auto mr-2" onclick="changeTrack(1)"><svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></div>
+        <div class="flex flex-col w-0 group-hover:w-48 overflow-hidden transition-all duration-300 opacity-0 group-hover:opacity-100 pl-2">
+            <div class="text-[10px] font-mono text-primary whitespace-nowrap font-bold">SOUND_ONLY // TRACK_01</div>
+            <div class="flex items-center gap-2 mt-1">
+                 <span class="text-[8px] text-secondary">VOL</span>
+                 <input type="range" class="w-full h-1 bg-white/20 appearance-none cursor-pointer" min="0" max="1" step="0.1" oninput="setVolume(this.value)">
             </div>
         </div>
     </div>
 
-    <div id="anime-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/90 backdrop-blur-xl cursor-pointer" onclick="closeAnimeModal()">
-        <div class="absolute inset-0 pointer-events-none opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CjxwYXRoIGQ9Ik0wIDBoNDB2NDBIMHoiIGZpbGw9Im5vbmUiLz4KPHBhdGggZD0iTTAgNDBoNDBNNDAgMHY0ME0wIDB2NDAiIHN0cm9rZT0iIzAwZmZmOSIgc3Ryb2tlLW9wYWNpdHk9IjAuMSIvPgo8L3N2Zz4=')]"></div>
-        <div class="relative w-full max-w-6xl h-[85vh] flex flex-col md:flex-row items-stretch justify-center gap-0 md:gap-8 p-6 md:p-12 cursor-default" onclick="event.stopPropagation()">
-            <div class="relative w-full md:w-5/12 h-[40vh] md:h-full border-2 border-primary/50 p-1 bg-black/50 flex-shrink-0">
-                <div class="absolute -top-1 -left-1 w-4 h-4 border-t-4 border-l-4 border-primary"></div>
-                <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-4 border-r-4 border-primary"></div>
-                <div class="w-full h-full overflow-hidden relative">
-                    <img id="modal-cover" src="" alt="Cover" class="w-full h-full object-cover auto-glitch">
-                    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-primary/10 to-transparent h-[20%] w-full animate-scan pointer-events-none"></div>
+    <!-- 导航栏 -->
+    <nav class="fixed top-0 w-full z-40 px-6 md:px-12 py-6 flex justify-between items-center bg-gradient-to-b from-bg to-transparent select-none">
+        <div class="flex items-center gap-6">
+            <a href="index.html" class="group flex flex-col">
+                <span class="text-2xl font-black tracking-tighter leading-none text-white group-hover:text-primary transition-colors italic magi-font">WH1TE.LOG</span>
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="w-2 h-2 bg-secondary animate-pulse"></span>
+                    <span class="font-mono text-[9px] tracking-[0.3em] opacity-60 group-hover:opacity-100 text-secondary">VER.2.0.5</span>
                 </div>
-            </div>
-            <div class="w-full md:w-7/12 flex flex-col justify-center space-y-6 text-left overflow-hidden">
-                <div class="flex items-center gap-4">
-                    <div class="inline-block px-3 py-1 border border-primary text-primary font-mono text-xs w-fit">// DATA_RETRIEVED</div>
-                    <div class="h-px flex-1 bg-white/10"></div>
-                </div>
-                <h2 id="modal-title" class="text-3xl md:text-5xl font-black text-white tracking-tighter leading-tight rgb-split uppercase line-clamp-2">LOADING...</h2>
-                <div class="space-y-2 font-mono text-sm text-gray-400 pl-4 border-l-2 border-white/20">
-                    <p>STATUS: <span class="text-primary blink">BROADCASTING</span></p>
-                    <p>SYNC_RATE: 98.4%</p>
-                    <p>RATING: <span id="modal-rating" class="text-white font-bold text-lg">--</span> / 10</p>
-                </div>
-                <div class="relative group flex-1 flex flex-col min-h-0">
-                    <h3 class="text-primary font-mono text-xs mb-2 font-bold">:: SUMMARY_DATA</h3>
-                    <div class="overflow-y-auto pr-4 text-sm text-gray-300 leading-relaxed font-sans border border-white/10 p-4 bg-white/5 rounded-sm backdrop-blur-sm h-full">
-                        <p id="modal-summary" class="whitespace-pre-wrap">Initializing connection to database...</p>
-                    </div>
-                </div>
-                <div class="mt-4 pt-2 flex justify-between items-end text-[10px] font-mono text-gray-600">
-                    <span>ID: <span id="modal-id">000000</span></span>
-                    <span>[ CLICK OUTSIDE TO CLOSE ]</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="fixed right-0 bottom-0 z-0 pointer-events-none w-[45vw] max-w-[600px] flex items-end justify-end">
-        <img 
-            id="hero-character"
-            src="./images/hero-glitch.png" 
-            alt="Cyberpunk Hero" 
-            class="w-full h-auto object-contain image-filter-acid-glitch"
-            fetchpriority="high"
-        >
-    </div>
-
-    <!-- 主题切换器 (新功能) -->
-    <!-- <div class="theme-switcher"> ... Removed bottom right ... </div> -->
-
-    <!-- 音乐按钮 (已被 Sonic Deck 替代) -->
-
-    <div class="fixed top-0 left-0 w-full h-px bg-white/10 z-40"></div>
-
-    <!-- 导航栏：包含颜色选择器 -->
-    <nav class="fixed top-0 w-full z-40 px-6 md:px-12 py-4 flex justify-between items-center mix-blend-difference text-white bg-gradient-to-b from-black/80 to-transparent">
-        <div class="flex items-center gap-4">
-            <a href="index.html" class="flex flex-col group cursor-pointer">
-                <span class="text-xl font-black tracking-tighter leading-none group-hover:text-primary transition-colors">WH1TE.LOG</span>
-                <span class="font-mono text-[9px] tracking-[0.2em] opacity-60 group-hover:opacity-100 transition-opacity">V2.0.5</span>
             </a>
             
-            <!-- 颜色选择器 -->
-            <div class="nav-theme-switcher ml-4 pointer-events-auto cursor-auto">
-                <div class="theme-btn active" style="background: #ccff00;" onclick="setTheme('default')" title="Acid Lime"></div>
-                <div class="theme-btn" style="background: #ff00ff;" onclick="setTheme('neon-pink')" title="Neon Pink"></div>
-                <div class="theme-btn" style="background: #00f3ff;" onclick="setTheme('cyber-blue')" title="Cyber Blue"></div>
-                <div class="theme-btn" style="background: #ff5f00;" onclick="setTheme('solar-orange')" title="Solar Orange"></div>
+            <!-- EVA 机体主题切换器 -->
+            <div class="flex gap-2 ml-8 items-center px-4 py-1 border-l border-white/10">
+                <div class="theme-btn active" style="background: #7d2ae8; border-color: #39ff14;" onclick="setTheme('default')" title="Unit-01 (Shinji)"></div>
+                <div class="theme-btn" style="background: #d90000; border-color: #ffae00;" onclick="setTheme('unit-02')" title="Unit-02 (Asuka)"></div>
+                <div class="theme-btn" style="background: #0091ff; border-color: #ffffff;" onclick="setTheme('unit-00')" title="Unit-00 (Rei)"></div>
+                <div class="theme-btn" style="background: #ff5cab; border-color: #50c878;" onclick="setTheme('unit-08')" title="Unit-08 (Mari)"></div>
             </div>
         </div>
         
-        <div class="hidden md:flex gap-8 font-mono text-[11px] tracking-widest cursor-pointer">
-            <a href="index.html" onclick="saveMusicState(event)" class="relative group py-2">
-                <span class="text-primary transition-colors">01_HOME</span>
-                <span class="absolute bottom-0 left-0 w-full h-[2px] bg-primary"></span>
-            </a>
-            <a href="article-1.html" onclick="saveMusicState(event)" class="relative group py-2">
-                <span class="group-hover:text-primary transition-colors">02_LATEST</span>
-                <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-primary group-hover:w-full transition-all duration-300"></span>
-            </a>
-            <a href="about.html" onclick="saveMusicState(event)" class="relative group py-2">
-                <span class="group-hover:text-primary transition-colors">03_ABOUT</span>
-                <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-primary group-hover:w-full transition-all duration-300"></span>
-            </a>
+        <div class="hidden md:flex gap-8 font-mono text-xs tracking-widest font-bold">
+            <a href="#" class="text-secondary border-b-2 border-secondary pb-1">01_HOME</a>
+            <a href="#" class="text-gray-500 hover:text-primary transition-colors">02_ARCHIVES</a>
+            <a href="#" class="text-gray-500 hover:text-primary transition-colors">03_ABOUT</a>
         </div>
-        <div class="md:hidden text-primary font-mono text-xs border border-primary/50 px-2 py-1 rounded cursor-pointer hover:bg-primary hover:text-black transition-colors">MENU::OPEN</div>
     </nav>
 
-    <header class="relative pt-40 pb-12 px-6 md:px-12 max-w-screen-xl mx-auto min-h-[calc(100vh-100px)] flex flex-col justify-center items-start text-left z-20 overflow-hidden cursor-default">
-        <div class="absolute top-1/2 right-0 translate-x-1/3 -translate-y-1/2 w-[60vw] aspect-square border border-dashed border-white/10 rounded-full animate-spin-slow pointer-events-none z-0"></div>
-        <div class="space-y-8 animate-fade-in-up w-full relative z-20 transition-all duration-500">
-            <div class="flex justify-start gap-3 mb-4 relative z-10">
-                <span class="px-2 py-1 bg-primary text-black font-mono text-[10px] font-bold uppercase tracking-wider rounded-sm">System Ready</span>
-                <span class="px-2 py-1 border border-white/20 backdrop-blur-sm text-white/70 font-mono text-[10px] font-bold uppercase tracking-wider rounded-sm">Loc: Internet</span>
-            </div>
-            <div class="relative inline-block z-10">
-                <h1 class="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-none text-white mix-blend-overlay opacity-90 select-none">WH1TE</h1>
-                <h1 class="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-none text-stroke-layer absolute top-0 left-0 w-full h-full flex items-center justify-center translate-x-[3px] translate-y-[3px]">WH1TE</h1>
-            </div>
-            <div class="flex items-center justify-start gap-4 mt-2 relative z-10">
-                <div class="h-px w-16 bg-primary/50"></div>
-                <h2 class="text-xl md:text-2xl font-bold text-white tracking-tight">互联网<span class="text-primary">小屋</span></h2>
-            </div>
-            <div class="mt-12 relative w-full max-w-3xl group z-10 cursor-text">
-                <div class="relative flex items-center">
-                    <div class="absolute left-0 pl-4 text-primary font-mono text-sm flex items-center h-full pb-1 tracking-widest">_SEARCH_QUERY ::</div>
-                    <input 
-                        type="text" 
-                        id="search-input" 
-                        placeholder="INPUT_KEYWORD..." 
-                        oninput="searchArticles()"
-                        class="w-full pl-48 pr-12 py-5 bg-black/40 backdrop-blur-xl border-b-2 border-white/20 text-white font-mono text-xl md:text-2xl placeholder-white/10 focus:border-primary focus:bg-black/60 focus:outline-none transition-all caret-primary uppercase"
-                    >
-                    <div class="absolute right-4 w-2 h-6 bg-primary animate-pulse-fast"></div>
-                </div>
-                <div id="search-status" class="absolute top-full left-0 mt-2 text-[10px] font-mono text-primary hidden">FILTERING_RESULTS...</div>
-            </div>
+    <!-- Hero 区域 -->
+    <header class="relative pt-48 pb-12 max-w-screen-xl mx-auto px-6 md:px-12 flex flex-col justify-center items-start text-left z-20 min-h-[65vh]">
+        
+        <!-- MAGI 系统装饰 -->
+        <div class="absolute top-24 right-[20%] opacity-30 pointer-events-none z-0 hidden lg:flex flex-col gap-3 scale-90 origin-top-right">
+            <div class="magi-node w-56 h-12 skew-x-12 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold">MELCHIOR - 1</div>
+            <div class="magi-node w-56 h-12 skew-x-12 ml-12 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold" style="animation-delay: 1s;">BALTHASAR - 2</div>
+            <div class="magi-node w-56 h-12 skew-x-12 ml-24 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold" style="animation-delay: 2s;">CASPER - 3</div>
         </div>
-        <div class="absolute bottom-8 left-6 md:left-12 text-gray-600 font-mono text-[10px] animate-bounce">
-            SCROLL_DOWN v
+
+        <div class="space-y-8 animate-pop-in w-full relative z-10 max-w-3xl">
+            <div class="flex items-center gap-3 mb-2">
+                <span class="px-3 py-1 bg-secondary text-black font-mono text-[10px] font-black uppercase tracking-widest">System Ready</span>
+                <span class="w-24 h-px bg-secondary/50"></span>
+                <span class="font-mono text-[10px] text-primary">SYNC RATE: 400%</span>
+            </div>
+
+            <div class="relative inline-block">
+                <h1 class="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-none text-white mix-blend-overlay opacity-90 magi-font">WH1TE_LOG</h1>
+                <h1 class="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-none text-stroke-layer absolute top-0 left-0 w-full h-full translate-x-[3px] translate-y-[3px]">WH1TE_LOG</h1>
+            </div>
+            
+            <div class="flex items-center gap-4 pl-4 border-l-4 border-secondary">
+                <h2 class="text-2xl font-bold text-white tracking-tight">互联网<span class="text-secondary">补完计划</span> <span class="text-xs font-mono opacity-60 ml-2 tracking-widest text-primary">DIGITAL ARCHIVE PROJECT</span></h2>
+            </div>
+
+            <div class="mt-16 relative w-full max-w-xl group">
+                <div class="absolute -top-4 left-0 bg-bg px-2 text-[10px] font-mono text-secondary border border-secondary/50">SEARCH_DATABASE</div>
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    placeholder="ENTER KEYWORD..." 
+                    oninput="searchArticles()"
+                    class="w-full pl-6 pr-12 py-5 bg-black/30 backdrop-blur-xl border-b-2 border-white/20 text-white font-mono text-xl placeholder-white/10 focus:border-secondary focus:bg-black/50 focus:outline-none transition-all uppercase tracking-widest"
+                >
+                <!-- 装饰性光标 -->
+                <div class="absolute right-0 bottom-0 w-0 h-0 border-l-[12px] border-l-transparent border-b-[12px] border-b-secondary"></div>
+            </div>
         </div>
     </header>
 
-    <main class="max-w-screen-xl mx-auto px-6 md:px-12 pb-24 relative z-20">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
-            <aside class="lg:col-span-4 space-y-6 lg:sticky lg:top-24 h-fit">
-                
-                <!-- AI 助手: 优化融合感 -->
-                <div class="cyber-card rounded-xl p-0 overflow-visible relative group transition-shadow duration-500 border-primary/30 cursor-pointer" onclick="triggerAiSpeech()">
-                    
-                    <div class="cyber-scan-line"></div>
-                    <div class="cyber-scan-data">
-                        <div>SYNC: <span class="text-white">98%</span></div>
-                        <div>CPU: <span class="text-white">34%</span></div>
-                        <div>BIO: <span class="text-white animate-pulse">OK</span></div>
-                    </div>
+    <!-- 人物图片 - 默认显示真嗣 -->
+    <div class="fixed right-0 bottom-0 z-0 pointer-events-none w-[45vw] max-w-[750px] flex items-end justify-end">
+        <img 
+            id="hero-character"
+            src="./images/shinji.png" 
+            alt="Cyberpunk Hero" 
+            class="w-full h-auto object-contain image-filter-acid-glitch transition-opacity duration-500"
+        >
+    </div>
 
-                    <div id="ai-speech-bubble" class="hidden absolute -top-16 left-0 z-50 animate-pop-in pointer-events-none" style="width: 250px; transform: translateY(-100%);">
-                        <div class="cp2077-bubble relative p-4">
-                             <p id="ai-speech-text" class="text-xs font-bold leading-relaxed"></p>
-                             <div class="absolute -bottom-4 left-8 w-0.5 h-4 bg-primary"></div>
+    <main class="max-w-screen-xl mx-auto px-6 md:px-12 pb-32 relative z-20">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-16">
+            
+            <!-- 左侧边栏 -->
+            <aside class="lg:col-span-4 space-y-10 lg:sticky lg:top-32 h-fit">
+                
+                <!-- AI 助手卡片 -->
+                <div id="ai-card" class="ai-card-container cursor-pointer group" onclick="triggerAiSpeech()">
+                    <!-- 扫描线 -->
+                    <div class="cyber-scan-line"></div>
+                    
+                    <!-- 对话气泡 -->
+                    <div id="ai-speech-bubble" class="hidden absolute -top-20 left-0 w-full z-50 animate-pop-in pointer-events-none">
+                        <div class="bg-bg/95 border border-primary p-4 relative shadow-[4px_4px_0_var(--secondary-color)]">
+                             <p id="ai-speech-text" class="text-xs font-bold font-mono text-primary leading-relaxed"></p>
+                             <div class="absolute -bottom-2 left-8 w-4 h-4 bg-bg border-r border-b border-primary transform rotate-45"></div>
                         </div>
                     </div>
 
-                    <div class="w-full relative aspect-[4/5] overflow-hidden rounded-xl bg-black/20">
-                        <img src="./images/ai-assistant.jpg" alt="AI Assistant" 
-                             class="w-full h-full object-cover image-filter-acid-subtle group-hover:scale-105 transition-transform duration-700" 
-                             decoding="async">
-                        <div class="absolute inset-0 shadow-[inset_0_0_30px_rgba(0,0,0,0.8)] pointer-events-none"></div>
-                        <div class="absolute bottom-0 left-0 w-full h-2/3 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
+                    <div class="w-full relative aspect-[4/5] overflow-hidden bg-black/40">
+                        <!-- 这里可以替换为你的 AI 助手头像，如果需要的话 -->
+                        <img src="./images/ai-assistant.jpg" onerror="this.style.display='none'" alt="AI" class="w-full h-full object-cover opacity-90 mix-blend-lighten group-hover:scale-105 transition-transform duration-500 filter contrast-125">
+                        <div class="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent"></div>
+                        <!-- 装饰角标 -->
+                        <div class="absolute top-2 right-2 text-[9px] font-mono text-black bg-secondary px-1 font-bold">LIVE</div>
                     </div>
-                    <div class="absolute bottom-0 left-0 w-full p-5 z-10 pointer-events-none">
-                        <h3 class="font-mono text-primary text-sm font-bold mb-1 tracking-wider border-b border-white/10 pb-2">:: AI_ASSISTANT</h3>
-                        <p class="text-gray-300 text-xs font-mono leading-relaxed">
-                            STATUS: <span id="ai-status-text" class="text-primary blink font-bold">ONLINE</span><br>
-                            <span class="opacity-70">Click to interact...</span>
-                        </p>
+                    
+                    <div class="p-5 border-t border-secondary/30 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-full h-full bg-secondary/5 -skew-x-12 transform translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
+                        <div class="flex items-center justify-between mb-2 relative z-10">
+                            <h3 class="font-mono text-primary text-sm font-bold tracking-wider">:: AI_ASSISTANT</h3>
+                            <div class="w-2 h-2 bg-secondary animate-pulse rounded-full"></div>
+                        </div>
+                        <p class="text-gray-400 text-[10px] font-mono relative z-10">STATUS: <span id="ai-status-text" class="text-secondary font-bold">ONLINE</span></p>
                     </div>
                 </div>
 
-                <!-- 每日新番放送窗口 -->
-                <div class="cyber-card rounded-xl p-6 relative overflow-hidden group">
-                    <div class="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-primary"></div>
-                    <div class="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-primary"></div>
-                    <h3 class="font-mono text-primary text-xs font-bold mb-4 border-b border-white/10 pb-2 flex items-center justify-between">
-                        <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 bg-primary rounded-sm animate-pulse"></span>ANIME_SCHEDULE</span>
+                <!-- 新番卡片 -->
+                <div class="cyber-card p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-12 h-12 border-t-2 border-r-2 border-secondary/30 rounded-tr-xl"></div>
+                    <h3 class="font-mono text-secondary text-xs font-bold mb-5 border-b border-white/10 pb-3 flex justify-between items-center">
+                        <span class="flex items-center gap-2"><i data-lucide="tv" class="w-3 h-3"></i> ANIME_FEED</span>
                         <span id="anime-date" class="text-[9px] text-gray-500">LOADING...</span>
                     </h3>
-                    <div id="anime-list" class="anime-scroll space-y-2 font-mono text-[10px] text-gray-300 max-h-64 overflow-y-auto pr-2">
-                        <div class="flex items-center justify-center py-4"><span class="text-primary animate-pulse">CONNECTING_BGM_NET...</span></div>
-                    </div>
+                    <div id="anime-list" class="space-y-3 font-mono text-[10px] text-gray-300 max-h-64 overflow-y-auto pr-2 custom-scrollbar"></div>
                 </div>
 
-                <div class="cyber-card rounded-xl p-6 relative overflow-hidden group">
-                    <h3 class="font-mono text-primary text-xs font-bold mb-4 border-b border-white/10 pb-2 flex items-center gap-2"><span class="w-1.5 h-1.5 bg-primary rounded-sm"></span>NOTICE_BOARD</h3>
-                    <div class="space-y-3 font-mono text-[11px] md:text-xs leading-relaxed text-gray-300 relative z-10">
-                        <div class="flex gap-2"><span class="text-primary min-w-[14px]">>></span><p>成功配置 Python 环境，下一步专注博客维护脚本开发。</p></div>
-                    </div>
-                </div>
-                <div class="grid grid-cols-3 gap-3">
-                    <a href="https://github.com/whte97284-hue/wh1te-blog-project/tree/main" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-white hover:text-black transition-all group relative overflow-hidden cursor-pointer"><span class="font-mono text-[9px] font-bold uppercase relative z-10">Git</span></a>
-                    <a href="https://space.bilibili.com/551898501" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-[#fb7299] hover:text-white transition-all group relative overflow-hidden cursor-pointer"><span class="font-mono text-[9px] font-bold uppercase relative z-10">Bili</span></a>
-                    <a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw" target="_blank" class="cyber-card rounded-xl aspect-square flex flex-col items-center justify-center hover:bg-black hover:text-white transition-all group relative overflow-hidden cursor-pointer"><span class="font-mono text-[9px] font-bold uppercase relative z-10">TikTok</span></a>
-                </div>
-                <div class="cyber-card rounded-xl p-6">
-                    <h3 class="font-mono text-gray-400 text-[10px] mb-4 uppercase tracking-widest flex justify-between">:: TAGS<span>[04]</span></h3>
-                    <div class="flex flex-wrap gap-2" id="tag-cloud">
-                         <button onclick="filterByTag('Novel')" class="px-2 py-1 bg-white/5 border border-white/10 hover:bg-primary hover:border-primary hover:text-black text-[10px] font-mono uppercase transition-all rounded-sm cursor-pointer">#Novel</button>
-                         <button onclick="filterByTag('Code')" class="px-2 py-1 bg-white/5 border border-white/10 hover:bg-primary hover:border-primary hover:text-black text-[10px] font-mono uppercase transition-all rounded-sm cursor-pointer">#Code</button>
-                         <button onclick="filterByTag('Python')" class="px-2 py-1 bg-white/5 border border-white/10 hover:bg-primary hover:border-primary hover:text-black text-[10px] font-mono uppercase transition-all rounded-sm cursor-pointer">#Python</button>
-                         <button onclick="filterByTag('Web')" class="px-2 py-1 bg-white/5 border border-white/10 hover:bg-primary hover:border-primary hover:text-black text-[10px] font-mono uppercase transition-all rounded-sm cursor-pointer">#Web</button>
+                <!-- 标签云 -->
+                <div class="cyber-card p-6">
+                    <h3 class="font-mono text-gray-500 text-[10px] mb-4 tracking-[0.2em]">:: TAG_CLOUD</h3>
+                    <div class="flex flex-wrap gap-3">
+                         <button onclick="filterByTag('Novel')" class="px-3 py-1.5 bg-white/5 border border-white/10 hover:bg-secondary hover:text-black hover:border-secondary text-[10px] font-mono transition-all uppercase tracking-wider">#Novel</button>
+                         <button onclick="filterByTag('Code')" class="px-3 py-1.5 bg-white/5 border border-white/10 hover:bg-secondary hover:text-black hover:border-secondary text-[10px] font-mono transition-all uppercase tracking-wider">#Code</button>
+                         <button onclick="filterByTag('Web')" class="px-3 py-1.5 bg-white/5 border border-white/10 hover:bg-secondary hover:text-black hover:border-secondary text-[10px] font-mono transition-all uppercase tracking-wider">#Web</button>
                     </div>
                 </div>
             </aside>
 
-            <div class="lg:col-span-8 space-y-8">
-                <div class="flex items-center justify-between border-b border-white/10 pb-4">
-                    <h2 class="text-2xl md:text-3xl font-bold tracking-tighter">LATEST_FEEDS</h2>
-                    <div class="flex items-center gap-2"><span class="w-2 h-2 bg-primary rounded-full animate-pulse"></span><span class="font-mono text-xs text-primary">[ ONLINE ]</span></div>
+            <!-- 右侧内容区 -->
+            <div class="lg:col-span-8 space-y-10">
+                <div class="flex items-center justify-between border-b-2 border-white/10 pb-4">
+                    <h2 class="text-3xl font-black tracking-tighter text-white">DATA_LOGS</h2>
+                    <div class="flex items-center gap-2">
+                        <div class="w-1.5 h-1.5 bg-secondary animate-ping"></div>
+                        <span class="font-mono text-xs text-secondary">[ RECORDING ]</span>
+                    </div>
                 </div>
-                <div id="article-list-container" class="space-y-6">
-                    <!-- 文章列表 -->
-                    <article class="article-card cyber-card rounded-xl p-6 md:p-8 relative group hover:bg-black/80 overflow-hidden border-l-4 border-l-transparent hover:border-l-primary transition-all cursor-pointer" data-tags="Novel ACG WhiteAlbum2">
-                        <div class="absolute top-0 right-0 w-48 h-48 bg-primary/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                
+                <div id="article-list-container" class="space-y-8">
+                    <!-- 文章 1 -->
+                    <article class="article-card cyber-card p-8 group hover:bg-white/5 cursor-pointer relative overflow-hidden" data-tags="Novel ACG WhiteAlbum2">
+                        <!-- 悬停发光背景 -->
+                        <div class="absolute -right-10 -top-10 w-40 h-40 bg-secondary/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        
                         <div class="flex flex-col gap-4 relative z-10">
-                            <div class="flex justify-between items-start">
-                                <div class="flex gap-2"><span class="text-[10px] font-mono uppercase text-black bg-primary px-2 py-1 font-bold">NOVEL</span><span class="text-[10px] font-mono uppercase text-white/60 border border-white/20 px-2 py-1">WA2</span></div>
-                                <span class="font-mono text-xs text-gray-500 border border-white/10 px-2 py-1 rounded-sm">2025.10.05</span>
+                            <div class="flex justify-between items-start font-mono text-[10px]">
+                                <div class="flex gap-2">
+                                    <span class="bg-secondary text-black px-1.5 py-0.5 font-bold">NOVEL</span>
+                                    <span class="border border-white/20 text-gray-400 px-1.5 py-0.5">WA2</span>
+                                </div>
+                                <span class="text-gray-500">2025.10.05</span>
                             </div>
-                            <h3 class="text-2xl md:text-3xl font-bold leading-tight max-w-xl"><a href="article-3.html" onclick="saveMusicState(event)" class="hover:text-primary transition-colors">雪融化、然后直到再次飘落时</a></h3>
-                            <p class="text-gray-400 font-light leading-relaxed text-sm md:text-base border-l border-white/10 pl-4 article-summary">冬马和纱，很讨厌天空。春天，当她翘掉自己今后每天都要去的峰城大学附属学园的入学仪式，在河边草丛上躺下来的时候，头顶那片苍蓝澄净的天空...</p>
-                            <div class="flex items-center justify-end mt-2"><a href="article-3.html" onclick="saveMusicState(event)" class="group-hover:translate-x-1 transition-transform flex items-center text-primary font-mono text-xs md:text-sm font-bold bg-white/5 px-4 py-2 rounded-full hover:bg-primary hover:text-black">READ_FULL <span class="ml-2">→</span></a></div>
+                            <h3 class="text-3xl font-bold leading-tight group-hover:text-secondary transition-colors duration-300">雪融化、然后直到再次飘落时</h3>
+                            <p class="text-gray-400 text-sm leading-relaxed pl-4 border-l-2 border-white/10 group-hover:border-secondary transition-colors article-summary">冬马和纱，很讨厌天空。春天，当她翘掉自己今后每天都要去的峰城大学附属学园的入学仪式...</p>
+                            <div class="flex justify-end mt-4">
+                                <span class="font-mono text-xs text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">READ_ENTRY <i data-lucide="chevron-right" class="w-3 h-3"></i></span>
+                            </div>
                         </div>
                     </article>
-                    <article class="article-card cyber-card rounded-xl p-6 md:p-8 relative group hover:bg-black/80 overflow-hidden border-l-4 border-l-transparent hover:border-l-primary transition-all cursor-pointer" data-tags="Python Automation Web">
-                        <div class="absolute top-0 right-0 w-48 h-48 bg-primary/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+
+                    <!-- 文章 2 -->
+                    <article class="article-card cyber-card p-8 group hover:bg-white/5 cursor-pointer relative overflow-hidden" data-tags="Python Automation">
+                        <div class="absolute -right-10 -top-10 w-40 h-40 bg-secondary/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         <div class="flex flex-col gap-4 relative z-10">
-                             <div class="flex justify-between items-start">
-                                <div class="flex gap-2"><span class="text-[10px] font-mono uppercase text-black bg-primary px-2 py-1 font-bold">Python</span><span class="text-[10px] font-mono uppercase text-white/60 border border-white/20 px-2 py-1">Automation</span></div>
-                                <span class="font-mono text-xs text-gray-500 border border-white/10 px-2 py-1 rounded-sm">2025.10.03</span>
+                            <div class="flex justify-between items-start font-mono text-[10px]">
+                                <div class="flex gap-2">
+                                    <span class="bg-secondary text-black px-1.5 py-0.5 font-bold">PYTHON</span>
+                                    <span class="border border-white/20 text-gray-400 px-1.5 py-0.5">AUTO</span>
+                                </div>
+                                <span class="text-gray-500">2025.10.03</span>
                             </div>
-                            <h3 class="text-2xl md:text-3xl font-bold leading-tight max-w-xl"><a href="article-2.html" onclick="saveMusicState(event)" class="hover:text-primary transition-colors">Python 主页自动生成脚本测试</a></h3>
-                             <p class="text-gray-400 font-light leading-relaxed text-sm md:text-base border-l border-white/10 pl-4 article-summary">辅助静态页面更新的自动化生成脚本第一次测试，探索如何高效管理我的数字花园。</p>
-                            <div class="flex items-center justify-end mt-2"><a href="article-2.html" onclick="saveMusicState(event)" class="group-hover:translate-x-1 transition-transform flex items-center text-primary font-mono text-xs md:text-sm font-bold bg-white/5 px-4 py-2 rounded-full hover:bg-primary hover:text-black">READ_FULL <span class="ml-2">→</span></a></div>
+                            <h3 class="text-3xl font-bold leading-tight group-hover:text-secondary transition-colors duration-300">Python 主页自动生成脚本测试</h3>
+                            <p class="text-gray-400 text-sm leading-relaxed pl-4 border-l-2 border-white/10 group-hover:border-secondary transition-colors article-summary">辅助静态页面更新的自动化生成脚本第一次测试，探索如何高效管理我的数字花园。</p>
+                            <div class="flex justify-end mt-4">
+                                <span class="font-mono text-xs text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">READ_ENTRY <i data-lucide="chevron-right" class="w-3 h-3"></i></span>
+                            </div>
                         </div>
                     </article>
-                    <article class="article-card cyber-card rounded-xl p-6 md:p-8 relative group hover:bg-black/80 overflow-hidden border-l-4 border-l-transparent hover:border-l-primary transition-all cursor-pointer" data-tags="Code Reflection Appium">
-                        <div class="absolute top-0 right-0 w-48 h-48 bg-primary/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                    
+                    <!-- 文章 3 -->
+                    <article class="article-card cyber-card p-8 group hover:bg-white/5 cursor-pointer relative overflow-hidden" data-tags="Code Reflection">
+                         <div class="absolute -right-10 -top-10 w-40 h-40 bg-secondary/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         <div class="flex flex-col gap-4 relative z-10">
-                            <div class="flex justify-between items-start">
-                                <div class="flex gap-2"><span class="text-[10px] font-mono uppercase text-black bg-primary px-2 py-1 font-bold">Code</span><span class="text-[10px] font-mono uppercase text-white/60 border border-white/20 px-2 py-1">Reflection</span></div>
-                                <span class="font-mono text-xs text-gray-500 border border-white/10 px-2 py-1 rounded-sm">2025.10.02</span>
+                            <div class="flex justify-between items-start font-mono text-[10px]">
+                                <div class="flex gap-2">
+                                    <span class="bg-secondary text-black px-1.5 py-0.5 font-bold">CODE</span>
+                                    <span class="border border-white/20 text-gray-400 px-1.5 py-0.5">WEB</span>
+                                </div>
+                                <span class="text-gray-500">2025.10.01</span>
                             </div>
-                            <h3 class="text-2xl md:text-3xl font-bold leading-tight max-w-xl"><a href="article-1.html" onclick="saveMusicState(event)" class="hover:text-primary transition-colors">从 Appium 到网站：我与代码的旅程初探</a></h3>
-                            <p class="text-gray-400 font-light leading-relaxed text-sm md:text-base border-l border-white/10 pl-4 article-summary">起初我以为编程就是找个工具抢票，最终却被安全机制所阻止。这次经历让我明白：真正的编程价值在于构建思维框架。</p>
-                            <div class="flex items-center justify-end mt-2"><a href="article-1.html" onclick="saveMusicState(event)" class="group-hover:translate-x-1 transition-transform flex items-center text-primary font-mono text-xs md:text-sm font-bold bg-white/5 px-4 py-2 rounded-full hover:bg-primary hover:text-black">READ_FULL <span class="ml-2">→</span></a></div>
+                            <h3 class="text-3xl font-bold leading-tight group-hover:text-secondary transition-colors duration-300">从 Appium 到网站：我与代码的旅程初探</h3>
+                            <p class="text-gray-400 text-sm leading-relaxed pl-4 border-l-2 border-white/10 group-hover:border-secondary transition-colors article-summary">起初我以为编程就是找个工具抢票，最终却被安全机制所阻止。这次经历让我明白：真正的编程价值在于构建思维框架。</p>
+                            <div class="flex justify-end mt-4">
+                                <span class="font-mono text-xs text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">READ_ENTRY <i data-lucide="chevron-right" class="w-3 h-3"></i></span>
+                            </div>
                         </div>
                     </article>
                 </div>
@@ -448,19 +583,52 @@
         </div>
     </main>
 
-    <footer class="border-t border-white/10 bg-black/80 backdrop-blur-xl mt-20 relative z-20">
-        <div class="max-w-7xl mx-auto py-12 px-6 md:px-12 flex flex-col md:flex-row justify-between items-end gap-8">
-            <div><h2 class="text-4xl font-black text-white tracking-tighter mb-2">WH1TE.LOG</h2><p class="font-mono text-xs text-gray-500">DESIGNED_FOR_THE_FUTURE_ARCHIVE</p></div>
-            <div class="font-mono text-xs text-gray-500 text-right"><p>&copy; 2025 ALL RIGHTS RESERVED.</p><div class="flex gap-4 justify-end mt-2"><span class="hover:text-acid cursor-pointer">[ PRIVACY ]</span><span class="hover:text-acid cursor-pointer">[ ABOUT ]</span></div></div>
+    <!-- Footer -->
+    <footer class="border-t border-white/10 bg-surface backdrop-blur-xl mt-20 relative z-20 py-16">
+        <div class="max-w-screen-xl mx-auto px-6 md:px-12 flex flex-col md:flex-row justify-between gap-8">
+            <div>
+                <h2 class="text-3xl font-black text-white tracking-tighter magi-font">WH1TE.LOG</h2>
+                <p class="font-mono text-[10px] text-gray-500 mt-2 tracking-widest">HUMAN INSTRUMENTALITY PROJECT</p>
+            </div>
+            <div class="font-mono text-[10px] text-gray-600 text-right">
+                <p>&copy; 2025 NERV. ALL RIGHTS RESERVED.</p>
+                <p class="mt-1 uppercase tracking-wider">God's in his heaven. All's right with the world.</p>
+            </div>
         </div>
     </footer>
 
-    <script>
-        let ticking = false;
-        // 全局变量追踪状态
-        let aiSpeechInterval = null;
-        let aiSpeechTimeout = null;
+    <!-- 模态框 -->
+    <div id="anime-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-bg/90 backdrop-blur-md cursor-pointer" onclick="closeAnimeModal()">
+        <div class="relative w-full max-w-4xl bg-bg border border-secondary p-8 flex gap-8 shadow-[0_0_50px_rgba(0,0,0,0.5)]" onclick="event.stopPropagation()">
+            <!-- 装饰性 UI -->
+            <div class="absolute top-0 left-0 w-32 h-32 border-t-2 border-l-2 border-secondary -translate-x-2 -translate-y-2"></div>
+            <div class="absolute bottom-0 right-0 w-32 h-32 border-b-2 border-r-2 border-secondary translate-x-2 translate-y-2"></div>
+            
+            <div class="w-1/3 bg-gray-900 relative overflow-hidden group">
+                <img id="modal-cover" src="" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500">
+                <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/60"></div>
+                <div class="absolute bottom-0 left-0 w-full h-1 bg-secondary animate-scan"></div>
+            </div>
+            <div class="w-2/3 text-left space-y-6">
+                <div class="flex items-center gap-2 text-secondary font-mono text-xs">
+                    <span class="w-2 h-2 bg-secondary"></span>
+                    <span>DATA_RETRIEVED</span>
+                </div>
+                <h2 id="modal-title" class="text-4xl font-black text-white magi-font leading-none">LOADING...</h2>
+                <div class="flex gap-6 text-xs font-mono text-primary border-y border-white/10 py-3">
+                    <span>RATING: <span id="modal-rating" class="text-white font-bold text-lg">--</span></span>
+                    <span>ID: <span id="modal-id" class="text-white">--</span></span>
+                </div>
+                <p id="modal-summary" class="text-sm text-gray-300 font-mono leading-relaxed">Fetching classified data from MAGI system...</p>
+            </div>
+        </div>
+    </div>
 
+    <script>
+        lucide.createIcons();
+
+        // === 1. 鼠标交互 ===
+        let ticking = false;
         document.addEventListener('mousemove', (e) => {
             if (!ticking) {
                 window.requestAnimationFrame(() => {
@@ -468,12 +636,6 @@
                     const y = (e.clientY / window.innerHeight) * 100;
                     document.documentElement.style.setProperty('--mouse-x', `${x}%`);
                     document.documentElement.style.setProperty('--mouse-y', `${y}%`);
-                    
-                    // 更新光晕大小
-                    const speed = Math.abs(e.movementX) + Math.abs(e.movementY);
-                    const size = 600 + Math.min(speed * 5, 400);
-                    document.documentElement.style.setProperty('--cursor-size', `${size}px`);
-
                     ticking = false;
                 });
                 ticking = true;
@@ -489,73 +651,35 @@
             wave.style.height = '50px';
             document.body.appendChild(wave);
             setTimeout(() => wave.remove(), 600);
+            
+            // AT Field Effect on Click
+            createATField(e.clientX, e.clientY);
         });
 
-        // --- Theme Switcher Logic ---
-        function setTheme(themeName) {
-            document.documentElement.setAttribute('data-theme', themeName);
-            localStorage.setItem('theme', themeName);
-            
-            document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
-            const targetBtn = document.querySelector(`.theme-btn[title="${themeName === 'default' ? 'Acid Lime' : themeName.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}"]`);
-            if(targetBtn) targetBtn.classList.add('active');
-        }
-        
-        const savedTheme = localStorage.getItem('theme');
-        if(savedTheme) {
-            setTheme(savedTheme);
-        }
-
-        // --- Eriri AI Interaction ---
-        const eririLines = [
-            "哼，才不是特意等你的！\n(Hmph, wasn't waiting for you!)",
-            "别误会了，我只是路过而已。\n(Just passing by, don't misunderstand.)",
-            "你是笨蛋吗？绝对是笨蛋吧！\n(Baka!)",
-            "金发双马尾才是正义！\n(Twin-tails are justice!)",
-            "我的画...才没有输！\n(My art... didn't lose!)",
-            "区区一个 Web 开发者...\n(Just a web dev...)"
-        ];
-
-        function triggerAiSpeech() {
-            const bubble = document.getElementById('ai-speech-bubble');
-            const textEl = document.getElementById('ai-speech-text');
-            const statusEl = document.getElementById('ai-status-text');
-            
-            // 1. 关键修复：清除上一次的打字机定时器和关闭倒计时
-            if (aiSpeechInterval) clearInterval(aiSpeechInterval);
-            if (aiSpeechTimeout) clearTimeout(aiSpeechTimeout);
-
-            // 状态切换
-            statusEl.innerText = "BUSY";
-            statusEl.style.color = "#ff0055"; // 红色
-
-            const line = eririLines[Math.floor(Math.random() * eririLines.length)];
-            
-            // 初始化文本框
-            textEl.innerText = "";
-            bubble.classList.remove('hidden');
-            let i = 0;
-
-            // 启动新的打字机效果
-            aiSpeechInterval = setInterval(() => {
-                if (i < line.length) {
-                    textEl.innerText += line.charAt(i);
-                    i++;
-                } else {
-                    clearInterval(aiSpeechInterval);
-                    aiSpeechInterval = null; // 清空引用
-                    
-                    // 恢复状态并隐藏气泡
-                    aiSpeechTimeout = setTimeout(() => {
-                        statusEl.innerText = "ONLINE";
-                        statusEl.style.color = ""; // 恢复默认色
-                        bubble.classList.add('hidden');
-                    }, 3000); // 停留3秒后消失
-                }
-            }, 40); // 打字速度
+        function createATField(x, y) {
+            const atField = document.createElement('div');
+            atField.style.cssText = `
+                position: fixed; top: ${y}px; left: ${x}px;
+                width: 10px; height: 10px;
+                border: 2px solid #ffa500;
+                background: rgba(255, 165, 0, 0.2);
+                transform: translate(-50%, -50%);
+                clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+                z-index: 9998; pointer-events: none;
+                transition: all 0.4s ease-out;
+                box-shadow: 0 0 10px #ffa500;
+            `;
+            document.body.appendChild(atField);
+            requestAnimationFrame(() => {
+                atField.style.width = '150px';
+                atField.style.height = '150px';
+                atField.style.opacity = '0';
+                atField.style.transform = 'translate(-50%, -50%) rotate(45deg)';
+            });
+            setTimeout(() => atField.remove(), 400);
         }
 
-        // --- 2. Hero 背景人物动画逻辑 (仅闪烁，不切换) ---
+        // === 2. 人物故障动画 ===
         function startHeroGlitch() {
             const heroImg = document.getElementById('hero-character');
             if(!heroImg) return;
@@ -563,316 +687,273 @@
                 heroImg.classList.add('cyber-swap-active');
                 setTimeout(() => {
                     heroImg.classList.remove('cyber-swap-active');
-                }, 600);
-            }, 10000); 
+                }, 400);
+            }, 5000); 
         }
 
-        // --- 3. 模态框逻辑 ---
-        async function openAnimeModal(title, rating, imageUrl, id) {
-            const modal = document.getElementById('anime-modal');
-            document.getElementById('modal-title').innerText = title || 'UNKNOWN_SIGNAL';
-            document.getElementById('modal-rating').innerText = rating || 'N/A';
-            document.getElementById('modal-cover').src = imageUrl || 'https://framerusercontent.com/images/kC7Gq14O91w0T3H0O5E0U8y2v4.png';
-            document.getElementById('modal-id').innerText = id || '000000';
-            const summaryEl = document.getElementById('modal-summary');
-            summaryEl.innerText = "SEARCHING_DATABASE_FOR_SUMMARY...";
-            modal.classList.remove('hidden');
-            modal.classList.add('flex', 'active');
+        // === 3. 主题切换与人物更换 ===
+        const characterMap = {
+            'default': './images/shinji.png', // Shinji
+            'unit-02': './images/asuka.png', // Asuka
+            'unit-00': './images/shinji.png', // Rei (Using Shinji as placeholder if no image)
+            'unit-08': './images/shinji.png'  // Mari (Using Shinji as placeholder if no image)
+        };
 
-            if (id) {
-                const proxyUrl = 'https://corsproxy.io/?';
-                const targetUrl = `https://api.bgm.tv/v0/subjects/${id}`;
-                const token = '2Yc4zjFj30unuzP7LKLfgMzkEyUD07ZagLmWavCp';
-                try {
-                    const response = await fetch(proxyUrl + encodeURIComponent(targetUrl), {
-                        headers: { 'Authorization': `Bearer ${token}`, 'accept': 'application/json' }
-                    });
-                    if (response.ok) {
-                        const data = await response.json();
-                        summaryEl.innerText = data.summary ? data.summary : "NO_SUMMARY_AVAILABLE_IN_ARCHIVE.";
-                    } else {
-                        summaryEl.innerText = "DATA_CORRUPTED: UNABLE_TO_FETCH_DETAILS.";
-                    }
-                } catch (e) {
-                    console.error(e);
-                    summaryEl.innerText = "CONNECTION_LOST: OFFLINE_MODE.";
+        function setTheme(themeName) {
+            document.documentElement.setAttribute('data-theme', themeName);
+            localStorage.setItem('theme', themeName);
+            
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.getAttribute('onclick').includes(themeName)) {
+                    btn.classList.add('active');
                 }
-            } else {
-                summaryEl.innerText = "INVALID_ID: ACCESS_DENIED.";
+            });
+            
+            // 更换人物图片逻辑
+            const heroImg = document.getElementById('hero-character');
+            if (heroImg && characterMap[themeName]) {
+                 // 简单的淡入淡出效果
+                 heroImg.style.opacity = 0;
+                 setTimeout(() => {
+                     heroImg.src = characterMap[themeName];
+                     heroImg.onload = () => { heroImg.style.opacity = 0.8; };
+                 }, 200);
+            }
+        }
+        
+        // 初始化主题
+        const savedTheme = localStorage.getItem('theme') || 'default';
+        setTheme(savedTheme);
+
+        // === 4. AI 对话逻辑 ===
+        const eririLines = [
+            "哼，才不是特意等你的！\n(Hmph, wasn't waiting for you!)",
+            "别误会了，我只是路过而已。",
+            "你是笨蛋吗？绝对是笨蛋吧！",
+            "金发双马尾才是正义！",
+            "同步率 400%... 笨蛋！不要靠这么近！",
+            "系统正在全速运转...",
+            "入侵检测中... 安全。",
+            "这可是 NERV 级机密！",
+            "别盯着我看啦！",
+            "快去写代码！"
+        ];
+
+        let aiSpeechInterval = null;
+        
+        function triggerAiSpeech() {
+            const bubble = document.getElementById('ai-speech-bubble');
+            const textEl = document.getElementById('ai-speech-text');
+            const statusEl = document.getElementById('ai-status-text');
+            
+            if (aiSpeechInterval) clearInterval(aiSpeechInterval);
+            
+            bubble.classList.remove('hidden');
+            statusEl.innerText = "SPEAKING...";
+            statusEl.classList.add("text-primary");
+
+            const line = eririLines[Math.floor(Math.random() * eririLines.length)];
+            textEl.innerText = "";
+            
+            let i = 0;
+            aiSpeechInterval = setInterval(() => {
+                if (i < line.length) {
+                    textEl.innerText += line.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(aiSpeechInterval);
+                    setTimeout(() => {
+                        bubble.classList.add('hidden');
+                        statusEl.innerText = "ONLINE";
+                        statusEl.classList.remove("text-primary");
+                    }, 3000);
+                }
+            }, 50);
+        }
+
+        // === 5. 音频可视化 ===
+        let audioContext, analyser, source, canvasCtx;
+        const audioEl = document.getElementById('background-music');
+        const canvas = document.getElementById('audio-visualizer');
+        
+        function initAudio() {
+            if(audioContext) return;
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioContext = new AudioContext();
+            analyser = audioContext.createAnalyser();
+            source = audioContext.createMediaElementSource(audioEl);
+            source.connect(analyser);
+            analyser.connect(audioContext.destination);
+            analyser.fftSize = 64;
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            canvasCtx = canvas.getContext('2d');
+            drawVisualizer();
+        }
+
+        function drawVisualizer() {
+            requestAnimationFrame(drawVisualizer);
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteFrequencyData(dataArray);
+            canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+            const barWidth = (canvas.width / bufferLength) * 2;
+            let x = 0;
+            const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim();
+            canvasCtx.fillStyle = primaryColor;
+            for(let i = 0; i < bufferLength; i++) {
+                const barHeight = dataArray[i] / 2;
+                canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                x += barWidth + 1;
             }
         }
 
-        function closeAnimeModal() {
-            const modal = document.getElementById('anime-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex', 'active');
+        function toggleMusic() {
+            if(!audioContext) initAudio();
+            if(audioContext.state === 'suspended') audioContext.resume();
+            const wave = document.getElementById('deck-wave');
+            const icon = document.querySelector('#sonic-deck i');
+            
+            if(audioEl.paused) {
+                audioEl.play().then(() => {
+                    wave.classList.remove('hidden');
+                    icon.setAttribute('data-lucide', 'pause');
+                    lucide.createIcons();
+                }).catch(e => console.log(e));
+            } else {
+                audioEl.pause();
+                wave.classList.add('hidden');
+                icon.setAttribute('data-lucide', 'disc');
+                lucide.createIcons();
+            }
         }
+        function setVolume(val) { audioEl.volume = val; }
 
-        // Mock Data (Fallback)
+        // === 6. Bangumi & Modal ===
         const mockData = [
             { id: 388296, name: "香格里拉·开拓异境", rating: { score: "8.1" }, images: { large: "https://lain.bgm.tv/pic/cover/l/13/9a/388296_7787Y.jpg" } },
             { id: 425974, name: "Re:从零开始的异世界生活 S3", rating: { score: "8.6" }, images: { large: "https://lain.bgm.tv/pic/cover/l/80/b8/425974_Z888m.jpg" } }
         ];
 
+        async function loadAnimeData() {
+            const dateDisplay = document.getElementById('anime-date');
+            const today = new Date();
+            dateDisplay.innerHTML = `${today.getMonth()+1}/${today.getDate()}`;
+            let bangumiWeekday = today.getDay() === 0 ? 7 : today.getDay();
+
+            const proxyUrl = 'https://corsproxy.io/?';
+            const targetUrl = 'https://api.bgm.tv/calendar';
+            
+            try {
+                const response = await fetch(proxyUrl + encodeURIComponent(targetUrl));
+                if (!response.ok) throw new Error('API Error');
+                const data = await response.json();
+                const todayData = data.find(day => day.weekday.id === bangumiWeekday);
+                renderList(todayData && todayData.items.length > 0 ? todayData.items : mockData);
+            } catch (error) {
+                renderList(mockData);
+                dateDisplay.innerHTML += ' <span class="text-red-500">OFFLINE</span>';
+            }
+        }
+
         const renderList = (items) => {
              const container = document.getElementById('anime-list');
              container.innerHTML = items.map(item => {
                     const title = item.name_cn || item.name;
-                    const score = item.rating && item.rating.score ? item.rating.score : 'N/A';
-                    const image = item.images ? (item.images.large || item.images.common) : '';
-                    const id = item.id;
+                    const score = item.rating?.score || 'N/A';
+                    const image = item.images?.large || item.images?.common || '';
                     return `
-                    <div class="anime-item flex justify-between items-center group/item cursor-pointer transition-all duration-300 border-l-2 border-transparent py-1 hover:border-primary hover:pl-2 hover:bg-white/5"
-                         onclick='openAnimeModal("${title.replace(/"/g, '&quot;')}", "${score}", "${image}", "${id}")'>
-                         <span class="text-gray-300 flex-1 truncate mx-2 text-[10px] group-hover/item:text-primary transition-colors">
-                            ${title}
-                         </span>
-                         <span class="text-gray-600 border border-white/10 px-1 rounded text-[9px] font-mono group-hover/item:border-primary group-hover/item:text-primary">
-                            ${score ? '★'+score : 'N/A'}
-                         </span>
-                    </div>
-                    `;
+                    <div class="flex justify-between items-center group cursor-pointer hover:bg-white/5 p-2 border-l-2 border-transparent hover:border-secondary transition-all"
+                         onclick='openAnimeModal("${title.replace(/"/g, '&quot;')}", "${score}", "${image}", "${item.id}")'>
+                         <span class="text-gray-400 truncate w-3/4 group-hover:text-white font-bold text-[10px]">${title}</span>
+                         <span class="text-secondary text-[9px] border border-secondary/30 px-1 font-mono">${score}</span>
+                    </div>`;
                 }).join('');
         };
 
-        async function loadAnimeData() {
-            const dateDisplay = document.getElementById('anime-date');
-            const today = new Date();
-            const weekDays = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-            dateDisplay.innerHTML = `${today.getMonth()+1}/${today.getDate()} <span class="text-primary">[${weekDays[today.getDay()]}]</span>`;
-
-            let bangumiWeekday = today.getDay();
-            if (bangumiWeekday === 0) bangumiWeekday = 7;
-
-            const proxyUrl = 'https://corsproxy.io/?';
-            const targetUrl = 'https://api.bgm.tv/calendar';
-            const token = '2Yc4zjFj30unuzP7LKLfgMzkEyUD07ZagLmWavCp'; 
-
-            try {
-                const response = await fetch(proxyUrl + encodeURIComponent(targetUrl), {
-                    headers: { 'Authorization': `Bearer ${token}`, 'accept': 'application/json' }
-                });
-
-                if (!response.ok) throw new Error('API_ERROR');
-                const data = await response.json();
-                const todayData = data.find(day => day.weekday.id === bangumiWeekday);
-                
-                if (todayData && todayData.items.length > 0) {
-                    renderList(todayData.items);
-                } else {
-                    renderList(mockData); 
-                }
-            } catch (error) {
-                console.warn("Bangumi API failed, switching to OFFLINE CACHE.", error);
-                renderList(mockData);
-                dateDisplay.innerHTML += ' <span class="text-red-500 text-[8px] align-top">OFFLINE</span>';
+        async function openAnimeModal(title, rating, imageUrl, id) {
+            const modal = document.getElementById('anime-modal');
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-rating').innerText = rating;
+            document.getElementById('modal-cover').src = imageUrl;
+            document.getElementById('modal-id').innerText = id;
+            document.getElementById('modal-summary').innerText = "ACCESSING MAGI ARCHIVE...";
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            if(id) {
+                 try {
+                    const res = await fetch(`https://corsproxy.io/?${encodeURIComponent('https://api.bgm.tv/v0/subjects/'+id)}`);
+                    const data = await res.json();
+                    document.getElementById('modal-summary').innerText = data.summary || "RESTRICTED DATA.";
+                 } catch(e) { document.getElementById('modal-summary').innerText = "CONNECTION LOST."; }
             }
         }
-
-        // --- Audio Context & Visualizer Setup ---
-        let audioContext;
-        let analyser;
-        let dataArray;
-        let source;
-        let animationId;
-        const audioEl = document.getElementById('background-music');
-        const canvas = document.getElementById('audio-visualizer');
-        let canvasCtx;
-
-        // Resize canvas
-        function resizeCanvas() {
-            if(canvas) {
-                 canvas.width = canvas.offsetWidth;
-                 canvas.height = canvas.offsetHeight;
-            }
-        }
-        window.addEventListener('resize', resizeCanvas);
-
-        function initAudioContext() {
-            if (audioContext) return;
-            
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            audioContext = new AudioContext();
-            
-            analyser = audioContext.createAnalyser();
-            analyser.fftSize = 64; // Low res for retro feel
-            
-            // Fix: Check if source already connected to avoid errors
-            if(!source) {
-                 source = audioContext.createMediaElementSource(audioEl);
-                 source.connect(analyser);
-                 analyser.connect(audioContext.destination);
-            }
-            
-            dataArray = new Uint8Array(analyser.frequencyBinCount);
-            
-            if(canvas) {
-                 canvasCtx = canvas.getContext('2d');
-                 resizeCanvas();
-                 drawVisualizer();
-            }
+        function closeAnimeModal() {
+            document.getElementById('anime-modal').classList.add('hidden');
+            document.getElementById('anime-modal').classList.remove('flex');
         }
 
-        function drawVisualizer() {
-            animationId = requestAnimationFrame(drawVisualizer);
-            
-            if(!canvasCtx) return;
-
-            analyser.getByteFrequencyData(dataArray);
-            
-            canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            const barWidth = (canvas.width / dataArray.length) * 2.5;
-            let barHeight;
-            let x = 0;
-            
-            // Get current theme color from CSS variable
-            const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
-
-            for(let i = 0; i < dataArray.length; i++) {
-                barHeight = dataArray[i] / 2;
-                
-                canvasCtx.fillStyle = primaryColor;
-                canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
-                
-                x += barWidth + 1;
-            }
-        }
-
-        // Playlist
-        const playlist = [
-            { title: "SYSTEM_SOUNDTRACK", src: "./audio/bgm.mp3" },
-            // Add more songs here if available
-        ];
-        let currentTrackIndex = 0;
-
-        // Player Controls
-        function toggleMusic() {
-            if (!audioContext) initAudioContext();
-            
-            if (audioContext && audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
-            
-            // Fix: Check if there is a pending play request to avoid AbortError
-            if (audioEl.paused) {
-                // Only play if not already playing
-                var playPromise = audioEl.play();
-                if (playPromise !== undefined) {
-                    playPromise.then(() => {
-                        updatePlayerUI(true);
-                    }).catch(error => {
-                        console.log("Play interrupted or failed:", error);
-                        updatePlayerUI(false); // Reset UI on failure
-                    });
-                }
-            } else {
-                // If playing, pause it
-                 audioEl.pause();
-                 updatePlayerUI(false);
-            }
-        }
-
-        function changeTrack(direction) {
-            currentTrackIndex += direction;
-            if (currentTrackIndex >= playlist.length) currentTrackIndex = 0;
-            if (currentTrackIndex < 0) currentTrackIndex = playlist.length - 1;
-            
-            audioEl.src = playlist[currentTrackIndex].src;
-            const titleEl = document.getElementById('track-title');
-            if(titleEl) titleEl.innerText = playlist[currentTrackIndex].title;
-            
-            // Auto play if changing track, handling promise safely
-            var playPromise = audioEl.play();
-            if (playPromise !== undefined) {
-                playPromise.then(() => {
-                     updatePlayerUI(true);
-                }).catch(e => console.log("Auto-play on track change failed:", e));
-            }
-        }
-
-        function setVolume(val) {
-            audioEl.volume = val;
-        }
-
-        function updatePlayerUI(isPlaying) {
-            const deckIcon = document.getElementById('deck-icon');
-            const deckWave = document.getElementById('deck-wave');
-            
-            if(deckIcon && deckWave) {
-                if (isPlaying) {
-                    deckIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'; // Pause icon
-                    deckWave.classList.remove('hidden');
-                } else {
-                    deckIcon.innerHTML = '<path d="M8 5v14l11-7z"/>'; // Play icon
-                    deckWave.classList.add('hidden');
-                }
-            }
-            saveMusicState();
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            loadAnimeData();
-            startHeroGlitch();
-            
-            const storedState = localStorage.getItem('music_playing');
-            const storedTime = localStorage.getItem('music_currentTime');
-            
-            // Initialize Audio Context on first click (browser policy)
-            const initClick = () => {
-                initAudioContext();
-                document.removeEventListener('click', initClick);
-            };
-            document.addEventListener('click', initClick);
-
-            if (storedTime) audioEl.currentTime = parseFloat(storedTime);
-            
-            // Restore UI state, but don't auto-play audio context without user gesture
-            // Just update UI to reflect potential intent, actual play needs click
-            if (storedState === 'true') {
-                 updatePlayerUI(false); // Show as paused initially to respect browser policy
-            }
-
-            const urlParams = new URLSearchParams(window.location.search);
-            const tagParam = urlParams.get('tag');
-            if (tagParam) filterByTag(tagParam);
-        });
-
-        window.addEventListener('beforeunload', () => {
-            saveMusicState();
-        });
-
-        function saveMusicState() {
-            localStorage.setItem('music_playing', !audioEl.paused);
-            localStorage.setItem('music_currentTime', audioEl.currentTime);
-        }
-        
         function searchArticles() {
-            const query = document.getElementById('search-input').value.toLowerCase().trim();
-            const cards = document.querySelectorAll('.article-card');
-            cards.forEach(card => {
-                const title = card.querySelector('h3 a').textContent.toLowerCase();
-                const summaryElement = card.querySelector('.article-summary') || card.querySelector('p');
-                const summary = summaryElement ? summaryElement.textContent.toLowerCase() : '';
+            const query = document.getElementById('search-input').value.toLowerCase();
+            document.querySelectorAll('.article-card').forEach(card => {
+                const text = card.textContent.toLowerCase();
                 const tags = card.dataset.tags ? card.dataset.tags.toLowerCase() : '';
-                
-                if (title.includes(query) || summary.includes(query) || tags.includes(query)) {
-                    card.style.display = ''; 
-                } else {
-                    card.style.display = 'none'; 
-                }
+                card.style.display = (text.includes(query) || tags.includes(query)) ? '' : 'none';
             });
         }
-
         function filterByTag(tag) {
-            const searchInput = document.getElementById('search-input');
-            const status = document.getElementById('search-status');
-            searchInput.value = tag;
-            status.classList.remove('hidden');
-            status.innerText = `FILTERING: [ ${tag.toUpperCase()} ]`;
+            document.getElementById('search-input').value = tag;
             searchArticles();
-            document.getElementById('article-list-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
+
+        // === 7. 开机动画 ===
+        const bootLines = [
+            "NERV OPERATING SYSTEM [VERSION 6.66]",
+            "(C) 2015 NERV. ALL RIGHTS RESERVED.",
+            "INITIALIZING MAGI SYSTEM...",
+            "  > MELCHIOR-1: CONNECTED.",
+            "  > BALTHASAR-2: CONNECTED.",
+            "  > CASPER-3: CONNECTED.",
+            "LOADING DRIVERS...",
+            "  > SYNCHRONIZATION RATE: 0%",
+            "  > SYNCHRONIZATION RATE: 18%",
+            "  > SYNCHRONIZATION RATE: 400% [CRITICAL]",
+            "ESTABLISHING AT-FIELD CONNECTION...",
+            "SYSTEM ONLINE."
+        ];
+
+        function runBootSequence() {
+            const screen = document.getElementById('boot-sequence');
+            screen.style.display = 'flex';
+            let delay = 0;
+            
+            bootLines.forEach((line, index) => {
+                delay += Math.random() * 200 + 50;
+                setTimeout(() => {
+                    const p = document.createElement('div');
+                    p.className = 'boot-line';
+                    if(line.includes("CRITICAL")) p.style.color = "red";
+                    else if(line.includes("CONNECTED")) p.style.color = "var(--secondary-color)";
+                    
+                    p.innerText = line;
+                    screen.appendChild(p);
+                    window.scrollTo(0, 0);
+                }, delay);
+            });
+
+            setTimeout(() => {
+                screen.style.opacity = '0';
+                setTimeout(() => { screen.remove(); }, 1000);
+            }, delay + 1000);
+        }
+
+        // 启动顺序
+        startHeroGlitch();
+        loadAnimeData();
+        window.addEventListener('load', runBootSequence);
+
     </script>
 </body>
 </html>
