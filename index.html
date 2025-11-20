@@ -46,6 +46,13 @@
                         popIn: {
                             '0%': { opacity: 0, transform: 'scale(0.9) translateY(20px)' },
                             '100%': { opacity: 1, transform: 'scale(1) translateY(0)' },
+                        },
+                        cyberSwap: {
+                            '0%': { opacity: 0.8, transform: 'translateX(0)' },
+                            '25%': { opacity: 0.6, transform: 'translateX(-5px) skewX(10deg)' },
+                            '50%': { opacity: 0.9, transform: 'translateX(5px) skewX(-10deg)' },
+                            '75%': { opacity: 0.4, transform: 'translateX(0)' },
+                            '100%': { opacity: 0.8, transform: 'translateX(0)' },
                         }
                     }
                 }
@@ -286,7 +293,7 @@
         <div class="hidden md:flex gap-8 font-mono text-xs tracking-widest font-bold">
             <a href="#" class="text-secondary border-b-2 border-secondary pb-1">01_HOME</a>
             <a href="#" class="text-gray-500 hover:text-primary transition-colors">02_ARCHIVES</a>
-            <a href="#" class="text-gray-500 hover:text-primary transition-colors">03_ABOUT</a>
+            <a href="about.html" class="text-gray-500 hover:text-primary transition-colors">03_ABOUT</a>
         </div>
     </nav>
 
@@ -399,7 +406,10 @@
                     </div>
                 </div>
                 <div id="article-list-container" class="space-y-8">
-                    <article class="article-card cyber-card p-8 group hover:bg-white/5 cursor-pointer relative overflow-hidden" data-tags="Novel ACG WhiteAlbum2">
+                    <!-- 文章 1: WA2 Novel -->
+                    <article class="article-card cyber-card p-8 group hover:bg-white/5 cursor-pointer relative overflow-hidden" 
+                             data-tags="Novel ACG WhiteAlbum2"
+                             onclick="window.location.href='article-3.html'">
                         <div class="absolute -right-10 -top-10 w-40 h-40 bg-secondary/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         <div class="flex flex-col gap-4 relative z-10">
                             <div class="flex justify-between items-start font-mono text-[10px]">
@@ -416,7 +426,11 @@
                             </div>
                         </div>
                     </article>
-                    <article class="article-card cyber-card p-8 group hover:bg-white/5 cursor-pointer relative overflow-hidden" data-tags="Python Automation">
+                    
+                    <!-- 文章 2: Python Automation -->
+                    <article class="article-card cyber-card p-8 group hover:bg-white/5 cursor-pointer relative overflow-hidden" 
+                             data-tags="Python Automation"
+                             onclick="window.location.href='article-2.html'">
                         <div class="absolute -right-10 -top-10 w-40 h-40 bg-secondary/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         <div class="flex flex-col gap-4 relative z-10">
                             <div class="flex justify-between items-start font-mono text-[10px]">
@@ -433,7 +447,11 @@
                             </div>
                         </div>
                     </article>
-                    <article class="article-card cyber-card p-8 group hover:bg-white/5 cursor-pointer relative overflow-hidden" data-tags="Code Reflection">
+                    
+                    <!-- 文章 3: Code Reflection -->
+                    <article class="article-card cyber-card p-8 group hover:bg-white/5 cursor-pointer relative overflow-hidden" 
+                             data-tags="Code Reflection"
+                             onclick="window.location.href='article-1.html'">
                          <div class="absolute -right-10 -top-10 w-40 h-40 bg-secondary/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         <div class="flex flex-col gap-4 relative z-10">
                             <div class="flex justify-between items-start font-mono text-[10px]">
@@ -547,8 +565,6 @@
         }
 
         /* === 角色图片映射表 (请确保 images 目录下有对应的文件) === */
-        // 注意：这里假设您已经将新上传的文件重命名为 mari.png 和 rei.png
-        // 否则您可以直接替换为您上传的原始文件名
         const characterMap = {
             'default': './images/shinji.png',
             'unit-02': './images/asuka.png',
