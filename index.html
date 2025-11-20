@@ -27,16 +27,21 @@
                     },
                     animation: {
                         'spin-slow': 'spin 30s linear infinite',
+                        'spin-slower': 'spin 60s linear infinite',
                         'glitch': 'glitch 3s linear infinite', 
                         'scan': 'scan 4s linear infinite', 
                         'magi-pulse': 'magiPulse 4s ease-in-out infinite',
                         'pop-in': 'popIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-                        'marquee': 'marquee 20s linear infinite', // 新增滚动文字动画
+                        'hazard-scroll': 'hazardScroll 2s linear infinite',
                     },
                     keyframes: {
                         scan: {
                             '0%': { backgroundPosition: '0 0' },
                             '100%': { backgroundPosition: '0 100%' },
+                        },
+                        hazardScroll: {
+                            '0%': { backgroundPosition: '0 0' },
+                            '100%': { backgroundPosition: '40px 0' },
                         },
                         magiPulse: {
                             '0%, 100%': { opacity: 0.3, boxShadow: '0 0 10px var(--secondary-color)' },
@@ -52,10 +57,6 @@
                             '50%': { opacity: 0.9, transform: 'translateX(5px) skewX(-10deg)' },
                             '75%': { opacity: 0.4, transform: 'translateX(0)' },
                             '100%': { opacity: 0.8, transform: 'translateX(0)' },
-                        },
-                        marquee: {
-                            '0%': { transform: 'translateX(100%)' },
-                            '100%': { transform: 'translateX(-100%)' }
                         }
                     }
                 }
@@ -90,7 +91,7 @@
             transition: background-color 0.6s ease, color 0.6s ease; 
             overflow-x: hidden; 
             cursor: crosshair; 
-            /* 增强径向渐变，模拟驾驶舱暗角 */
+            /* 基础暗色背景 */
             background: radial-gradient(circle at 50% 40%, rgba(40,40,40,0.05) 0%, var(--bg-color) 90%);
         }
 
@@ -98,10 +99,10 @@
         .hex-bg {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -2;
             background-image: 
-                url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ffffff' stroke-opacity='0.15' stroke-width='1'/%3E%3C/svg%3E");
+                url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ffffff' stroke-opacity='0.1' stroke-width='1'/%3E%3C/svg%3E");
             background-size: 60px 104px;
             mask-image: linear-gradient(to bottom, black 20%, transparent 90%);
-            animation: bg-scroll 40s linear infinite;
+            animation: bg-scroll 60s linear infinite;
         }
         @keyframes bg-scroll {
             0% { background-position: 0 0; }
@@ -116,7 +117,7 @@
             opacity: 0;
             animation: hexFlash 4s infinite;
         }
-        @keyframes hexFlash { 0%, 90% { opacity: 0; } 92% { opacity: 0.15; } 94% { opacity: 0; } }
+        @keyframes hexFlash { 0%, 90% { opacity: 0; } 92% { opacity: 0.1; } 94% { opacity: 0; } }
 
         /* --- 2. 沉浸式 LCL 粒子系统 --- */
         #particles-container {
@@ -146,34 +147,54 @@
             100% { transform: translateY(-120vh) scale(var(--p-scale)); opacity: 0; }
         }
 
-        /* --- 3. 高亮扫描线 (调整为第一版的匀速感，但周期为60s) --- */
+        /* --- 3. 扫描线 (周期60s，动作3s) --- */
         .scan-bar {
-            position: fixed; top: -10%; left: 0; width: 100%; height: 8px; 
+            position: fixed; top: -10%; left: 0; width: 100%; height: 15px; 
             background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent);
             opacity: 0;
-            box-shadow: 0 0 25px var(--secondary-color);
+            box-shadow: 0 0 30px var(--secondary-color);
             z-index: 40;
             pointer-events: none;
-            /* 60秒一次循环。
-               假设扫描过程需要 2秒 (类似第一版的速度)，2s / 60s ≈ 3.33%。
-               这里设置为 4% 也就是 2.4秒完成扫描，剩下 57.6秒 等待。
-            */
+            /* 60秒一次循环 */
             animation: scanDown 60s linear infinite;
         }
         @keyframes scanDown {
             0% { top: -10%; opacity: 0; }
-            0.1% { opacity: 0.3; } /* 瞬间出现 */
-            4% { top: 110%; opacity: 0.3; } /* 2.4秒匀速扫到底部 */
-            4.1% { top: 110%; opacity: 0; } /* 消失 */
-            100% { top: 110%; opacity: 0; } /* 保持消失直到下一轮 */
+            1% { opacity: 0.4; } /* 显现 */
+            6% { top: 110%; opacity: 0.4; } /* 约3秒钟从顶扫到底 */
+            7% { top: 110%; opacity: 0; }   /* 消失 */
+            100% { top: 110%; opacity: 0; } /* 等待下一轮 */
         }
         
         /* --- 4. 驾驶舱视觉增强 --- */
+        /* 暗角层 - 调整透明度减少遮挡 */
         .cockpit-overlay {
             position: fixed; inset: 0; pointer-events: none; z-index: 90;
-            background: radial-gradient(circle at center, transparent 60%, rgba(0,0,0,0.6) 100%);
-            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+            background: radial-gradient(circle at center, transparent 65%, rgba(0,0,0,0.5) 100%);
+            box-shadow: inset 0 0 80px rgba(0,0,0,0.3);
         }
+        
+        /* 中央准星 (HUD) */
+        .cockpit-reticle {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 600px; height: 600px; border: 1px dashed var(--secondary-color);
+            border-radius: 50%; opacity: 0.05; pointer-events: none; z-index: -1;
+            animation: spin-slower 120s linear infinite;
+        }
+        .cockpit-reticle::before {
+            content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 580px; height: 580px; border: 1px solid var(--secondary-color);
+            border-radius: 50%; opacity: 0.1; clip-path: polygon(0 0, 100% 0, 100% 20%, 0 20%, 0 80%, 100% 80%, 100% 100%, 0 100%);
+        }
+        
+        /* 侧边仪表装饰 */
+        .cockpit-side-meter {
+            position: fixed; top: 20%; bottom: 20%; width: 4px; z-index: 80; pointer-events: none;
+            background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent);
+            opacity: 0.2;
+        }
+        .meter-left { left: 40px; }
+        .meter-right { right: 40px; }
 
         /* 鼠标光晕 */
         #cursor-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; background-image: radial-gradient(circle var(--cursor-size) at var(--mouse-x) var(--mouse-y), var(--grid-color) 0%, transparent 60%); transition: --cursor-size 0.1s ease; will-change: background-image; mix-blend-mode: screen; }
@@ -249,28 +270,48 @@
             animation: ai-talking-glitch 0.2s infinite;
         }
 
-        /* --- 5. 新版警戒条 (战术状态栏) --- */
+        /* --- 5. 新版警戒条 (Hazard Strip) --- */
         .eva-warning-strip {
-            position: fixed; bottom: 0; left: 0; width: 100%; height: 24px; z-index: 999; pointer-events: none;
-            background: rgba(0, 0, 0, 0.85);
-            border-top: 1px solid var(--secondary-color);
-            display: flex;
-            align-items: center;
-            overflow: hidden;
-            backdrop-filter: blur(4px);
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 28px; z-index: 999; pointer-events: none;
+            /* 经典的 NERV 警示斜纹背景 */
+            background: repeating-linear-gradient(
+                45deg,
+                #000,
+                #000 10px,
+                var(--secondary-color) 10px,
+                var(--secondary-color) 20px
+            );
+            border-top: 2px solid #000;
+            display: flex; align-items: center;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.5);
+            opacity: 0.9;
+            /* 斜纹滚动动画 */
+            animation: hazardScroll 2s linear infinite;
         }
-        .warning-content {
+        
+        .warning-content-overlay {
+            position: absolute; inset: 0;
+            background: rgba(0,0,0,0.7); /* 压暗斜纹以便显示文字 */
+            display: flex; align-items: center;
+        }
+        
+        .warning-marquee {
             white-space: nowrap;
             display: flex;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 10px;
-            color: var(--secondary-color);
-            font-weight: bold;
-            letter-spacing: 0.1em;
-            /* 无限滚动动画 */
+            font-size: 12px;
+            color: #fff; /* 警示条文字通常为白色 */
+            font-weight: 900;
+            letter-spacing: 0.15em;
+            text-shadow: 0 0 4px var(--secondary-color);
+            /* 文字滚动动画 */
             animation: marquee 30s linear infinite;
-            padding-left: 100%; /* Start off-screen */
+            padding-left: 100vw;
+        }
+        
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
         }
 
         .magi-font { font-family: 'Space Grotesk', sans-serif; font-weight: 900; letter-spacing: -0.05em; }
@@ -312,8 +353,12 @@
 </head>
 <body class="antialiased overflow-x-hidden font-sans">
 
-    <!-- 驾驶舱视觉增强层 (暗角) -->
+    <!-- 驾驶舱视觉增强层 (暗角 + 准星) -->
     <div class="cockpit-overlay"></div>
+    <div class="cockpit-reticle"></div>
+    <div class="cockpit-side-meter meter-left"></div>
+    <div class="cockpit-side-meter meter-right"></div>
+
     <!-- 特效层 -->
     <div class="crt-overlay"></div>
     <div class="scan-bar"></div> <!-- 移动扫描线 -->
@@ -327,17 +372,19 @@
 
     <div id="cursor-glow"></div>
     
-    <!-- 新版警戒条 (战术状态栏) -->
+    <!-- 新版警戒条 (NERV 战术样式) -->
     <div class="eva-warning-strip">
-        <div class="warning-content">
-            <span>INTERNAL_STATUS: NORMAL</span><span class="mx-6">//</span>
-            <span>MAGI_SYSTEM: ONLINE</span><span class="mx-6">//</span>
-            <span>SYNC_RATE: 400%</span><span class="mx-6">//</span>
-            <span>A.T. FIELD: DEPLOYED</span><span class="mx-6">//</span>
-            <span>TARGET: SILENT</span><span class="mx-6">//</span>
-            <span>PROG_VER: 2.0.5</span><span class="mx-6">//</span>
-            <span>LCL_PRESSURE: STABLE</span><span class="mx-6">//</span>
-            <span>CONNECTION: SECURE</span>
+        <div class="warning-content-overlay">
+            <div class="warning-marquee">
+                <span>INTERNAL_STATUS: NORMAL</span><span class="mx-8 text-secondary">///</span>
+                <span>MAGI_SYSTEM: ONLINE</span><span class="mx-8 text-secondary">///</span>
+                <span>SYNC_RATE: 400%</span><span class="mx-8 text-secondary">///</span>
+                <span>A.T. FIELD: DEPLOYED</span><span class="mx-8 text-secondary">///</span>
+                <span>TARGET: SILENT</span><span class="mx-8 text-secondary">///</span>
+                <span>PROG_VER: 2.0.5</span><span class="mx-8 text-secondary">///</span>
+                <span>LCL_PRESSURE: STABLE</span><span class="mx-8 text-secondary">///</span>
+                <span>CONNECTION: SECURE</span>
+            </div>
         </div>
     </div>
 
