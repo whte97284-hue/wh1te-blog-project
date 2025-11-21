@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WH1TE_LOG // HUMAN_INSTRUMENTALITY_V6</title>
+    <title>WH1TE_LOG // HUMAN_INSTRUMENTALITY_V7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@300;500;700;900&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Serif+SC:wght@700;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -476,7 +476,7 @@
                     </div>
                 </div>
                 
-                <!-- Other Side Content -->
+                <!-- Anime Feed (EVA Style) -->
                 <div class="">
                     <div class="eva-card p-6 relative overflow-hidden">
                         <div class="eva-glare"></div>
@@ -487,6 +487,46 @@
                         <div id="anime-list" class="space-y-3 font-mono text-[10px] text-gray-300 max-h-64 overflow-y-auto pr-2 custom-scrollbar"></div>
                     </div>
                 </div>
+
+                <!-- Social Uplink (NEW) -->
+                <div class="eva-card p-6 relative overflow-hidden">
+                     <div class="eva-glare"></div>
+                     <div class="eva-header">
+                        <div class="flex items-center"><div class="eva-header-deco"></div><span>DATA_UPLINK</span></div>
+                        <span class="w-2 h-2 bg-secondary animate-pulse"></span>
+                     </div>
+                     <div class="grid grid-cols-3 gap-3">
+                        <!-- GitHub -->
+                        <a href="https://github.com/whte97284-hue/wh1te-blog-project/tree/main" target="_blank" class="group relative h-16 bg-white/5 border border-white/10 hover:border-secondary hover:bg-secondary/20 transition-all flex items-center justify-center overflow-hidden">
+                            <span class="font-mono text-[10px] group-hover:opacity-0 transition-opacity tracking-widest text-gray-400 group-hover:text-secondary">GH_REPO</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-github w-8 h-8 absolute opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 transition-all text-secondary duration-300 filter drop-shadow-[0_0_5px_rgba(57,255,20,0.8)]"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+                            <div class="absolute inset-0 bg-secondary/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300 pointer-events-none"></div>
+                        </a>
+                        
+                        <!-- Bilibili -->
+                        <a href="https://space.bilibili.com/551898501" target="_blank" class="group relative h-16 bg-white/5 border border-white/10 hover:border-[#ff69b4] hover:bg-[#ff69b4]/20 transition-all flex items-center justify-center overflow-hidden">
+                            <span class="font-mono text-[10px] group-hover:opacity-0 transition-opacity tracking-widest text-gray-400 group-hover:text-[#ff69b4]">BL_SPACE</span>
+                            <!-- Bilibili SVG Icon -->
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 absolute opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 transition-all text-[#ff69b4] duration-300 filter drop-shadow-[0_0_5px_rgba(255,105,180,0.8)]">
+                                <rect x="2" y="4" width="20" height="16" rx="4" />
+                                <path d="M8 2l4 4" />
+                                <path d="M16 2l-4 4" />
+                                <path d="M9 12v2" />
+                                <path d="M15 12v2" />
+                            </svg>
+                            <div class="absolute inset-0 bg-[#ff69b4]/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300 pointer-events-none"></div>
+                        </a>
+                        
+                        <!-- Douyin -->
+                        <a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw?from_tab_name=main" target="_blank" class="group relative h-16 bg-white/5 border border-white/10 hover:border-white hover:bg-white/20 transition-all flex items-center justify-center overflow-hidden">
+                            <span class="font-mono text-[10px] group-hover:opacity-0 transition-opacity tracking-widest text-gray-400 group-hover:text-white">DY_USER</span>
+                            <!-- Douyin/Music SVG Icon -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-music w-8 h-8 absolute opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 transition-all text-white duration-300 filter drop-shadow-[2px_2px_0px_rgba(255,0,0,0.8)] drop-shadow-[-2px_-2px_0px_rgba(0,255,255,0.8)]"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                            <div class="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300 pointer-events-none"></div>
+                        </a>
+                     </div>
+                </div>
+
                 <div class="">
                     <div class="eva-card p-6">
                         <div class="eva-glare"></div>
