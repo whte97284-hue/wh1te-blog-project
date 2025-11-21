@@ -10,7 +10,6 @@
     
     <script>
         window.tailwind = window.tailwind || {};
-        
         window.tailwind.config = {
             theme: {
                 extend: {
@@ -33,14 +32,14 @@
                         'magi-pulse': 'magiPulse 4s ease-in-out infinite',
                         'pop-in': 'popIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
                         'hazard-scroll': 'hazardScroll 2s linear infinite',
-                        'marquee': 'marquee 30s linear infinite',
+                        'marquee': 'marquee 20s linear infinite',
                         'red-alert': 'redAlert 2s ease-in-out infinite',
                     },
                     keyframes: {
                         scan: { '0%': { backgroundPosition: '0 0' }, '100%': { backgroundPosition: '0 100%' } },
                         hazardScroll: { '0%': { backgroundPosition: '0 0' }, '100%': { backgroundPosition: '40px 0' } },
-                        magiPulse: { '0%, 100%': { opacity: 0.3, boxShadow: '0 0 10px var(--secondary-color)' }, '50%': { opacity: 0.8, boxShadow: '0 0 20px var(--secondary-color)' } },
-                        popIn: { '0%': { opacity: 0, transform: 'scale(0.9) translateY(20px)' }, '100%': { opacity: 1, transform: 'scale(1) translateY(0)' } },
+                        magiPulse: { '0%, 100%': { opacity: 0.3, boxShadow: '0 0 5px var(--secondary-color)' }, '50%': { opacity: 0.8, boxShadow: '0 0 15px var(--secondary-color)' } },
+                        popIn: { '0%': { opacity: 0, transform: 'scale(0.95) translateY(10px)' }, '100%': { opacity: 1, transform: 'scale(1) translateY(0)' } },
                         cyberSwap: { 
                             '0%': { opacity: 0.8, transform: 'translateX(0)' },
                             '25%': { opacity: 0.6, transform: 'translateX(-5px) skewX(10deg)' },
@@ -65,12 +64,10 @@
             --grid-color: rgba(125, 42, 232, 0.15); --hue-rotate: 260deg;
         }
         
-        /* THEMES */
-        [data-theme="unit-02"] { --primary-color: #ffae00; --secondary-color: #ff0000; --bg-color: #140202; --surface-color: rgba(30, 5, 5, 0.3); --grid-color: rgba(255, 0, 0, 0.15); --hue-rotate: 0deg; }
-        [data-theme="unit-00"] { --primary-color: #ffffff; --secondary-color: #0091ff; --bg-color: #020a14; --surface-color: rgba(5, 15, 30, 0.3); --grid-color: rgba(0, 145, 255, 0.15); --hue-rotate: 180deg; }
-        [data-theme="unit-08"] { --primary-color: #ff5cab; --secondary-color: #50c878; --bg-color: #14020d; --surface-color: rgba(30, 5, 20, 0.3); --grid-color: rgba(255, 0, 153, 0.15); --hue-rotate: 300deg; }
+        [data-theme="unit-02"] { --primary-color: #ffae00; --secondary-color: #ff0000; --bg-color: #140202; --surface-color: rgba(46, 11, 11, 0.3); --grid-color: rgba(255, 0, 0, 0.15); --hue-rotate: 0deg; }
+        [data-theme="unit-00"] { --primary-color: #ffffff; --secondary-color: #0091ff; --bg-color: #020a14; --surface-color: rgba(11, 20, 46, 0.3); --grid-color: rgba(0, 145, 255, 0.15); --hue-rotate: 180deg; }
+        [data-theme="unit-08"] { --primary-color: #ff5cab; --secondary-color: #50c878; --bg-color: #14020d; --surface-color: rgba(46, 11, 29, 0.3); --grid-color: rgba(255, 0, 153, 0.15); --hue-rotate: 300deg; }
 
-        /* EMERGENCY MODE */
         body.emergency-mode {
             --primary-color: #ff0000 !important; --secondary-color: #ff0000 !important; --bg-color: #0a0000 !important;
             --surface-color: rgba(40, 0, 0, 0.5) !important; --grid-color: rgba(255, 0, 0, 0.3) !important; --hue-rotate: 0deg !important;
@@ -80,7 +77,7 @@
 
         body { background-color: var(--bg-color); min-height: 100vh; color: white; transition: background-color 0.3s ease, color 0.3s ease; overflow-x: hidden; cursor: crosshair; background: radial-gradient(circle at 50% 40%, rgba(40,40,40,0.05) 0%, var(--bg-color) 90%); }
 
-        /* --- EFFECTS --- */
+        /* EFFECTS */
         .hex-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -2; background-image: url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ffffff' stroke-opacity='0.1' stroke-width='1'/%3E%3C/svg%3E"); background-size: 60px 104px; mask-image: linear-gradient(to bottom, black 20%, transparent 90%); animation: bg-scroll 60s linear infinite; transition: background-image 0.3s; }
         @keyframes bg-scroll { 0% { background-position: 0 0; } 100% { background-position: 60px 104px; } }
         .hex-flash { position: absolute; width: 60px; height: 104px; background: var(--secondary-color); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); opacity: 0; animation: hexFlash 4s infinite; }
@@ -109,10 +106,10 @@
         #cursor-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; background-image: radial-gradient(circle var(--cursor-size) at var(--mouse-x) var(--mouse-y), var(--grid-color) 0%, transparent 60%); transition: --cursor-size 0.1s ease; will-change: background-image; mix-blend-mode: screen; }
         .hero-character-container { position: fixed; right: 0; top: 0; bottom: 0; z-index: 0; width: 50vw; max-width: 900px; height: 100vh; display: flex; align-items: flex-start; justify-content: flex-end; pointer-events: none; overflow: hidden; }
         .hero-character-image { width: 100%; height: 100%; object-fit: cover; object-position: center top; filter: none; mix-blend-mode: normal; opacity: 1; background: transparent !important; will-change: transform, opacity, clip-path, filter; transition: opacity 0.5s ease; }
-        @keyframes cyberSwap { 0% { opacity: 1; transform: translateX(0) skewX(0deg); filter: hue-rotate(0deg); } 20% { opacity: 0.8; transform: translateX(-5px) skewX(10deg); filter: hue-rotate(90deg) contrast(1.5); clip-path: inset(10% 0 60% 0); } 40% { opacity: 0.9; transform: translateX(5px) skewX(-10deg); filter: hue-rotate(-90deg) contrast(1.5); clip-path: inset(50% 0 20% 0); } 60% { opacity: 0.8; transform: translateX(-2px) skewX(5deg); filter: hue-rotate(45deg); clip-path: inset(0 0 80% 0); } 80% { transform: translateX(0) skewX(0deg); filter: hue-rotate(0deg); clip-path: none; } 100% { opacity: 1; transform: translateX(0) skewX(0deg); filter: hue-rotate(0deg); } }
+        @keyframes cyberSwap { 0% { opacity: 1; transform: translateX(0) skewX(0deg); filter: hue-rotate(0deg); } 20% { opacity: 0.8; transform: translateX(-5px) skewX(10deg); filter: hue-rotate(90deg) contrast(1.5); clip-path: inset(10% 0 60% 0); } 40% { opacity: 0.9; transform: translateX(5px) skewX(-10deg); filter: hue-rotate(-90deg) contrast(1.5); clip-path: inset(50% 0 20% 0); } 60% { opacity: 0.8; transform: translateX(-2px) skewX(5deg); filter: hue-rotate(45deg); clip-path: inset(0 0 80% 0); } 80% { opacity: 0.9; transform: translateX(0) skewX(0deg); filter: hue-rotate(0deg); clip-path: none; } 100% { opacity: 1; transform: translateX(0) skewX(0deg); filter: hue-rotate(0deg); } }
         .cyber-swap-active { animation: cyberSwap 0.4s steps(5) forwards; }
         
-        /* --- 核心 UI 卡片样式 (2D Glass + Glow) --- */
+        /* UI Card Styles */
         .eva-card {
             background: var(--surface-color);
             backdrop-filter: blur(10px);
@@ -122,7 +119,6 @@
             transition: box-shadow 0.3s ease, border-color 0.3s ease;
             clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
         }
-        /* 内部高光层 */
         .eva-glare {
             position: absolute; inset: 0;
             background: radial-gradient(circle at var(--mouse-x) var(--mouse-y), rgba(255,255,255,0.15) 0%, transparent 50%);
@@ -130,26 +126,23 @@
             mix-blend-mode: overlay;
         }
         .eva-card:hover .eva-glare { opacity: 1; }
-        
         .eva-card:hover {
             box-shadow: 0 10px 30px -10px rgba(var(--secondary-color), 0.3), 0 0 10px rgba(var(--secondary-color), 0.1);
             border-color: rgba(255,255,255,0.2);
             z-index: 10;
         }
-        
-        /* 装饰线 */
         .eva-card::before { content: ''; position: absolute; top: 0; right: 0; width: 15px; height: 15px; border-top: 1px solid var(--secondary-color); border-right: 1px solid var(--secondary-color); opacity: 0.7; }
         .eva-card::after { content: ''; position: absolute; bottom: 0; left: 0; width: 15px; height: 15px; border-bottom: 1px solid var(--secondary-color); border-left: 1px solid var(--secondary-color); opacity: 0.7; }
 
         .eva-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; margin-bottom: 16px; font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.1em; color: var(--secondary-color); }
         .eva-header-deco { width: 4px; height: 4px; background: var(--primary-color); margin-right: 6px; }
 
-        /* AI Card Specifics */
+        /* AI Card */
+        .ai-card-container { background: var(--surface-color); backdrop-filter: blur(12px); border: 1px solid var(--secondary-color); position: relative; transition: all 0.4s ease; overflow: hidden; }
         .ai-scanlines { position: absolute; inset: 0; pointer-events: none; z-index: 10; background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2)); background-size: 100% 4px; opacity: 0.4; }
         @keyframes ai-talking-glitch { 0% { transform: translate(0); filter: hue-rotate(0deg); } 20% { transform: translate(-2px, 1px); filter: hue-rotate(10deg) brightness(1.2); } 40% { transform: translate(1px, -1px); filter: hue-rotate(-10deg); } 60% { transform: translate(-1px, -1px); filter: hue-rotate(5deg) opacity(0.9); } 80% { transform: translate(2px, 1px); filter: hue-rotate(-5deg); } 100% { transform: translate(0); filter: hue-rotate(0deg); } }
         .ai-talking .ai-avatar-img { animation: ai-talking-glitch 0.2s infinite; }
 
-        /* Bottom Strip */
         .eva-warning-strip { position: fixed; bottom: 0; left: 0; width: 100%; height: 28px; z-index: 999; pointer-events: none; background: repeating-linear-gradient(45deg, #000, #000 10px, var(--secondary-color) 10px, var(--secondary-color) 20px); border-top: 2px solid #000; display: flex; align-items: center; box-shadow: 0 -4px 10px rgba(0,0,0,0.5); opacity: 0.9; animation: hazardScroll 2s linear infinite; }
         .warning-content-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; }
         .warning-marquee { white-space: nowrap; display: flex; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #fff; font-weight: 900; letter-spacing: 0.15em; text-shadow: 0 0 4px var(--secondary-color); animation: marquee 30s linear infinite; padding-left: 100vw; }
@@ -161,7 +154,6 @@
         .hud-corner { position: fixed; width: 40px; height: 40px; border: 2px solid var(--secondary-color); z-index: 50; pointer-events: none; opacity: 0.6; } 
         .hud-tl { top: 20px; left: 20px; border-right: 0; border-bottom: 0; } .hud-tr { top: 20px; right: 20px; border-left: 0; border-bottom: 0; } .hud-bl { bottom: 20px; left: 20px; border-right: 0; border-top: 0; } .hud-br { bottom: 20px; right: 20px; border-left: 0; border-top: 0; }
         .crt-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; pointer-events: none; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 2px, 6px 100%; opacity: 0.2; mix-blend-mode: overlay; }
-        #boot-sequence { display: none !important; }
         
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: var(--bg-color); }
@@ -216,9 +208,12 @@
 
     <div id="sonic-deck" class="fixed bottom-8 left-8 z-50 flex items-center gap-3 bg-black/60 border border-secondary p-2 pr-4 group hover:shadow-[0_0_20px_var(--secondary-color)] transition-all duration-300 backdrop-blur-md" style="clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);">
         <canvas id="audio-visualizer" class="absolute bottom-0 left-0 w-full h-full opacity-30 pointer-events-none"></canvas>
-        <div class="w-12 h-12 flex items-center justify-center cursor-pointer bg-secondary/10 hover:bg-secondary/20 transition-colors border border-secondary/30" onclick="toggleMusic()">
+        <!-- Music toggle container with explicit ID to fix null reference -->
+        <div id="music-trigger" class="w-12 h-12 flex items-center justify-center cursor-pointer bg-secondary/10 hover:bg-secondary/20 transition-colors border border-secondary/30" onclick="toggleMusic()">
             <div id="deck-wave" class="absolute border border-secondary w-full h-full animate-ping hidden"></div>
-            <i data-lucide="disc" class="w-6 h-6 text-secondary animate-spin-slow"></i>
+            <!-- Pre-render both icons and toggle visibility -->
+            <i id="icon-disc" data-lucide="disc" class="w-6 h-6 text-secondary animate-spin-slow"></i>
+            <i id="icon-pause" data-lucide="pause" class="w-6 h-6 text-secondary hidden"></i>
         </div>
         <div class="flex flex-col w-0 group-hover:w-48 overflow-hidden transition-all duration-300 opacity-0 group-hover:opacity-100 pl-2">
             <div class="text-[10px] font-mono text-primary whitespace-nowrap font-bold">SOUND_ONLY // TRACK_01</div>
@@ -244,12 +239,12 @@
         </div>
         <div class="hidden md:flex gap-8 font-mono text-xs tracking-widest font-bold">
             <a href="#" class="text-secondary border-b-2 border-secondary pb-1">01_HOME</a>
-            <a href="#" class="text-gray-500 hover:text-primary transition-colors">02_ARCHIVES</a>
+            <a href="about.html" class="text-gray-500 hover:text-primary transition-colors">02_ARCHIVES</a>
             <a href="about.html" class="text-gray-500 hover:text-primary transition-colors">03_ABOUT</a>
         </div>
     </nav>
 
-    <header class="relative pt-32 pb-12 max-w-screen-xl mx-auto px-6 md:px-12 flex flex-col justify-center items-start text-left z-20 min-h-[65vh]">
+    <header class="relative pt-48 pb-12 max-w-screen-xl mx-auto px-6 md:px-12 flex flex-col justify-center items-start text-left z-20 min-h-[65vh]">
         <div class="absolute top-24 right-[20%] opacity-60 pointer-events-none z-0 hidden lg:flex flex-col gap-3 scale-90 origin-top-right">
             <div class="magi-node w-56 h-12 skew-x-12 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold shadow-[0_0_10px_var(--secondary-color)] bg-black/30">MELCHIOR - 1</div>
             <div class="magi-node w-56 h-12 skew-x-12 ml-12 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold shadow-[0_0_10px_var(--secondary-color)] bg-black/30" style="animation-delay: 1s;">BALTHASAR - 2</div>
@@ -284,7 +279,8 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-16">
             <aside class="lg:col-span-4 space-y-10 lg:sticky lg:top-32 h-fit">
                 
-                <!-- AI CARD (FIXED) -->
+                <!-- AI CARD -->
+                <!-- Fix: Moved bubble outside of the clipped container -->
                 <div class="relative z-50">
                     <div id="ai-speech-bubble" class="hidden absolute -top-24 left-0 w-full z-50 animate-pop-in pointer-events-none">
                         <div class="bg-bg/95 border border-primary p-4 relative shadow-[4px_4px_0_var(--secondary-color)]">
@@ -343,9 +339,8 @@
                     </div>
                 </div>
                 <div id="article-list-container" class="space-y-8">
-                    
                     <!-- Article 1 -->
-                    <article class="eva-card p-8 cursor-pointer group" data-tags="Novel ACG WhiteAlbum2" onclick="window.location.href='article-3.html'">
+                    <article class="eva-card p-8 group cursor-pointer" data-tags="Novel ACG WhiteAlbum2" onclick="window.location.href='article-3.html'">
                         <div class="eva-glare"></div>
                         <div class="flex flex-col gap-4 relative z-10">
                             <div class="flex justify-between items-start font-mono text-[10px]">
@@ -364,7 +359,7 @@
                     </article>
                     
                     <!-- Article 2 -->
-                    <article class="eva-card p-8 cursor-pointer group" data-tags="Python Automation" onclick="window.location.href='article-2.html'">
+                    <article class="eva-card p-8 group cursor-pointer" data-tags="Python Automation" onclick="window.location.href='article-2.html'">
                         <div class="eva-glare"></div>
                         <div class="flex flex-col gap-4 relative z-10">
                             <div class="flex justify-between items-start font-mono text-[10px]">
@@ -383,8 +378,8 @@
                     </article>
                     
                     <!-- Article 3 -->
-                    <article class="eva-card p-8 cursor-pointer group" data-tags="Code Reflection" onclick="window.location.href='article-1.html'">
-                        <div class="eva-glare"></div>
+                    <article class="eva-card p-8 group cursor-pointer" data-tags="Code Reflection" onclick="window.location.href='article-1.html'">
+                         <div class="eva-glare"></div>
                         <div class="flex flex-col gap-4 relative z-10">
                             <div class="flex justify-between items-start font-mono text-[10px]">
                                 <div class="flex gap-2">
@@ -426,9 +421,9 @@
                 <div class="absolute bottom-0 left-0 w-full h-1 bg-secondary animate-scan"></div>
             </div>
             <div class="w-2/3 text-left space-y-6">
-                <div class="flex items-center gap-2 text-secondary font-mono text-xs">
+                <div class="eva-header">
+                    <div class="flex items-center"><div class="eva-header-deco"></div><span>DATA_RETRIEVED</span></div>
                     <span class="w-2 h-2 bg-secondary"></span>
-                    <span>DATA_RETRIEVED</span>
                 </div>
                 <h2 id="modal-title" class="text-4xl font-black text-white magi-font leading-none">LOADING...</h2>
                 <div class="flex gap-6 text-xs font-mono text-primary border-y border-white/10 py-3">
@@ -452,6 +447,17 @@
                     document.documentElement.style.setProperty('--mouse-x', `${x}%`);
                     document.documentElement.style.setProperty('--mouse-y', `${y}%`);
                     ticking = false;
+                    // --- 光斑实时追踪 ---
+                    document.querySelectorAll('.eva-glare').forEach(glare => {
+                        const rect = glare.closest('.eva-card').getBoundingClientRect();
+                        const localX = e.clientX - rect.left;
+                        const localY = e.clientY - rect.top;
+                        glare.style.background = `radial-gradient(circle at ${localX}px ${localY}px, rgba(255,255,255,0.15) 0%, transparent 50%)`;
+                        glare.style.opacity = 1;
+                        // 离开时淡出
+                        clearTimeout(glare.timer);
+                        glare.timer = setTimeout(() => { glare.style.opacity = 0; }, 200);
+                    });
                 });
                 ticking = true;
             }
@@ -517,43 +523,86 @@
             if (!initial) setTimeout(() => p.remove(), duration * 1000);
         }
 
-        const characterMap = { 'default': './images/shinji.png', 'unit-02': './images/asuka.png', 'unit-00': './images/rei.png', 'unit-08': './images/mari.png' };
+        const characterMap = {
+            'default': './images/shinji.png',
+            'unit-02': './images/asuka.png',
+            'unit-00': './images/rei.png',  // 对应绫波丽 (Rei)
+            'unit-08': './images/mari.png'  // 对应真希波 (Mari)
+        };
+
         function setTheme(themeName) {
             document.documentElement.setAttribute('data-theme', themeName);
             localStorage.setItem('theme', themeName);
+            
             document.querySelectorAll('.theme-btn').forEach(btn => {
                 btn.classList.remove('active');
                 if(btn.getAttribute('onclick').includes(themeName)) btn.classList.add('active');
             });
+            
             const heroImg = document.getElementById('hero-character');
             if (heroImg && characterMap[themeName]) {
                  heroImg.style.opacity = 0;
-                 setTimeout(() => { heroImg.src = characterMap[themeName]; heroImg.onload = () => { heroImg.style.opacity = 1; }; }, 200);
+                 setTimeout(() => {
+                     heroImg.src = characterMap[themeName];
+                     heroImg.onload = () => { heroImg.style.opacity = 1; };
+                 }, 200);
             }
         }
         const savedTheme = localStorage.getItem('theme') || 'default';
         setTheme(savedTheme);
 
-        function toggleEmergency() { document.body.classList.toggle('emergency-mode'); }
+        function toggleEmergency() {
+            document.body.classList.toggle('emergency-mode');
+        }
 
-        const eririLines = ["哼，才不是特意等你的！", "检测到不明入侵... 啊，是你啊。", "笨蛋！AT立场要全开啊！", "MAGI 正在通过提案...", "不要盯着我看！变态！", "Code 404: Tsundere not found."];
+        // AI 逻辑
+        const aiLines = [
+            // EVA
+            "哼，才不是特意等你的！",
+            "检测到不明入侵... 啊，是你啊。",
+            "笨蛋！AT立场要全开啊！",
+            "MAGI 正在通过提案...",
+            "不要盯着我看！变态！",
+            "Code 404: Tsundere not found.",
+            
+            // White Album 2 (Gastric pain style)
+            "又到了白色相簿的季节。",
+            "为什么会变成这样呢……",
+            "是我，是我先，明明都是我先来的……",
+            "第一次有了喜欢的人...",
+            "届不到的爱恋。",
+            "雪融化之后，会变成什么呢？"
+        ];
+        
         let aiSpeechInterval = null;
+        let lastAiLineIndex = -1;
+        
         function triggerAiSpeech() {
             const bubble = document.getElementById('ai-speech-bubble');
             const textEl = document.getElementById('ai-speech-text');
             const statusEl = document.getElementById('ai-status-text');
-            const aiCard = document.getElementById('ai-card');
+            const aiCard = document.getElementById('ai-card'); // 获取 AI 卡片容器
+
             if (aiSpeechInterval) clearInterval(aiSpeechInterval);
             
-            // --- FIX: SHOW THE BUBBLE ---
+            // --- FIX: REMOVE HIDDEN CLASS TO SHOW BUBBLE ---
             bubble.classList.remove('hidden'); 
             
             statusEl.innerText = "SPEAKING...";
             statusEl.classList.add("text-primary");
             aiCard.classList.add("ai-talking");
-            const line = eririLines[Math.floor(Math.random() * eririLines.length)];
+
+            let randomIndex;
+            do {
+                randomIndex = Math.floor(Math.random() * aiLines.length);
+            } while (randomIndex === lastAiLineIndex && aiLines.length > 1);
+            
+            lastAiLineIndex = randomIndex;
+            const line = aiLines[randomIndex];
+
             textEl.innerText = "";
             let i = 0;
+            
             aiSpeechInterval = setInterval(() => {
                 if (i < line.length) { 
                     textEl.innerText += line.charAt(i); 
@@ -565,13 +614,15 @@
                         statusEl.innerText = "ONLINE"; 
                         statusEl.classList.remove("text-primary"); 
                         aiCard.classList.remove("ai-talking"); 
-                    }, 3000);
+                    }, 6000); // Extended to 6 seconds
                 }
             }, 50);
         }
+        
         let audioContext, analyser, source, canvasCtx;
         const audioEl = document.getElementById('background-music');
         const canvas = document.getElementById('audio-visualizer');
+        
         function initAudio() {
             if(audioContext) return;
             const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -586,6 +637,7 @@
             canvasCtx = canvas.getContext('2d');
             drawVisualizer();
         }
+
         function drawVisualizer() {
             requestAnimationFrame(drawVisualizer);
             const bufferLength = analyser.frequencyBinCount;
@@ -602,18 +654,36 @@
                 x += barWidth + 1;
             }
         }
+
+        // --- FIX: Music Toggle Logic with pre-rendered icons ---
         function toggleMusic() {
             if(!audioContext) initAudio();
             if(audioContext.state === 'suspended') audioContext.resume();
+            
             const wave = document.getElementById('deck-wave');
-            const icon = document.querySelector('#sonic-deck i');
+            const audioEl = document.getElementById('background-music');
+            
+            // Get the pre-rendered icon elements
+            const iconDisc = document.getElementById('icon-disc');
+            const iconPause = document.getElementById('icon-pause');
+            
             if(audioEl.paused) {
-                audioEl.play().then(() => { wave.classList.remove('hidden'); icon.setAttribute('data-lucide', 'pause'); lucide.createIcons(); }).catch(e => console.log(e));
+                audioEl.play().then(() => {
+                    wave.classList.remove('hidden');
+                    // Show Pause, Hide Disc
+                    iconDisc.classList.add('hidden');
+                    iconPause.classList.remove('hidden');
+                }).catch(e => console.log(e));
             } else {
-                audioEl.pause(); wave.classList.add('hidden'); icon.setAttribute('data-lucide', 'disc'); lucide.createIcons();
+                audioEl.pause();
+                wave.classList.add('hidden');
+                // Show Disc, Hide Pause
+                iconDisc.classList.remove('hidden');
+                iconPause.classList.add('hidden');
             }
         }
         function setVolume(val) { audioEl.volume = val; }
+
         const mockData = [{ id: 388296, name: "香格里拉·开拓异境", rating: { score: "8.1" }, images: { large: "https://lain.bgm.tv/pic/cover/l/13/9a/388296_7787Y.jpg" } }];
         async function loadAnimeData() {
             const dateDisplay = document.getElementById('anime-date');
@@ -652,9 +722,11 @@
         function closeAnimeModal() { document.getElementById('anime-modal').classList.add('hidden'); document.getElementById('anime-modal').classList.remove('flex'); }
         function searchArticles() { const query = document.getElementById('search-input').value.toLowerCase(); document.querySelectorAll('.eva-card').forEach(card => { const text = card.textContent.toLowerCase(); const tags = card.dataset.tags ? card.dataset.tags.toLowerCase() : ''; card.style.display = (text.includes(query) || tags.includes(query)) ? '' : 'none'; }); }
         function filterByTag(tag) { document.getElementById('search-input').value = tag; searchArticles(); }
+
         startHeroGlitch();
         loadAnimeData();
-        createParticles();
+        createParticles(); // Start particle system
+
     </script>
 </body>
 </html>
