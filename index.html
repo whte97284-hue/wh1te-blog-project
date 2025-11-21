@@ -72,7 +72,6 @@
             color: white; 
             transition: background-color 0.3s ease, color 0.3s ease; 
             overflow-x: hidden; 
-            /* 默认显示系统鼠标 */
             cursor: auto;
         }
 
@@ -85,42 +84,120 @@
             cursor: none !important; 
         }
 
-        /* 战术光标默认隐藏 */
+        /* 战术光标容器 */
         #tactical-cursor {
             position: fixed; top: 0; left: 0; z-index: 99999; pointer-events: none;
-            will-change: transform;
             display: none; /* 默认关闭 */
+            /* 移除 mix-blend-mode 以提升性能，改用透明度 */
+            /* mix-blend-mode: screen; */
         }
         
-        /* 战术模式下显示光标 */
         body.tactical-mode #tactical-cursor {
             display: block;
         }
+
+        /* 光标层级结构 - 优化性能 */
+        .cursor-layer {
+            position: fixed; top: 0; left: 0;
+            will-change: transform; /* 启用 GPU 加速 */
+            pointer-events: none;
+            /* 确保没有任何 CSS 过渡干扰 JS 的实时控制 */
+            transition: none !important; 
+            /* 硬件加速 hack */
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
         
+        /* 主光标 */
+        .cursor-main { z-index: 100; }
+        /* 拖尾光标 */
+        .cursor-trail-1 { z-index: 99; opacity: 0.6; }
+        .cursor-trail-2 { z-index: 98; opacity: 0.3; }
+
         .cursor-wrapper {
             position: relative; display: flex; align-items: center; justify-content: center;
             color: var(--secondary-color);
-            transition: color 0.15s ease;
+            transition: color 0.2s ease;
         }
 
-        /* 光标组件 */
-        .cursor-core { position: absolute; width: 4px; height: 4px; background: currentColor; box-shadow: 0 0 10px currentColor; }
-        .cursor-crosshair::before, .cursor-crosshair::after { content: ''; position: absolute; background: currentColor; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-        .cursor-crosshair::before { width: 1px; height: 20px; } .cursor-crosshair::after { width: 20px; height: 1px; }
-        .cursor-ring-inner { position: absolute; width: 24px; height: 24px; border: 1px solid currentColor; border-radius: 50%; opacity: 0.6; border-right-color: transparent; border-bottom-color: transparent; animation: spin 2s linear infinite; }
-        .cursor-field { position: absolute; width: 40px; height: 40px; border: 1px dashed currentColor; border-radius: 50%; opacity: 0.4; animation: spin 8s linear infinite reverse; transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
-        .cursor-coords { position: absolute; top: 20px; left: 20px; font-family: 'JetBrains Mono'; font-size: 9px; font-weight: bold; white-space: nowrap; text-shadow: 1px 1px 0 rgba(0,0,0,0.8); letter-spacing: 0.05em; }
+        /* 光标组件优化 */
+        .cursor-core { 
+            position: absolute; width: 4px; height: 4px; background: currentColor; 
+            box-shadow: 0 0 10px currentColor; 
+            border-radius: 50%;
+        }
+        .cursor-crosshair::before, .cursor-crosshair::after { 
+            content: ''; position: absolute; background: currentColor; 
+            top: 50%; left: 50%; transform: translate(-50%, -50%); 
+        }
+        .cursor-crosshair::before { width: 1px; height: 16px; } 
+        .cursor-crosshair::after { width: 16px; height: 1px; }
+        
+        .cursor-ring-inner { 
+            position: absolute; width: 20px; height: 20px; 
+            border: 1px solid currentColor; border-radius: 50%; 
+            opacity: 0.6; 
+            border-top-color: transparent; border-bottom-color: transparent; 
+            animation: spin 2s linear infinite; 
+        }
+        
+        .cursor-field { 
+            position: absolute; width: 36px; height: 36px; 
+            border: 1px dashed currentColor; border-radius: 50%; 
+            opacity: 0.3; 
+            animation: spin 8s linear infinite reverse; 
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+        
+        .cursor-coords { 
+            position: absolute; top: 24px; left: 24px; 
+            font-family: 'JetBrains Mono'; font-size: 8px; font-weight: bold; 
+            white-space: nowrap; text-shadow: 1px 1px 0 rgba(0,0,0,0.8); 
+            letter-spacing: 0.05em; opacity: 0.8;
+        }
 
-        /* 光标锁定状态 */
-        body.hovering #tactical-cursor .cursor-wrapper { color: #ff0000; }
-        body.hovering .cursor-core { transform: scale(1.5); }
-        body.hovering .cursor-field { width: 50px; height: 50px; border-radius: 0; border-style: solid; border-width: 2px; clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%); animation: lock-pulse 0.2s ease-out; opacity: 1; background: rgba(255, 0, 0, 0.1); }
-        body.hovering .cursor-coords { content: 'LOCK'; color: #ff0000; }
-        body.clicking .cursor-field { transform: scale(0.8); background: rgba(255, 0, 0, 0.3); }
+        /* 拖尾特化样式 */
+        .cursor-trail-1 .cursor-field { border-style: dotted; width: 30px; height: 30px; }
+        .cursor-trail-1 .cursor-core { display: none; }
+        .cursor-trail-1 .cursor-coords { display: none; }
+        
+        .cursor-trail-2 .cursor-field { border: 1px solid currentColor; width: 20px; height: 20px; opacity: 0.2; }
+        .cursor-trail-2 .cursor-core { display: none; }
+        .cursor-trail-2 .cursor-coords { display: none; }
+
+        /* 光标锁定/Hover 状态 */
+        body.hovering #tactical-cursor .cursor-wrapper { color: #ff0055; } /* NERV Red */
+        
+        body.hovering .cursor-main .cursor-core { transform: scale(1.5); background: #fff; }
+        
+        body.hovering .cursor-main .cursor-field { 
+            width: 48px; height: 48px; 
+            border-radius: 0; border-style: solid; border-width: 1px; 
+            border-color: #ff0055;
+            /* Octagon shape for EVA style */
+            clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%); 
+            animation: lock-spin 4s linear infinite; 
+            opacity: 1; 
+            background: rgba(255, 0, 85, 0.05); 
+        }
+        
+        body.hovering .cursor-coords { color: #ff0055; content: 'LOCK_ON'; }
+        
+        /* 点击反馈 */
+        .click-ripple {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 10px; height: 10px; border: 2px solid var(--secondary-color);
+            border-radius: 50%; pointer-events: none; opacity: 1;
+            animation: ripple-effect 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
 
         /* 动画定义 */
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes lock-pulse { 0% { transform: scale(1.5) rotate(45deg); opacity: 0; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
+        @keyframes lock-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(-90deg); } }
+        @keyframes ripple-effect { 
+            0% { width: 10px; height: 10px; opacity: 1; border-width: 2px; } 
+            100% { width: 100px; height: 100px; opacity: 0; border-width: 0px; } 
+        }
 
         /* --- 社交按钮优化 (Social Uplink Animation) --- */
         .social-btn {
@@ -337,18 +414,29 @@
 </head>
 <body class="antialiased overflow-x-hidden font-sans selection:bg-secondary selection:text-black">
 
-    <!-- 战术光标 (默认隐藏，通过开关开启) -->
+    <!-- 战术光标系统 (多层结构) -->
     <div id="tactical-cursor">
-        <div class="cursor-wrapper">
-            <!-- 核心准星 -->
-            <div class="cursor-core"></div>
-            <div class="cursor-crosshair"></div>
-            <!-- 内旋转环 -->
-            <div class="cursor-ring-inner"></div>
-            <!-- 外数据环 (AT Field 形态) -->
-            <div class="cursor-field"></div>
-            <!-- 坐标数据 -->
-            <div class="cursor-coords">000,000</div>
+        <!-- 主光标 -->
+        <div id="cursor-main" class="cursor-layer cursor-main">
+            <div class="cursor-wrapper">
+                <div class="cursor-core"></div>
+                <div class="cursor-crosshair"></div>
+                <div class="cursor-ring-inner"></div>
+                <div class="cursor-field"></div>
+                <div class="cursor-coords">000,000</div>
+            </div>
+        </div>
+        <!-- 拖尾残影 1 -->
+        <div id="cursor-trail-1" class="cursor-layer cursor-trail-1">
+            <div class="cursor-wrapper">
+                <div class="cursor-field"></div>
+            </div>
+        </div>
+        <!-- 拖尾残影 2 -->
+        <div id="cursor-trail-2" class="cursor-layer cursor-trail-2">
+            <div class="cursor-wrapper">
+                <div class="cursor-field"></div>
+            </div>
         </div>
     </div>
 
@@ -688,7 +776,6 @@
         lucide.createIcons();
 
         /* --- TACTICAL MODE TOGGLE LOGIC --- */
-        // Check storage on load
         const savedTactical = localStorage.getItem('tacticalMode');
         if (savedTactical === 'true') {
             document.body.classList.add('tactical-mode');
@@ -696,50 +783,108 @@
 
         function toggleTacticalMode() {
             document.body.classList.toggle('tactical-mode');
-            // Save state
             localStorage.setItem('tacticalMode', document.body.classList.contains('tactical-mode'));
         }
 
-        /* --- 极速战术光标逻辑 (No Lag, Instant Follow) --- */
-        const cursor = document.getElementById('tactical-cursor');
+        /* ==========================================================================
+           ULTIMATE PERFORMANCE CURSOR SYSTEM (KERNEL LEVEL OPTIMIZATION)
+           ========================================================================== */
+        
+        // Elements
+        const cursorMain = document.getElementById('cursor-main');
+        const cursorTrail1 = document.getElementById('cursor-trail-1');
+        const cursorTrail2 = document.getElementById('cursor-trail-2');
         const cursorInfo = document.querySelector('.cursor-coords');
+
+        // State (Decoupled from DOM)
+        let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
         
-        let mouseX = window.innerWidth / 2;
-        let mouseY = window.innerHeight / 2;
-        
-        // 实时更新光标位置，不使用 lerp 延迟，直接跟随
+        // Pos objects for trails
+        let posTrail1 = { x: mouse.x, y: mouse.y };
+        let posTrail2 = { x: mouse.x, y: mouse.y };
+
+        // Trail Lerp Factors
+        const LERP_TRAIL1 = 0.15; 
+        const LERP_TRAIL2 = 0.08; 
+
+        // Linear Interpolation
+        const lerp = (start, end, factor) => start + (end - start) * factor;
+
+        // --- 1. MOUSE MOVE: PURE INPUT HANDLING (NO LAYOUT THRASHING) ---
+        // This event now only does ONE thing: Update Main Cursor. 
+        // No calculations, no queries, no loops.
         document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-            
-            // Hover Detection
-            const hoverable = e.target.closest('a, button, .eva-card, input, .group, .cursor-pointer, .social-btn');
-            if (hoverable) {
-                document.body.classList.add('hovering');
-            } else {
-                document.body.classList.remove('hovering');
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+
+            // ZERO LATENCY update for main cursor
+            if (document.body.classList.contains('tactical-mode')) {
+                // Direct style transform is the fastest way to move an element
+                cursorMain.style.transform = `translate3d(${mouse.x}px, ${mouse.y}px, 0)`;
             }
-            
-            // Global CSS vars for glare effects
-            const xPct = (mouseX / window.innerWidth) * 100;
-            const yPct = (mouseY / window.innerHeight) * 100;
-            document.documentElement.style.setProperty('--mouse-x', `${xPct}%`);
-            document.documentElement.style.setProperty('--mouse-y', `${yPct}%`);
+        });
+
+        // --- 2. EVENT-DRIVEN HOVER SYSTEM (REPLACES 'closest' LOOP) ---
+        // Instead of calculating distance to elements every frame, we just listen for entry/exit.
+        // This saves thousands of calculations per second.
+        document.addEventListener('mouseover', (e) => {
+            if (e.target.closest('a, button, .eva-card, input, .group, .cursor-pointer, .social-btn')) {
+                document.body.classList.add('hovering');
+            }
         });
         
-        // Click feedback
-        document.addEventListener('mousedown', () => document.body.classList.add('clicking'));
+        document.addEventListener('mouseout', (e) => {
+            if (e.target.closest('a, button, .eva-card, input, .group, .cursor-pointer, .social-btn')) {
+                document.body.classList.remove('hovering');
+            }
+        });
+
+        // --- 3. CLICK FEEDBACK ---
+        document.addEventListener('mousedown', (e) => {
+            document.body.classList.add('clicking');
+            if(document.body.classList.contains('tactical-mode')) {
+                const ripple = document.createElement('div');
+                ripple.classList.add('click-ripple');
+                ripple.style.left = `${e.clientX}px`;
+                ripple.style.top = `${e.clientY}px`;
+                document.body.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 500);
+            }
+        });
+        
         document.addEventListener('mouseup', () => document.body.classList.remove('clicking'));
 
-        // 使用 rAF 保证渲染与屏幕刷新率同步
-        function renderCursor() {
-            if (cursor && document.body.classList.contains('tactical-mode')) {
-                cursor.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0)`;
-                if(cursorInfo) cursorInfo.innerText = `TGT:${Math.round(mouseX)},${Math.round(mouseY)}`;
+        // --- 4. RENDER LOOP (SYNCED TO REFRESH RATE) ---
+        // Heavy lifting (CSS Vars, Trails) happens here, not in mousemove.
+        function renderCursorLoop() {
+            if (document.body.classList.contains('tactical-mode')) {
+                // Update Trails
+                posTrail1.x = lerp(posTrail1.x, mouse.x, LERP_TRAIL1);
+                posTrail1.y = lerp(posTrail1.y, mouse.y, LERP_TRAIL1);
+                cursorTrail1.style.transform = `translate3d(${posTrail1.x}px, ${posTrail1.y}px, 0)`;
+                
+                posTrail2.x = lerp(posTrail2.x, mouse.x, LERP_TRAIL2);
+                posTrail2.y = lerp(posTrail2.y, mouse.y, LERP_TRAIL2);
+                cursorTrail2.style.transform = `translate3d(${posTrail2.x}px, ${posTrail2.y}px, 0)`;
+
+                // Update Coords Text
+                if (cursorInfo) {
+                    cursorInfo.innerText = `TGT:${Math.round(mouse.x)},${Math.round(mouse.y)}`;
+                }
+
+                // UPDATE CSS VARS HERE INSTEAD OF MOUSEMOVE
+                // This prevents layout thrashing by batching updates to screen refresh
+                const xPct = (mouse.x / window.innerWidth) * 100;
+                const yPct = (mouse.y / window.innerHeight) * 100;
+                document.documentElement.style.setProperty('--mouse-x', `${xPct}%`);
+                document.documentElement.style.setProperty('--mouse-y', `${yPct}%`);
             }
-            requestAnimationFrame(renderCursor);
+            requestAnimationFrame(renderCursorLoop);
         }
-        renderCursor();
+        
+        // Start Loop
+        renderCursorLoop();
+
 
         /* --- Rest of the logic --- */
         const canvas = document.getElementById('matrix-bg');
@@ -813,10 +958,7 @@
         window.addEventListener('DOMContentLoaded', initMarquee);
         window.addEventListener('resize', () => { clearTimeout(window.resizeTimer); window.resizeTimer = setTimeout(initMarquee, 200); });
 
-        document.addEventListener('mousedown', (e) => {
-            createATField(e.clientX, e.clientY);
-        });
-
+        // AT Field effect on body click (using CSS transform for performance)
         function createATField(x, y) {
             const atField = document.createElement('div');
             atField.style.cssText = `position: fixed; top: ${y}px; left: ${x}px; width: 10px; height: 10px; border: 2px solid #ffa500; background: rgba(255, 165, 0, 0.2); transform: translate(-50%, -50%); clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%); z-index: 9998; pointer-events: none; transition: all 0.4s ease-out; box-shadow: 0 0 10px #ffa500;`;
@@ -824,6 +966,9 @@
             requestAnimationFrame(() => { atField.style.width = '200px'; atField.style.height = '200px'; atField.style.opacity = '0'; atField.style.transform = 'translate(-50%, -50%) rotate(45deg)'; });
             setTimeout(() => atField.remove(), 400);
         }
+        // Bind it
+        document.addEventListener('mousedown', (e) => createATField(e.clientX, e.clientY));
+
 
         function startHeroGlitch() {
             const heroImg = document.getElementById('hero-character');
@@ -1066,28 +1211,28 @@
         });
 
         // --- 3. 3D HOLOGRAPHIC CARD EFFECT ---
+        // Optimized to use RequestAnimationFrame
+        let cardHoverTarget = null;
+        let cardRotation = { x: 0, y: 0 };
+
         document.querySelectorAll('.eva-card').forEach(card => {
-            // Add the 3d class
             card.classList.add('holo-card-3d'); 
             
             card.addEventListener('mousemove', (e) => {
                 const rect = card.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
-                
-                // Calculate rotation based on mouse position
                 const centerX = rect.width / 2;
                 const centerY = rect.height / 2;
                 
-                const rotateX = ((y - centerY) / centerY) * -3; // Max rotation deg
+                // Direct transform for instant feedback, but can be throttled if needed
+                const rotateX = ((y - centerY) / centerY) * -3;
                 const rotateY = ((x - centerX) / centerX) * 3;
-
-                // Apply transform
+                
                 card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
             });
 
             card.addEventListener('mouseleave', () => {
-                // Reset
                 card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
             });
         });
