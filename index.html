@@ -88,8 +88,6 @@
         #tactical-cursor {
             position: fixed; top: 0; left: 0; z-index: 99999; pointer-events: none;
             display: none; /* 默认关闭 */
-            /* 移除 mix-blend-mode 以提升性能，改用透明度 */
-            /* mix-blend-mode: screen; */
         }
         
         body.tactical-mode #tactical-cursor {
@@ -99,18 +97,14 @@
         /* 光标层级结构 - 优化性能 */
         .cursor-layer {
             position: fixed; top: 0; left: 0;
-            will-change: transform; /* 启用 GPU 加速 */
+            will-change: transform;
             pointer-events: none;
-            /* 确保没有任何 CSS 过渡干扰 JS 的实时控制 */
             transition: none !important; 
-            /* 硬件加速 hack */
             transform: translateZ(0);
             backface-visibility: hidden;
         }
         
-        /* 主光标 */
         .cursor-main { z-index: 100; }
-        /* 拖尾光标 */
         .cursor-trail-1 { z-index: 99; opacity: 0.6; }
         .cursor-trail-2 { z-index: 98; opacity: 0.3; }
 
@@ -166,21 +160,17 @@
         .cursor-trail-2 .cursor-coords { display: none; }
 
         /* 光标锁定/Hover 状态 */
-        body.hovering #tactical-cursor .cursor-wrapper { color: #ff0055; } /* NERV Red */
-        
+        body.hovering #tactical-cursor .cursor-wrapper { color: #ff0055; }
         body.hovering .cursor-main .cursor-core { transform: scale(1.5); background: #fff; }
-        
         body.hovering .cursor-main .cursor-field { 
             width: 48px; height: 48px; 
             border-radius: 0; border-style: solid; border-width: 1px; 
             border-color: #ff0055;
-            /* Octagon shape for EVA style */
             clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%); 
             animation: lock-spin 4s linear infinite; 
             opacity: 1; 
             background: rgba(255, 0, 85, 0.05); 
         }
-        
         body.hovering .cursor-coords { color: #ff0055; content: 'LOCK_ON'; }
         
         /* 点击反馈 */
@@ -191,13 +181,9 @@
             animation: ripple-effect 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
 
-        /* 动画定义 */
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes lock-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(-90deg); } }
-        @keyframes ripple-effect { 
-            0% { width: 10px; height: 10px; opacity: 1; border-width: 2px; } 
-            100% { width: 100px; height: 100px; opacity: 0; border-width: 0px; } 
-        }
+        @keyframes ripple-effect { 0% { width: 10px; height: 10px; opacity: 1; border-width: 2px; } 100% { width: 100px; height: 100px; opacity: 0; border-width: 0px; } }
 
         /* --- 社交按钮优化 (Social Uplink Animation) --- */
         .social-btn {
@@ -231,7 +217,6 @@
             transform: scale(1);
             animation: icon-glitch 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        /* 闸门效果背景 */
         .social-shutter {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--secondary-color);
@@ -260,7 +245,6 @@
             width: 6px; height: 6px; background: var(--secondary-color);
             opacity: 0; transition: opacity 0.2s;
         }
-        /* Active state */
         body.tactical-mode .switch-box-inner { opacity: 1; }
         body.tactical-mode .tactical-switch { 
             color: var(--secondary-color); border-color: var(--secondary-color); 
@@ -382,17 +366,11 @@
         ::-webkit-scrollbar-track { background: var(--bg-color); }
         ::-webkit-scrollbar-thumb { background: var(--secondary-color); border-radius: 2px; }
 
-        /* ==========================================================================
-           NEW ENHANCEMENTS (PHASE 1 & 2)
-           ========================================================================== */
-        
-        /* Phase 2: 3D Holographic Card Effect */
         .holo-card-3d {
             transition: transform 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             transform-style: preserve-3d;
             will-change: transform;
         }
-        /* Lift internal elements for depth */
         .holo-card-3d .eva-header, 
         .holo-card-3d h3, 
         .holo-card-3d p,
@@ -402,10 +380,9 @@
             transform-style: preserve-3d;
         }
         .holo-card-3d .eva-glare {
-            transform: translateZ(1px); /* Just above background */
+            transform: translateZ(1px); 
         }
 
-        /* Decoder text style */
         .scramble-text {
             display: inline-block;
             min-width: 1em;
@@ -520,7 +497,6 @@
     </audio>
     
     <!-- SFX Audio Channels (Tactical Mode) -->
-    <!-- Note: Using placeholders. Replace with your own 'bip.mp3' or 'click.mp3' for better effect -->
     <audio id="sfx-hover" preload="auto">
          <source src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" type="audio/mp3">
     </audio>
@@ -599,23 +575,18 @@
             
             <!-- Updated Title Area with NERV Decor -->
             <div class="relative inline-block group">
-                <!-- Decor: Top Left Corner -->
                 <div class="absolute -top-6 -left-6 w-12 h-12 border-t-2 border-l-2 border-secondary/50 pointer-events-none"></div>
-                <!-- Decor: Bottom Right Corner -->
                 <div class="absolute -bottom-4 -right-6 w-12 h-12 border-b-2 border-r-2 border-secondary/50 pointer-events-none"></div>
                 
-                <!-- Decor: Small Text -->
                 <div class="absolute -top-8 right-0 text-[10px] font-mono text-secondary/70 tracking-[0.2em]">PROJECT_EVA</div>
                 
                 <h1 class="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-none text-white font-serif mix-blend-overlay opacity-90 glitch-text" style="font-family: 'Noto Serif SC', serif;" data-text="WH1TE_LOG">WH1TE_LOG</h1>
                 
-                <!-- Shadow Layer -->
                 <h1 class="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-none text-stroke-layer absolute top-0 left-0 w-full h-full translate-x-[2px] translate-y-[2px] opacity-50 group-hover:translate-x-[4px] group-hover:translate-y-[4px] transition-transform font-serif text-transparent" style="font-family: 'Noto Serif SC', serif; -webkit-text-stroke: 1px var(--secondary-color);">WH1TE_LOG</h1>
             </div>
 
             <!-- Updated Subtitle Area -->
             <div class="flex items-center gap-4 pl-4 border-l-4 border-secondary bg-gradient-to-r from-secondary/10 to-transparent py-3 relative overflow-hidden">
-                <!-- Background Stripe Animation -->
                 <div class="absolute inset-0 opacity-10 animate-scan pointer-events-none" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, #000 2px, #000 4px);"></div>
                 
                 <h2 class="text-2xl font-bold text-white tracking-tight font-serif z-10" style="font-family: 'Noto Serif SC', serif;">
@@ -772,6 +743,56 @@
         </div>
     </main>
 
+    <!-- Anime Detail Modal (Added) -->
+    <div id="anime-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-300" onclick="if(event.target === this) closeAnimeModal()">
+        <div class="eva-card w-[90%] max-w-2xl bg-bg border border-secondary relative p-6 transform scale-95 transition-transform duration-300" style="box-shadow: 0 0 50px rgba(var(--secondary-color), 0.2);">
+            <!-- Corner decos -->
+            <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-primary"></div>
+            <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-primary"></div>
+            
+            <!-- Header -->
+            <div class="flex justify-between items-center border-b border-white/10 pb-4 mb-6">
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 bg-secondary animate-pulse"></div>
+                    <span class="font-mono text-secondary tracking-widest text-xs">MAGI_ARCHIVE // DATA_RETRIEVAL</span>
+                </div>
+                <button onclick="closeAnimeModal()" class="text-gray-500 hover:text-emergency font-mono text-xs">[ TERMINATE ]</button>
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-6">
+                <!-- Cover Image -->
+                <div class="w-full md:w-1/3 shrink-0">
+                    <div class="relative aspect-[2/3] overflow-hidden border border-white/10 group">
+                        <img id="modal-cover" src="" alt="Cover" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                        <div class="absolute bottom-2 right-2 font-mono text-[10px] text-white bg-primary px-1">IMG_01</div>
+                    </div>
+                </div>
+
+                <!-- Info -->
+                <div class="flex-1 space-y-4">
+                    <div>
+                        <div class="font-mono text-[10px] text-gray-500 mb-1">SUBJECT_ID: <span id="modal-id" class="text-primary">00000</span></div>
+                        <h3 id="modal-title" class="text-2xl font-bold text-white font-serif leading-tight">LOADING...</h3>
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                        <div class="px-3 py-1 border border-secondary/50 text-secondary font-mono text-xs bg-secondary/10">
+                            SCORE: <span id="modal-rating" class="font-bold text-white">0.0</span>
+                        </div>
+                        <div class="h-px flex-1 bg-white/10"></div>
+                    </div>
+
+                    <div class="relative h-48 overflow-y-auto custom-scrollbar border-l-2 border-white/5 pl-4">
+                        <p id="modal-summary" class="text-gray-300 text-sm leading-relaxed font-sans">
+                            ACCESSING DATABASE...
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         lucide.createIcons();
 
@@ -811,22 +832,17 @@
         const lerp = (start, end, factor) => start + (end - start) * factor;
 
         // --- 1. MOUSE MOVE: PURE INPUT HANDLING (NO LAYOUT THRASHING) ---
-        // This event now only does ONE thing: Update Main Cursor. 
-        // No calculations, no queries, no loops.
         document.addEventListener('mousemove', (e) => {
             mouse.x = e.clientX;
             mouse.y = e.clientY;
 
             // ZERO LATENCY update for main cursor
             if (document.body.classList.contains('tactical-mode')) {
-                // Direct style transform is the fastest way to move an element
                 cursorMain.style.transform = `translate3d(${mouse.x}px, ${mouse.y}px, 0)`;
             }
         });
 
         // --- 2. EVENT-DRIVEN HOVER SYSTEM (REPLACES 'closest' LOOP) ---
-        // Instead of calculating distance to elements every frame, we just listen for entry/exit.
-        // This saves thousands of calculations per second.
         document.addEventListener('mouseover', (e) => {
             if (e.target.closest('a, button, .eva-card, input, .group, .cursor-pointer, .social-btn')) {
                 document.body.classList.add('hovering');
@@ -855,7 +871,6 @@
         document.addEventListener('mouseup', () => document.body.classList.remove('clicking'));
 
         // --- 4. RENDER LOOP (SYNCED TO REFRESH RATE) ---
-        // Heavy lifting (CSS Vars, Trails) happens here, not in mousemove.
         function renderCursorLoop() {
             if (document.body.classList.contains('tactical-mode')) {
                 // Update Trails
@@ -873,7 +888,6 @@
                 }
 
                 // UPDATE CSS VARS HERE INSTEAD OF MOUSEMOVE
-                // This prevents layout thrashing by batching updates to screen refresh
                 const xPct = (mouse.x / window.innerWidth) * 100;
                 const yPct = (mouse.y / window.innerHeight) * 100;
                 document.documentElement.style.setProperty('--mouse-x', `${xPct}%`);
@@ -958,7 +972,7 @@
         window.addEventListener('DOMContentLoaded', initMarquee);
         window.addEventListener('resize', () => { clearTimeout(window.resizeTimer); window.resizeTimer = setTimeout(initMarquee, 200); });
 
-        // AT Field effect on body click (using CSS transform for performance)
+        // AT Field effect on body click
         function createATField(x, y) {
             const atField = document.createElement('div');
             atField.style.cssText = `position: fixed; top: ${y}px; left: ${x}px; width: 10px; height: 10px; border: 2px solid #ffa500; background: rgba(255, 165, 0, 0.2); transform: translate(-50%, -50%); clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%); z-index: 9998; pointer-events: none; transition: all 0.4s ease-out; box-shadow: 0 0 10px #ffa500;`;
@@ -966,7 +980,6 @@
             requestAnimationFrame(() => { atField.style.width = '200px'; atField.style.height = '200px'; atField.style.opacity = '0'; atField.style.transform = 'translate(-50%, -50%) rotate(45deg)'; });
             setTimeout(() => atField.remove(), 400);
         }
-        // Bind it
         document.addEventListener('mousedown', (e) => createATField(e.clientX, e.clientY));
 
 
@@ -1099,6 +1112,7 @@
                     return `<div class="flex justify-between items-center group cursor-pointer hover:bg-white/5 p-2 border-b border-white/10 hover:border-secondary transition-all" onclick='openAnimeModal("${title.replace(/"/g, '&quot;')}", "${score}", "${image}", "${item.id}")'><span class="text-gray-400 truncate w-3/4 group-hover:text-white font-bold text-[10px]">${title}</span><span class="text-secondary text-[9px] border border-secondary/30 px-1 font-mono">${score}</span></div>`;
                 }).join('');
         };
+        
         async function openAnimeModal(title, rating, imageUrl, id) {
             const modal = document.getElementById('anime-modal');
             document.getElementById('modal-title').innerText = title;
@@ -1106,10 +1120,41 @@
             document.getElementById('modal-cover').src = imageUrl;
             document.getElementById('modal-id').innerText = id;
             document.getElementById('modal-summary').innerText = "ACCESSING MAGI ARCHIVE...";
-            modal.classList.remove('hidden'); modal.classList.add('flex');
-            if(id) { try { const res = await fetch(`https://corsproxy.io/?${encodeURIComponent('https://api.bgm.tv/v0/subjects/'+id)}`); const data = await res.json(); document.getElementById('modal-summary').innerText = data.summary || "RESTRICTED DATA."; } catch(e) { document.getElementById('modal-summary').innerText = "CONNECTION LOST."; } }
+            
+            // Show modal
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            // Trigger fade in transition
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+                modal.querySelector('div').classList.add('scale-100');
+            }, 10);
+
+            if(id) { 
+                try { 
+                    const res = await fetch(`https://corsproxy.io/?${encodeURIComponent('https://api.bgm.tv/v0/subjects/'+id)}`); 
+                    const data = await res.json(); 
+                    document.getElementById('modal-summary').innerText = data.summary || "RESTRICTED DATA: SUMMARY UNAVAILABLE."; 
+                } catch(e) { 
+                    document.getElementById('modal-summary').innerText = "CONNECTION LOST: UNABLE TO RETRIEVE ARCHIVE DATA."; 
+                } 
+            }
         }
-        function closeAnimeModal() { document.getElementById('anime-modal').classList.add('hidden'); document.getElementById('anime-modal').classList.remove('flex'); }
+
+        function closeAnimeModal() { 
+            const modal = document.getElementById('anime-modal');
+            // Fade out
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.remove('scale-100');
+            modal.querySelector('div').classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden'); 
+                modal.classList.remove('flex'); 
+            }, 300);
+        }
+
         function searchArticles() { const query = document.getElementById('search-input').value.toLowerCase(); document.querySelectorAll('.eva-card').forEach(card => { const text = card.textContent.toLowerCase(); const tags = card.dataset.tags ? card.dataset.tags.toLowerCase() : ''; card.style.display = (text.includes(query) || tags.includes(query)) ? '' : 'none'; }); }
         function filterByTag(tag) { document.getElementById('search-input').value = tag; searchArticles(); }
 
