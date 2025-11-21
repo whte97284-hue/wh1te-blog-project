@@ -38,7 +38,7 @@
                     keyframes: {
                         scan: { '0%': { backgroundPosition: '0 0' }, '100%': { backgroundPosition: '0 100%' } },
                         hazardScroll: { '0%': { backgroundPosition: '0 0' }, '100%': { backgroundPosition: '40px 0' } },
-                        magiPulse: { '0%, 100%': { opacity: 0.3, boxShadow: '0 0 5px var(--secondary-color)' }, '50%': { opacity: 0.8, boxShadow: '0 0 15px var(--secondary-color)' } },
+                        magiPulse: { '0%, 100%': { opacity: 0.5, boxShadow: '0 0 15px var(--secondary-color)' }, '50%': { opacity: 1, boxShadow: '0 0 30px var(--secondary-color)' } },
                         popIn: { '0%': { opacity: 0, transform: 'scale(0.95) translateY(10px)' }, '100%': { opacity: 1, transform: 'scale(1) translateY(0)' } },
                         cyberSwap: { 
                             '0%': { opacity: 0.8, transform: 'translateX(0)' },
@@ -48,7 +48,7 @@
                             '100%': { opacity: 0.8, transform: 'translateX(0)' } 
                         },
                         marquee: { '0%': { transform: 'translateX(100%)' }, '100%': { transform: 'translateX(-100%)' } },
-                        redAlert: { '0%, 100%': { boxShadow: 'inset 0 0 30px rgba(255,0,0,0.2)' }, '50%': { boxShadow: 'inset 0 0 80px rgba(255,0,0,0.5)' } }
+                        redAlert: { '0%, 100%': { boxShadow: 'inset 0 0 30px rgba(255,0,0,0.3)' }, '50%': { boxShadow: 'inset 0 0 80px rgba(255,0,0,0.6)' } }
                     }
                 }
             }
@@ -60,7 +60,6 @@
             --mouse-x: 50%; --mouse-y: 50%; --cursor-size: 800px;
             --primary-color: #b15dff; --secondary-color: #39ff14; 
             --bg-color: #0f0518;
-            /* 提高透明度，让背景透过来 */
             --surface-color: rgba(20, 10, 30, 0.4); 
             --grid-color: rgba(125, 42, 232, 0.15); --hue-rotate: 260deg;
         }
@@ -73,35 +72,36 @@
             --primary-color: #ff0000 !important; --secondary-color: #ff0000 !important; --bg-color: #0a0000 !important;
             --surface-color: rgba(40, 0, 0, 0.5) !important; --grid-color: rgba(255, 0, 0, 0.3) !important; --hue-rotate: 0deg !important;
         }
-        body.emergency-mode .hex-bg { animation: none; background-image: url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ff0000' stroke-opacity='0.3' stroke-width='2'/%3E%3C/svg%3E"); }
+        body.emergency-mode .hex-bg { animation: none; background-image: url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ff0000' stroke-opacity='0.4' stroke-width='2'/%3E%3C/svg%3E"); }
         body.emergency-mode .emergency-overlay { display: flex !important; animation: red-alert 2s ease-in-out infinite; }
 
-        body { background-color: var(--bg-color); min-height: 100vh; color: white; transition: background-color 0.3s ease, color 0.3s ease; overflow-x: hidden; cursor: crosshair; background: radial-gradient(circle at 50% 40%, rgba(40,40,40,0.05) 0%, var(--bg-color) 90%); }
+        body { background-color: var(--bg-color); min-height: 100vh; color: white; transition: background-color 0.3s ease, color 0.3s ease; overflow-x: hidden; cursor: crosshair; background: radial-gradient(circle at 50% 40%, rgba(40,40,40,0.1) 0%, var(--bg-color) 90%); }
 
-        /* --- EFFECTS --- */
-        .hex-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -2; background-image: url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ffffff' stroke-opacity='0.1' stroke-width='1'/%3E%3C/svg%3E"); background-size: 60px 104px; mask-image: linear-gradient(to bottom, black 20%, transparent 90%); animation: bg-scroll 60s linear infinite; transition: background-image 0.3s; }
+        /* --- 增强版背景特效 --- */
+        .hex-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -2; background-image: url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ffffff' stroke-opacity='0.12' stroke-width='1'/%3E%3C/svg%3E"); background-size: 60px 104px; mask-image: linear-gradient(to bottom, black 20%, transparent 90%); animation: bg-scroll 60s linear infinite; transition: background-image 0.3s; }
         @keyframes bg-scroll { 0% { background-position: 0 0; } 100% { background-position: 60px 104px; } }
-        .hex-flash { position: absolute; width: 60px; height: 104px; background: var(--secondary-color); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); opacity: 0; animation: hexFlash 4s infinite; }
-        @keyframes hexFlash { 0%, 90% { opacity: 0; } 92% { opacity: 0.15; } 94% { opacity: 0; } }
+        .hex-flash { position: absolute; width: 60px; height: 104px; background: var(--secondary-color); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); opacity: 0; animation: hexFlash 4s infinite; box-shadow: 0 0 20px var(--secondary-color); }
+        @keyframes hexFlash { 0%, 90% { opacity: 0; } 92% { opacity: 0.3; } 94% { opacity: 0; } }
         
+        /* LCL 粒子 - 增加光晕 */
         #particles-container { position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden; perspective: 1000px; }
         .particle { position: absolute; background: var(--secondary-color); opacity: 0; bottom: -50px; transition: background-color 0.3s; }
-        .particle.bubble { border-radius: 50%; box-shadow: 0 0 4px var(--secondary-color); }
-        .particle.bit { height: 1px !important; box-shadow: 0 0 2px var(--secondary-color); }
+        .particle.bubble { border-radius: 50%; box-shadow: 0 0 8px var(--secondary-color); }
+        .particle.bit { height: 1px !important; box-shadow: 0 0 4px var(--secondary-color); }
         @keyframes floatUp { 0% { transform: translateY(0) scale(var(--p-scale)); opacity: 0; } 15% { opacity: var(--p-opacity); } 85% { opacity: var(--p-opacity); } 100% { transform: translateY(-120vh) scale(var(--p-scale)); opacity: 0; } }
 
-        .scan-bar { position: fixed; top: -10%; left: 0; width: 100%; height: 15px; background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent); opacity: 0; box-shadow: 0 0 30px var(--secondary-color); z-index: 40; pointer-events: none; animation: scanDown 60s linear infinite; }
-        @keyframes scanDown { 0% { top: -10%; opacity: 0; } 0.1% { opacity: 0.3; } 5% { top: 110%; opacity: 0.3; } 5.1% { top: 110%; opacity: 0; } 100% { top: 110%; opacity: 0; } }
+        .scan-bar { position: fixed; top: -10%; left: 0; width: 100%; height: 20px; background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent); opacity: 0; box-shadow: 0 0 40px var(--secondary-color); z-index: 40; pointer-events: none; animation: scanDown 60s linear infinite; }
+        @keyframes scanDown { 0% { top: -10%; opacity: 0; } 0.1% { opacity: 0.4; } 5% { top: 110%; opacity: 0.4; } 5.1% { top: 110%; opacity: 0; } 100% { top: 110%; opacity: 0; } }
 
-        .cockpit-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 90; background: radial-gradient(circle at center, transparent 65%, rgba(0,0,0,0.5) 100%); box-shadow: inset 0 0 80px rgba(0,0,0,0.3); }
-        .cockpit-reticle { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; height: 600px; border: 1px dashed var(--secondary-color); border-radius: 50%; opacity: 0.05; pointer-events: none; z-index: -1; animation: spin-slower 120s linear infinite; transition: border-color 0.3s; }
-        .cockpit-side-meter { position: fixed; top: 20%; bottom: 20%; width: 4px; z-index: 80; pointer-events: none; background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent); opacity: 0.2; transition: background 0.3s; }
+        .cockpit-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 90; background: radial-gradient(circle at center, transparent 65%, rgba(0,0,0,0.5) 100%); box-shadow: inset 0 0 100px rgba(0,0,0,0.4); }
+        .cockpit-reticle { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 700px; height: 700px; border: 1px dashed var(--secondary-color); border-radius: 50%; opacity: 0.08; pointer-events: none; z-index: -1; animation: spin-slower 120s linear infinite; transition: border-color 0.3s; }
+        .cockpit-side-meter { position: fixed; top: 20%; bottom: 20%; width: 4px; z-index: 80; pointer-events: none; background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent); opacity: 0.25; transition: background 0.3s; }
         .meter-left { left: 40px; } .meter-right { right: 40px; }
         
         .emergency-overlay { display: none; position: fixed; inset: 0; z-index: 1000; background: transparent; align-items: center; justify-content: center; pointer-events: none; }
-        .emergency-hex { width: 400px; height: 460px; background: rgba(255, 0, 0, 0.05); border: 6px solid #ff0000; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: 0 0 40px #ff0000, inset 0 0 20px #ff0000; color: #ff0000; animation: pulse-slow 4s ease-in-out infinite; }
+        .emergency-hex { width: 400px; height: 460px; background: rgba(255, 0, 0, 0.05); border: 6px solid #ff0000; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: 0 0 50px #ff0000, inset 0 0 20px #ff0000; color: #ff0000; animation: pulse-slow 4s ease-in-out infinite; }
         @keyframes pulse-slow { 0%, 100% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(1.02); opacity: 1; } }
-        .emergency-text-big { font-family: 'Times New Roman', serif; font-weight: 900; font-size: 3rem; letter-spacing: 0.1em; transform: scaleY(1.2); margin-bottom: 1rem; text-shadow: 0 0 10px #ff0000; }
+        .emergency-text-big { font-family: 'Times New Roman', serif; font-weight: 900; font-size: 3rem; letter-spacing: 0.1em; transform: scaleY(1.2); margin-bottom: 1rem; text-shadow: 0 0 15px #ff0000; }
         .emergency-text-sub { font-family: 'Arial Black', sans-serif; font-size: 1rem; letter-spacing: 0.5em; border-top: 2px solid #ff0000; border-bottom: 2px solid #ff0000; padding: 0.5rem 0; }
 
         #cursor-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; background-image: radial-gradient(circle var(--cursor-size) at var(--mouse-x) var(--mouse-y), var(--grid-color) 0%, transparent 60%); transition: --cursor-size 0.1s ease; will-change: background-image; mix-blend-mode: screen; }
@@ -110,56 +110,51 @@
         @keyframes cyberSwap { 0% { opacity: 1; transform: translateX(0) skewX(0deg); filter: hue-rotate(0deg); } 20% { opacity: 0.8; transform: translateX(-5px) skewX(10deg); filter: hue-rotate(90deg) contrast(1.5); clip-path: inset(10% 0 60% 0); } 40% { opacity: 0.9; transform: translateX(5px) skewX(-10deg); filter: hue-rotate(-90deg) contrast(1.5); clip-path: inset(50% 0 20% 0); } 60% { opacity: 0.8; transform: translateX(-2px) skewX(5deg); filter: hue-rotate(45deg); clip-path: inset(0 0 80% 0); } 80% { opacity: 0.9; transform: translateX(0) skewX(0deg); filter: hue-rotate(0deg); clip-path: none; } 100% { opacity: 1; transform: translateX(0) skewX(0deg); filter: hue-rotate(0deg); } }
         .cyber-swap-active { animation: cyberSwap 0.4s steps(5) forwards; }
         
-        /* --- 核心 UI 卡片样式 (2D Glass + Glow) --- */
+        /* --- 增强版 UI 卡片样式 --- */
         .eva-card {
             background: var(--surface-color);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px); /* 增强玻璃感 */
+            border: 1px solid rgba(255, 255, 255, 0.15);
             border-left: 2px solid var(--secondary-color);
             position: relative;
             transition: box-shadow 0.3s ease, border-color 0.3s ease;
-            /* 简单的几何切角 */
             clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
         }
-        /* 内部高光层 */
         .eva-glare {
             position: absolute; inset: 0;
-            background: radial-gradient(circle at var(--mouse-x) var(--mouse-y), rgba(255,255,255,0.15) 0%, transparent 50%);
+            background: radial-gradient(circle at var(--mouse-x) var(--mouse-y), rgba(255,255,255,0.2) 0%, transparent 50%);
             pointer-events: none; opacity: 0; transition: opacity 0.3s;
             mix-blend-mode: overlay;
         }
         .eva-card:hover .eva-glare { opacity: 1; }
-        
         .eva-card:hover {
-            box-shadow: 0 0 25px rgba(var(--secondary-color), 0.2), inset 0 0 10px rgba(var(--secondary-color), 0.1);
-            border-color: rgba(255,255,255,0.2);
+            box-shadow: 0 0 30px rgba(var(--secondary-color), 0.3), inset 0 0 10px rgba(var(--secondary-color), 0.1);
+            border-color: rgba(255,255,255,0.3);
             z-index: 10;
         }
-        
-        /* 装饰线 */
-        .eva-card::before { content: ''; position: absolute; top: 0; right: 0; width: 15px; height: 15px; border-top: 1px solid var(--secondary-color); border-right: 1px solid var(--secondary-color); opacity: 0.7; }
-        .eva-card::after { content: ''; position: absolute; bottom: 0; left: 0; width: 15px; height: 15px; border-bottom: 1px solid var(--secondary-color); border-left: 1px solid var(--secondary-color); opacity: 0.7; }
+        .eva-card::before { content: ''; position: absolute; top: 0; right: 0; width: 15px; height: 15px; border-top: 2px solid var(--secondary-color); border-right: 2px solid var(--secondary-color); opacity: 0.9; box-shadow: 2px -2px 5px var(--secondary-color); }
+        .eva-card::after { content: ''; position: absolute; bottom: 0; left: 0; width: 15px; height: 15px; border-bottom: 2px solid var(--secondary-color); border-left: 2px solid var(--secondary-color); opacity: 0.9; box-shadow: -2px 2px 5px var(--secondary-color); }
 
-        .eva-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; margin-bottom: 16px; font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.1em; color: var(--secondary-color); }
-        .eva-header-deco { width: 4px; height: 4px; background: var(--primary-color); margin-right: 6px; }
+        .eva-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 8px; margin-bottom: 16px; font-family: 'JetBrains Mono'; font-size: 11px; letter-spacing: 0.1em; color: var(--secondary-color); text-shadow: 0 0 5px var(--secondary-color); }
+        .eva-header-deco { width: 4px; height: 4px; background: var(--primary-color); margin-right: 6px; box-shadow: 0 0 5px var(--primary-color); }
 
         /* AI Card Specifics */
-        .ai-scanlines { position: absolute; inset: 0; pointer-events: none; z-index: 10; background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2)); background-size: 100% 4px; opacity: 0.4; }
+        .ai-scanlines { position: absolute; inset: 0; pointer-events: none; z-index: 10; background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2)); background-size: 100% 4px; opacity: 0.5; }
         @keyframes ai-talking-glitch { 0% { transform: translate(0); filter: hue-rotate(0deg); } 20% { transform: translate(-2px, 1px); filter: hue-rotate(10deg) brightness(1.2); } 40% { transform: translate(1px, -1px); filter: hue-rotate(-10deg); } 60% { transform: translate(-1px, -1px); filter: hue-rotate(5deg) opacity(0.9); } 80% { transform: translate(2px, 1px); filter: hue-rotate(-5deg); } 100% { transform: translate(0); filter: hue-rotate(0deg); } }
         .ai-talking .ai-avatar-img { animation: ai-talking-glitch 0.2s infinite; }
 
         /* Bottom Strip */
-        .eva-warning-strip { position: fixed; bottom: 0; left: 0; width: 100%; height: 28px; z-index: 999; pointer-events: none; background: repeating-linear-gradient(45deg, #000, #000 10px, var(--secondary-color) 10px, var(--secondary-color) 20px); border-top: 2px solid #000; display: flex; align-items: center; box-shadow: 0 -4px 10px rgba(0,0,0,0.5); opacity: 0.9; animation: hazardScroll 2s linear infinite; }
-        .warning-content-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; }
-        .warning-marquee { white-space: nowrap; display: flex; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #fff; font-weight: 900; letter-spacing: 0.15em; text-shadow: 0 0 4px var(--secondary-color); animation: marquee 30s linear infinite; padding-left: 100vw; }
+        .eva-warning-strip { position: fixed; bottom: 0; left: 0; width: 100%; height: 28px; z-index: 999; pointer-events: none; background: repeating-linear-gradient(45deg, #000, #000 10px, var(--secondary-color) 10px, var(--secondary-color) 20px); border-top: 2px solid #000; display: flex; align-items: center; box-shadow: 0 -4px 15px rgba(0,0,0,0.6); opacity: 0.95; animation: hazardScroll 2s linear infinite; }
+        .warning-content-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; }
+        .warning-marquee { white-space: nowrap; display: flex; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #fff; font-weight: 900; letter-spacing: 0.15em; text-shadow: 0 0 8px var(--secondary-color); animation: marquee 30s linear infinite; padding-left: 100vw; }
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
-        .magi-font { font-family: 'Space Grotesk', sans-serif; font-weight: 900; letter-spacing: -0.05em; }
-        .theme-btn { width: 30px; height: 6px; transform: skewX(-30deg); cursor: pointer; border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s; margin-right: 4px; }
+        .magi-font { font-family: 'Space Grotesk', sans-serif; font-weight: 900; letter-spacing: -0.05em; text-shadow: 2px 2px 0px rgba(0,0,0,0.5); }
+        .theme-btn { width: 30px; height: 6px; transform: skewX(-30deg); cursor: pointer; border: 1px solid rgba(255,255,255,0.3); transition: all 0.3s; margin-right: 4px; }
         .theme-btn.active { border-color: white; box-shadow: 0 0 15px currentColor; background-color: currentColor !important; }
-        .hud-corner { position: fixed; width: 40px; height: 40px; border: 2px solid var(--secondary-color); z-index: 50; pointer-events: none; opacity: 0.6; } 
+        .hud-corner { position: fixed; width: 40px; height: 40px; border: 2px solid var(--secondary-color); z-index: 50; pointer-events: none; opacity: 0.7; box-shadow: 0 0 10px var(--secondary-color); } 
         .hud-tl { top: 20px; left: 20px; border-right: 0; border-bottom: 0; } .hud-tr { top: 20px; right: 20px; border-left: 0; border-bottom: 0; } .hud-bl { bottom: 20px; left: 20px; border-right: 0; border-top: 0; } .hud-br { bottom: 20px; right: 20px; border-left: 0; border-top: 0; }
-        .crt-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; pointer-events: none; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 2px, 6px 100%; opacity: 0.2; mix-blend-mode: overlay; }
+        .crt-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; pointer-events: none; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 2px, 6px 100%; opacity: 0.15; mix-blend-mode: overlay; }
         
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: var(--bg-color); }
@@ -176,6 +171,7 @@
         </div>
     </div>
 
+    <!-- 视觉增强 -->
     <div class="cockpit-overlay"></div>
     <div class="cockpit-reticle"></div>
     <div class="cockpit-side-meter meter-left"></div>
@@ -183,11 +179,27 @@
     <div class="crt-overlay"></div>
     <div class="scan-bar"></div>
     <div id="particles-container"></div>
-    <div class="hex-bg"></div>
-    <div class="hex-flash" style="top: 20%; left: 10%;"></div>
-    <div class="hex-flash" style="top: 60%; right: 15%; animation-delay: 2s;"></div>
+    
+    <!-- 背景 -->
+    <div id="bg-layer">
+        <!-- SVG MAGI Rings - Enhanced Opacity & Shadow -->
+        <svg id="magi-rings" viewBox="0 0 800 800" fill="none" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120vmax] h-[120vmax] pointer-events-none opacity-20 transition-opacity duration-500" style="filter: drop-shadow(0 0 10px var(--secondary-color));">
+            <g stroke="var(--secondary-color)" stroke-width="1.5">
+                <circle cx="400" cy="400" r="150" stroke-dasharray="20 10" class="animate-[spin_25s_linear_infinite]" />
+                <circle cx="400" cy="400" r="250" stroke-dasharray="40 20" class="animate-[spin_40s_linear_infinite_reverse]" stroke-opacity="0.8" />
+                <circle cx="400" cy="400" r="350" stroke-dasharray="10 10" class="animate-[spin_55s_linear_infinite]" stroke-opacity="0.6" />
+                <path d="M400 100 L400 700 M100 400 L700 400" stroke-opacity="0.3" />
+                <path d="M187 187 L613 613 M613 187 L187 613" stroke-opacity="0.3" />
+            </g>
+        </svg>
+        <div class="hex-bg"></div>
+        <div class="hex-flash" style="top: 20%; left: 10%;"></div>
+        <div class="hex-flash" style="top: 60%; right: 15%; animation-delay: 2s;"></div>
+    </div>
+    
     <div id="cursor-glow"></div>
     
+    <!-- 警戒条 -->
     <div class="eva-warning-strip">
         <div class="warning-content-overlay">
             <div class="warning-marquee">
@@ -203,6 +215,7 @@
         </div>
     </div>
 
+    <!-- HUD -->
     <div class="hud-corner hud-tl"></div>
     <div class="hud-corner hud-tr"></div>
     <div class="hud-corner hud-bl"></div>
@@ -212,12 +225,10 @@
         <source src="./audio/bgm.mp3" type="audio/mp3">
     </audio>
 
-    <div id="sonic-deck" class="fixed bottom-8 left-8 z-50 flex items-center gap-3 bg-black/60 border border-secondary p-2 pr-4 group hover:shadow-[0_0_20px_var(--secondary-color)] transition-all duration-300 backdrop-blur-md" style="clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);">
+    <div id="sonic-deck" class="fixed bottom-8 left-8 z-50 flex items-center gap-3 bg-black/60 border border-secondary p-2 pr-4 group hover:shadow-[0_0_30px_var(--secondary-color)] transition-all duration-300 backdrop-blur-md eva-card" style="clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);">
         <canvas id="audio-visualizer" class="absolute bottom-0 left-0 w-full h-full opacity-30 pointer-events-none"></canvas>
-        <!-- Music toggle container with explicit ID to fix null reference -->
         <div id="music-trigger" class="w-12 h-12 flex items-center justify-center cursor-pointer bg-secondary/10 hover:bg-secondary/20 transition-colors border border-secondary/30" onclick="toggleMusic()">
             <div id="deck-wave" class="absolute border border-secondary w-full h-full animate-ping hidden"></div>
-            <!-- Pre-render both icons and toggle visibility -->
             <i id="icon-disc" data-lucide="disc" class="w-6 h-6 text-secondary animate-spin-slow"></i>
             <i id="icon-pause" data-lucide="pause" class="w-6 h-6 text-secondary hidden"></i>
         </div>
@@ -285,21 +296,21 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-16">
             <aside class="lg:col-span-4 space-y-10 lg:sticky lg:top-32 h-fit">
                 
-                <!-- AI CARD (EVA Style) -->
-                <!-- Fix: Moved bubble outside of the clipped container -->
+                <!-- AI CARD (Full EVA Style) -->
+                <!-- 移动气泡到容器外部，防止被 hidden 遮挡 -->
                 <div class="relative z-50">
-                    <div id="ai-speech-bubble" class="hidden absolute -top-24 left-0 w-full z-50 animate-pop-in pointer-events-none">
+                     <div id="ai-speech-bubble" class="hidden absolute -top-24 left-0 w-full z-50 animate-pop-in pointer-events-none">
                         <div class="bg-bg/95 border border-primary p-4 relative shadow-[4px_4px_0_var(--secondary-color)]">
                              <p id="ai-speech-text" class="text-xs font-bold font-mono text-primary leading-relaxed"></p>
                              <div class="absolute -bottom-2 left-8 w-4 h-4 bg-bg border-r border-b border-primary transform rotate-45"></div>
                         </div>
                     </div>
-
+                    
                     <div id="ai-card" class="eva-card ai-card-container cursor-pointer group" onclick="triggerAiSpeech()">
                         <div class="eva-glare"></div>
                         <div class="ai-scanlines"></div>
                         <div class="w-full relative aspect-[4/5] overflow-hidden bg-black/40">
-                            <img src="./images/ai-assistant.jpg" onerror="this.style.display='none'" alt="AI" class="ai-avatar-img w-full h-full object-cover opacity-90 mix-blend-lighten group-hover:scale-105 transition-transform duration-500 filter contrast-125">
+                            <img src="./images/ai-assistant.jpg" onerror="this.style.display='none'" alt="AI" class="ai-avatar-img w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity mix-blend-lighten filter contrast-125">
                             <div class="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent"></div>
                             <div class="absolute top-2 right-2 text-[9px] font-mono text-black bg-secondary px-1 font-bold">LIVE</div>
                         </div>
@@ -504,8 +515,8 @@
         function createParticles() {
             const container = document.getElementById('particles-container');
             if (!container) return;
-            for (let i = 0; i < 50; i++) spawnParticle(container, true);
-            setInterval(() => spawnParticle(container, false), 500);
+            for (let i = 0; i < 150; i++) spawnParticle(container, true);
+            setInterval(() => spawnParticle(container, false), 150);
         }
         
         function spawnParticle(container, initial) {
@@ -518,11 +529,11 @@
             p.style.height = isBit ? `${size}px` : `${size}px`;
             p.style.left = `${Math.random() * 100}vw`;
             const depth = Math.random();
-            p.style.setProperty('--p-opacity', depth * 0.5 + 0.1);
+            p.style.setProperty('--p-opacity', depth * 0.5 + 0.3);
             p.style.setProperty('--p-scale', depth * 0.5 + 0.5);
-            if (depth < 0.5) p.style.filter = `blur(${2 * (1-depth)}px)`;
-            if (initial) { p.style.bottom = `${Math.random() * 100}vh`; p.style.opacity = depth * 0.5 + 0.1; }
-            const duration = Math.random() * 20 + 10;
+            if (depth < 0.5) p.style.filter = `blur(${3 * (1-depth)}px)`;
+            if (initial) { p.style.bottom = `${Math.random() * 100}vh`; p.style.opacity = depth * 0.5 + 0.3; }
+            const duration = Math.random() * 15 + 10;
             p.style.animation = `floatUp ${duration}s linear infinite`;
             p.style.animationDelay = `-${Math.random() * duration}s`;
             container.appendChild(p);
