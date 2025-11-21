@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WH1TE_LOG // HUMAN_INSTRUMENTALITY</title>
+    <title>WH1TE_LOG // HUMAN_INSTRUMENTALITY_V3</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 EVA 风格字体：Serif 用于 EMERGENCY，Mono 用于数据 -->
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@300;500;700;900&family=Noto+Serif+SC:wght@900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@300;500;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <script>
@@ -17,7 +16,6 @@
                     fontFamily: {
                         sans: ['"Space Grotesk"', '"Noto Sans JP"', 'sans-serif'],
                         mono: ['"JetBrains Mono"', '"Noto Sans JP"', 'monospace'],
-                        serif: ['"Noto Serif SC"', 'serif'], // 用于 EMERGENCY
                     },
                     colors: {
                         primary: 'var(--primary-color)',
@@ -36,27 +34,16 @@
                         'hazard-scroll': 'hazardScroll 2s linear infinite',
                         'marquee': 'marquee 20s linear infinite',
                         'red-alert': 'redAlert 2s ease-in-out infinite',
-                        'hologram': 'hologram 2s infinite alternate', // 新增全息抖动
+                        'typing': 'typing 3.5s steps(40, end)',
                     },
                     keyframes: {
                         scan: { '0%': { backgroundPosition: '0 0' }, '100%': { backgroundPosition: '0 100%' } },
                         hazardScroll: { '0%': { backgroundPosition: '0 0' }, '100%': { backgroundPosition: '40px 0' } },
                         magiPulse: { '0%, 100%': { opacity: 0.5, boxShadow: '0 0 15px var(--secondary-color)' }, '50%': { opacity: 1, boxShadow: '0 0 30px var(--secondary-color)' } },
                         popIn: { '0%': { opacity: 0, transform: 'scale(0.95) translateY(10px)' }, '100%': { opacity: 1, transform: 'scale(1) translateY(0)' } },
-                        cyberSwap: { 
-                            '0%': { opacity: 0.8, transform: 'translateX(0)' },
-                            '25%': { opacity: 0.6, transform: 'translateX(-5px) skewX(10deg)' },
-                            '50%': { opacity: 0.9, transform: 'translateX(5px) skewX(-10deg)' },
-                            '75%': { opacity: 0.4, transform: 'translateX(0)' }, 
-                            '100%': { opacity: 0.8, transform: 'translateX(0)' } 
-                        },
                         marquee: { '0%': { transform: 'translateX(100%)' }, '100%': { transform: 'translateX(-100%)' } },
-                        redAlert: { '0%, 100%': { boxShadow: 'inset 0 0 30px rgba(255,0,0,0.3)' }, '50%': { boxShadow: 'inset 0 0 100px rgba(255,0,0,0.6)' } },
-                        hologram: {
-                            '0%': { opacity: 0.8, filter: 'brightness(100%) blur(0px)' },
-                            '50%': { opacity: 0.9, filter: 'brightness(120%) blur(1px)' },
-                            '100%': { opacity: 0.7, filter: 'brightness(90%) blur(0px)' }
-                        }
+                        redAlert: { '0%, 100%': { boxShadow: 'inset 0 0 30px rgba(255,0,0,0.3)' }, '50%': { boxShadow: 'inset 0 0 80px rgba(255,0,0,0.6)' } },
+                        typing: { '0%': { width: '0' }, '100%': { width: '100%' } }
                     }
                 }
             }
@@ -68,173 +55,170 @@
             --mouse-x: 50%; --mouse-y: 50%; --cursor-size: 800px;
             --primary-color: #b15dff; --secondary-color: #39ff14; 
             --bg-color: #0f0518;
-            --surface-color: rgba(20, 10, 30, 0.4); 
-            --grid-color: rgba(125, 42, 232, 0.2);
-            --hue-rotate: 260deg;
+            --surface-color: rgba(20, 10, 30, 0.6); 
+            --grid-color: rgba(125, 42, 232, 0.15); 
         }
         
-        [data-theme="unit-02"] { --primary-color: #ffae00; --secondary-color: #ff0000; --bg-color: #140202; --surface-color: rgba(40, 10, 10, 0.4); --grid-color: rgba(255, 0, 0, 0.2); --hue-rotate: 0deg; }
-        [data-theme="unit-00"] { --primary-color: #ffffff; --secondary-color: #0091ff; --bg-color: #020a14; --surface-color: rgba(10, 20, 40, 0.4); --grid-color: rgba(0, 145, 255, 0.2); --hue-rotate: 180deg; }
-        [data-theme="unit-08"] { --primary-color: #ff5cab; --secondary-color: #50c878; --bg-color: #14020d; --surface-color: rgba(40, 10, 30, 0.4); --grid-color: rgba(255, 0, 153, 0.2); --hue-rotate: 300deg; }
+        [data-theme="unit-02"] { --primary-color: #ffae00; --secondary-color: #ff0000; --bg-color: #140202; --surface-color: rgba(40, 10, 10, 0.6); --grid-color: rgba(255, 0, 0, 0.15); }
+        [data-theme="unit-00"] { --primary-color: #ffffff; --secondary-color: #0091ff; --bg-color: #020a14; --surface-color: rgba(10, 20, 40, 0.6); --grid-color: rgba(0, 145, 255, 0.15); }
+        [data-theme="unit-08"] { --primary-color: #ff5cab; --secondary-color: #50c878; --bg-color: #14020d; --surface-color: rgba(40, 10, 30, 0.6); --grid-color: rgba(255, 0, 153, 0.15); }
 
-        /* EMERGENCY MODE STYLE */
         body.emergency-mode {
-            --primary-color: #ff0000 !important; --secondary-color: #ff0000 !important; --bg-color: #000000 !important;
-            --surface-color: rgba(40, 0, 0, 0.6) !important; --grid-color: rgba(255, 0, 0, 0.4) !important; --hue-rotate: 0deg !important;
+            --primary-color: #ff0000 !important; --secondary-color: #ff0000 !important; --bg-color: #0a0000 !important;
+            --surface-color: rgba(40, 0, 0, 0.5) !important; --grid-color: rgba(255, 0, 0, 0.3) !important;
         }
-        /* 紧急模式下背景变红 */
-        body.emergency-mode .hex-bg { 
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ff0000' stroke-opacity='0.4' stroke-width='2'/%3E%3C/svg%3E"); 
+        body.emergency-mode .hex-bg { animation: none; background-image: url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ff0000' stroke-opacity='0.4' stroke-width='2'/%3E%3C/svg%3E"); }
+        body.emergency-mode .emergency-overlay { display: flex !important; animation: red-alert 2s ease-in-out infinite; }
+
+        body { 
+            background-color: var(--bg-color); 
+            min-height: 100vh; 
+            color: white; 
+            transition: background-color 0.3s ease, color 0.3s ease; 
+            overflow-x: hidden; 
+            cursor: crosshair; 
         }
-        /* 紧急模式下显示警告层 */
-        body.emergency-mode .emergency-overlay { display: flex !important; animation: red-alert 1s ease-in-out infinite; }
 
-        body { background-color: var(--bg-color); min-height: 100vh; color: white; transition: background-color 0.3s ease, color 0.3s ease; overflow-x: hidden; cursor: crosshair; background: radial-gradient(circle at 50% 40%, rgba(40,40,40,0.2) 0%, var(--bg-color) 90%); }
+        /* --- 矩阵代码雨 Canvas --- */
+        #matrix-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -3; opacity: 0.15; pointer-events: none;
+        }
 
-        /* --- EFFECTS --- */
-        .hex-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -2; background-image: url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ffffff' stroke-opacity='0.1' stroke-width='1'/%3E%3C/svg%3E"); background-size: 60px 104px; mask-image: linear-gradient(to bottom, black 30%, transparent 90%); animation: bg-scroll 60s linear infinite; transition: background-image 0.3s; }
+        /* --- 增强版背景特效 --- */
+        .hex-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -2; background-image: url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ffffff' stroke-opacity='0.12' stroke-width='1'/%3E%3C/svg%3E"); background-size: 60px 104px; mask-image: linear-gradient(to bottom, black 20%, transparent 90%); animation: bg-scroll 60s linear infinite; transition: background-image 0.3s; }
         @keyframes bg-scroll { 0% { background-position: 0 0; } 100% { background-position: 60px 104px; } }
+        .hex-flash { position: absolute; width: 60px; height: 104px; background: var(--secondary-color); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); opacity: 0; animation: hexFlash 4s infinite; box-shadow: 0 0 20px var(--secondary-color); }
+        @keyframes hexFlash { 0%, 90% { opacity: 0; } 92% { opacity: 0.3; } 94% { opacity: 0; } }
         
-        /* 偶尔亮起的背景警告 (Background Alarm) */
-        @keyframes background-alarm-flash {
-            0%, 90% { opacity: 0; filter: grayscale(100%); }
-            92% { opacity: 0.6; filter: grayscale(0%); } /* 瞬间亮起 */
-            95% { opacity: 0.8; filter: hue-rotate(0deg) saturate(300%); } /* 变红 */
-            96% { opacity: 0; }
-            100% { opacity: 0; }
-        }
-        .bg-alarm-layer {
-            position: fixed; inset: 0; z-index: -1; pointer-events: none;
-            background: radial-gradient(circle, rgba(255,0,0,0.2) 0%, transparent 70%);
-            mix-blend-mode: overlay;
-            animation: background-alarm-flash 45s infinite; /* 45秒触发一次 */
-        }
-
-        .hex-flash { position: absolute; width: 60px; height: 104px; background: var(--secondary-color); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); opacity: 0; animation: hexFlash 4s infinite; box-shadow: 0 0 15px var(--secondary-color); }
-        @keyframes hexFlash { 0%, 90% { opacity: 0; } 92% { opacity: 0.4; } 94% { opacity: 0; } }
-        
+        /* LCL 粒子 - 增加光晕 */
         #particles-container { position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden; perspective: 1000px; }
         .particle { position: absolute; background: var(--secondary-color); opacity: 0; bottom: -50px; transition: background-color 0.3s; }
-        .particle.bubble { border-radius: 50%; box-shadow: 0 0 6px var(--secondary-color); }
+        .particle.bubble { border-radius: 50%; box-shadow: 0 0 8px var(--secondary-color); }
         .particle.bit { height: 1px !important; box-shadow: 0 0 4px var(--secondary-color); }
-        @keyframes floatUp { 0% { transform: translateY(0) scale(var(--p-scale)); opacity: 0; } 15% { opacity: var(--p-opacity); } 85% { opacity: var(--p-opacity); } 100% { transform: translateY(-130vh) scale(var(--p-scale)); opacity: 0; } }
+        @keyframes floatUp { 0% { transform: translateY(0) scale(var(--p-scale)); opacity: 0; } 15% { opacity: var(--p-opacity); } 85% { opacity: var(--p-opacity); } 100% { transform: translateY(-120vh) scale(var(--p-scale)); opacity: 0; } }
 
-        .scan-bar { position: fixed; top: -10%; left: 0; width: 100%; height: 15px; background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent); opacity: 0; box-shadow: 0 0 40px var(--secondary-color); z-index: 40; pointer-events: none; animation: scanDown 60s linear infinite; }
-        @keyframes scanDown { 0% { top: -10%; opacity: 0; } 0.1% { opacity: 0.4; } 5% { top: 110%; opacity: 0.4; } 5.1% { top: 110%; opacity: 0; } 100% { top: 110%; opacity: 0; } }
+        .scan-bar { position: fixed; top: -10%; left: 0; width: 100%; height: 20px; background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent); opacity: 0; box-shadow: 0 0 40px var(--secondary-color); z-index: 40; pointer-events: none; animation: scanDown 10s linear infinite; }
+        @keyframes scanDown { 0% { top: -10%; opacity: 0; } 0.5% { opacity: 0.4; } 50% { top: 110%; opacity: 0.4; } 50.1% { top: 110%; opacity: 0; } 100% { top: 110%; opacity: 0; } }
 
-        .cockpit-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 90; background: radial-gradient(circle at center, transparent 60%, rgba(0,0,0,0.6) 100%); box-shadow: inset 0 0 100px rgba(0,0,0,0.4); }
+        /* HUD & Cockpit */
+        .cockpit-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 90; background: radial-gradient(circle at center, transparent 65%, rgba(0,0,0,0.6) 100%); box-shadow: inset 0 0 100px rgba(0,0,0,0.4); }
         .cockpit-reticle { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 700px; height: 700px; border: 1px dashed var(--secondary-color); border-radius: 50%; opacity: 0.08; pointer-events: none; z-index: -1; animation: spin-slower 120s linear infinite; transition: border-color 0.3s; }
-        .cockpit-side-meter { position: fixed; top: 20%; bottom: 20%; width: 4px; z-index: 80; pointer-events: none; background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent); opacity: 0.3; transition: background 0.3s; }
+        .cockpit-side-meter { position: fixed; top: 20%; bottom: 20%; width: 4px; z-index: 80; pointer-events: none; background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent); opacity: 0.25; transition: background 0.3s; }
         .meter-left { left: 40px; } .meter-right { right: 40px; }
         
-        /* 紧急覆盖层 (NERV Style) */
-        .emergency-overlay { display: none; position: fixed; inset: 0; z-index: 1000; background: transparent; align-items: center; justify-content: center; pointer-events: none; }
-        .emergency-hex { 
-            width: 500px; height: 580px; 
-            background: rgba(0, 0, 0, 0.8); 
-            border: 10px solid #ff0000; 
-            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; 
-            box-shadow: 0 0 60px #ff0000, inset 0 0 30px #ff0000; 
-            color: #ff0000; 
-            /* 稳定的脉冲 */
-            animation: pulse-alert 2s ease-in-out infinite;
-        }
-        @keyframes pulse-alert { 0%, 100% { opacity: 0.9; transform: scale(1); } 50% { opacity: 1; transform: scale(1.02); } }
+        /* Emergency Mode */
+        .emergency-overlay { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; pointer-events: none; backdrop-filter: blur(5px); }
+        .emergency-hex { width: 400px; height: 460px; background: rgba(255, 0, 0, 0.1); border: 6px solid #ff0000; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: 0 0 80px #ff0000, inset 0 0 30px #ff0000; color: #ff0000; animation: pulse-slow 4s ease-in-out infinite; }
+        @keyframes pulse-slow { 0%, 100% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(1.05); opacity: 1; } }
+        .emergency-text-big { font-family: 'Times New Roman', serif; font-weight: 900; font-size: 4rem; letter-spacing: 0.1em; transform: scaleY(1.2); margin-bottom: 1rem; text-shadow: 0 0 20px #ff0000; animation: glitch-text 0.3s infinite; }
         
-        .emergency-text-big { 
-            font-family: 'Noto Serif SC', serif; 
-            font-weight: 900; font-size: 5rem; letter-spacing: 0.05em; transform: scaleY(1.2); margin-bottom: 1rem; text-shadow: 0 0 20px #ff0000; 
-        }
-        .emergency-text-sub { 
-            font-family: 'JetBrains Mono', sans-serif; 
-            font-size: 1.5rem; letter-spacing: 0.5em; border-top: 4px solid #ff0000; border-bottom: 4px solid #ff0000; padding: 0.5rem 2rem; 
-            background: #ff0000; color: black; font-weight: bold;
-        }
-
         #cursor-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; background-image: radial-gradient(circle var(--cursor-size) at var(--mouse-x) var(--mouse-y), var(--grid-color) 0%, transparent 60%); transition: --cursor-size 0.1s ease; will-change: background-image; mix-blend-mode: screen; }
-        .hero-character-container { position: fixed; right: 0; top: 0; bottom: 0; z-index: 0; width: 50vw; max-width: 900px; height: 100vh; display: flex; align-items: flex-start; justify-content: flex-end; pointer-events: none; overflow: hidden; }
-        .hero-character-image { width: 100%; height: 100%; object-fit: cover; object-position: center top; filter: none; mix-blend-mode: normal; opacity: 1; background: transparent !important; will-change: transform, opacity, clip-path, filter; transition: opacity 0.5s ease; }
-        @keyframes cyberSwap { 0% { opacity: 1; transform: translateX(0) skewX(0deg); filter: hue-rotate(0deg); } 20% { opacity: 0.8; transform: translateX(-5px) skewX(10deg); filter: hue-rotate(90deg) contrast(1.5); clip-path: inset(10% 0 60% 0); } 40% { opacity: 0.9; transform: translateX(5px) skewX(-10deg); filter: hue-rotate(-90deg) contrast(1.5); clip-path: inset(50% 0 20% 0); } 60% { opacity: 0.8; transform: translateX(-2px) skewX(5deg); filter: hue-rotate(45deg); clip-path: inset(0 0 80% 0); } 80% { opacity: 0.9; transform: translateX(0) skewX(0deg); filter: hue-rotate(0deg); clip-path: none; } 100% { opacity: 1; transform: translateX(0) skewX(0deg); filter: hue-rotate(0deg); } }
-        .cyber-swap-active { animation: cyberSwap 0.4s steps(5) forwards; }
         
-        /* --- UI 卡片 (EVA GLASS) --- */
+        /* Hero Character & Glitch FX */
+        .hero-character-container { position: fixed; right: -5%; top: 0; bottom: 0; z-index: 0; width: 60vw; max-width: 1000px; height: 100vh; display: flex; align-items: flex-start; justify-content: flex-end; pointer-events: none; overflow: hidden; mix-blend-mode: screen; }
+        .hero-character-image { width: 100%; height: 100%; object-fit: cover; object-position: center top; filter: brightness(0.8) contrast(1.1); opacity: 0.9; will-change: transform, opacity, clip-path, filter; transition: opacity 0.5s ease; }
+        
+        /* Cyber Glitch Animation */
+        @keyframes cyberSwap { 
+            0% { opacity: 1; transform: translateX(0) skewX(0deg); filter: hue-rotate(0deg); clip-path: inset(0 0 0 0); } 
+            5% { opacity: 0.8; transform: translateX(-10px) skewX(20deg); filter: hue-rotate(90deg) contrast(2); clip-path: inset(10% 0 60% 0); } 
+            10% { opacity: 0.9; transform: translateX(10px) skewX(-10deg); filter: hue-rotate(-90deg) contrast(1.5); clip-path: inset(40% 0 40% 0); } 
+            15% { opacity: 0.4; transform: translateX(-5px) skewX(5deg); filter: hue-rotate(180deg); clip-path: inset(80% 0 5% 0); } 
+            20% { opacity: 0.9; transform: translateX(0) skewX(0deg); filter: hue-rotate(0deg); clip-path: none; } 
+            100% { opacity: 1; transform: translateX(0) skewX(0deg); filter: hue-rotate(0deg); } 
+        }
+        .cyber-swap-active { animation: cyberSwap 0.5s steps(3) forwards; }
+        
+        /* --- 卡片样式 (移除 3D 属性) --- */
         .eva-card {
             background: var(--surface-color);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-left: 2px solid var(--secondary-color);
             position: relative;
-            transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
-            clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+            transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.2s ease; 
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
         }
         .eva-glare {
             position: absolute; inset: 0;
-            background: radial-gradient(circle at var(--mouse-x) var(--mouse-y), rgba(255,255,255,0.2) 0%, transparent 60%);
+            background: radial-gradient(circle at var(--mouse-x) var(--mouse-y), rgba(255,255,255,0.3) 0%, transparent 60%);
             pointer-events: none; opacity: 0; transition: opacity 0.3s;
             mix-blend-mode: overlay;
+            z-index: 20;
         }
         .eva-card:hover .eva-glare { opacity: 1; }
         .eva-card:hover {
-            box-shadow: 0 0 35px rgba(var(--secondary-color), 0.3), inset 0 0 15px rgba(var(--secondary-color), 0.15);
-            border-color: rgba(255,255,255,0.3);
+            box-shadow: 0 10px 40px rgba(var(--secondary-color), 0.2), inset 0 0 20px rgba(var(--secondary-color), 0.1);
+            border-color: rgba(255,255,255,0.4);
             z-index: 10;
-            transform: translateY(-3px);
+            transform: translateY(-5px); /* 仅保留简单的上浮效果 */
         }
-        .eva-card::before { content: ''; position: absolute; top: 0; right: 0; width: 20px; height: 20px; border-top: 2px solid var(--secondary-color); border-right: 2px solid var(--secondary-color); opacity: 0.8; box-shadow: 1px -1px 6px var(--secondary-color); }
-        .eva-card::after { content: ''; position: absolute; bottom: 0; left: 0; width: 20px; height: 20px; border-bottom: 2px solid var(--secondary-color); border-left: 2px solid var(--secondary-color); opacity: 0.8; box-shadow: -1px 1px 6px var(--secondary-color); }
+        /* 装饰角标 */
+        .eva-card::before { content: ''; position: absolute; top: 0; right: 0; width: 15px; height: 15px; border-top: 2px solid var(--secondary-color); border-right: 2px solid var(--secondary-color); opacity: 0.8; box-shadow: 2px -2px 8px var(--secondary-color); transition: all 0.3s; }
+        .eva-card::after { content: ''; position: absolute; bottom: 0; left: 0; width: 15px; height: 15px; border-bottom: 2px solid var(--secondary-color); border-left: 2px solid var(--secondary-color); opacity: 0.8; box-shadow: -2px 2px 8px var(--secondary-color); transition: all 0.3s; }
+        .eva-card:hover::before { width: 30px; height: 30px; }
+        .eva-card:hover::after { width: 30px; height: 30px; }
 
+        /* Glitch Text Effect for Titles */
+        .glitch-text { position: relative; display: inline-block; }
+        .glitch-text::before, .glitch-text::after {
+            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.8;
+        }
+        .glitch-text::before { color: #0ff; z-index: -1; clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%); animation: glitch-anim-1 2s infinite linear alternate-reverse; transform: translate(-2px); }
+        .glitch-text::after { color: #f0f; z-index: -2; clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%); animation: glitch-anim-2 2s infinite linear alternate-reverse; transform: translate(2px); }
+        @keyframes glitch-anim-1 { 0% { clip-path: inset(20% 0 80% 0); } 20% { clip-path: inset(60% 0 10% 0); } 40% { clip-path: inset(40% 0 50% 0); } 60% { clip-path: inset(80% 0 5% 0); } 80% { clip-path: inset(10% 0 70% 0); } 100% { clip-path: inset(30% 0 20% 0); } }
+        @keyframes glitch-anim-2 { 0% { clip-path: inset(10% 0 60% 0); } 20% { clip-path: inset(30% 0 20% 0); } 40% { clip-path: inset(70% 0 10% 0); } 60% { clip-path: inset(20% 0 50% 0); } 80% { clip-path: inset(60% 0 30% 0); } 100% { clip-path: inset(50% 0 40% 0); } }
+
+        /* Terminal Typing Cursor */
+        .typing-cursor::after { content: '_'; animation: blink 1s step-end infinite; color: var(--secondary-color); }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* Header & Fonts */
         .eva-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 8px; margin-bottom: 16px; font-family: 'JetBrains Mono'; font-size: 11px; letter-spacing: 0.1em; color: var(--secondary-color); text-shadow: 0 0 5px var(--secondary-color); }
-        .eva-header-deco { width: 4px; height: 4px; background: var(--primary-color); margin-right: 8px; box-shadow: 0 0 6px var(--primary-color); }
-
-        /* AI Card - Holographic Style */
-        .ai-card-container { 
-            background: var(--surface-color); backdrop-filter: blur(12px); border: 1px solid var(--secondary-color); position: relative; transition: all 0.4s ease; overflow: visible; /* 允许气泡溢出 */
-            box-shadow: 0 0 20px rgba(var(--secondary-color), 0.2);
-        }
-        /* 全息扫描线 */
-        .ai-scanlines { position: absolute; inset: 0; pointer-events: none; z-index: 10; background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2)); background-size: 100% 4px; opacity: 0.4; }
-        .ai-hologram-effect {
-            animation: hologram 3s infinite alternate;
-            mix-blend-mode: screen;
-            filter: drop-shadow(0 0 5px var(--secondary-color));
-        }
-
-        @keyframes ai-talking-glitch { 0% { transform: translate(0); filter: hue-rotate(0deg); } 20% { transform: translate(-2px, 1px); filter: hue-rotate(10deg) brightness(1.2); } 40% { transform: translate(1px, -1px); filter: hue-rotate(-10deg); } 60% { transform: translate(-1px, -1px); filter: hue-rotate(5deg) opacity(0.9); } 80% { transform: translate(2px, 1px); filter: hue-rotate(-5deg); } 100% { transform: translate(0); filter: hue-rotate(0deg); } }
-        .ai-talking .ai-avatar-img { animation: ai-talking-glitch 0.2s infinite; }
-
-        /* Bottom Strip */
-        .eva-warning-strip { position: fixed; bottom: 0; left: 0; width: 100%; height: 32px; z-index: 999; pointer-events: none; background: repeating-linear-gradient(45deg, #000, #000 12px, var(--secondary-color) 12px, var(--secondary-color) 24px); border-top: 2px solid #000; display: flex; align-items: center; box-shadow: 0 -4px 20px rgba(0,0,0,0.7); opacity: 0.95; animation: hazardScroll 2s linear infinite; }
-        .warning-content-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; backdrop-filter: blur(2px); }
-        .warning-marquee { white-space: nowrap; display: flex; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #fff; font-weight: 900; letter-spacing: 0.2em; text-shadow: 0 0 8px var(--secondary-color); animation: marquee 35s linear infinite; padding-left: 100vw; }
-        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
-
+        .eva-header-deco { width: 4px; height: 4px; background: var(--primary-color); margin-right: 6px; box-shadow: 0 0 5px var(--primary-color); }
         .magi-font { font-family: 'Space Grotesk', sans-serif; font-weight: 900; letter-spacing: -0.05em; text-shadow: 2px 2px 0px rgba(0,0,0,0.5); }
+        
+        /* AI & Marquee */
+        .ai-scanlines { position: absolute; inset: 0; pointer-events: none; z-index: 10; background: repeating-linear-gradient(to bottom, transparent, transparent 2px, rgba(0,0,0,0.2) 2px, rgba(0,0,0,0.2) 4px); background-size: 100% 4px; opacity: 0.6; }
+        .eva-warning-strip { position: fixed; bottom: 0; left: 0; width: 100%; height: 28px; z-index: 999; pointer-events: none; background: repeating-linear-gradient(45deg, #000, #000 10px, var(--secondary-color) 10px, var(--secondary-color) 20px); border-top: 2px solid #000; display: flex; align-items: center; box-shadow: 0 -4px 15px rgba(0,0,0,0.6); opacity: 0.95; animation: hazardScroll 2s linear infinite; }
+        .warning-content-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; }
+        .warning-marquee { white-space: nowrap; display: flex; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #fff; font-weight: 900; letter-spacing: 0.15em; text-shadow: 0 0 8px var(--secondary-color); animation: marquee 30s linear infinite; padding-left: 100vw; }
+
+        /* Theme Buttons & HUD */
         .theme-btn { width: 30px; height: 6px; transform: skewX(-30deg); cursor: pointer; border: 1px solid rgba(255,255,255,0.3); transition: all 0.3s; margin-right: 4px; }
         .theme-btn.active { border-color: white; box-shadow: 0 0 15px currentColor; background-color: currentColor !important; }
-        .hud-corner { position: fixed; width: 50px; height: 50px; border: 3px solid var(--secondary-color); z-index: 50; pointer-events: none; opacity: 0.6; box-shadow: 0 0 10px var(--secondary-color); } 
-        .hud-tl { top: 24px; left: 24px; border-right: 0; border-bottom: 0; } .hud-tr { top: 24px; right: 24px; border-left: 0; border-bottom: 0; } .hud-bl { bottom: 24px; left: 24px; border-right: 0; border-top: 0; } .hud-br { bottom: 24px; right: 24px; border-left: 0; border-top: 0; }
-        .crt-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; pointer-events: none; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 2px, 6px 100%; opacity: 0.2; mix-blend-mode: overlay; }
+        .hud-corner { position: fixed; width: 40px; height: 40px; border: 2px solid var(--secondary-color); z-index: 50; pointer-events: none; opacity: 0.7; box-shadow: 0 0 10px var(--secondary-color); } 
+        .hud-tl { top: 20px; left: 20px; border-right: 0; border-bottom: 0; } .hud-tr { top: 20px; right: 20px; border-left: 0; border-bottom: 0; } .hud-bl { bottom: 20px; left: 20px; border-right: 0; border-top: 0; } .hud-br { bottom: 20px; right: 20px; border-left: 0; border-top: 0; }
         
-        ::-webkit-scrollbar { width: 6px; }
+        /* CRT Overlay - 增强版 */
+        .crt-overlay { 
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; pointer-events: none; 
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); 
+            background-size: 100% 3px, 3px 100%; 
+            opacity: 0.4; mix-blend-mode: overlay; 
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
+        }
+        
+        ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: var(--bg-color); }
-        ::-webkit-scrollbar-thumb { background: var(--secondary-color); border-radius: 3px; border: 1px solid var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: var(--secondary-color); border-radius: 2px; }
     </style>
 </head>
-<body class="antialiased overflow-x-hidden font-sans">
+<body class="antialiased overflow-x-hidden font-sans selection:bg-secondary selection:text-black">
 
-    <!-- 紧急事态覆盖层 -->
+    <!-- Matrix Code Rain Canvas -->
+    <canvas id="matrix-bg"></canvas>
+
     <div class="emergency-overlay">
         <div class="emergency-hex">
-            <div class="emergency-text-big">EMERGENCY</div>
-            <div class="emergency-text-sub">HEX: PATTERN BLUE</div>
-            <div class="mt-8 font-mono text-xs tracking-widest">ANGEL DETECTED</div>
+            <div class="emergency-text-big" data-text="EMERGENCY">EMERGENCY</div>
+            <div class="emergency-text-sub border-t-2 border-b-2 border-red-600 py-2 font-black tracking-[0.5em]">HEX: PATTERN BLUE</div>
+            <div class="mt-8 font-mono text-xs tracking-widest animate-pulse">ANGEL DETECTED // ANALYSIS FAILED</div>
         </div>
     </div>
 
-    <!-- 背景偶尔闪烁的红光 -->
-    <div class="bg-alarm-layer"></div>
-
+    <!-- 视觉增强 -->
     <div class="cockpit-overlay"></div>
     <div class="cockpit-reticle"></div>
     <div class="cockpit-side-meter meter-left"></div>
@@ -243,14 +227,17 @@
     <div class="scan-bar"></div>
     <div id="particles-container"></div>
     
-    <!-- 背景 (SVG Rings) -->
+    <!-- 背景 -->
     <div id="bg-layer">
-        <svg id="magi-rings" viewBox="0 0 800 800" fill="none" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120vmax] h-[120vmax] pointer-events-none opacity-25 transition-opacity duration-500" style="filter: drop-shadow(0 0 15px var(--secondary-color));">
+        <!-- SVG MAGI Rings -->
+        <svg id="magi-rings" viewBox="0 0 800 800" fill="none" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[130vmax] h-[130vmax] pointer-events-none opacity-30 transition-opacity duration-500" style="filter: drop-shadow(0 0 10px var(--secondary-color));">
             <g stroke="var(--secondary-color)" stroke-width="1.5">
                 <circle cx="400" cy="400" r="150" stroke-dasharray="20 10" class="animate-[spin_25s_linear_infinite]" />
                 <circle cx="400" cy="400" r="250" stroke-dasharray="40 20" class="animate-[spin_40s_linear_infinite_reverse]" stroke-opacity="0.8" />
                 <circle cx="400" cy="400" r="350" stroke-dasharray="10 10" class="animate-[spin_55s_linear_infinite]" stroke-opacity="0.6" />
-                <path d="M400 100 L400 700 M100 400 L700 400" stroke-opacity="0.3" />
+                <!-- 增加复杂的几何线条 -->
+                <path d="M400 50 L400 750 M50 400 L750 400" stroke-opacity="0.2" />
+                <rect x="250" y="250" width="300" height="300" stroke-opacity="0.3" class="animate-[spin_60s_linear_infinite]" />
                 <path d="M187 187 L613 613 M613 187 L187 613" stroke-opacity="0.3" />
             </g>
         </svg>
@@ -258,23 +245,26 @@
         <div class="hex-flash" style="top: 20%; left: 10%;"></div>
         <div class="hex-flash" style="top: 60%; right: 15%; animation-delay: 2s;"></div>
     </div>
+    
     <div id="cursor-glow"></div>
     
+    <!-- 警戒条 -->
     <div class="eva-warning-strip">
         <div class="warning-content-overlay">
             <div class="warning-marquee">
-                <span>INTERNAL_STATUS: NORMAL</span><span class="mx-12 text-secondary">///</span>
-                <span>MAGI_SYSTEM: ONLINE</span><span class="mx-12 text-secondary">///</span>
-                <span>SYNC_RATE: 400%</span><span class="mx-12 text-secondary">///</span>
-                <span>A.T. FIELD: DEPLOYED</span><span class="mx-12 text-secondary">///</span>
-                <span>TARGET: SILENT</span><span class="mx-12 text-secondary">///</span>
-                <span>PROG_VER: 3.0+1.0</span><span class="mx-12 text-secondary">///</span>
-                <span>LCL_PRESSURE: STABLE</span><span class="mx-12 text-secondary">///</span>
+                <span>INTERNAL_STATUS: NORMAL</span><span class="mx-8 text-secondary">///</span>
+                <span>MAGI_SYSTEM: ONLINE</span><span class="mx-8 text-secondary">///</span>
+                <span>SYNC_RATE: 400%</span><span class="mx-8 text-secondary">///</span>
+                <span>A.T. FIELD: DEPLOYED</span><span class="mx-8 text-secondary">///</span>
+                <span>TARGET: SILENT</span><span class="mx-8 text-secondary">///</span>
+                <span>PROG_VER: 3.0+1.0</span><span class="mx-8 text-secondary">///</span>
+                <span>LCL_PRESSURE: STABLE</span><span class="mx-8 text-secondary">///</span>
                 <span>CONNECTION: SECURE</span>
             </div>
         </div>
     </div>
 
+    <!-- HUD -->
     <div class="hud-corner hud-tl"></div>
     <div class="hud-corner hud-tr"></div>
     <div class="hud-corner hud-bl"></div>
@@ -284,28 +274,31 @@
         <source src="./audio/bgm.mp3" type="audio/mp3">
     </audio>
 
-    <div id="sonic-deck" class="fixed bottom-10 left-10 z-50 flex items-center gap-3 bg-black/60 border border-secondary p-3 pr-5 group hover:shadow-[0_0_30px_var(--secondary-color)] transition-all duration-300 backdrop-blur-md eva-card" style="clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);">
-        <canvas id="audio-visualizer" class="absolute bottom-0 left-0 w-full h-full opacity-30 pointer-events-none"></canvas>
-        <div id="music-trigger" class="w-12 h-12 flex items-center justify-center cursor-pointer bg-secondary/10 hover:bg-secondary/20 transition-colors border border-secondary/30" onclick="toggleMusic()">
-            <div id="deck-wave" class="absolute border border-secondary w-full h-full animate-ping hidden"></div>
-            <i id="icon-disc" data-lucide="disc" class="w-6 h-6 text-secondary animate-spin-slow"></i>
-            <i id="icon-pause" data-lucide="pause" class="w-6 h-6 text-secondary hidden"></i>
-        </div>
-        <div class="flex flex-col w-0 group-hover:w-48 overflow-hidden transition-all duration-300 opacity-0 group-hover:opacity-100 pl-2">
-            <div class="text-[10px] font-mono text-primary whitespace-nowrap font-bold">SOUND_ONLY // TRACK_01</div>
-            <div class="flex items-center gap-2 mt-1">
-                 <span class="text-[8px] text-secondary">VOL</span>
-                 <input type="range" class="w-full h-1 bg-white/20 appearance-none cursor-pointer" min="0" max="1" step="0.1" oninput="setVolume(this.value)">
+    <!-- 音乐控制 - 移除 perspective -->
+    <div class="fixed bottom-8 left-8 z-50">
+        <div id="sonic-deck" class="flex items-center gap-3 bg-black/60 border border-secondary p-2 pr-4 group hover:shadow-[0_0_30px_var(--secondary-color)] transition-all duration-300 backdrop-blur-md eva-card">
+            <canvas id="audio-visualizer" class="absolute bottom-0 left-0 w-full h-full opacity-30 pointer-events-none"></canvas>
+            <div id="music-trigger" class="w-12 h-12 flex items-center justify-center cursor-pointer bg-secondary/10 hover:bg-secondary/20 transition-colors border border-secondary/30 relative z-20" onclick="toggleMusic()">
+                <div id="deck-wave" class="absolute border border-secondary w-full h-full animate-ping hidden"></div>
+                <i id="icon-disc" data-lucide="disc" class="w-6 h-6 text-secondary animate-spin-slow"></i>
+                <i id="icon-pause" data-lucide="pause" class="w-6 h-6 text-secondary hidden"></i>
+            </div>
+            <div class="flex flex-col w-0 group-hover:w-48 overflow-hidden transition-all duration-300 opacity-0 group-hover:opacity-100 pl-2 relative z-20">
+                <div class="text-[10px] font-mono text-primary whitespace-nowrap font-bold">SOUND_ONLY // TRACK_01</div>
+                <div class="flex items-center gap-2 mt-1">
+                     <span class="text-[8px] text-secondary">VOL</span>
+                     <input type="range" class="w-full h-1 bg-white/20 appearance-none cursor-pointer" min="0" max="1" step="0.1" oninput="setVolume(this.value)">
+                </div>
             </div>
         </div>
     </div>
 
-    <nav class="fixed top-0 w-full z-40 px-6 md:px-12 py-6 flex justify-between items-center bg-gradient-to-b from-bg to-transparent select-none">
-        <div class="flex items-center gap-8">
-            <div class="group flex flex-col">
-                <span class="text-3xl font-black tracking-tighter leading-none text-white group-hover:text-primary transition-colors italic magi-font">WH1TE.LOG</span>
-                <button onclick="toggleEmergency()" class="mt-1 border border-secondary/50 px-2 py-0.5 text-[9px] font-mono text-secondary/70 hover:bg-secondary hover:text-black hover:border-secondary transition-all tracking-widest uppercase">[ EMERGENCY ]</button>
-            </div>
+    <nav class="fixed top-0 w-full z-40 px-6 md:px-12 py-6 flex justify-between items-center bg-gradient-to-b from-bg via-bg/80 to-transparent select-none backdrop-blur-[2px]">
+        <div class="flex items-center gap-6">
+            <a href="index.html" class="group flex flex-col">
+                <span class="text-2xl font-black tracking-tighter leading-none text-white group-hover:text-primary transition-colors italic magi-font glitch-text" data-text="WH1TE.LOG">WH1TE.LOG</span>
+                <button onclick="toggleEmergency()" class="mt-1 border border-secondary/50 px-2 py-0.5 text-[9px] font-mono text-secondary/70 hover:bg-secondary hover:text-black hover:border-secondary transition-all tracking-widest uppercase hover:shadow-[0_0_10px_var(--secondary-color)]">[ EMERGENCY ]</button>
+            </a>
             <div class="flex gap-2 ml-8 items-center px-4 py-1 border-l border-white/10">
                 <div class="theme-btn active" style="background: #7d2ae8; border-color: #39ff14;" onclick="setTheme('default')" title="Unit-01 (Shinji)"></div>
                 <div class="theme-btn" style="background: #d90000; border-color: #ffae00;" onclick="setTheme('unit-02')" title="Unit-02 (Asuka)"></div>
@@ -313,36 +306,39 @@
                 <div class="theme-btn" style="background: #ff5cab; border-color: #50c878;" onclick="setTheme('unit-08')" title="Unit-08 (Mari)"></div>
             </div>
         </div>
-        <div class="hidden md:flex gap-12 font-mono text-xs tracking-widest font-bold">
-            <a href="#" class="text-secondary border-b-2 border-secondary pb-1">01_HOME</a>
-            <a href="about.html" class="text-gray-500 hover:text-primary transition-colors">02_ARCHIVES</a>
-            <a href="about.html" class="text-gray-500 hover:text-primary transition-colors">03_ABOUT</a>
+        <div class="hidden md:flex gap-8 font-mono text-xs tracking-widest font-bold">
+            <a href="#" class="text-secondary border-b-2 border-secondary pb-1 shadow-[0_10px_20px_-10px_var(--secondary-color)]">01_HOME</a>
+            <a href="about.html" class="text-gray-500 hover:text-primary transition-colors relative group">02_ARCHIVES<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span></a>
+            <a href="about.html" class="text-gray-500 hover:text-primary transition-colors relative group">03_ABOUT<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span></a>
         </div>
     </nav>
 
     <header class="relative pt-48 pb-12 max-w-screen-xl mx-auto px-6 md:px-12 flex flex-col justify-center items-start text-left z-20 min-h-[65vh]">
-        <div class="absolute top-24 right-[20%] opacity-60 pointer-events-none z-0 hidden lg:flex flex-col gap-3 scale-90 origin-top-right">
-            <div class="magi-node w-56 h-12 skew-x-12 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold shadow-[0_0_10px_var(--secondary-color)] bg-black/30">MELCHIOR - 1</div>
-            <div class="magi-node w-56 h-12 skew-x-12 ml-12 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold shadow-[0_0_10px_var(--secondary-color)] bg-black/30" style="animation-delay: 1s;">BALTHASAR - 2</div>
-            <div class="magi-node w-56 h-12 skew-x-12 ml-24 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold shadow-[0_0_10px_var(--secondary-color)] bg-black/30" style="animation-delay: 2s;">CASPER - 3</div>
+        <!-- MAGI 节点 -->
+        <div class="absolute top-24 right-[20%] opacity-80 pointer-events-none z-0 hidden lg:flex flex-col gap-3 scale-90 origin-top-right">
+            <div class="magi-node w-56 h-12 skew-x-12 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold shadow-[0_0_15px_var(--secondary-color)] bg-black/60 backdrop-blur-sm">MELCHIOR - 1</div>
+            <div class="magi-node w-56 h-12 skew-x-12 ml-12 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold shadow-[0_0_15px_var(--secondary-color)] bg-black/60 backdrop-blur-sm" style="animation-delay: 1s;">BALTHASAR - 2</div>
+            <div class="magi-node w-56 h-12 skew-x-12 ml-24 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold shadow-[0_0_15px_var(--secondary-color)] bg-black/60 backdrop-blur-sm" style="animation-delay: 2s;">CASPER - 3</div>
         </div>
+        
         <div class="space-y-8 animate-pop-in w-full relative z-10 max-w-3xl">
             <div class="flex items-center gap-3 mb-2">
-                <span class="px-3 py-1 bg-secondary text-black font-mono text-[10px] font-black uppercase tracking-widest border border-secondary/50">System Ready</span>
+                <span class="px-3 py-1 bg-secondary text-black font-mono text-[10px] font-black uppercase tracking-widest border border-secondary/50 shadow-[0_0_10px_var(--secondary-color)]">System Ready</span>
                 <span class="w-24 h-px bg-secondary/50"></span>
-                <span class="font-mono text-[10px] text-primary">SYNC RATE: 400%</span>
+                <span class="font-mono text-[10px] text-primary typing-cursor">SYNC RATE: 400%</span>
             </div>
-            <div class="relative inline-block">
-                <h1 class="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-none text-white mix-blend-overlay opacity-90 magi-font">WH1TE_LOG</h1>
-                <h1 class="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-none text-stroke-layer absolute top-0 left-0 w-full h-full translate-x-[3px] translate-y-[3px]">WH1TE_LOG</h1>
+            <div class="relative inline-block group">
+                <h1 class="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-none text-white mix-blend-overlay opacity-90 magi-font glitch-text" data-text="WH1TE_LOG">WH1TE_LOG</h1>
+                <h1 class="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-none text-stroke-layer absolute top-0 left-0 w-full h-full translate-x-[3px] translate-y-[3px] opacity-50 group-hover:translate-x-[6px] group-hover:translate-y-[6px] transition-transform">WH1TE_LOG</h1>
             </div>
-            <div class="flex items-center gap-4 pl-4 border-l-4 border-secondary">
-                <h2 class="text-2xl font-bold text-white tracking-tight">互联网<span class="text-secondary">补完计划</span> <span class="text-xs font-mono opacity-60 ml-2 tracking-widest text-primary">DIGITAL ARCHIVE PROJECT</span></h2>
+            <div class="flex items-center gap-4 pl-4 border-l-4 border-secondary bg-gradient-to-r from-secondary/10 to-transparent py-2">
+                <h2 class="text-2xl font-bold text-white tracking-tight">互联网<span class="text-secondary glitch-text" data-text="补完计划">补完计划</span> <span class="text-xs font-mono opacity-60 ml-2 tracking-widest text-primary">DIGITAL ARCHIVE PROJECT</span></h2>
             </div>
-            <div class="mt-16 relative w-full max-w-xl group">
+            <div class="mt-16 relative w-full max-w-xl group transform transition-transform hover:scale-[1.02]">
                 <div class="absolute -top-4 left-0 bg-bg px-2 text-[10px] font-mono text-secondary border border-secondary/50">SEARCH_DATABASE</div>
-                <input type="text" id="search-input" placeholder="ENTER KEYWORD..." oninput="searchArticles()" class="w-full pl-6 pr-12 py-5 bg-black/30 backdrop-blur-xl border-b-2 border-white/20 text-white font-mono text-xl placeholder-white/10 focus:border-secondary focus:bg-black/50 focus:outline-none transition-all uppercase tracking-widest">
+                <input type="text" id="search-input" placeholder="ENTER KEYWORD..." oninput="searchArticles()" class="w-full pl-6 pr-12 py-5 bg-black/30 backdrop-blur-xl border-b-2 border-white/20 text-white font-mono text-xl placeholder-white/10 focus:border-secondary focus:bg-black/60 focus:outline-none transition-all uppercase tracking-widest focus:shadow-[0_10px_30px_-10px_var(--secondary-color)]">
                 <div class="absolute right-0 bottom-0 w-0 h-0 border-l-[12px] border-l-transparent border-b-[12px] border-b-secondary"></div>
+                <div class="absolute top-1/2 right-4 -translate-y-1/2 text-secondary opacity-50 group-focus-within:opacity-100 animate-pulse">_</div>
             </div>
         </div>
     </header>
@@ -355,28 +351,27 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-16">
             <aside class="lg:col-span-4 space-y-10 lg:sticky lg:top-32 h-fit">
                 
-                <!-- AI CARD (Fully Restored) -->
+                <!-- AI CARD (修复气泡框位置问题) -->
                 <div class="relative z-50">
-                    <!-- 气泡移出，避免遮挡 -->
-                    <div id="ai-speech-bubble" class="hidden absolute -top-24 left-0 w-full z-50 animate-pop-in pointer-events-none">
-                        <div class="bg-black/90 backdrop-blur-md border border-primary p-4 relative shadow-[0_0_20px_var(--primary-color)] rounded-sm">
-                             <p id="ai-speech-text" class="text-xs font-bold font-mono text-primary leading-relaxed tracking-wide"></p>
-                             <div class="absolute -bottom-2 left-8 w-4 h-4 bg-black border-r border-b border-primary transform rotate-45"></div>
+                     <!-- 气泡框 - 使用绝对定位但确保 z-index 最高 -->
+                     <div id="ai-speech-bubble" class="hidden absolute -top-32 left-0 w-full z-[100] animate-pop-in pointer-events-none">
+                        <div class="bg-bg border-2 border-secondary p-4 relative shadow-[0_0_20px_var(--secondary-color)] before:content-[''] before:absolute before:-bottom-3 before:left-8 before:w-6 before:h-6 before:bg-bg before:border-b-2 before:border-r-2 before:border-secondary before:rotate-45">
+                             <p id="ai-speech-text" class="text-xs font-bold font-mono text-secondary leading-relaxed drop-shadow-[0_0_2px_rgba(0,255,0,0.8)]"></p>
                         </div>
                     </div>
-
-                    <div id="ai-card" class="eva-card ai-card-container cursor-pointer group" onclick="triggerAiSpeech()">
+                    
+                    <div id="ai-card" class="eva-card ai-card-container cursor-pointer group hover:bg-secondary/10 transition-colors" onclick="triggerAiSpeech()">
                         <div class="eva-glare"></div>
                         <div class="ai-scanlines"></div>
                         <div class="w-full relative aspect-[4/5] overflow-hidden bg-black/40">
-                            <img src="./images/ai-assistant.jpg" onerror="this.style.display='none'" alt="AI" class="ai-avatar-img w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity mix-blend-lighten filter contrast-125 ai-hologram-effect">
+                            <img src="./images/ai-assistant.jpg" onerror="this.style.display='none'" alt="AI" class="ai-avatar-img w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity mix-blend-lighten filter contrast-125 grayscale group-hover:grayscale-0 duration-500">
                             <div class="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent"></div>
                             <div class="absolute top-2 right-2 text-[9px] font-mono text-black bg-secondary px-1 font-bold">LIVE</div>
                         </div>
                         <div class="p-5 border-t border-secondary/30 relative overflow-hidden">
                             <div class="flex items-center justify-between mb-2 relative z-10">
-                                <h3 class="font-mono text-primary text-sm font-bold tracking-wider">:: AI_ASSISTANT</h3>
-                                <div class="w-2 h-2 bg-secondary animate-pulse rounded-full"></div>
+                                <h3 class="font-mono text-primary text-sm font-bold tracking-wider">:: ERIRI.MODE</h3>
+                                <div class="w-2 h-2 bg-secondary animate-pulse rounded-full shadow-[0_0_5px_var(--secondary-color)]"></div>
                             </div>
                             <p class="text-gray-400 text-[10px] font-mono relative z-10">STATUS: <span id="ai-status-text" class="text-secondary font-bold">ONLINE</span></p>
                         </div>
@@ -384,26 +379,30 @@
                 </div>
 
                 <!-- Anime Feed (EVA Style) -->
-                <div class="eva-card p-6 relative overflow-hidden">
-                    <div class="eva-glare"></div>
-                    <div class="eva-header">
-                        <div class="flex items-center"><div class="eva-header-deco"></div><span>ANIME_FEED</span></div>
-                        <span id="anime-date" class="text-primary">...</span>
+                <div class="">
+                    <div class="eva-card p-6 relative overflow-hidden">
+                        <div class="eva-glare"></div>
+                        <div class="eva-header">
+                            <div class="flex items-center"><div class="eva-header-deco"></div><span>ANIME_FEED</span></div>
+                            <span id="anime-date" class="text-primary">...</span>
+                        </div>
+                        <div id="anime-list" class="space-y-3 font-mono text-[10px] text-gray-300 max-h-64 overflow-y-auto pr-2 custom-scrollbar"></div>
                     </div>
-                    <div id="anime-list" class="space-y-3 font-mono text-[10px] text-gray-300 max-h-64 overflow-y-auto pr-2 custom-scrollbar"></div>
                 </div>
 
                 <!-- Tag Cloud (EVA Style) -->
-                <div class="eva-card p-6">
-                    <div class="eva-glare"></div>
-                    <div class="eva-header">
-                        <div class="flex items-center"><div class="eva-header-deco"></div><span>TAG_CLOUD</span></div>
-                        <span class="w-1 h-1 bg-secondary rounded-full animate-pulse"></span>
-                    </div>
-                    <div class="flex flex-wrap gap-3">
-                         <button onclick="filterByTag('Novel')" class="px-3 py-1.5 bg-white/5 border border-white/10 hover:bg-secondary hover:text-black hover:border-secondary text-[10px] font-mono transition-all uppercase tracking-wider">#Novel</button>
-                         <button onclick="filterByTag('Code')" class="px-3 py-1.5 bg-white/5 border border-white/10 hover:bg-secondary hover:text-black hover:border-secondary text-[10px] font-mono transition-all uppercase tracking-wider">#Code</button>
-                         <button onclick="filterByTag('Web')" class="px-3 py-1.5 bg-white/5 border border-white/10 hover:bg-secondary hover:text-black hover:border-secondary text-[10px] font-mono transition-all uppercase tracking-wider">#Web</button>
+                <div class="">
+                    <div class="eva-card p-6">
+                        <div class="eva-glare"></div>
+                        <div class="eva-header">
+                            <div class="flex items-center"><div class="eva-header-deco"></div><span>TAG_CLOUD</span></div>
+                            <span class="w-1 h-1 bg-secondary rounded-full animate-pulse"></span>
+                        </div>
+                        <div class="flex flex-wrap gap-3">
+                             <button onclick="filterByTag('Novel')" class="px-3 py-1.5 bg-white/5 border border-white/10 hover:bg-secondary hover:text-black hover:border-secondary hover:shadow-[0_0_15px_var(--secondary-color)] text-[10px] font-mono transition-all uppercase tracking-wider skew-x-[-10deg]">#Novel</button>
+                             <button onclick="filterByTag('Code')" class="px-3 py-1.5 bg-white/5 border border-white/10 hover:bg-secondary hover:text-black hover:border-secondary hover:shadow-[0_0_15px_var(--secondary-color)] text-[10px] font-mono transition-all uppercase tracking-wider skew-x-[-10deg]">#Code</button>
+                             <button onclick="filterByTag('Web')" class="px-3 py-1.5 bg-white/5 border border-white/10 hover:bg-secondary hover:text-black hover:border-secondary hover:shadow-[0_0_15px_var(--secondary-color)] text-[10px] font-mono transition-all uppercase tracking-wider skew-x-[-10deg]">#Web</button>
+                        </div>
                     </div>
                 </div>
             </aside>
@@ -411,66 +410,72 @@
             <!-- 右侧内容区 -->
             <div class="lg:col-span-8 space-y-10">
                 <div class="flex items-center justify-between border-b-2 border-white/10 pb-4">
-                    <h2 class="text-3xl font-black tracking-tighter text-white">DATA_LOGS</h2>
+                    <h2 class="text-3xl font-black tracking-tighter text-white glitch-text" data-text="DATA_LOGS">DATA_LOGS</h2>
                     <div class="flex items-center gap-2">
                         <div class="w-1.5 h-1.5 bg-secondary animate-ping"></div>
                         <span class="font-mono text-xs text-secondary">[ RECORDING ]</span>
                     </div>
                 </div>
                 <div id="article-list-container" class="space-y-8">
-                    <!-- Article 1: WA2 Novel -> article-3.html -->
-                    <article class="eva-card p-8 group cursor-pointer" data-tags="Novel ACG WhiteAlbum2" onclick="window.location.href='article-3.html'">
-                        <div class="eva-glare"></div>
-                        <div class="eva-header mb-6">
-                            <div class="flex items-center"><div class="eva-header-deco"></div><span>ARCHIVE_001</span></div>
-                            <span class="text-primary">NOVEL</span>
-                        </div>
-                        <div class="flex justify-between items-start font-mono text-[10px] mb-4 opacity-60 group-hover:opacity-100 transition-opacity">
-                            <span class="border border-white/20 text-gray-300 px-1.5 py-0.5">WA2</span>
-                            <span>2025.10.05</span>
-                        </div>
-                        <h3 class="text-3xl font-bold leading-tight group-hover:text-secondary transition-colors duration-300">雪融化、然后直到再次飘落时</h3>
-                        <p class="text-gray-400 text-sm leading-relaxed mt-4 pl-4 border-l border-white/10 group-hover:border-secondary transition-colors">冬马和纱，很讨厌天空。春天，当她翘掉自己今后每天都要去的峰城大学附属学园的入学仪式...</p>
-                        <div class="flex justify-end mt-6">
-                            <span class="font-mono text-xs text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">READ_ENTRY <i data-lucide="chevron-right" class="w-4 h-4"></i></span>
-                        </div>
-                    </article>
+                    <!-- Article 1 -->
+                    <div class="">
+                        <article class="eva-card p-8 group cursor-pointer transform transition-transform hover:-translate-y-1" data-tags="Novel ACG WhiteAlbum2" onclick="window.location.href='article-3.html'">
+                            <div class="eva-glare"></div>
+                            <div class="eva-header mb-6">
+                                <div class="flex items-center"><div class="eva-header-deco"></div><span>ARCHIVE_001</span></div>
+                                <span class="text-primary border border-primary/30 px-2 bg-primary/10">NOVEL</span>
+                            </div>
+                            <div class="flex justify-between items-start font-mono text-[10px] mb-4 opacity-60 group-hover:opacity-100 transition-opacity">
+                                <span class="border border-white/20 text-gray-300 px-1.5 py-0.5">WA2</span>
+                                <span>2025.10.05</span>
+                            </div>
+                            <h3 class="text-3xl font-bold leading-tight group-hover:text-secondary transition-colors duration-300">雪融化、然后直到再次飘落时</h3>
+                            <p class="text-gray-400 text-sm leading-relaxed mt-4 pl-4 border-l border-white/10 group-hover:border-secondary transition-colors">冬马和纱，很讨厌天空。春天，当她翘掉自己今后每天都要去的峰城大学附属学园的入学仪式...</p>
+                            <div class="flex justify-end mt-6">
+                                <span class="font-mono text-xs text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">READ_ENTRY <i data-lucide="chevron-right" class="w-4 h-4"></i></span>
+                            </div>
+                        </article>
+                    </div>
                     
-                    <!-- Article 2: Python Automation -> article-2.html -->
-                    <article class="eva-card p-8 group cursor-pointer" data-tags="Python Automation" onclick="window.location.href='article-2.html'">
-                        <div class="eva-glare"></div>
-                        <div class="eva-header mb-6">
-                            <div class="flex items-center"><div class="eva-header-deco"></div><span>ARCHIVE_002</span></div>
-                            <span class="text-primary">PYTHON</span>
-                        </div>
-                        <div class="flex justify-between items-start font-mono text-[10px] mb-4 opacity-60 group-hover:opacity-100 transition-opacity">
-                            <span class="border border-white/20 text-gray-300 px-1.5 py-0.5">AUTO</span>
-                            <span>2025.10.03</span>
-                        </div>
-                        <h3 class="text-3xl font-bold leading-tight group-hover:text-secondary transition-colors duration-300">Python 主页自动生成脚本测试</h3>
-                        <p class="text-gray-400 text-sm leading-relaxed mt-4 pl-4 border-l border-white/10 group-hover:border-secondary transition-colors">辅助静态页面更新的自动化生成脚本第一次测试，探索如何高效管理我的数字花园。</p>
-                        <div class="flex justify-end mt-6">
-                            <span class="font-mono text-xs text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">READ_ENTRY <i data-lucide="chevron-right" class="w-4 h-4"></i></span>
-                        </div>
-                    </article>
+                    <!-- Article 2 -->
+                    <div class="">
+                        <article class="eva-card p-8 group cursor-pointer transform transition-transform hover:-translate-y-1" data-tags="Python Automation" onclick="window.location.href='article-2.html'">
+                            <div class="eva-glare"></div>
+                            <div class="eva-header mb-6">
+                                <div class="flex items-center"><div class="eva-header-deco"></div><span>ARCHIVE_002</span></div>
+                                <span class="text-primary border border-primary/30 px-2 bg-primary/10">PYTHON</span>
+                            </div>
+                            <div class="flex justify-between items-start font-mono text-[10px] mb-4 opacity-60 group-hover:opacity-100 transition-opacity">
+                                <span class="border border-white/20 text-gray-300 px-1.5 py-0.5">AUTO</span>
+                                <span>2025.10.03</span>
+                            </div>
+                            <h3 class="text-3xl font-bold leading-tight group-hover:text-secondary transition-colors duration-300">Python 主页自动生成脚本测试</h3>
+                            <p class="text-gray-400 text-sm leading-relaxed mt-4 pl-4 border-l border-white/10 group-hover:border-secondary transition-colors">辅助静态页面更新的自动化生成脚本第一次测试，探索如何高效管理我的数字花园。</p>
+                            <div class="flex justify-end mt-6">
+                                <span class="font-mono text-xs text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">READ_ENTRY <i data-lucide="chevron-right" class="w-4 h-4"></i></span>
+                            </div>
+                        </article>
+                    </div>
                     
-                    <!-- Article 3: Code Reflection -> article-1.html -->
-                    <article class="eva-card p-8 group cursor-pointer" data-tags="Code Reflection" onclick="window.location.href='article-1.html'">
-                        <div class="eva-glare"></div>
-                        <div class="eva-header mb-6">
-                            <div class="flex items-center"><div class="eva-header-deco"></div><span>ARCHIVE_003</span></div>
-                            <span class="text-primary">CODE</span>
-                        </div>
-                        <div class="flex justify-between items-start font-mono text-[10px] mb-4 opacity-60 group-hover:opacity-100 transition-opacity">
-                            <span class="border border-white/20 text-gray-300 px-1.5 py-0.5">WEB</span>
-                            <span>2025.10.01</span>
-                        </div>
-                        <h3 class="text-3xl font-bold leading-tight group-hover:text-secondary transition-colors duration-300">从 Appium 到网站：我与代码的旅程初探</h3>
-                        <p class="text-gray-400 text-sm leading-relaxed mt-4 pl-4 border-l border-white/10 group-hover:border-secondary transition-colors">起初我以为编程就是找个工具抢票，最终却被安全机制所阻止。这次经历让我明白：真正的编程价值在于构建思维框架。</p>
-                        <div class="flex justify-end mt-6">
-                            <span class="font-mono text-xs text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">READ_ENTRY <i data-lucide="chevron-right" class="w-4 h-4"></i></span>
-                        </div>
-                    </article>
+                    <!-- Article 3 -->
+                    <div class="">
+                        <article class="eva-card p-8 group cursor-pointer transform transition-transform hover:-translate-y-1" data-tags="Code Reflection" onclick="window.location.href='article-1.html'">
+                            <div class="eva-glare"></div>
+                            <div class="eva-header mb-6">
+                                <div class="flex items-center"><div class="eva-header-deco"></div><span>ARCHIVE_003</span></div>
+                                <span class="text-primary border border-primary/30 px-2 bg-primary/10">CODE</span>
+                            </div>
+                            <div class="flex justify-between items-start font-mono text-[10px] mb-4 opacity-60 group-hover:opacity-100 transition-opacity">
+                                <span class="border border-white/20 text-gray-300 px-1.5 py-0.5">WEB</span>
+                                <span>2025.10.01</span>
+                            </div>
+                            <h3 class="text-3xl font-bold leading-tight group-hover:text-secondary transition-colors duration-300">从 Appium 到网站：我与代码的旅程初探</h3>
+                            <p class="text-gray-400 text-sm leading-relaxed mt-4 pl-4 border-l border-white/10 group-hover:border-secondary transition-colors">起初我以为编程就是找个工具抢票，最终却被安全机制所阻止。这次经历让我明白：真正的编程价值在于构建思维框架。</p>
+                            <div class="flex justify-end mt-6">
+                                <span class="font-mono text-xs text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">READ_ENTRY <i data-lucide="chevron-right" class="w-4 h-4"></i></span>
+                            </div>
+                        </article>
+                    </div>
                 </div>
             </div>
         </div>
@@ -479,7 +484,7 @@
     <footer class="border-t border-white/10 bg-surface backdrop-blur-xl mt-20 relative z-20 py-16">
         <div class="max-w-screen-xl mx-auto px-6 md:px-12 flex flex-col md:flex-row justify-between gap-8">
             <div>
-                <h2 class="text-3xl font-black text-white tracking-tighter magi-font">WH1TE.LOG</h2>
+                <h2 class="text-3xl font-black text-white tracking-tighter magi-font glitch-text" data-text="WH1TE.LOG">WH1TE.LOG</h2>
                 <p class="font-mono text-[10px] text-gray-500 mt-2 tracking-widest">HUMAN INSTRUMENTALITY PROJECT</p>
             </div>
             <div class="font-mono text-[10px] text-gray-600 text-right">
@@ -489,9 +494,10 @@
         </div>
     </footer>
 
+    <!-- Anime Modal -->
     <div id="anime-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-bg/90 backdrop-blur-md cursor-pointer" onclick="closeAnimeModal()">
-        <div class="relative w-full max-w-4xl bg-bg border border-secondary p-8 flex gap-8 shadow-[0_0_50px_rgba(0,0,0,0.5)] eva-card" onclick="event.stopPropagation()">
-            <div class="w-1/3 bg-gray-900 relative overflow-hidden group">
+        <div class="relative w-full max-w-4xl bg-bg border border-secondary p-8 flex gap-8 shadow-[0_0_50px_rgba(0,0,0,0.8)] eva-card transform transition-all scale-95" onclick="event.stopPropagation()">
+            <div class="w-1/3 bg-gray-900 relative overflow-hidden group border border-white/10">
                 <img id="modal-cover" src="" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500">
                 <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/60"></div>
                 <div class="absolute bottom-0 left-0 w-full h-1 bg-secondary animate-scan"></div>
@@ -499,9 +505,9 @@
             <div class="w-2/3 text-left space-y-6">
                 <div class="eva-header">
                     <div class="flex items-center"><div class="eva-header-deco"></div><span>DATA_RETRIEVED</span></div>
-                    <span class="w-2 h-2 bg-secondary"></span>
+                    <span class="w-2 h-2 bg-secondary animate-ping"></span>
                 </div>
-                <h2 id="modal-title" class="text-4xl font-black text-white magi-font leading-none">LOADING...</h2>
+                <h2 id="modal-title" class="text-4xl font-black text-white magi-font leading-none tracking-tighter">LOADING...</h2>
                 <div class="flex gap-6 text-xs font-mono text-primary border-y border-white/10 py-3">
                     <span>RATING: <span id="modal-rating" class="text-white font-bold text-lg">--</span></span>
                     <span>ID: <span id="modal-id" class="text-white">--</span></span>
@@ -514,29 +520,49 @@
     <script>
         lucide.createIcons();
 
-        let ticking = false;
-        document.addEventListener('mousemove', (e) => {
-            if (!ticking) {
-                window.requestAnimationFrame(() => {
-                    const x = (e.clientX / window.innerWidth) * 100;
-                    const y = (e.clientY / window.innerHeight) * 100;
-                    document.documentElement.style.setProperty('--mouse-x', `${x}%`);
-                    document.documentElement.style.setProperty('--mouse-y', `${y}%`);
-                    ticking = false;
-                    // --- 光斑实时追踪 ---
-                    document.querySelectorAll('.eva-glare').forEach(glare => {
-                        const rect = glare.closest('.eva-card').getBoundingClientRect();
-                        const localX = e.clientX - rect.left;
-                        const localY = e.clientY - rect.top;
-                        glare.style.background = `radial-gradient(circle at ${localX}px ${localY}px, rgba(255,255,255,0.15) 0%, transparent 50%)`;
-                        glare.style.opacity = 1;
-                        // 离开时淡出
-                        clearTimeout(glare.timer);
-                        glare.timer = setTimeout(() => { glare.style.opacity = 0; }, 200);
-                    });
-                });
-                ticking = true;
+        /* --- Matrix Rain Effect --- */
+        const canvas = document.getElementById('matrix-bg');
+        const ctx = canvas.getContext('2d');
+
+        function resizeMatrix() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeMatrix);
+        resizeMatrix();
+
+        const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const style = getComputedStyle(document.documentElement);
+            const color = style.getPropertyValue('--secondary-color').trim();
+            
+            ctx.fillStyle = color;
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = katakana.charAt(Math.floor(Math.random() * katakana.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
             }
+        }
+        setInterval(drawMatrix, 50);
+
+        /* --- Mouse Interaction (No Tilt) --- */
+        document.addEventListener('mousemove', (e) => {
+            const xPct = (e.clientX / window.innerWidth) * 100;
+            const yPct = (e.clientY / window.innerHeight) * 100;
+            document.documentElement.style.setProperty('--mouse-x', `${xPct}%`);
+            document.documentElement.style.setProperty('--mouse-y', `${yPct}%`);
         });
 
         document.addEventListener('mousedown', (e) => {
@@ -554,8 +580,8 @@
             `;
             document.body.appendChild(atField);
             requestAnimationFrame(() => {
-                atField.style.width = '150px';
-                atField.style.height = '150px';
+                atField.style.width = '200px';
+                atField.style.height = '200px';
                 atField.style.opacity = '0';
                 atField.style.transform = 'translate(-50%, -50%) rotate(45deg)';
             });
@@ -567,8 +593,8 @@
             if(!heroImg) return;
             setInterval(() => {
                 heroImg.classList.add('cyber-swap-active');
-                setTimeout(() => { heroImg.classList.remove('cyber-swap-active'); }, 400);
-            }, 5000); 
+                setTimeout(() => { heroImg.classList.remove('cyber-swap-active'); }, 500);
+            }, 4000); 
         }
         
         function createParticles() {
@@ -602,8 +628,8 @@
         const characterMap = {
             'default': './images/shinji.png',
             'unit-02': './images/asuka.png',
-            'unit-00': './images/rei.png',  // 对应绫波丽 (Rei)
-            'unit-08': './images/mari.png'  // 对应真希波 (Mari)
+            'unit-00': './images/rei.png',
+            'unit-08': './images/mari.png'
         };
 
         function setTheme(themeName) {
@@ -623,11 +649,6 @@
                      heroImg.onload = () => { heroImg.style.opacity = 1; };
                  }, 200);
             }
-            // 修复 MAGI 环颜色
-            const magiRings = document.querySelector('#magi-rings circle, #magi-rings path');
-            if (magiRings) {
-                 magiRings.style.stroke = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color');
-            }
         }
         const savedTheme = localStorage.getItem('theme') || 'default';
         setTheme(savedTheme);
@@ -636,25 +657,20 @@
             document.body.classList.toggle('emergency-mode');
         }
 
-        // AI 逻辑
+        // 英梨梨 AI 逻辑
         const aiLines = [
-            // EVA
-            "哼，才不是特意等你的！",
-            "检测到不明入侵... 啊，是你啊。",
-            "笨蛋！AT立场要全开啊！",
-            "MAGI 正在通过提案...",
-            "不要盯着我看！变态！",
-            "Code 404: Tsundere not found.",
-            "同步率 400%... 危险！",
-            
-            // WA2 (胃痛台词)
-            "又到了白色相簿的季节。",
-            "为什么会变成这样呢……",
-            "是我，是我先，明明都是我先来的……",
-            "第一次有了喜欢的人...",
-            "届不到的爱恋。",
-            "雪融化之后，会变成什么呢？",
-            "心之壁，AT Field... 也会被白色相簿打破吗？"
+            "哼，才不是特意在这等你的！只是刚好路过！",
+            "笨蛋，那个地方的代码写错了啦！",
+            "别盯着我看... 变态！去写你的代码！",
+            "哈？这种程度的 UI 还要我来教你吗？",
+            "如果是为了取材的话... 稍微陪你一下也不是不行。",
+            "我的画笔可是很贵的，别让我画无聊的东西。",
+            "再不更新博客的话，粉丝都要跑光了哦？",
+            "那个... 谢谢你一直以来的支持... 诶？！没听到就算了！",
+            "(正在专心画画中，勿扰...)",
+            "那边的像素偏移了 1px，强迫症要发作了！",
+            "MAGI 系统判定：你是笨蛋的概率为 99.9%。",
+            "要不要本小姐帮你优化一下算法？"
         ];
         
         let aiSpeechInterval = null;
@@ -664,17 +680,17 @@
             const bubble = document.getElementById('ai-speech-bubble');
             const textEl = document.getElementById('ai-speech-text');
             const statusEl = document.getElementById('ai-status-text');
-            const aiCard = document.getElementById('ai-card'); // 获取 AI 卡片容器
+            const aiCard = document.getElementById('ai-card');
 
+            // 停止之前的动画
             if (aiSpeechInterval) clearInterval(aiSpeechInterval);
             
-            // --- FIX: REMOVE HIDDEN CLASS TO SHOW BUBBLE ---
+            // 强制移除 hidden
             bubble.classList.remove('hidden'); 
             
             statusEl.innerText = "SPEAKING...";
             statusEl.classList.add("text-primary");
-            aiCard.classList.add("ai-talking");
-
+            
             let randomIndex;
             do {
                 randomIndex = Math.floor(Math.random() * aiLines.length);
@@ -686,25 +702,26 @@
             textEl.innerText = "";
             let i = 0;
             
+            // 打字机效果
             aiSpeechInterval = setInterval(() => {
                 if (i < line.length) { 
                     textEl.innerText += line.charAt(i); 
                     i++; 
                 } else {
                     clearInterval(aiSpeechInterval);
+                    // 5秒后消失
                     setTimeout(() => { 
                         bubble.classList.add('hidden'); 
                         statusEl.innerText = "ONLINE"; 
                         statusEl.classList.remove("text-primary"); 
-                        aiCard.classList.remove("ai-talking"); 
-                    }, 6000); // 停留 6 秒
+                    }, 5000);
                 }
             }, 50);
         }
         
         let audioContext, analyser, source, canvasCtx;
         const audioEl = document.getElementById('background-music');
-        const canvas = document.getElementById('audio-visualizer');
+        const visualCanvas = document.getElementById('audio-visualizer');
         
         function initAudio() {
             if(audioContext) return;
@@ -715,9 +732,9 @@
             source.connect(analyser);
             analyser.connect(audioContext.destination);
             analyser.fftSize = 64;
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
-            canvasCtx = canvas.getContext('2d');
+            visualCanvas.width = visualCanvas.offsetWidth;
+            visualCanvas.height = visualCanvas.offsetHeight;
+            canvasCtx = visualCanvas.getContext('2d');
             drawVisualizer();
         }
 
@@ -726,41 +743,35 @@
             const bufferLength = analyser.frequencyBinCount;
             const dataArray = new Uint8Array(bufferLength);
             analyser.getByteFrequencyData(dataArray);
-            canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
-            const barWidth = (canvas.width / bufferLength) * 2;
+            canvasCtx.clearRect(0, 0, visualCanvas.width, visualCanvas.height);
+            const barWidth = (visualCanvas.width / bufferLength) * 2;
             let x = 0;
             const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim();
             canvasCtx.fillStyle = primaryColor;
             for(let i = 0; i < bufferLength; i++) {
                 const barHeight = dataArray[i] / 2;
-                canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                canvasCtx.fillRect(x, visualCanvas.height - barHeight, barWidth, barHeight);
                 x += barWidth + 1;
             }
         }
 
-        // --- FIX: Music Toggle Logic with pre-rendered icons ---
         function toggleMusic() {
             if(!audioContext) initAudio();
             if(audioContext.state === 'suspended') audioContext.resume();
             
             const wave = document.getElementById('deck-wave');
-            const audioEl = document.getElementById('background-music');
-            
-            // Get the pre-rendered icon elements
             const iconDisc = document.getElementById('icon-disc');
             const iconPause = document.getElementById('icon-pause');
             
             if(audioEl.paused) {
                 audioEl.play().then(() => {
                     wave.classList.remove('hidden');
-                    // Show Pause, Hide Disc
                     iconDisc.classList.add('hidden');
                     iconPause.classList.remove('hidden');
                 }).catch(e => console.log(e));
             } else {
                 audioEl.pause();
                 wave.classList.add('hidden');
-                // Show Disc, Hide Pause
                 iconDisc.classList.remove('hidden');
                 iconPause.classList.add('hidden');
             }
@@ -803,12 +814,12 @@
             if(id) { try { const res = await fetch(`https://corsproxy.io/?${encodeURIComponent('https://api.bgm.tv/v0/subjects/'+id)}`); const data = await res.json(); document.getElementById('modal-summary').innerText = data.summary || "RESTRICTED DATA."; } catch(e) { document.getElementById('modal-summary').innerText = "CONNECTION LOST."; } }
         }
         function closeAnimeModal() { document.getElementById('anime-modal').classList.add('hidden'); document.getElementById('anime-modal').classList.remove('flex'); }
-        function searchArticles() { const query = document.getElementById('search-input').value.toLowerCase(); document.querySelectorAll('.eva-card').forEach(card => { const text = card.textContent.toLowerCase(); const tags = card.dataset.tags ? card.dataset.tags.toLowerCase() : ''; card.style.display = (text.includes(query) || tags.includes(query)) ? '' : 'none'; }); }
+        function searchArticles() { const query = document.getElementById('search-input').value.toLowerCase(); document.querySelectorAll('article').forEach(card => { const text = card.textContent.toLowerCase(); const tags = card.dataset.tags ? card.dataset.tags.toLowerCase() : ''; card.style.display = (text.includes(query) || tags.includes(query)) ? '' : 'none'; }); }
         function filterByTag(tag) { document.getElementById('search-input').value = tag; searchArticles(); }
 
         startHeroGlitch();
         loadAnimeData();
-        createParticles(); // Start particle system
+        createParticles();
 
     </script>
 </body>
