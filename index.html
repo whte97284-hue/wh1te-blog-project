@@ -933,38 +933,44 @@
             renderCursorLoop();
         }
 
-        /* --- Optimized Matrix Rain (Throttled for Mobile) --- */
+        /* --- Optimized Matrix Rain --- */
         const canvas = document.getElementById('matrix-bg');
         const ctx = canvas.getContext('2d');
         
-        // Debounce Resize
-        let resizeTimeout;
-        function resizeMatrix() { 
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                canvas.width = window.innerWidth; 
-                canvas.height = window.innerHeight;
-            }, 100);
-        }
-        window.addEventListener('resize', resizeMatrix); 
-        resizeMatrix();
-
         const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         const fontSize = 14; 
-        // Reduce columns calculation frequency
-        let columns = Math.floor(canvas.width / fontSize); 
         let drops = [];
-        
-        function initDrops() {
-            columns = Math.floor(canvas.width / fontSize);
-            drops = Array(columns).fill(1);
-        }
-        initDrops();
-        window.addEventListener('resize', () => setTimeout(initDrops, 150));
 
-        // Use requestAnimationFrame with time delta for smooth performance
+        function initMatrix() {
+            // Update canvas size synchronously
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            // Recalculate columns immediately
+            const columns = Math.floor(canvas.width / fontSize);
+            
+            // Re-init drops array, preserving existing positions to avoid full reset flash
+            const newDrops = [];
+            for (let i = 0; i < columns; i++) {
+                // If existing drop, keep it; otherwise start random
+                newDrops[i] = drops[i] || Math.floor(Math.random() * -canvas.height/fontSize);
+            }
+            drops = newDrops;
+        }
+
+        // Debounce resize slightly for performance, but keep visual sync fast
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(initMatrix, 50);
+        });
+        
+        // Initial load
+        initMatrix();
+
+        // Throttled FPS for matrix rain to save battery
         let lastTime = 0;
-        const fps = 30; // Limit FPS to 30 for background effect to save battery
+        const fps = 30; 
         const interval = 1000 / fps;
 
         function drawMatrix(currentTime) {
@@ -985,7 +991,10 @@
             for (let i = 0; i < drops.length; i++) {
                 const text = katakana.charAt(Math.floor(Math.random() * katakana.length));
                 ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
                 drops[i]++;
             }
         }
