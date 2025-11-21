@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>WH1TE_LOG // HUMAN_INSTRUMENTALITY</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@300;500;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- 引入 EVA 风格字体：Serif 用于 EMERGENCY，Mono 用于数据 -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@300;500;700;900&family=Noto+Serif+SC:wght@900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <script>
@@ -16,6 +17,7 @@
                     fontFamily: {
                         sans: ['"Space Grotesk"', '"Noto Sans JP"', 'sans-serif'],
                         mono: ['"JetBrains Mono"', '"Noto Sans JP"', 'monospace'],
+                        serif: ['"Noto Serif SC"', 'serif'], // 用于 EMERGENCY
                     },
                     colors: {
                         primary: 'var(--primary-color)',
@@ -34,6 +36,7 @@
                         'hazard-scroll': 'hazardScroll 2s linear infinite',
                         'marquee': 'marquee 20s linear infinite',
                         'red-alert': 'redAlert 2s ease-in-out infinite',
+                        'hologram': 'hologram 2s infinite alternate', // 新增全息抖动
                     },
                     keyframes: {
                         scan: { '0%': { backgroundPosition: '0 0' }, '100%': { backgroundPosition: '0 100%' } },
@@ -48,7 +51,12 @@
                             '100%': { opacity: 0.8, transform: 'translateX(0)' } 
                         },
                         marquee: { '0%': { transform: 'translateX(100%)' }, '100%': { transform: 'translateX(-100%)' } },
-                        redAlert: { '0%, 100%': { boxShadow: 'inset 0 0 30px rgba(255,0,0,0.3)' }, '50%': { boxShadow: 'inset 0 0 80px rgba(255,0,0,0.6)' } }
+                        redAlert: { '0%, 100%': { boxShadow: 'inset 0 0 30px rgba(255,0,0,0.3)' }, '50%': { boxShadow: 'inset 0 0 100px rgba(255,0,0,0.6)' } },
+                        hologram: {
+                            '0%': { opacity: 0.8, filter: 'brightness(100%) blur(0px)' },
+                            '50%': { opacity: 0.9, filter: 'brightness(120%) blur(1px)' },
+                            '100%': { opacity: 0.7, filter: 'brightness(90%) blur(0px)' }
+                        }
                     }
                 }
             }
@@ -60,53 +68,89 @@
             --mouse-x: 50%; --mouse-y: 50%; --cursor-size: 800px;
             --primary-color: #b15dff; --secondary-color: #39ff14; 
             --bg-color: #0f0518;
-            /* 极高透明度，实现完美融合 */
-            --surface-color: rgba(20, 10, 30, 0.35); 
-            --grid-color: rgba(125, 42, 232, 0.15); --hue-rotate: 260deg;
+            --surface-color: rgba(20, 10, 30, 0.4); 
+            --grid-color: rgba(125, 42, 232, 0.2);
+            --hue-rotate: 260deg;
         }
         
-        [data-theme="unit-02"] { --primary-color: #ffae00; --secondary-color: #ff0000; --bg-color: #140202; --surface-color: rgba(40, 10, 10, 0.35); --grid-color: rgba(255, 0, 0, 0.15); --hue-rotate: 0deg; }
-        [data-theme="unit-00"] { --primary-color: #ffffff; --secondary-color: #0091ff; --bg-color: #020a14; --surface-color: rgba(10, 20, 40, 0.35); --grid-color: rgba(0, 145, 255, 0.15); --hue-rotate: 180deg; }
-        [data-theme="unit-08"] { --primary-color: #ff5cab; --secondary-color: #50c878; --bg-color: #14020d; --surface-color: rgba(40, 10, 30, 0.35); --grid-color: rgba(255, 0, 153, 0.15); --hue-rotate: 300deg; }
+        [data-theme="unit-02"] { --primary-color: #ffae00; --secondary-color: #ff0000; --bg-color: #140202; --surface-color: rgba(40, 10, 10, 0.4); --grid-color: rgba(255, 0, 0, 0.2); --hue-rotate: 0deg; }
+        [data-theme="unit-00"] { --primary-color: #ffffff; --secondary-color: #0091ff; --bg-color: #020a14; --surface-color: rgba(10, 20, 40, 0.4); --grid-color: rgba(0, 145, 255, 0.2); --hue-rotate: 180deg; }
+        [data-theme="unit-08"] { --primary-color: #ff5cab; --secondary-color: #50c878; --bg-color: #14020d; --surface-color: rgba(40, 10, 30, 0.4); --grid-color: rgba(255, 0, 153, 0.2); --hue-rotate: 300deg; }
 
-        /* EMERGENCY MODE */
+        /* EMERGENCY MODE STYLE */
         body.emergency-mode {
-            --primary-color: #ff0000 !important; --secondary-color: #ff0000 !important; --bg-color: #0a0000 !important;
-            --surface-color: rgba(40, 0, 0, 0.6) !important; --grid-color: rgba(255, 0, 0, 0.3) !important; --hue-rotate: 0deg !important;
+            --primary-color: #ff0000 !important; --secondary-color: #ff0000 !important; --bg-color: #000000 !important;
+            --surface-color: rgba(40, 0, 0, 0.6) !important; --grid-color: rgba(255, 0, 0, 0.4) !important; --hue-rotate: 0deg !important;
         }
-        body.emergency-mode .hex-bg { animation: none; background-image: url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ff0000' stroke-opacity='0.3' stroke-width='2'/%3E%3C/svg%3E"); }
-        body.emergency-mode .emergency-overlay { display: flex !important; animation: red-alert 2s ease-in-out infinite; }
+        /* 紧急模式下背景变红 */
+        body.emergency-mode .hex-bg { 
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ff0000' stroke-opacity='0.4' stroke-width='2'/%3E%3C/svg%3E"); 
+        }
+        /* 紧急模式下显示警告层 */
+        body.emergency-mode .emergency-overlay { display: flex !important; animation: red-alert 1s ease-in-out infinite; }
 
-        body { background-color: var(--bg-color); min-height: 100vh; color: white; transition: background-color 0.3s ease, color 0.3s ease; overflow-x: hidden; cursor: crosshair; background: radial-gradient(circle at 50% 40%, rgba(40,40,40,0.1) 0%, var(--bg-color) 90%); }
+        body { background-color: var(--bg-color); min-height: 100vh; color: white; transition: background-color 0.3s ease, color 0.3s ease; overflow-x: hidden; cursor: crosshair; background: radial-gradient(circle at 50% 40%, rgba(40,40,40,0.2) 0%, var(--bg-color) 90%); }
 
         /* --- EFFECTS --- */
-        /* 背景网格 - 增强 */
-        .hex-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -2; background-image: url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ffffff' stroke-opacity='0.12' stroke-width='1'/%3E%3C/svg%3E"); background-size: 60px 104px; mask-image: linear-gradient(to bottom, black 20%, transparent 90%); animation: bg-scroll 60s linear infinite; transition: background-image 0.3s; }
+        .hex-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -2; background-image: url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ffffff' stroke-opacity='0.1' stroke-width='1'/%3E%3C/svg%3E"); background-size: 60px 104px; mask-image: linear-gradient(to bottom, black 30%, transparent 90%); animation: bg-scroll 60s linear infinite; transition: background-image 0.3s; }
         @keyframes bg-scroll { 0% { background-position: 0 0; } 100% { background-position: 60px 104px; } }
-        .hex-flash { position: absolute; width: 60px; height: 104px; background: var(--secondary-color); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); opacity: 0; animation: hexFlash 4s infinite; box-shadow: 0 0 20px var(--secondary-color); }
-        @keyframes hexFlash { 0%, 90% { opacity: 0; } 92% { opacity: 0.3; } 94% { opacity: 0; } }
         
-        /* LCL 粒子 - 增强 */
+        /* 偶尔亮起的背景警告 (Background Alarm) */
+        @keyframes background-alarm-flash {
+            0%, 90% { opacity: 0; filter: grayscale(100%); }
+            92% { opacity: 0.6; filter: grayscale(0%); } /* 瞬间亮起 */
+            95% { opacity: 0.8; filter: hue-rotate(0deg) saturate(300%); } /* 变红 */
+            96% { opacity: 0; }
+            100% { opacity: 0; }
+        }
+        .bg-alarm-layer {
+            position: fixed; inset: 0; z-index: -1; pointer-events: none;
+            background: radial-gradient(circle, rgba(255,0,0,0.2) 0%, transparent 70%);
+            mix-blend-mode: overlay;
+            animation: background-alarm-flash 45s infinite; /* 45秒触发一次 */
+        }
+
+        .hex-flash { position: absolute; width: 60px; height: 104px; background: var(--secondary-color); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); opacity: 0; animation: hexFlash 4s infinite; box-shadow: 0 0 15px var(--secondary-color); }
+        @keyframes hexFlash { 0%, 90% { opacity: 0; } 92% { opacity: 0.4; } 94% { opacity: 0; } }
+        
         #particles-container { position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden; perspective: 1000px; }
         .particle { position: absolute; background: var(--secondary-color); opacity: 0; bottom: -50px; transition: background-color 0.3s; }
         .particle.bubble { border-radius: 50%; box-shadow: 0 0 6px var(--secondary-color); }
-        .particle.bit { height: 1px !important; box-shadow: 0 0 3px var(--secondary-color); }
+        .particle.bit { height: 1px !important; box-shadow: 0 0 4px var(--secondary-color); }
         @keyframes floatUp { 0% { transform: translateY(0) scale(var(--p-scale)); opacity: 0; } 15% { opacity: var(--p-opacity); } 85% { opacity: var(--p-opacity); } 100% { transform: translateY(-130vh) scale(var(--p-scale)); opacity: 0; } }
 
-        /* 扫描线 */
         .scan-bar { position: fixed; top: -10%; left: 0; width: 100%; height: 15px; background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent); opacity: 0; box-shadow: 0 0 40px var(--secondary-color); z-index: 40; pointer-events: none; animation: scanDown 60s linear infinite; }
         @keyframes scanDown { 0% { top: -10%; opacity: 0; } 0.1% { opacity: 0.4; } 5% { top: 110%; opacity: 0.4; } 5.1% { top: 110%; opacity: 0; } 100% { top: 110%; opacity: 0; } }
 
         .cockpit-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 90; background: radial-gradient(circle at center, transparent 60%, rgba(0,0,0,0.6) 100%); box-shadow: inset 0 0 100px rgba(0,0,0,0.4); }
-        .cockpit-reticle { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 650px; height: 650px; border: 1px dashed var(--secondary-color); border-radius: 50%; opacity: 0.08; pointer-events: none; z-index: -1; animation: spin-slower 120s linear infinite; transition: border-color 0.3s; }
+        .cockpit-reticle { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 700px; height: 700px; border: 1px dashed var(--secondary-color); border-radius: 50%; opacity: 0.08; pointer-events: none; z-index: -1; animation: spin-slower 120s linear infinite; transition: border-color 0.3s; }
         .cockpit-side-meter { position: fixed; top: 20%; bottom: 20%; width: 4px; z-index: 80; pointer-events: none; background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent); opacity: 0.3; transition: background 0.3s; }
         .meter-left { left: 40px; } .meter-right { right: 40px; }
         
+        /* 紧急覆盖层 (NERV Style) */
         .emergency-overlay { display: none; position: fixed; inset: 0; z-index: 1000; background: transparent; align-items: center; justify-content: center; pointer-events: none; }
-        .emergency-hex { width: 400px; height: 460px; background: rgba(255, 0, 0, 0.05); border: 6px solid #ff0000; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: 0 0 40px #ff0000, inset 0 0 20px #ff0000; color: #ff0000; animation: pulse-slow 4s ease-in-out infinite; }
-        @keyframes pulse-slow { 0%, 100% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(1.02); opacity: 1; } }
-        .emergency-text-big { font-family: 'Times New Roman', serif; font-weight: 900; font-size: 3rem; letter-spacing: 0.1em; transform: scaleY(1.2); margin-bottom: 1rem; text-shadow: 0 0 10px #ff0000; }
-        .emergency-text-sub { font-family: 'Arial Black', sans-serif; font-size: 1rem; letter-spacing: 0.5em; border-top: 2px solid #ff0000; border-bottom: 2px solid #ff0000; padding: 0.5rem 0; }
+        .emergency-hex { 
+            width: 500px; height: 580px; 
+            background: rgba(0, 0, 0, 0.8); 
+            border: 10px solid #ff0000; 
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; 
+            box-shadow: 0 0 60px #ff0000, inset 0 0 30px #ff0000; 
+            color: #ff0000; 
+            /* 稳定的脉冲 */
+            animation: pulse-alert 2s ease-in-out infinite;
+        }
+        @keyframes pulse-alert { 0%, 100% { opacity: 0.9; transform: scale(1); } 50% { opacity: 1; transform: scale(1.02); } }
+        
+        .emergency-text-big { 
+            font-family: 'Noto Serif SC', serif; 
+            font-weight: 900; font-size: 5rem; letter-spacing: 0.05em; transform: scaleY(1.2); margin-bottom: 1rem; text-shadow: 0 0 20px #ff0000; 
+        }
+        .emergency-text-sub { 
+            font-family: 'JetBrains Mono', sans-serif; 
+            font-size: 1.5rem; letter-spacing: 0.5em; border-top: 4px solid #ff0000; border-bottom: 4px solid #ff0000; padding: 0.5rem 2rem; 
+            background: #ff0000; color: black; font-weight: bold;
+        }
 
         #cursor-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; background-image: radial-gradient(circle var(--cursor-size) at var(--mouse-x) var(--mouse-y), var(--grid-color) 0%, transparent 60%); transition: --cursor-size 0.1s ease; will-change: background-image; mix-blend-mode: screen; }
         .hero-character-container { position: fixed; right: 0; top: 0; bottom: 0; z-index: 0; width: 50vw; max-width: 900px; height: 100vh; display: flex; align-items: flex-start; justify-content: flex-end; pointer-events: none; overflow: hidden; }
@@ -114,17 +158,16 @@
         @keyframes cyberSwap { 0% { opacity: 1; transform: translateX(0) skewX(0deg); filter: hue-rotate(0deg); } 20% { opacity: 0.8; transform: translateX(-5px) skewX(10deg); filter: hue-rotate(90deg) contrast(1.5); clip-path: inset(10% 0 60% 0); } 40% { opacity: 0.9; transform: translateX(5px) skewX(-10deg); filter: hue-rotate(-90deg) contrast(1.5); clip-path: inset(50% 0 20% 0); } 60% { opacity: 0.8; transform: translateX(-2px) skewX(5deg); filter: hue-rotate(45deg); clip-path: inset(0 0 80% 0); } 80% { opacity: 0.9; transform: translateX(0) skewX(0deg); filter: hue-rotate(0deg); clip-path: none; } 100% { opacity: 1; transform: translateX(0) skewX(0deg); filter: hue-rotate(0deg); } }
         .cyber-swap-active { animation: cyberSwap 0.4s steps(5) forwards; }
         
-        /* --- 核心 UI 卡片样式 (EVA GLASS V2) --- */
+        /* --- UI 卡片 (EVA GLASS) --- */
         .eva-card {
             background: var(--surface-color);
-            backdrop-filter: blur(16px); /* 增强模糊 */
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             border-left: 2px solid var(--secondary-color);
             position: relative;
             transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
             clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
         }
-        /* 内部高光 */
         .eva-glare {
             position: absolute; inset: 0;
             background: radial-gradient(circle at var(--mouse-x) var(--mouse-y), rgba(255,255,255,0.2) 0%, transparent 60%);
@@ -132,24 +175,31 @@
             mix-blend-mode: overlay;
         }
         .eva-card:hover .eva-glare { opacity: 1; }
-        
         .eva-card:hover {
             box-shadow: 0 0 35px rgba(var(--secondary-color), 0.3), inset 0 0 15px rgba(var(--secondary-color), 0.15);
             border-color: rgba(255,255,255,0.3);
             z-index: 10;
-            transform: translateY(-3px); /* 悬浮感 */
+            transform: translateY(-3px);
         }
-        
-        /* 装饰支架 */
         .eva-card::before { content: ''; position: absolute; top: 0; right: 0; width: 20px; height: 20px; border-top: 2px solid var(--secondary-color); border-right: 2px solid var(--secondary-color); opacity: 0.8; box-shadow: 1px -1px 6px var(--secondary-color); }
         .eva-card::after { content: ''; position: absolute; bottom: 0; left: 0; width: 20px; height: 20px; border-bottom: 2px solid var(--secondary-color); border-left: 2px solid var(--secondary-color); opacity: 0.8; box-shadow: -1px 1px 6px var(--secondary-color); }
 
-        /* 标题栏 */
         .eva-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 8px; margin-bottom: 16px; font-family: 'JetBrains Mono'; font-size: 11px; letter-spacing: 0.1em; color: var(--secondary-color); text-shadow: 0 0 5px var(--secondary-color); }
         .eva-header-deco { width: 4px; height: 4px; background: var(--primary-color); margin-right: 8px; box-shadow: 0 0 6px var(--primary-color); }
 
-        /* AI Card Specifics */
+        /* AI Card - Holographic Style */
+        .ai-card-container { 
+            background: var(--surface-color); backdrop-filter: blur(12px); border: 1px solid var(--secondary-color); position: relative; transition: all 0.4s ease; overflow: visible; /* 允许气泡溢出 */
+            box-shadow: 0 0 20px rgba(var(--secondary-color), 0.2);
+        }
+        /* 全息扫描线 */
         .ai-scanlines { position: absolute; inset: 0; pointer-events: none; z-index: 10; background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2)); background-size: 100% 4px; opacity: 0.4; }
+        .ai-hologram-effect {
+            animation: hologram 3s infinite alternate;
+            mix-blend-mode: screen;
+            filter: drop-shadow(0 0 5px var(--secondary-color));
+        }
+
         @keyframes ai-talking-glitch { 0% { transform: translate(0); filter: hue-rotate(0deg); } 20% { transform: translate(-2px, 1px); filter: hue-rotate(10deg) brightness(1.2); } 40% { transform: translate(1px, -1px); filter: hue-rotate(-10deg); } 60% { transform: translate(-1px, -1px); filter: hue-rotate(5deg) opacity(0.9); } 80% { transform: translate(2px, 1px); filter: hue-rotate(-5deg); } 100% { transform: translate(0); filter: hue-rotate(0deg); } }
         .ai-talking .ai-avatar-img { animation: ai-talking-glitch 0.2s infinite; }
 
@@ -173,6 +223,7 @@
 </head>
 <body class="antialiased overflow-x-hidden font-sans">
 
+    <!-- 紧急事态覆盖层 -->
     <div class="emergency-overlay">
         <div class="emergency-hex">
             <div class="emergency-text-big">EMERGENCY</div>
@@ -180,6 +231,9 @@
             <div class="mt-8 font-mono text-xs tracking-widest">ANGEL DETECTED</div>
         </div>
     </div>
+
+    <!-- 背景偶尔闪烁的红光 -->
+    <div class="bg-alarm-layer"></div>
 
     <div class="cockpit-overlay"></div>
     <div class="cockpit-reticle"></div>
@@ -248,10 +302,10 @@
 
     <nav class="fixed top-0 w-full z-40 px-6 md:px-12 py-6 flex justify-between items-center bg-gradient-to-b from-bg to-transparent select-none">
         <div class="flex items-center gap-8">
-            <a href="index.html" class="group flex flex-col">
+            <div class="group flex flex-col">
                 <span class="text-3xl font-black tracking-tighter leading-none text-white group-hover:text-primary transition-colors italic magi-font">WH1TE.LOG</span>
                 <button onclick="toggleEmergency()" class="mt-1 border border-secondary/50 px-2 py-0.5 text-[9px] font-mono text-secondary/70 hover:bg-secondary hover:text-black hover:border-secondary transition-all tracking-widest uppercase">[ EMERGENCY ]</button>
-            </a>
+            </div>
             <div class="flex gap-2 ml-8 items-center px-4 py-1 border-l border-white/10">
                 <div class="theme-btn active" style="background: #7d2ae8; border-color: #39ff14;" onclick="setTheme('default')" title="Unit-01 (Shinji)"></div>
                 <div class="theme-btn" style="background: #d90000; border-color: #ffae00;" onclick="setTheme('unit-02')" title="Unit-02 (Asuka)"></div>
@@ -315,7 +369,7 @@
                         <div class="eva-glare"></div>
                         <div class="ai-scanlines"></div>
                         <div class="w-full relative aspect-[4/5] overflow-hidden bg-black/40">
-                            <img src="./images/ai-assistant.jpg" onerror="this.style.display='none'" alt="AI" class="ai-avatar-img w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity mix-blend-lighten filter contrast-125">
+                            <img src="./images/ai-assistant.jpg" onerror="this.style.display='none'" alt="AI" class="ai-avatar-img w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity mix-blend-lighten filter contrast-125 ai-hologram-effect">
                             <div class="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent"></div>
                             <div class="absolute top-2 right-2 text-[9px] font-mono text-black bg-secondary px-1 font-bold">LIVE</div>
                         </div>
@@ -499,14 +553,22 @@
                 z-index: 9998; pointer-events: none; transition: all 0.4s ease-out; box-shadow: 0 0 10px #ffa500;
             `;
             document.body.appendChild(atField);
-            requestAnimationFrame(() => { atField.style.width = '150px'; atField.style.height = '150px'; atField.style.opacity = '0'; atField.style.transform = 'translate(-50%, -50%) rotate(45deg)'; });
+            requestAnimationFrame(() => {
+                atField.style.width = '150px';
+                atField.style.height = '150px';
+                atField.style.opacity = '0';
+                atField.style.transform = 'translate(-50%, -50%) rotate(45deg)';
+            });
             setTimeout(() => atField.remove(), 400);
         }
 
         function startHeroGlitch() {
             const heroImg = document.getElementById('hero-character');
             if(!heroImg) return;
-            setInterval(() => { heroImg.classList.add('cyber-swap-active'); setTimeout(() => { heroImg.classList.remove('cyber-swap-active'); }, 400); }, 5000); 
+            setInterval(() => {
+                heroImg.classList.add('cyber-swap-active');
+                setTimeout(() => { heroImg.classList.remove('cyber-swap-active'); }, 400);
+            }, 5000); 
         }
         
         function createParticles() {
@@ -540,22 +602,28 @@
         const characterMap = {
             'default': './images/shinji.png',
             'unit-02': './images/asuka.png',
-            'unit-00': './images/rei.png',
-            'unit-08': './images/mari.png'
+            'unit-00': './images/rei.png',  // 对应绫波丽 (Rei)
+            'unit-08': './images/mari.png'  // 对应真希波 (Mari)
         };
 
         function setTheme(themeName) {
             document.documentElement.setAttribute('data-theme', themeName);
             localStorage.setItem('theme', themeName);
+            
             document.querySelectorAll('.theme-btn').forEach(btn => {
                 btn.classList.remove('active');
                 if(btn.getAttribute('onclick').includes(themeName)) btn.classList.add('active');
             });
+            
             const heroImg = document.getElementById('hero-character');
             if (heroImg && characterMap[themeName]) {
                  heroImg.style.opacity = 0;
-                 setTimeout(() => { heroImg.src = characterMap[themeName]; heroImg.onload = () => { heroImg.style.opacity = 1; }; }, 200);
+                 setTimeout(() => {
+                     heroImg.src = characterMap[themeName];
+                     heroImg.onload = () => { heroImg.style.opacity = 1; };
+                 }, 200);
             }
+            // 修复 MAGI 环颜色
             const magiRings = document.querySelector('#magi-rings circle, #magi-rings path');
             if (magiRings) {
                  magiRings.style.stroke = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color');
@@ -568,7 +636,7 @@
             document.body.classList.toggle('emergency-mode');
         }
 
-        // AI 逻辑 (混合 EVA + WA2)
+        // AI 逻辑
         const aiLines = [
             // EVA
             "哼，才不是特意等你的！",
@@ -596,11 +664,11 @@
             const bubble = document.getElementById('ai-speech-bubble');
             const textEl = document.getElementById('ai-speech-text');
             const statusEl = document.getElementById('ai-status-text');
-            const aiCard = document.getElementById('ai-card');
+            const aiCard = document.getElementById('ai-card'); // 获取 AI 卡片容器
 
             if (aiSpeechInterval) clearInterval(aiSpeechInterval);
             
-            // 关键修复：移除 hidden
+            // --- FIX: REMOVE HIDDEN CLASS TO SHOW BUBBLE ---
             bubble.classList.remove('hidden'); 
             
             statusEl.innerText = "SPEAKING...";
@@ -670,25 +738,29 @@
             }
         }
 
-        // 修复：双图标切换逻辑
+        // --- FIX: Music Toggle Logic with pre-rendered icons ---
         function toggleMusic() {
             if(!audioContext) initAudio();
             if(audioContext.state === 'suspended') audioContext.resume();
             
             const wave = document.getElementById('deck-wave');
             const audioEl = document.getElementById('background-music');
+            
+            // Get the pre-rendered icon elements
             const iconDisc = document.getElementById('icon-disc');
             const iconPause = document.getElementById('icon-pause');
             
             if(audioEl.paused) {
                 audioEl.play().then(() => {
                     wave.classList.remove('hidden');
+                    // Show Pause, Hide Disc
                     iconDisc.classList.add('hidden');
                     iconPause.classList.remove('hidden');
                 }).catch(e => console.log(e));
             } else {
                 audioEl.pause();
                 wave.classList.add('hidden');
+                // Show Disc, Hide Pause
                 iconDisc.classList.remove('hidden');
                 iconPause.classList.add('hidden');
             }
@@ -736,7 +808,8 @@
 
         startHeroGlitch();
         loadAnimeData();
-        createParticles();
+        createParticles(); // Start particle system
+
     </script>
 </body>
 </html>
