@@ -73,25 +73,31 @@
             transition: background-color 0.3s ease, color 0.3s ease; 
             overflow-x: hidden; 
             cursor: auto;
+            /* 移动端优化：禁止横向滚动，优化触摸高亮 */
+            -webkit-tap-highlight-color: transparent;
         }
 
         /* --- 战术模式：隐藏系统鼠标，启用自定义光标 --- */
-        body.tactical-mode, 
-        body.tactical-mode a, 
-        body.tactical-mode button, 
-        body.tactical-mode input, 
-        body.tactical-mode .cursor-pointer { 
-            cursor: none !important; 
+        /* 仅在支持 hover 的设备（PC）上生效，手机上强制显示系统原生指针以优化体验 */
+        @media (hover: hover) and (pointer: fine) {
+            body.tactical-mode, 
+            body.tactical-mode a, 
+            body.tactical-mode button, 
+            body.tactical-mode input, 
+            body.tactical-mode .cursor-pointer { 
+                cursor: none !important; 
+            }
+            
+            /* 战术光标仅在 PC 端显示 */
+            body.tactical-mode #tactical-cursor {
+                display: block;
+            }
         }
 
         /* 战术光标容器 */
         #tactical-cursor {
             position: fixed; top: 0; left: 0; z-index: 99999; pointer-events: none;
             display: none; /* 默认关闭 */
-        }
-        
-        body.tactical-mode #tactical-cursor {
-            display: block;
         }
 
         /* 光标层级结构 - 优化性能 */
@@ -100,7 +106,7 @@
             will-change: transform;
             pointer-events: none;
             transition: none !important; 
-            transform: translateZ(0);
+            transform: translateZ(0); /* 开启 GPU 加速 */
             backface-visibility: hidden;
         }
         
@@ -185,11 +191,13 @@
         @keyframes lock-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(-90deg); } }
         @keyframes ripple-effect { 0% { width: 10px; height: 10px; opacity: 1; border-width: 2px; } 100% { width: 100px; height: 100px; opacity: 0; border-width: 0px; } }
 
-        /* --- 社交按钮优化 (Social Uplink Animation) --- */
+        /* --- 社交按钮优化 --- */
         .social-btn {
             position: relative;
             overflow: hidden;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            /* 手机端增加点击区域 */
+            touch-action: manipulation;
         }
         .social-btn:hover {
             border-color: var(--secondary-color);
@@ -198,10 +206,22 @@
         .social-text {
             transition: transform 0.3s ease, opacity 0.2s;
         }
-        .social-btn:hover .social-text {
-            transform: translateY(-150%);
-            opacity: 0;
+        /* 媒体查询：仅在支持 hover 的设备启用位移动效，防止手机点击时闪烁 */
+        @media (hover: hover) {
+            .social-btn:hover .social-text {
+                transform: translateY(-150%);
+                opacity: 0;
+            }
+            .social-btn:hover .social-icon-container {
+                opacity: 1;
+                transform: scale(1);
+                animation: icon-glitch 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
+            .social-btn:hover .social-shutter {
+                transform: scaleY(1);
+            }
         }
+        
         .social-icon-container {
             position: absolute;
             inset: 0;
@@ -212,20 +232,13 @@
             transform: scale(0.8);
             transition: all 0.3s ease;
         }
-        .social-btn:hover .social-icon-container {
-            opacity: 1;
-            transform: scale(1);
-            animation: icon-glitch 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
+        /* 手机端默认显示图标，或根据需求调整，这里保持原样逻辑但在触摸时优化 */
         .social-shutter {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--secondary-color);
             transform: scaleY(0); transform-origin: bottom;
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             opacity: 0.1; pointer-events: none;
-        }
-        .social-btn:hover .social-shutter {
-            transform: scaleY(1);
         }
 
         /* Toggle Switch Style */
@@ -236,6 +249,11 @@
             padding: 4px 8px; border: 1px solid rgba(255,255,255,0.2);
             transition: all 0.3s;
         }
+        /* 手机端隐藏战术开关，因为手机不启用战术模式 */
+        @media (hover: none) {
+            .tactical-switch { display: none; }
+        }
+
         .tactical-switch:hover { border-color: white; }
         .switch-box {
             width: 12px; height: 12px; border: 1px solid currentColor;
@@ -277,6 +295,12 @@
 
         .cockpit-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 90; background: radial-gradient(circle at center, transparent 65%, rgba(0,0,0,0.6) 100%); box-shadow: inset 0 0 100px rgba(0,0,0,0.4); }
         .cockpit-reticle { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 700px; height: 700px; border: 1px dashed var(--secondary-color); border-radius: 50%; opacity: 0.08; pointer-events: none; z-index: -1; animation: spin-slower 120s linear infinite; transition: border-color 0.3s; }
+        /* 手机端优化：隐藏过于复杂的座舱装饰，减少视觉干扰 */
+        @media (max-width: 768px) {
+            .cockpit-reticle { display: none; }
+            .cockpit-side-meter { display: none; }
+        }
+        
         .cockpit-side-meter { position: fixed; top: 20%; bottom: 20%; width: 4px; z-index: 80; pointer-events: none; background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent); opacity: 0.25; transition: background 0.3s; }
         .meter-left { left: 40px; } .meter-right { right: 40px; }
         
@@ -316,17 +340,21 @@
             mix-blend-mode: overlay;
             z-index: 20;
         }
-        .eva-card:hover .eva-glare { opacity: 1; }
-        .eva-card:hover {
-            box-shadow: 0 10px 40px rgba(var(--secondary-color), 0.2), inset 0 0 20px rgba(var(--secondary-color), 0.1);
-            border-color: rgba(255,255,255,0.4);
-            z-index: 10;
-            transform: translateY(-5px);
+        /* 只有在支持 hover 的设备上启用反光和位移，手机端禁用以节省性能 */
+        @media (hover: hover) {
+            .eva-card:hover .eva-glare { opacity: 1; }
+            .eva-card:hover {
+                box-shadow: 0 10px 40px rgba(var(--secondary-color), 0.2), inset 0 0 20px rgba(var(--secondary-color), 0.1);
+                border-color: rgba(255,255,255,0.4);
+                z-index: 10;
+                transform: translateY(-5px);
+            }
+            .eva-card:hover::before { width: 30px; height: 30px; }
+            .eva-card:hover::after { width: 30px; height: 30px; }
         }
+
         .eva-card::before { content: ''; position: absolute; top: 0; right: 0; width: 15px; height: 15px; border-top: 2px solid var(--secondary-color); border-right: 2px solid var(--secondary-color); opacity: 0.8; box-shadow: 2px -2px 8px var(--secondary-color); transition: all 0.3s; }
         .eva-card::after { content: ''; position: absolute; bottom: 0; left: 0; width: 15px; height: 15px; border-bottom: 2px solid var(--secondary-color); border-left: 2px solid var(--secondary-color); opacity: 0.8; box-shadow: -2px 2px 8px var(--secondary-color); transition: all 0.3s; }
-        .eva-card:hover::before { width: 30px; height: 30px; }
-        .eva-card:hover::after { width: 30px; height: 30px; }
 
         .glitch-text { position: relative; display: inline-block; }
         .glitch-text::before, .glitch-text::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.8; }
@@ -391,7 +419,7 @@
 </head>
 <body class="antialiased overflow-x-hidden font-sans selection:bg-secondary selection:text-black">
 
-    <!-- 战术光标系统 (多层结构) -->
+    <!-- 战术光标系统 (多层结构) - 仅在 PC 端显示 -->
     <div id="tactical-cursor">
         <!-- 主光标 -->
         <div id="cursor-main" class="cursor-layer cursor-main">
@@ -796,121 +824,164 @@
     <script>
         lucide.createIcons();
 
+        /* ==========================================================================
+           CORE OPTIMIZATION: DEVICE & CAPABILITY DETECTION
+           ========================================================================== */
+        
+        // Check if device supports touch (Mobile/Tablet)
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        
+        // Adjust particle count based on device capability
+        const PARTICLE_COUNT = isTouchDevice ? 50 : 150;
+
         /* --- TACTICAL MODE TOGGLE LOGIC --- */
         const savedTactical = localStorage.getItem('tacticalMode');
-        if (savedTactical === 'true') {
+        
+        // Auto-disable tactical mode on touch devices to prevent UX issues
+        if (savedTactical === 'true' && !isTouchDevice) {
             document.body.classList.add('tactical-mode');
         }
 
         function toggleTacticalMode() {
+            // Prevent enabling on touch devices
+            if(isTouchDevice) return; 
+            
             document.body.classList.toggle('tactical-mode');
             localStorage.setItem('tacticalMode', document.body.classList.contains('tactical-mode'));
         }
 
         /* ==========================================================================
-           ULTIMATE PERFORMANCE CURSOR SYSTEM (KERNEL LEVEL OPTIMIZATION)
+           OPTIMIZED CURSOR SYSTEM (CONDITIONAL RENDERING)
            ========================================================================== */
         
-        // Elements
-        const cursorMain = document.getElementById('cursor-main');
-        const cursorTrail1 = document.getElementById('cursor-trail-1');
-        const cursorTrail2 = document.getElementById('cursor-trail-2');
-        const cursorInfo = document.querySelector('.cursor-coords');
+        // Only initialize cursor logic on non-touch devices
+        if (!isTouchDevice) {
+            const cursorMain = document.getElementById('cursor-main');
+            const cursorTrail1 = document.getElementById('cursor-trail-1');
+            const cursorTrail2 = document.getElementById('cursor-trail-2');
+            const cursorInfo = document.querySelector('.cursor-coords');
 
-        // State (Decoupled from DOM)
-        let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-        
-        // Pos objects for trails
-        let posTrail1 = { x: mouse.x, y: mouse.y };
-        let posTrail2 = { x: mouse.x, y: mouse.y };
+            let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+            let posTrail1 = { x: mouse.x, y: mouse.y };
+            let posTrail2 = { x: mouse.x, y: mouse.y };
 
-        // Trail Lerp Factors
-        const LERP_TRAIL1 = 0.15; 
-        const LERP_TRAIL2 = 0.08; 
+            const LERP_TRAIL1 = 0.15; 
+            const LERP_TRAIL2 = 0.08; 
+            const lerp = (start, end, factor) => start + (end - start) * factor;
 
-        // Linear Interpolation
-        const lerp = (start, end, factor) => start + (end - start) * factor;
+            // 1. MOUSE MOVE: Zero latency update for main cursor
+            document.addEventListener('mousemove', (e) => {
+                mouse.x = e.clientX;
+                mouse.y = e.clientY;
 
-        // --- 1. MOUSE MOVE: PURE INPUT HANDLING (NO LAYOUT THRASHING) ---
-        document.addEventListener('mousemove', (e) => {
-            mouse.x = e.clientX;
-            mouse.y = e.clientY;
-
-            // ZERO LATENCY update for main cursor
-            if (document.body.classList.contains('tactical-mode')) {
-                cursorMain.style.transform = `translate3d(${mouse.x}px, ${mouse.y}px, 0)`;
-            }
-        });
-
-        // --- 2. EVENT-DRIVEN HOVER SYSTEM (REPLACES 'closest' LOOP) ---
-        document.addEventListener('mouseover', (e) => {
-            if (e.target.closest('a, button, .eva-card, input, .group, .cursor-pointer, .social-btn')) {
-                document.body.classList.add('hovering');
-            }
-        });
-        
-        document.addEventListener('mouseout', (e) => {
-            if (e.target.closest('a, button, .eva-card, input, .group, .cursor-pointer, .social-btn')) {
-                document.body.classList.remove('hovering');
-            }
-        });
-
-        // --- 3. CLICK FEEDBACK ---
-        document.addEventListener('mousedown', (e) => {
-            document.body.classList.add('clicking');
-            if(document.body.classList.contains('tactical-mode')) {
-                const ripple = document.createElement('div');
-                ripple.classList.add('click-ripple');
-                ripple.style.left = `${e.clientX}px`;
-                ripple.style.top = `${e.clientY}px`;
-                document.body.appendChild(ripple);
-                setTimeout(() => ripple.remove(), 500);
-            }
-        });
-        
-        document.addEventListener('mouseup', () => document.body.classList.remove('clicking'));
-
-        // --- 4. RENDER LOOP (SYNCED TO REFRESH RATE) ---
-        function renderCursorLoop() {
-            if (document.body.classList.contains('tactical-mode')) {
-                // Update Trails
-                posTrail1.x = lerp(posTrail1.x, mouse.x, LERP_TRAIL1);
-                posTrail1.y = lerp(posTrail1.y, mouse.y, LERP_TRAIL1);
-                cursorTrail1.style.transform = `translate3d(${posTrail1.x}px, ${posTrail1.y}px, 0)`;
-                
-                posTrail2.x = lerp(posTrail2.x, mouse.x, LERP_TRAIL2);
-                posTrail2.y = lerp(posTrail2.y, mouse.y, LERP_TRAIL2);
-                cursorTrail2.style.transform = `translate3d(${posTrail2.x}px, ${posTrail2.y}px, 0)`;
-
-                // Update Coords Text
-                if (cursorInfo) {
-                    cursorInfo.innerText = `TGT:${Math.round(mouse.x)},${Math.round(mouse.y)}`;
+                if (document.body.classList.contains('tactical-mode')) {
+                    cursorMain.style.transform = `translate3d(${mouse.x}px, ${mouse.y}px, 0)`;
                 }
+            }, { passive: true }); // Passive listener for scrolling performance
 
-                // UPDATE CSS VARS HERE INSTEAD OF MOUSEMOVE
-                const xPct = (mouse.x / window.innerWidth) * 100;
-                const yPct = (mouse.y / window.innerHeight) * 100;
-                document.documentElement.style.setProperty('--mouse-x', `${xPct}%`);
-                document.documentElement.style.setProperty('--mouse-y', `${yPct}%`);
+            // 2. HOVER SYSTEM
+            document.addEventListener('mouseover', (e) => {
+                if (e.target.closest('a, button, .eva-card, input, .group, .cursor-pointer, .social-btn')) {
+                    document.body.classList.add('hovering');
+                }
+            });
+            
+            document.addEventListener('mouseout', (e) => {
+                if (e.target.closest('a, button, .eva-card, input, .group, .cursor-pointer, .social-btn')) {
+                    document.body.classList.remove('hovering');
+                }
+            });
+
+            // 3. CLICK FEEDBACK
+            document.addEventListener('mousedown', (e) => {
+                document.body.classList.add('clicking');
+                if(document.body.classList.contains('tactical-mode')) {
+                    const ripple = document.createElement('div');
+                    ripple.classList.add('click-ripple');
+                    ripple.style.left = `${e.clientX}px`;
+                    ripple.style.top = `${e.clientY}px`;
+                    document.body.appendChild(ripple);
+                    setTimeout(() => ripple.remove(), 500);
+                }
+            });
+            
+            document.addEventListener('mouseup', () => document.body.classList.remove('clicking'));
+
+            // 4. RENDER LOOP
+            function renderCursorLoop() {
+                if (document.body.classList.contains('tactical-mode')) {
+                    posTrail1.x = lerp(posTrail1.x, mouse.x, LERP_TRAIL1);
+                    posTrail1.y = lerp(posTrail1.y, mouse.y, LERP_TRAIL1);
+                    cursorTrail1.style.transform = `translate3d(${posTrail1.x}px, ${posTrail1.y}px, 0)`;
+                    
+                    posTrail2.x = lerp(posTrail2.x, mouse.x, LERP_TRAIL2);
+                    posTrail2.y = lerp(posTrail2.y, mouse.y, LERP_TRAIL2);
+                    cursorTrail2.style.transform = `translate3d(${posTrail2.x}px, ${posTrail2.y}px, 0)`;
+
+                    if (cursorInfo) {
+                        cursorInfo.innerText = `TGT:${Math.round(mouse.x)},${Math.round(mouse.y)}`;
+                    }
+
+                    // Update CSS Vars for Glare Effects (Only needed on PC)
+                    const xPct = (mouse.x / window.innerWidth) * 100;
+                    const yPct = (mouse.y / window.innerHeight) * 100;
+                    document.documentElement.style.setProperty('--mouse-x', `${xPct}%`);
+                    document.documentElement.style.setProperty('--mouse-y', `${yPct}%`);
+                }
+                requestAnimationFrame(renderCursorLoop);
             }
-            requestAnimationFrame(renderCursorLoop);
+            renderCursorLoop();
         }
-        
-        // Start Loop
-        renderCursorLoop();
 
-
-        /* --- Rest of the logic --- */
+        /* --- Optimized Matrix Rain (Throttled for Mobile) --- */
         const canvas = document.getElementById('matrix-bg');
         const ctx = canvas.getContext('2d');
-        function resizeMatrix() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-        window.addEventListener('resize', resizeMatrix); resizeMatrix();
+        
+        // Debounce Resize
+        let resizeTimeout;
+        function resizeMatrix() { 
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                canvas.width = window.innerWidth; 
+                canvas.height = window.innerHeight;
+            }, 100);
+        }
+        window.addEventListener('resize', resizeMatrix); 
+        resizeMatrix();
+
         const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        const fontSize = 14; const columns = canvas.width / fontSize; const drops = Array(Math.floor(columns)).fill(1);
-        function drawMatrix() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const fontSize = 14; 
+        // Reduce columns calculation frequency
+        let columns = Math.floor(canvas.width / fontSize); 
+        let drops = [];
+        
+        function initDrops() {
+            columns = Math.floor(canvas.width / fontSize);
+            drops = Array(columns).fill(1);
+        }
+        initDrops();
+        window.addEventListener('resize', () => setTimeout(initDrops, 150));
+
+        // Use requestAnimationFrame with time delta for smooth performance
+        let lastTime = 0;
+        const fps = 30; // Limit FPS to 30 for background effect to save battery
+        const interval = 1000 / fps;
+
+        function drawMatrix(currentTime) {
+            requestAnimationFrame(drawMatrix);
+            
+            const deltaTime = currentTime - lastTime;
+            if (deltaTime < interval) return;
+
+            lastTime = currentTime - (deltaTime % interval);
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
             const style = getComputedStyle(document.documentElement);
-            ctx.fillStyle = style.getPropertyValue('--secondary-color').trim(); ctx.font = fontSize + 'px monospace';
+            ctx.fillStyle = style.getPropertyValue('--secondary-color').trim(); 
+            ctx.font = fontSize + 'px monospace';
+            
             for (let i = 0; i < drops.length; i++) {
                 const text = katakana.charAt(Math.floor(Math.random() * katakana.length));
                 ctx.fillText(text, i * fontSize, drops[i] * fontSize);
@@ -918,38 +989,41 @@
                 drops[i]++;
             }
         }
-        setInterval(drawMatrix, 50);
+        requestAnimationFrame(drawMatrix);
 
-        /* --- 全息波形动画 --- */
+        /* --- Holo Wave Animation --- */
         const holoWaveCanvas = document.getElementById('holo-wave');
         const holoCtx = holoWaveCanvas.getContext('2d');
         function resizeHolo() { holoWaveCanvas.width = window.innerWidth; holoWaveCanvas.height = 48; }
         window.addEventListener('resize', resizeHolo); resizeHolo();
         let holoOffset = 0;
+        
         function drawHoloWave() {
+            // Basic rAF is fine here, it's small area
             holoCtx.clearRect(0, 0, holoWaveCanvas.width, holoWaveCanvas.height);
             const style = getComputedStyle(document.documentElement);
             const color = style.getPropertyValue('--secondary-color').trim();
             
             holoCtx.beginPath(); holoCtx.lineWidth = 1.5; holoCtx.strokeStyle = color;
-            for(let i=0; i<holoWaveCanvas.width; i++) {
+            for(let i=0; i<holoWaveCanvas.width; i+=2) { // Skip every other pixel for performance
                 const y = 24 + Math.sin((i + holoOffset) * 0.02) * 12 * Math.sin((i + holoOffset * 0.5) * 0.01);
                 if(i===0) holoCtx.moveTo(i, y); else holoCtx.lineTo(i, y);
             }
             holoCtx.stroke();
 
             holoCtx.beginPath(); holoCtx.lineWidth = 0.5; holoCtx.strokeStyle = color; holoCtx.globalAlpha = 0.5;
-            for(let i=0; i<holoWaveCanvas.width; i+=2) {
+            for(let i=0; i<holoWaveCanvas.width; i+=4) { // Skip more pixels
                 const y = 24 + Math.sin((i - holoOffset * 2) * 0.1) * 5 + (Math.random() - 0.5) * 3;
                 if(i===0) holoCtx.moveTo(i, y); else holoCtx.lineTo(i, y);
             }
             holoCtx.stroke(); holoCtx.globalAlpha = 1;
 
-            holoOffset += 1.5; requestAnimationFrame(drawHoloWave);
+            holoOffset += 1.5; 
+            requestAnimationFrame(drawHoloWave);
         }
         drawHoloWave();
 
-        /* --- 动态跑马灯内容填充 --- */
+        /* --- Marquee Init --- */
         function initMarquee() {
             const wrapper = document.getElementById('marquee-wrapper');
             const baseContent = `
@@ -961,20 +1035,32 @@
                 <div class="holo-marquee-item"><span>HUMAN INSTRUMENTALITY PROJECT</span><span class="mx-4 opacity-50">///</span></div>
             `;
             wrapper.innerHTML = baseContent;
-            const screenWidth = window.innerWidth;
-            let contentWidth = wrapper.scrollWidth;
-            while (contentWidth < screenWidth * 2) {
-                wrapper.innerHTML += baseContent;
-                contentWidth = wrapper.scrollWidth;
+            // Only duplicate content if screen is wide enough, saves DOM nodes on mobile
+            if (window.innerWidth > 768) {
+                const screenWidth = window.innerWidth;
+                let contentWidth = wrapper.scrollWidth;
+                while (contentWidth < screenWidth * 2) {
+                    wrapper.innerHTML += baseContent;
+                    contentWidth = wrapper.scrollWidth;
+                }
             }
             wrapper.innerHTML += baseContent;
         }
         window.addEventListener('DOMContentLoaded', initMarquee);
-        window.addEventListener('resize', () => { clearTimeout(window.resizeTimer); window.resizeTimer = setTimeout(initMarquee, 200); });
+        // Debounce marquee resize
+        let marqueeTimeout;
+        window.addEventListener('resize', () => { 
+            clearTimeout(marqueeTimeout); 
+            marqueeTimeout = setTimeout(initMarquee, 200); 
+        });
 
-        // AT Field effect on body click
+        // AT Field effect
         function createATField(x, y) {
+            // Simple performance check: too many AT fields? skip
+            if (document.querySelectorAll('.at-field-effect').length > 5) return;
+
             const atField = document.createElement('div');
+            atField.classList.add('at-field-effect'); // For counting
             atField.style.cssText = `position: fixed; top: ${y}px; left: ${x}px; width: 10px; height: 10px; border: 2px solid #ffa500; background: rgba(255, 165, 0, 0.2); transform: translate(-50%, -50%); clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%); z-index: 9998; pointer-events: none; transition: all 0.4s ease-out; box-shadow: 0 0 10px #ffa500;`;
             document.body.appendChild(atField);
             requestAnimationFrame(() => { atField.style.width = '200px'; atField.style.height = '200px'; atField.style.opacity = '0'; atField.style.transform = 'translate(-50%, -50%) rotate(45deg)'; });
@@ -982,22 +1068,32 @@
         }
         document.addEventListener('mousedown', (e) => createATField(e.clientX, e.clientY));
 
-
         function startHeroGlitch() {
             const heroImg = document.getElementById('hero-character');
             if(!heroImg) return;
             setInterval(() => {
-                heroImg.classList.add('cyber-swap-active');
-                setTimeout(() => { heroImg.classList.remove('cyber-swap-active'); }, 500);
+                // Only glitch if visible/not minimized to save battery
+                if (document.visibilityState === 'visible') {
+                    heroImg.classList.add('cyber-swap-active');
+                    setTimeout(() => { heroImg.classList.remove('cyber-swap-active'); }, 500);
+                }
             }, 4000); 
         }
         
         function createParticles() {
             const container = document.getElementById('particles-container');
             if (!container) return;
-            for (let i = 0; i < 150; i++) spawnParticle(container, true);
-            setInterval(() => spawnParticle(container, false), 150);
+            // Initial spawn
+            for (let i = 0; i < PARTICLE_COUNT; i++) spawnParticle(container, true);
+            
+            // Throttled spawn loop
+            setInterval(() => {
+                if (document.visibilityState === 'visible' && container.childElementCount < PARTICLE_COUNT) {
+                    spawnParticle(container, false);
+                }
+            }, 200);
         }
+        
         function spawnParticle(container, initial) {
             const p = document.createElement('div');
             p.classList.add('particle');
@@ -1071,7 +1167,12 @@
         function drawVisualizer() {
             const canvas = document.getElementById('audio-visualizer');
             const ctx = canvas.getContext('2d');
+            // Throttle visualizer slightly or rely on rAF, which is fine
             requestAnimationFrame(drawVisualizer);
+            
+            // If audio is paused, skip drawing to save power
+            if (audioEl.paused) return;
+
             const bufferLength = analyser.frequencyBinCount;
             const dataArray = new Uint8Array(bufferLength);
             analyser.getByteFrequencyData(dataArray);
@@ -1121,10 +1222,8 @@
             document.getElementById('modal-id').innerText = id;
             document.getElementById('modal-summary').innerText = "ACCESSING MAGI ARCHIVE...";
             
-            // Show modal
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            // Trigger fade in transition
             setTimeout(() => {
                 modal.classList.remove('opacity-0');
                 modal.querySelector('div').classList.remove('scale-95');
@@ -1144,7 +1243,6 @@
 
         function closeAnimeModal() { 
             const modal = document.getElementById('anime-modal');
-            // Fade out
             modal.classList.add('opacity-0');
             modal.querySelector('div').classList.remove('scale-100');
             modal.querySelector('div').classList.add('scale-95');
@@ -1160,7 +1258,7 @@
 
         startHeroGlitch();
         loadAnimeData();
-        createParticles(); // Start particle system
+        createParticles(); 
 
         /* ==========================================================================
            NEW ENHANCEMENTS LOGIC (PHASE 1 & 2)
@@ -1218,34 +1316,52 @@
             }
         }
 
-        // Apply decoder to all H3 titles and Sidebar Headers
-        document.querySelectorAll('h3, .eva-header span').forEach(el => {
-            const fx = new TextScramble(el);
-            let originalText = el.innerText;
-            
-            // Trigger on mouse enter
-            el.parentElement.addEventListener('mouseenter', () => {
-                fx.setText(originalText);
+        // Text Decoder: Mobile vs Desktop Strategy
+        const scrambleElements = document.querySelectorAll('h3, .eva-header span');
+        
+        if (!isTouchDevice) {
+            // Desktop: Trigger on hover
+            scrambleElements.forEach(el => {
+                const fx = new TextScramble(el);
+                let originalText = el.innerText;
+                el.parentElement.addEventListener('mouseenter', () => { fx.setText(originalText); });
             });
-        });
+        } else {
+            // Mobile: Trigger on scroll into view
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const el = entry.target;
+                        const fx = new TextScramble(el);
+                        fx.setText(el.innerText);
+                        observer.unobserve(el); // Play once per session
+                    }
+                });
+            }, { threshold: 0.5 });
+            
+            scrambleElements.forEach(el => observer.observe(el));
+        }
 
         // --- 2. AUDIO SFX SYSTEM ---
+        // Initialize sound objects only once
         const hoverSfx = document.getElementById('sfx-hover');
         const clickSfx = document.getElementById('sfx-click');
         
-        if(hoverSfx) hoverSfx.volume = 0.15; // Keep it subtle
+        if(hoverSfx) hoverSfx.volume = 0.15; 
         if(clickSfx) clickSfx.volume = 0.3;
 
         const sfxElements = document.querySelectorAll('a, button, .eva-card, .tactical-switch, input');
         
         sfxElements.forEach(el => {
-            el.addEventListener('mouseenter', () => {
-                // Only play sfx if tactical mode is active
-                if(hoverSfx && document.body.classList.contains('tactical-mode')) {
-                    hoverSfx.currentTime = 0;
-                    hoverSfx.play().catch(e => {}); // Catch auto-play errors
-                }
-            });
+            // Hover sound only on PC
+            if(!isTouchDevice) {
+                el.addEventListener('mouseenter', () => {
+                    if(hoverSfx && document.body.classList.contains('tactical-mode')) {
+                        hoverSfx.currentTime = 0;
+                        hoverSfx.play().catch(e => {}); 
+                    }
+                });
+            }
             
             el.addEventListener('click', () => {
                 if(clickSfx) {
@@ -1255,32 +1371,30 @@
             });
         });
 
-        // --- 3. 3D HOLOGRAPHIC CARD EFFECT ---
-        // Optimized to use RequestAnimationFrame
-        let cardHoverTarget = null;
-        let cardRotation = { x: 0, y: 0 };
-
-        document.querySelectorAll('.eva-card').forEach(card => {
-            card.classList.add('holo-card-3d'); 
-            
-            card.addEventListener('mousemove', (e) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
+        // --- 3. 3D HOLOGRAPHIC CARD EFFECT (PC ONLY) ---
+        // Disable on mobile to prevent scroll jank and save battery
+        if (!isTouchDevice) {
+            document.querySelectorAll('.eva-card').forEach(card => {
+                card.classList.add('holo-card-3d'); 
                 
-                // Direct transform for instant feedback, but can be throttled if needed
-                const rotateX = ((y - centerY) / centerY) * -3;
-                const rotateY = ((x - centerX) / centerX) * 3;
-                
-                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
-            });
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    
+                    const rotateX = ((y - centerY) / centerY) * -3;
+                    const rotateY = ((x - centerX) / centerX) * 3;
+                    
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+                });
 
-            card.addEventListener('mouseleave', () => {
-                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
+                });
             });
-        });
+        }
 
     </script>
 </body>
