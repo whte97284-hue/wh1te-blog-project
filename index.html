@@ -64,6 +64,7 @@
             --bg-color: #0f0518;
             --surface-color: rgba(20, 10, 30, 0.6); 
             --grid-color: rgba(125, 42, 232, 0.15); 
+            --lock-color: #ff0055; /* EVA Red */
         }
         
         body { 
@@ -73,12 +74,10 @@
             transition: background-color 0.3s ease, color 0.3s ease; 
             overflow-x: hidden; 
             cursor: auto;
-            /* 移动端优化：禁止横向滚动，优化触摸高亮 */
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* --- 战术模式：隐藏系统鼠标，启用自定义光标 --- */
-        /* 仅在支持 hover 的设备（PC）上生效，手机上强制显示系统原生指针以优化体验 */
+        /* --- 战术模式：PC端隐藏系统鼠标 --- */
         @media (hover: hover) and (pointer: fine) {
             body.tactical-mode, 
             body.tactical-mode a, 
@@ -87,8 +86,6 @@
             body.tactical-mode .cursor-pointer { 
                 cursor: none !important; 
             }
-            
-            /* 战术光标仅在 PC 端显示 */
             body.tactical-mode #tactical-cursor {
                 display: block;
             }
@@ -97,16 +94,15 @@
         /* 战术光标容器 */
         #tactical-cursor {
             position: fixed; top: 0; left: 0; z-index: 99999; pointer-events: none;
-            display: none; /* 默认关闭 */
+            display: none;
         }
 
-        /* 光标层级结构 - 优化性能 */
         .cursor-layer {
             position: fixed; top: 0; left: 0;
             will-change: transform;
             pointer-events: none;
             transition: none !important; 
-            transform: translateZ(0); /* 开启 GPU 加速 */
+            transform: translateZ(0);
             backface-visibility: hidden;
         }
         
@@ -114,71 +110,93 @@
         .cursor-trail-1 { z-index: 99; opacity: 0.6; }
         .cursor-trail-2 { z-index: 98; opacity: 0.3; }
 
+        /* --- EVA 3.0+ 风格光标设计 --- */
         .cursor-wrapper {
             position: relative; display: flex; align-items: center; justify-content: center;
             color: var(--secondary-color);
             transition: color 0.2s ease;
         }
 
-        /* 光标组件优化 */
-        .cursor-core { 
-            position: absolute; width: 4px; height: 4px; background: currentColor; 
-            box-shadow: 0 0 10px currentColor; 
-            border-radius: 50%;
-        }
-        .cursor-crosshair::before, .cursor-crosshair::after { 
-            content: ''; position: absolute; background: currentColor; 
-            top: 50%; left: 50%; transform: translate(-50%, -50%); 
-        }
-        .cursor-crosshair::before { width: 1px; height: 16px; } 
-        .cursor-crosshair::after { width: 16px; height: 1px; }
-        
-        .cursor-ring-inner { 
-            position: absolute; width: 20px; height: 20px; 
-            border: 1px solid currentColor; border-radius: 50%; 
-            opacity: 0.6; 
-            border-top-color: transparent; border-bottom-color: transparent; 
-            animation: spin 2s linear infinite; 
-        }
-        
-        .cursor-field { 
-            position: absolute; width: 36px; height: 36px; 
-            border: 1px dashed currentColor; border-radius: 50%; 
-            opacity: 0.3; 
-            animation: spin 8s linear infinite reverse; 
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-        }
-        
-        .cursor-coords { 
-            position: absolute; top: 24px; left: 24px; 
-            font-family: 'JetBrains Mono'; font-size: 8px; font-weight: bold; 
-            white-space: nowrap; text-shadow: 1px 1px 0 rgba(0,0,0,0.8); 
-            letter-spacing: 0.05em; opacity: 0.8;
+        /* 中心点 */
+        .cursor-center { 
+            position: absolute; width: 4px; height: 4px; 
+            background: currentColor; border-radius: 50%; 
+            box-shadow: 0 0 8px currentColor;
         }
 
-        /* 拖尾特化样式 */
-        .cursor-trail-1 .cursor-field { border-style: dotted; width: 30px; height: 30px; }
-        .cursor-trail-1 .cursor-core { display: none; }
-        .cursor-trail-1 .cursor-coords { display: none; }
-        
-        .cursor-trail-2 .cursor-field { border: 1px solid currentColor; width: 20px; height: 20px; opacity: 0.2; }
-        .cursor-trail-2 .cursor-core { display: none; }
-        .cursor-trail-2 .cursor-coords { display: none; }
+        /* 极细十字线 */
+        .cursor-cross-v { position: absolute; width: 1px; height: 24px; background: currentColor; opacity: 0.6; }
+        .cursor-cross-h { position: absolute; width: 24px; height: 1px; background: currentColor; opacity: 0.6; }
 
-        /* 光标锁定/Hover 状态 */
-        body.hovering #tactical-cursor .cursor-wrapper { color: #ff0055; }
-        body.hovering .cursor-main .cursor-core { transform: scale(1.5); background: #fff; }
-        body.hovering .cursor-main .cursor-field { 
-            width: 48px; height: 48px; 
-            border-radius: 0; border-style: solid; border-width: 1px; 
-            border-color: #ff0055;
-            clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%); 
-            animation: lock-spin 4s linear infinite; 
-            opacity: 1; 
-            background: rgba(255, 0, 85, 0.05); 
+        /* 旋转扫描环 (常态) */
+        .cursor-ring { 
+            position: absolute; width: 40px; height: 40px; 
+            border: 1px dashed currentColor; border-radius: 50%; opacity: 0.3; 
+            animation: spin 10s linear infinite;
+            transition: all 0.3s ease;
         }
-        body.hovering .cursor-coords { color: #ff0055; content: 'LOCK_ON'; }
-        
+
+        /* 锁定括号 (EVA HUD Brackets) */
+        .cursor-bracket {
+            position: absolute; width: 12px; height: 12px;
+            border: 2px solid currentColor; opacity: 0.8;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); /* 弹跳效果 */
+        }
+        .cb-tl { top: -16px; left: -16px; border-right: 0; border-bottom: 0; }
+        .cb-tr { top: -16px; right: -16px; border-left: 0; border-bottom: 0; }
+        .cb-bl { bottom: -16px; left: -16px; border-right: 0; border-top: 0; }
+        .cb-br { bottom: -16px; right: -16px; border-left: 0; border-top: 0; }
+
+        /* 战术文字 */
+        .cursor-info-wrapper {
+            position: absolute; top: 20px; left: 24px;
+            font-family: 'JetBrains Mono'; font-size: 9px; font-weight: 700;
+            display: flex; flex-direction: column;
+            gap: 2px; opacity: 0.8;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
+        }
+        .cursor-mode { font-size: 7px; opacity: 0.7; letter-spacing: 1px; }
+
+        /* --- 锁定状态 (LOCK-ON) 动效 --- */
+        body.hovering #tactical-cursor .cursor-wrapper { 
+            color: var(--lock-color); 
+        }
+
+        /* 锁定瞬间括号收缩 (Snap In) */
+        body.hovering .cursor-bracket {
+            border-width: 3px;
+            opacity: 1;
+            box-shadow: 0 0 10px var(--lock-color);
+        }
+        body.hovering .cb-tl { transform: translate(8px, 8px); }
+        body.hovering .cb-tr { transform: translate(-8px, 8px); }
+        body.hovering .cb-bl { transform: translate(8px, -8px); }
+        body.hovering .cb-br { transform: translate(-8px, -8px); }
+
+        /* 外部环加速旋转并变实 */
+        body.hovering .cursor-ring {
+            width: 50px; height: 50px;
+            border-style: solid; border-width: 1px;
+            border-color: transparent;
+            border-top-color: var(--lock-color);
+            border-bottom-color: var(--lock-color);
+            animation: spin 1s linear infinite;
+            opacity: 0.8;
+        }
+
+        /* 十字线消失 */
+        body.hovering .cursor-cross-v, body.hovering .cursor-cross-h {
+            opacity: 0; height: 0; width: 0;
+        }
+
+        /* 拖尾特化样式 (仅显示轮廓) */
+        .cursor-trail-1 .cursor-bracket, .cursor-trail-1 .cursor-ring, .cursor-trail-1 .cursor-cross-v, .cursor-trail-1 .cursor-cross-h { display: none; }
+        .cursor-trail-1 .cursor-center { 
+            width: 30px; height: 30px; background: transparent; 
+            border: 1px dotted currentColor; box-shadow: none;
+        }
+        .cursor-trail-2 .cursor-center { display: none; }
+
         /* 点击反馈 */
         .click-ripple {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -188,7 +206,6 @@
         }
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes lock-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(-90deg); } }
         @keyframes ripple-effect { 0% { width: 10px; height: 10px; opacity: 1; border-width: 2px; } 100% { width: 100px; height: 100px; opacity: 0; border-width: 0px; } }
 
         /* --- 社交按钮优化 --- */
@@ -196,7 +213,6 @@
             position: relative;
             overflow: hidden;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            /* 手机端增加点击区域 */
             touch-action: manipulation;
         }
         .social-btn:hover {
@@ -206,7 +222,6 @@
         .social-text {
             transition: transform 0.3s ease, opacity 0.2s;
         }
-        /* 媒体查询：仅在支持 hover 的设备启用位移动效，防止手机点击时闪烁 */
         @media (hover: hover) {
             .social-btn:hover .social-text {
                 transform: translateY(-150%);
@@ -232,7 +247,6 @@
             transform: scale(0.8);
             transition: all 0.3s ease;
         }
-        /* 手机端默认显示图标，或根据需求调整，这里保持原样逻辑但在触摸时优化 */
         .social-shutter {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--secondary-color);
@@ -249,7 +263,6 @@
             padding: 4px 8px; border: 1px solid rgba(255,255,255,0.2);
             transition: all 0.3s;
         }
-        /* 手机端隐藏战术开关，因为手机不启用战术模式 */
         @media (hover: none) {
             .tactical-switch { display: none; }
         }
@@ -270,9 +283,9 @@
         }
 
         /* Existing styles... */
-        [data-theme="unit-02"] { --primary-color: #ffae00; --secondary-color: #ff0000; --bg-color: #140202; --surface-color: rgba(40, 10, 10, 0.6); --grid-color: rgba(255, 0, 0, 0.15); }
-        [data-theme="unit-00"] { --primary-color: #ffffff; --secondary-color: #0091ff; --bg-color: #020a14; --surface-color: rgba(10, 20, 40, 0.6); --grid-color: rgba(0, 145, 255, 0.15); }
-        [data-theme="unit-08"] { --primary-color: #ff5cab; --secondary-color: #50c878; --bg-color: #14020d; --surface-color: rgba(40, 10, 30, 0.6); --grid-color: rgba(255, 0, 153, 0.15); }
+        [data-theme="unit-02"] { --primary-color: #ffae00; --secondary-color: #ff0000; --bg-color: #140202; --surface-color: rgba(40, 10, 10, 0.6); --grid-color: rgba(255, 0, 0, 0.15); --lock-color: #ffae00; }
+        [data-theme="unit-00"] { --primary-color: #ffffff; --secondary-color: #0091ff; --bg-color: #020a14; --surface-color: rgba(10, 20, 40, 0.6); --grid-color: rgba(0, 145, 255, 0.15); --lock-color: #ffffff; }
+        [data-theme="unit-08"] { --primary-color: #ff5cab; --secondary-color: #50c878; --bg-color: #14020d; --surface-color: rgba(40, 10, 30, 0.6); --grid-color: rgba(255, 0, 153, 0.15); --lock-color: #ff5cab; }
         
         body.emergency-mode { --primary-color: #ff0000 !important; --secondary-color: #ff0000 !important; --bg-color: #0a0000 !important; --surface-color: rgba(40, 0, 0, 0.5) !important; --grid-color: rgba(255, 0, 0, 0.3) !important; }
         body.emergency-mode .hex-bg { animation: none; background-image: url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ff0000' stroke-opacity='0.4' stroke-width='2'/%3E%3C/svg%3E"); }
@@ -421,26 +434,38 @@
 
     <!-- 战术光标系统 (多层结构) - 仅在 PC 端显示 -->
     <div id="tactical-cursor">
-        <!-- 主光标 -->
+        <!-- 主光标 (EVA HUD 风格) -->
         <div id="cursor-main" class="cursor-layer cursor-main">
             <div class="cursor-wrapper">
-                <div class="cursor-core"></div>
-                <div class="cursor-crosshair"></div>
-                <div class="cursor-ring-inner"></div>
-                <div class="cursor-field"></div>
-                <div class="cursor-coords">000,000</div>
+                <!-- 中心点 -->
+                <div class="cursor-center"></div>
+                <!-- 十字准星 -->
+                <div class="cursor-cross-v"></div>
+                <div class="cursor-cross-h"></div>
+                <!-- 旋转扫描环 -->
+                <div class="cursor-ring"></div>
+                <!-- 锁定括号 -->
+                <div class="cursor-bracket cb-tl"></div>
+                <div class="cursor-bracket cb-tr"></div>
+                <div class="cursor-bracket cb-bl"></div>
+                <div class="cursor-bracket cb-br"></div>
+                <!-- 文字信息 -->
+                <div class="cursor-info-wrapper">
+                    <div class="cursor-mode">STD</div>
+                    <div class="cursor-coords">000,000</div>
+                </div>
             </div>
         </div>
-        <!-- 拖尾残影 1 -->
+        
+        <!-- 拖尾残影 (简化版) -->
         <div id="cursor-trail-1" class="cursor-layer cursor-trail-1">
             <div class="cursor-wrapper">
-                <div class="cursor-field"></div>
+                <div class="cursor-center"></div>
             </div>
         </div>
-        <!-- 拖尾残影 2 -->
         <div id="cursor-trail-2" class="cursor-layer cursor-trail-2">
             <div class="cursor-wrapper">
-                <div class="cursor-field"></div>
+                <div class="cursor-center"></div>
             </div>
         </div>
     </div>
@@ -860,6 +885,7 @@
             const cursorTrail1 = document.getElementById('cursor-trail-1');
             const cursorTrail2 = document.getElementById('cursor-trail-2');
             const cursorInfo = document.querySelector('.cursor-coords');
+            const cursorMode = document.querySelector('.cursor-mode');
 
             let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
             let posTrail1 = { x: mouse.x, y: mouse.y };
@@ -883,12 +909,14 @@
             document.addEventListener('mouseover', (e) => {
                 if (e.target.closest('a, button, .eva-card, input, .group, .cursor-pointer, .social-btn')) {
                     document.body.classList.add('hovering');
+                    if(cursorMode) cursorMode.innerText = 'LOCK';
                 }
             });
             
             document.addEventListener('mouseout', (e) => {
                 if (e.target.closest('a, button, .eva-card, input, .group, .cursor-pointer, .social-btn')) {
                     document.body.classList.remove('hovering');
+                    if(cursorMode) cursorMode.innerText = 'STD';
                 }
             });
 
