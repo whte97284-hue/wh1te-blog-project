@@ -403,7 +403,7 @@
         @keyframes floatUp { 0% { transform: translateY(0) scale(var(--p-scale)); opacity: 0; } 15% { opacity: var(--p-opacity); } 85% { opacity: var(--p-opacity); } 100% { transform: translateY(-120vh) scale(var(--p-scale)); opacity: 0; } }
 
         .scan-bar { position: fixed; top: -10%; left: 0; width: 100%; height: 20px; background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent); opacity: 0; box-shadow: 0 0 40px var(--secondary-color); z-index: 40; pointer-events: none; animation: scanDown 10s linear infinite; }
-        @keyframes scanDown { 0% { top: -10%; opacity: 0; } 0.5% { opacity: 0.4; } 50% { top: 110%; opacity: 0.4; } 50.1% { top: 110%; opacity: 0; } 100% { top: 110%; opacity: 0; } }
+        @keyframes scanDown { 0% { top: -10%; opacity: 0; } 0.5% { opacity: 0.4; } 50% { top: 110%; opacity: 0.4; } 50.1% { top: 110%; opacity: 0.4; } 100% { top: 110%; opacity: 0; } }
 
         .cockpit-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 90; background: radial-gradient(circle at center, transparent 65%, rgba(0,0,0,0.6) 100%); box-shadow: inset 0 0 100px rgba(0,0,0,0.4); mix-blend-mode: multiply; }
         [data-mode="light"] .cockpit-overlay { background: radial-gradient(circle at center, transparent 55%, rgba(255,255,255,0.8) 100%); box-shadow: none; }
@@ -1429,7 +1429,8 @@
         // --- LLM 聊天逻辑 ---
         // ⚠️ 警告：API Key 已直接写入前端，仅供演示。生产环境建议通过后端转发。
         const API_KEY = "AIzaSyDOokn1y7wv7PGkNG8QtzIvpVZIwlDTMA8"; 
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
+        const API_URL_25 = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
+        const API_URL_15 = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
         const SYSTEM_PROMPT = `
 你现在是 MAGI 系统的对外人格接口，代号 'ERIRI'。设定：
@@ -1473,23 +1474,37 @@
             };
 
             try {
-                const response = await fetch(API_URL, {
+                // 尝试使用 Gemini 2.5 Flash
+                let response = await fetch(API_URL_25, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
-                if (!response.ok) throw new Error('MAGI Link Error');
+                // 如果 2.5 失败（例如模型不存在或权限问题），回退到 1.5 Flash
+                if (!response.ok) {
+                    console.warn(`Gemini 2.5 failed (${response.status}), attempting fallback to 1.5 Flash...`);
+                    response = await fetch(API_URL_15, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                }
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(`MAGI Link Error: ${response.status} - ${errText}`);
+                }
 
                 const data = await response.json();
-                const aiResponseText = data.candidates[0].content.parts[0].text;
+                const aiResponseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "MAGI DATA CORRUPTED";
                 
                 showAiSpeech(aiResponseText);
 
             } catch (error) {
                 console.error("MAGI CONNECTION LOST", error);
                 // 如果没有 key 或者出错，使用 fallback 回复
-                showAiSpeech("MAGI 连接受阻... 请检查 API Key 配置！笨蛋！");
+                showAiSpeech("MAGI 连接受阻... // ERR: " + error.message.substring(0, 20) + "...");
             } finally {
                 if(aiStatus) {
                     aiStatus.classList.remove("text-emergency", "animate-pulse");
