@@ -11,6 +11,7 @@
     <script>
         window.tailwind = window.tailwind || {};
         window.tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
@@ -59,40 +60,98 @@
 
     <style>
         :root {
+            /* --- 默认暗色模式变量 (EVA-01 Dark) --- */
             --mouse-x: 50%; --mouse-y: 50%; --cursor-size: 800px;
-            --primary-color: #b15dff; --secondary-color: #39ff14; 
+            --primary-color: #b15dff; 
+            --secondary-color: #39ff14; 
             --bg-color: #0f0518;
             --surface-color: rgba(20, 10, 30, 0.6); 
             --grid-color: rgba(125, 42, 232, 0.15); 
-            --lock-color: #ff0055; /* EVA Red */
+            --lock-color: #ff0055; 
+            
+            /* 背景渐变 - 暗色 */
+            --bg-gradient: radial-gradient(circle at 50% 50%, #2d1b4e 0%, #1a0b2e 45%, #0a0a0a 100%);
+            /* 混合模式：暗色背景用 screen (滤色) 让光发亮 */
+            --blend-mode: screen;
+            --overlay-opacity: 0.18;
+            
+            /* 文字颜色基准 */
+            --text-main: #ffffff;
+            --text-muted: #9ca3af;
+            --border-color: rgba(255, 255, 255, 0.1);
         }
+
+        /* --- EVA 白/红美学模式 (Light Mode) --- */
+        [data-mode="light"] {
+            /* 基础配色：纯白 + 实验室灰 */
+            --bg-color: #ffffff;
+            --bg-gradient: radial-gradient(circle at 50% 50%, #ffffff 0%, #f2f2f2 60%, #e0e0e0 100%);
+            --surface-color: rgba(255, 255, 255, 0.75); /* 毛玻璃变白 */
+            
+            /* 混合模式：亮色背景用 multiply (正片叠底) 让网格变黑 */
+            --blend-mode: multiply; 
+            --overlay-opacity: 0.08; /* 亮背景下纹理稍微淡一点 */
+            
+            /* 文字反转 */
+            --text-main: #1a1a1a;
+            --text-muted: #4b5563;
+            --border-color: rgba(0, 0, 0, 0.1);
+            
+            /* 网格变为深灰色 */
+            --grid-color: rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- 亮色模式下的机体配色微调 (为了在白底上更清晰) --- */
+        /* Unit-01 (Default/Shinji) */
+        [data-mode="light"][data-theme="default"] { --primary-color: #7d2ae8; --secondary-color: #00c000; }
         
-        /* --- EVA REBUILD 视觉增强核心 --- */
+        /* Unit-02 (Asuka) - 经典的白红配色 */
+        [data-mode="light"][data-theme="unit-02"] { --primary-color: #ffae00; --secondary-color: #d90000; }
+        
+        /* Unit-00 (Rei) - 实验室蓝白 */
+        [data-mode="light"][data-theme="unit-00"] { --primary-color: #0056b3; --secondary-color: #0091ff; }
+        
+        /* Unit-08 (Mari) - 粉色 */
+        [data-mode="light"][data-theme="unit-08"] { --primary-color: #d63384; --secondary-color: #00a846; }
+
+        /* 核心：强制覆盖 Tailwind 的 text-white 类 */
+        [data-mode="light"] .text-white { color: var(--text-main) !important; }
+        [data-mode="light"] .text-gray-400, 
+        [data-mode="light"] .text-gray-500,
+        [data-mode="light"] .text-gray-300 { color: var(--text-muted) !important; }
+        [data-mode="light"] .border-white\/10 { border-color: var(--border-color) !important; }
+        [data-mode="light"] .bg-white\/5 { background-color: rgba(0,0,0,0.05) !important; }
+        [data-mode="light"] .bg-black\/30,
+        [data-mode="light"] .bg-black\/60,
+        [data-mode="light"] .bg-black\/40 { background-color: rgba(255,255,255,0.6) !important; }
+        [data-mode="light"] .backdrop-blur-xl { backdrop-filter: blur(20px); }
+
+        /* 通用样式 */
         body { 
-            /* 深渊渐变背景：提亮中心区域和整体基调，不再死黑 */
-            background: radial-gradient(circle at 50% 50%, #2d1b4e 0%, #1a0b2e 45%, #0a0a0a 100%);
+            background: var(--bg-gradient);
             min-height: 100vh; 
-            color: white; 
-            transition: background 0.3s ease, color 0.3s ease; 
+            color: var(--text-main); 
+            transition: background 0.5s ease, color 0.3s ease; 
             overflow-x: hidden; 
             cursor: auto;
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* 蜂巢干扰层：Rebuild 风格的 AT 力场纹理 */
+        /* 蜂巢干扰层 */
         .rebuild-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;
             background-image: 
-                linear-gradient(30deg, #000000 12%, transparent 12.5%, transparent 87%, #000000 87.5%, #000000),
-                linear-gradient(150deg, #000000 12%, transparent 12.5%, transparent 87%, #000000 87.5%, #000000),
-                linear-gradient(30deg, #000000 12%, transparent 12.5%, transparent 87%, #000000 87.5%, #000000),
-                linear-gradient(150deg, #000000 12%, transparent 12.5%, transparent 87%, #000000 87.5%, #000000),
+                linear-gradient(30deg, var(--grid-color) 12%, transparent 12.5%, transparent 87%, var(--grid-color) 87.5%, var(--grid-color)),
+                linear-gradient(150deg, var(--grid-color) 12%, transparent 12.5%, transparent 87%, var(--grid-color) 87.5%, var(--grid-color)),
+                linear-gradient(30deg, var(--grid-color) 12%, transparent 12.5%, transparent 87%, var(--grid-color) 87.5%, var(--grid-color)),
+                linear-gradient(150deg, var(--grid-color) 12%, transparent 12.5%, transparent 87%, var(--grid-color) 87.5%, var(--grid-color)),
                 linear-gradient(60deg, var(--grid-color) 25%, transparent 25.5%, transparent 75%, var(--grid-color) 75%, var(--grid-color)),
                 linear-gradient(60deg, var(--grid-color) 25%, transparent 25.5%, transparent 75%, var(--grid-color) 75%, var(--grid-color));
             background-size: 20px 35px;
             background-position: 0 0, 0 0, 10px 18px, 10px 18px, 0 0, 10px 18px;
-            opacity: 0.28; /* 再次提亮：0.12 -> 0.18 */
-            mix-blend-mode: screen;
+            opacity: var(--overlay-opacity);
+            mix-blend-mode: var(--blend-mode); /* 动态混合模式 */
+            transition: mix-blend-mode 0.3s, opacity 0.3s;
         }
 
         /* 字体发光增强 */
@@ -283,14 +342,17 @@
             display: flex; align-items: center; gap: 8px;
             font-family: 'JetBrains Mono'; font-size: 10px;
             cursor: pointer; select-none: none;
-            padding: 4px 8px; border: 1px solid rgba(255,255,255,0.2);
+            padding: 4px 8px; border: 1px solid var(--border-color);
             transition: all 0.3s;
         }
+        [data-mode="light"] .tactical-switch { border-color: rgba(0,0,0,0.2); color: #333; }
+        [data-mode="light"] .tactical-switch:hover { border-color: #000; }
+
         @media (hover: none) {
             .tactical-switch { display: none; }
         }
 
-        .tactical-switch:hover { border-color: white; }
+        .tactical-switch:hover { border-color: var(--text-main); }
         .switch-box {
             width: 12px; height: 12px; border: 1px solid currentColor;
             display: flex; align-items: center; justify-content: center;
@@ -326,8 +388,9 @@
             transition: background-image 0.3s;
             opacity: 0.5; /* 微调亮度 0.4 -> 0.5 */
             filter: drop-shadow(0 0 2px var(--grid-color));
-            mix-blend-mode: screen;
+            mix-blend-mode: var(--blend-mode); /* 随主题变化 */
         }
+        [data-mode="light"] .hex-bg { background-image: url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23000000' stroke-opacity='0.12' stroke-width='1'/%3E%3C/svg%3E"); }
 
         @keyframes bg-scroll { 0% { background-position: 0 0; } 100% { background-position: 60px 104px; } }
         .hex-flash { position: absolute; width: 60px; height: 104px; background: var(--secondary-color); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); opacity: 0; animation: hexFlash 4s infinite; box-shadow: 0 0 20px var(--secondary-color); }
@@ -342,7 +405,9 @@
         .scan-bar { position: fixed; top: -10%; left: 0; width: 100%; height: 20px; background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent); opacity: 0; box-shadow: 0 0 40px var(--secondary-color); z-index: 40; pointer-events: none; animation: scanDown 10s linear infinite; }
         @keyframes scanDown { 0% { top: -10%; opacity: 0; } 0.5% { opacity: 0.4; } 50% { top: 110%; opacity: 0.4; } 50.1% { top: 110%; opacity: 0; } 100% { top: 110%; opacity: 0; } }
 
-        .cockpit-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 90; background: radial-gradient(circle at center, transparent 65%, rgba(0,0,0,0.6) 100%); box-shadow: inset 0 0 100px rgba(0,0,0,0.4); }
+        .cockpit-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 90; background: radial-gradient(circle at center, transparent 65%, rgba(0,0,0,0.6) 100%); box-shadow: inset 0 0 100px rgba(0,0,0,0.4); mix-blend-mode: multiply; }
+        [data-mode="light"] .cockpit-overlay { background: radial-gradient(circle at center, transparent 55%, rgba(255,255,255,0.8) 100%); box-shadow: none; }
+
         .cockpit-reticle { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 700px; height: 700px; border: 1px dashed var(--secondary-color); border-radius: 50%; opacity: 0.08; pointer-events: none; z-index: -1; animation: spin-slower 120s linear infinite; transition: border-color 0.3s; }
         /* 手机端优化：隐藏过于复杂的座舱装饰，减少视觉干扰 */
         @media (max-width: 768px) {
@@ -361,6 +426,7 @@
         #cursor-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; background-image: radial-gradient(circle var(--cursor-size) at var(--mouse-x) var(--mouse-y), var(--grid-color) 0%, transparent 60%); transition: --cursor-size 0.1s ease; will-change: background-image; mix-blend-mode: screen; }
         
         .hero-character-container { position: fixed; right: -5%; top: 0; bottom: 0; z-index: 0; width: 60vw; max-width: 1000px; height: 100vh; display: flex; align-items: flex-start; justify-content: flex-end; pointer-events: none; overflow: hidden; mix-blend-mode: screen; }
+        [data-mode="light"] .hero-character-container { mix-blend-mode: multiply; opacity: 0.8; }
         .hero-character-image { width: 100%; height: 100%; object-fit: cover; object-position: center top; filter: brightness(0.8) contrast(1.1); opacity: 0.9; will-change: transform, opacity, clip-path, filter; transition: opacity 0.5s ease; }
         
         @keyframes cyberSwap { 
@@ -376,7 +442,7 @@
         .eva-card {
             background: var(--surface-color);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-color);
             border-left: 2px solid var(--secondary-color);
             position: relative;
             transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.2s ease; 
@@ -415,21 +481,31 @@
         .typing-cursor::after { content: '_'; animation: blink 1s step-end infinite; color: var(--secondary-color); }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-        .eva-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 8px; margin-bottom: 16px; font-family: 'JetBrains Mono'; font-size: 11px; letter-spacing: 0.1em; color: var(--secondary-color); text-shadow: 0 0 5px var(--secondary-color); }
+        .eva-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 16px; font-family: 'JetBrains Mono'; font-size: 11px; letter-spacing: 0.1em; color: var(--secondary-color); text-shadow: 0 0 5px var(--secondary-color); }
         .eva-header-deco { width: 4px; height: 4px; background: var(--primary-color); margin-right: 6px; box-shadow: 0 0 5px var(--primary-color); }
         .magi-font { font-family: 'Space Grotesk', sans-serif; font-weight: 900; letter-spacing: -0.05em; text-shadow: 2px 2px 0px rgba(0,0,0,0.5); }
         .ai-scanlines { position: absolute; inset: 0; pointer-events: none; z-index: 10; background: repeating-linear-gradient(to bottom, transparent, transparent 2px, rgba(0,0,0,0.2) 2px, rgba(0,0,0,0.2) 4px); background-size: 100% 4px; opacity: 0.6; }
         
         .bottom-bar-container { position: fixed; bottom: 0; left: 0; width: 100%; height: 48px; z-index: 900; pointer-events: none; }
         .holo-status-bar { position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 70%, transparent 100%); border-bottom: 1px solid rgba(var(--secondary-color), 0.5); border-top: 1px solid rgba(var(--secondary-color), 0.1); backdrop-filter: blur(4px); mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%); -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%); overflow: hidden; }
+        [data-mode="light"] .holo-status-bar { background: linear-gradient(to top, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.5) 70%, transparent 100%); mask-image: none; -webkit-mask-image: none; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--secondary-color); }
+
         .holo-scanner { position: absolute; top: 0; left: -100%; width: 20%; height: 100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent); transform: skewX(-20deg); animation: scanner-beam 5s cubic-bezier(0.4, 0, 0.2, 1) infinite; pointer-events: none; z-index: 5; }
         .holo-wave-canvas { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.3; mix-blend-mode: screen; }
         .holo-segment { display: flex; align-items: center; gap: 12px; padding: 0 40px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--secondary-color); text-shadow: 0 0 5px var(--secondary-color); z-index: 10; background: rgba(0,0,0,0.3); height: 100%; }
+        [data-mode="light"] .holo-segment { background: rgba(255,255,255,0.3); }
+        
         .holo-label { opacity: 0.7; margin-right: 4px; letter-spacing: 1px; }
         .holo-val { font-weight: bold; color: #fff; text-shadow: 0 0 8px var(--primary-color); }
+        [data-mode="light"] .holo-val { color: #000; }
+
         .holo-marquee-container { flex: 1; overflow: hidden; position: relative; height: 100%; display: flex; align-items: center; background: rgba(0, 0, 0, 0.2); background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); background-size: 20px 20px; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
+        [data-mode="light"] .holo-marquee-container { background: rgba(255, 255, 255, 0.2); box-shadow: inset 0 0 20px rgba(0,0,0,0.1); }
+
         .holo-marquee-wrapper { display: flex; white-space: nowrap; position: absolute; left: 0; animation: scrollText 60s linear infinite; }
         .holo-marquee-item { display: inline-flex; align-items: center; font-family: 'Space Grotesk', sans-serif; font-weight: 700; letter-spacing: 0.15em; font-size: 11px; color: rgba(255,255,255,0.85); padding-right: 4rem; }
+        [data-mode="light"] .holo-marquee-item { color: rgba(0,0,0,0.85); }
+
         @keyframes scrollText { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         .holo-hex-deco { width: 8px; height: 8px; background: var(--secondary-color); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); animation: flash 2s infinite; }
 
@@ -446,6 +522,13 @@
             opacity: 0.6; 
             mix-blend-mode: overlay; 
             box-shadow: inset 0 0 100px rgba(0,0,0,0.9); 
+        }
+        [data-mode="light"] .crt-overlay {
+            background: linear-gradient(rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.05) 50%), linear-gradient(90deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.01), rgba(0, 0, 0, 0.02));
+            background-size: 100% 2px, 3px 100%;
+            opacity: 0.3;
+            mix-blend-mode: multiply;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.1);
         }
         
         ::-webkit-scrollbar { width: 4px; }
@@ -642,6 +725,14 @@
                             <div class="switch-box-inner"></div>
                         </div>
                         <span>TACTICAL</span>
+                    </div>
+
+                    <!-- LIGHT MODE SWITCH (New) -->
+                    <div class="tactical-switch" onclick="toggleLightMode()">
+                        <div class="switch-box">
+                            <div class="switch-box-inner" id="light-mode-indicator"></div>
+                        </div>
+                        <span>VISUAL</span>
                     </div>
                 </div>
             </div>
@@ -923,6 +1014,38 @@
             localStorage.setItem('tacticalMode', document.body.classList.contains('tactical-mode'));
         }
 
+        /* --- LIGHT MODE TOGGLE LOGIC --- */
+        const lightModeIndicator = document.getElementById('light-mode-indicator');
+        
+        function toggleLightMode() {
+            const isLight = document.documentElement.getAttribute('data-mode') === 'light';
+            if (isLight) {
+                document.documentElement.removeAttribute('data-mode');
+                localStorage.setItem('visualMode', 'dark');
+                if(lightModeIndicator) lightModeIndicator.style.opacity = 0;
+            } else {
+                document.documentElement.setAttribute('data-mode', 'light');
+                localStorage.setItem('visualMode', 'light');
+                if(lightModeIndicator) lightModeIndicator.style.opacity = 1;
+            }
+            // Re-init matrix to adjust colors immediately
+            if(window.drawMatrix) {
+                // Force a redraw cycle or clear
+                const canvas = document.getElementById('matrix-bg');
+                if(canvas) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0,0, canvas.width, canvas.height);
+                }
+            }
+        }
+
+        // Init Light Mode State
+        const savedVisualMode = localStorage.getItem('visualMode');
+        if (savedVisualMode === 'light') {
+            document.documentElement.setAttribute('data-mode', 'light');
+            if(lightModeIndicator) lightModeIndicator.style.opacity = 1;
+        }
+
         /* ==========================================================================
            OPTIMIZED CURSOR SYSTEM (CONDITIONAL RENDERING)
            ========================================================================== */
@@ -1009,7 +1132,7 @@
             renderCursorLoop();
         }
 
-        /* --- Optimized Matrix Rain (Enhanced for Rebuild Style) --- */
+        /* --- Optimized Matrix Rain (Enhanced for Rebuild Style & Light Mode) --- */
         const canvas = document.getElementById('matrix-bg');
         const ctx = canvas.getContext('2d');
         
@@ -1059,8 +1182,12 @@
 
             lastTime = currentTime - (deltaTime % interval);
 
-            // 核心修改：更透明的遮盖层 (0.03) 让拖尾更长更亮 (原为 0.04)
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.025)'; 
+            const isLightMode = document.documentElement.getAttribute('data-mode') === 'light';
+
+            // 核心修改：适配亮色模式
+            // 暗色模式：使用黑色遮罩
+            // 亮色模式：使用白色遮罩，让拖尾变白
+            ctx.fillStyle = isLightMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.025)'; 
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
             const style = getComputedStyle(document.documentElement);
@@ -1078,8 +1205,8 @@
                 
                 // 核心修改：随机高亮白色脉冲
                 if (Math.random() > 0.98) {
-                    ctx.fillStyle = '#fff';
-                    ctx.shadowColor = '#fff';
+                    ctx.fillStyle = isLightMode ? '#000' : '#fff'; // 亮色模式下高亮为黑色，暗色为白色
+                    ctx.shadowColor = isLightMode ? '#000' : '#fff';
                     ctx.shadowBlur = 20; /* 高亮时辉光增强 */
                     ctx.fillText(text, i * fontSize, drops[i] * fontSize);
                     // 还原样式
@@ -1528,4 +1655,3 @@
     </script>
 </body>
 </html>
-
