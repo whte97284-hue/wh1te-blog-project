@@ -840,6 +840,17 @@
                             <p class="text-gray-400 text-[10px] font-mono relative z-10">STATUS: <span id="ai-status-text" class="text-secondary font-bold">ONLINE</span></p>
                         </div>
                     </div>
+                    
+                    <!-- AI Chat Input (New) -->
+                    <div id="magi-input-container" class="mt-4 relative group">
+                        <div class="absolute -top-2 left-2 text-[8px] font-mono text-secondary bg-bg px-1 z-10">MAGI_LINK</div>
+                        <div class="flex border border-secondary/50 bg-black/20 backdrop-blur-sm">
+                            <input type="text" id="magi-input" placeholder="Ask ERIRI..." class="w-full bg-transparent border-none px-3 py-2 text-xs font-mono text-primary focus:outline-none placeholder-secondary/30" onkeypress="handleChatInput(event)">
+                            <button onclick="sendToMagi()" class="px-3 border-l border-secondary/50 hover:bg-secondary hover:text-black transition-colors text-secondary">
+                                <i data-lucide="send" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Anime Feed (EVA Style) -->
@@ -1376,21 +1387,114 @@
 
         const aiLines = [ "哼，才不是特意在这等你的！", "笨蛋，那个地方的代码写错了啦！", "别盯着我看... 变态！", "MAGI 系统判定：你是笨蛋的概率为 99.9%。", "要不要本小姐帮你优化一下算法？" ];
         let aiSpeechInterval = null; let lastAiLineIndex = -1;
+        
         function triggerAiSpeech() {
+            const aiStatus = document.getElementById('ai-status-text');
+            
+            // 如果正在聊天（显示 CALCULATING），不要打断
+            if (aiStatus && aiStatus.innerText === "CALCULATING...") return;
+
+            let randomIndex; do { randomIndex = Math.floor(Math.random() * aiLines.length); } while (randomIndex === lastAiLineIndex && aiLines.length > 1);
+            lastAiLineIndex = randomIndex; 
+            showAiSpeech(aiLines[randomIndex]);
+        }
+        
+        function showAiSpeech(text) {
             const bubble = document.getElementById('ai-speech-bubble');
             const textEl = document.getElementById('ai-speech-text');
             const statusEl = document.getElementById('ai-status-text');
-            if (aiSpeechInterval) clearInterval(aiSpeechInterval);
-            bubble.classList.remove('hidden'); 
-            statusEl.innerText = "SPEAKING..."; statusEl.classList.add("text-primary");
-            let randomIndex; do { randomIndex = Math.floor(Math.random() * aiLines.length); } while (randomIndex === lastAiLineIndex && aiLines.length > 1);
-            lastAiLineIndex = randomIndex; const line = aiLines[randomIndex];
-            textEl.innerText = ""; let i = 0;
-            aiSpeechInterval = setInterval(() => {
-                if (i < line.length) { textEl.innerText += line.charAt(i); i++; } else {
-                    clearInterval(aiSpeechInterval); setTimeout(() => { bubble.classList.add('hidden'); statusEl.innerText = "ONLINE"; statusEl.classList.remove("text-primary"); }, 5000);
+            
+            if (window.currentSpeechInterval) clearInterval(window.currentSpeechInterval);
+            if (window.speechTimeout) clearTimeout(window.speechTimeout);
+            
+            bubble.classList.remove('hidden');
+            statusEl.innerText = "SPEAKING..."; 
+            statusEl.classList.add("text-primary");
+            
+            textEl.innerText = ""; 
+            let i = 0;
+            window.currentSpeechInterval = setInterval(() => {
+                if (i < text.length) { 
+                    textEl.innerText += text.charAt(i); i++; 
+                } else {
+                    clearInterval(window.currentSpeechInterval); 
+                    statusEl.innerText = "ONLINE"; 
+                    statusEl.classList.remove("text-primary");
+                    // 5秒后自动关闭气泡
+                    window.speechTimeout = setTimeout(() => { bubble.classList.add('hidden'); }, 5000);
                 }
             }, 50);
+        }
+
+        // --- LLM 聊天逻辑 ---
+        // ⚠️ 警告：API Key 已直接写入前端，仅供演示。生产环境建议通过后端转发。
+        const API_KEY = "AIzaSyDOokn1y7wv7PGkNG8QtzIvpVZIwlDTMA8"; 
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
+
+        const SYSTEM_PROMPT = `
+你现在是 MAGI 系统的对外人格接口，代号 'ERIRI'。设定：
+1. 你是傲娇性格（Tsundere），说话带有刺但这只是为了掩饰关心。
+2. 你处于《新世纪福音战士》的世界观中，你的用户是 NERV 的工作人员或驾驶员。
+3. 说话风格要简短、有力，夹杂技术术语（如：同步率、AT力场、模式蓝色）。
+4. 不要说 '我是一个AI'，要说 '本小姐' 或 'MAGI 系统'。
+5. 当用户查询博客文章时，你要用评价情报的口吻。说话的口吻要全面还原泽村英梨梨这个角色。并且要知道博客作者的名字是：Wh1te
+回复限制：
+既然是气泡对话，回复不要超过 50 个字。
+严禁长篇大论。
+`;
+
+        function handleChatInput(event) {
+            if (event.key === 'Enter') sendToMagi();
+        }
+
+        async function sendToMagi() {
+            const input = document.getElementById('magi-input');
+            const query = input.value.trim();
+            if (!query) return;
+            
+            input.value = ''; // 清空输入框
+            await chatWithMAGI(query);
+        }
+
+        async function chatWithMAGI(userText) {
+            const aiStatus = document.getElementById('ai-status-text');
+            
+            // UI 状态更新
+            if(aiStatus) {
+                aiStatus.innerText = "CALCULATING...";
+                aiStatus.classList.add("text-emergency", "animate-pulse");
+            }
+            
+            // 构建请求
+            const payload = {
+                contents: [{
+                    parts: [{ text: SYSTEM_PROMPT + "\n\n用户: " + userText }]
+                }]
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error('MAGI Link Error');
+
+                const data = await response.json();
+                const aiResponseText = data.candidates[0].content.parts[0].text;
+                
+                showAiSpeech(aiResponseText);
+
+            } catch (error) {
+                console.error("MAGI CONNECTION LOST", error);
+                // 如果没有 key 或者出错，使用 fallback 回复
+                showAiSpeech("MAGI 连接受阻... 请检查 API Key 配置！笨蛋！");
+            } finally {
+                if(aiStatus) {
+                    aiStatus.classList.remove("text-emergency", "animate-pulse");
+                }
+            }
         }
         
         let audioContext, analyser;
