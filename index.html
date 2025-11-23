@@ -531,6 +531,17 @@
             box-shadow: inset 0 0 100px rgba(0,0,0,0.1);
         }
         
+        /* --- AI 助手视觉修复 (针对亮色模式) --- */
+        [data-mode="light"] .ai-avatar-img {
+            mix-blend-mode: normal !important; /* 取消滤色混合，否则在白底上会消失 */
+            filter: brightness(1.05) contrast(1.05) drop-shadow(0 5px 15px rgba(0,0,0,0.15)) !important; /* 增加阴影提升立体感 */
+            opacity: 1 !important;
+        }
+        /* 调整亮色模式下 AI 卡片图片容器背景，避免过于苍白 */
+        [data-mode="light"] .ai-card-container .overflow-hidden.bg-black\/40 {
+            background-color: rgba(240, 240, 240, 0.8) !important;
+        }
+
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: var(--bg-color); }
         ::-webkit-scrollbar-thumb { background: var(--secondary-color); border-radius: 2px; }
