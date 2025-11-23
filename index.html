@@ -1420,7 +1420,7 @@
                     clearInterval(window.currentSpeechInterval); 
                     statusEl.innerText = "ONLINE"; 
                     statusEl.classList.remove("text-primary");
-                    // 8秒后自动关闭气泡 (稍微延长一点阅读时间)
+                    // 8秒后自动关闭气泡
                     window.speechTimeout = setTimeout(() => { bubble.classList.add('hidden'); }, 8000);
                 }
             }, 50);
@@ -1430,11 +1430,12 @@
         // ⚠️ 警告：API Key 已直接写入前端，仅供演示。生产环境建议通过后端转发。
         const API_KEY = "AIzaSyDOokn1y7wv7PGkNG8QtzIvpVZIwlDTMA8".trim(); 
         
-        // 修正模型列表：使用真实存在的模型名称
+        // 定义尝试的模型列表，按优先级排序
+        // 根据您的指示，优先使用 gemini-2.5-flash
         const MODEL_LIST = [
-            "gemini-2.0-flash-exp",       // 修正：目前最新的 Flash 版本是 2.0-exp
-            "gemini-1.5-flash",           // 稳定且快速
-            "gemini-1.5-pro",             // 更智能
+            "gemini-2.5-flash",           // 用户指定最新版
+            "gemini-1.5-flash",           // 稳定版回退
+            "gemini-1.5-pro"              // 强力备用
         ];
 
         const SYSTEM_PROMPT = `
@@ -1493,10 +1494,12 @@
 
             // 循环尝试模型列表
             for (const model of MODEL_LIST) {
+                // 依然使用 v1beta，因为它是目前大多数 Flash 模型的标准接入点
+                // 如果 gemini-2.5-flash 需要 v1，可以尝试手动修改，但 v1beta 通常兼容性更好
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
                 
                 try {
-                    console.log(`Trying connect to MAGI via node: ${model}...`);
+                    console.log(`[MAGI] Trying connection via node: ${model}...`);
                     const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1506,7 +1509,7 @@
                     if (!response.ok) {
                         const status = response.status;
                         // 记录具体的失败原因
-                        console.warn(`Node ${model} failed with status: ${status}`);
+                        console.warn(`[MAGI] Node ${model} failed with status: ${status}`);
                         finalError = `HTTP ${status}`;
                         continue; // 尝试下一个模型
                     }
@@ -1524,18 +1527,18 @@
                     
                     showAiSpeech(aiResponseText);
                     success = true;
-                    console.log(`MAGI connected via ${model}`);
+                    console.log(`[MAGI] Connected successfully via ${model}`);
                     break; // 成功则退出循环
 
                 } catch (error) {
-                    console.warn(`Connection error on ${model}:`, error);
+                    console.warn(`[MAGI] Connection error on ${model}:`, error);
                     finalError = error.message;
                 }
             }
 
             if (!success) {
                 console.error("All MAGI nodes failed.");
-                showAiSpeech(`MAGI 全节点离线。最后错误: ${finalError || "未知中断"}。请检查控制台日志。`);
+                showAiSpeech(`MAGI 全节点离线。请检查 API Key 或网络配置。最后错误: ${finalError}`);
             }
 
             if(aiStatus) {
