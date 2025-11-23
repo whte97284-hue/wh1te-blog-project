@@ -91,7 +91,7 @@
                 linear-gradient(60deg, var(--grid-color) 25%, transparent 25.5%, transparent 75%, var(--grid-color) 75%, var(--grid-color));
             background-size: 20px 35px;
             background-position: 0 0, 0 0, 10px 18px, 10px 18px, 0 0, 10px 18px;
-            opacity: 0.04; /* 极淡纹理，增加细节 */
+            opacity: 0.12; /* 亮度微调：0.08 -> 0.12 */
             mix-blend-mode: screen;
         }
 
@@ -459,7 +459,7 @@
         }
         .holo-card-3d .eva-header, 
         .holo-card-3d h3, 
-        .holo-card-3d p,
+        .holo-card-3d p, 
         .holo-card-3d .social-btn,
         .holo-card-3d button {
             transform: translateZ(20px);
@@ -1059,15 +1059,15 @@
 
             lastTime = currentTime - (deltaTime % interval);
 
-            // 核心修改：更透明的遮盖层 (0.04) 让拖尾更长
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.04)'; 
+            // 核心修改：更透明的遮盖层 (0.03) 让拖尾更长更亮 (原为 0.04)
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.025)'; 
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
             const style = getComputedStyle(document.documentElement);
             const color = style.getPropertyValue('--secondary-color').trim(); 
             
-            // 核心修改：添加霓虹辉光
-            ctx.shadowBlur = 8; 
+            // 核心修改：增强霓虹辉光 (原为 8)
+            ctx.shadowBlur = 14; 
             ctx.shadowColor = color;
             
             ctx.fillStyle = color; 
@@ -1080,12 +1080,12 @@
                 if (Math.random() > 0.98) {
                     ctx.fillStyle = '#fff';
                     ctx.shadowColor = '#fff';
-                    ctx.shadowBlur = 12;
+                    ctx.shadowBlur = 20; /* 高亮时辉光增强 */
                     ctx.fillText(text, i * fontSize, drops[i] * fontSize);
                     // 还原样式
                     ctx.fillStyle = color;
                     ctx.shadowColor = color;
-                    ctx.shadowBlur = 8;
+                    ctx.shadowBlur = 14;
                 } else {
                     ctx.fillText(text, i * fontSize, drops[i] * fontSize);
                 }
@@ -1270,8 +1270,20 @@
             const wave = document.getElementById('deck-wave');
             const iconDisc = document.getElementById('icon-disc');
             const iconPause = document.getElementById('icon-pause');
-            if(audioEl.paused) { audioEl.play(); wave.classList.remove('hidden'); iconDisc.classList.add('hidden'); iconPause.classList.remove('hidden'); } 
-            else { audioEl.pause(); wave.classList.add('hidden'); iconDisc.classList.remove('hidden'); iconPause.classList.add('hidden'); }
+            if(audioEl.paused) { 
+                // 核心修复：捕获 play() 的错误，防止 AbortError
+                const playPromise = audioEl.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log("Autoplay prevented or interrupted:", error);
+                    });
+                }
+                wave.classList.remove('hidden'); iconDisc.classList.add('hidden'); iconPause.classList.remove('hidden'); 
+            } 
+            else { 
+                audioEl.pause(); 
+                wave.classList.add('hidden'); iconDisc.classList.remove('hidden'); iconPause.classList.add('hidden'); 
+            }
         }
         function setVolume(val) { audioEl.volume = val; }
         function drawVisualizer() {
@@ -1468,7 +1480,11 @@
                 el.addEventListener('mouseenter', () => {
                     if(hoverSfx && document.body.classList.contains('tactical-mode')) {
                         hoverSfx.currentTime = 0;
-                        hoverSfx.play().catch(e => {}); 
+                        // 安全播放：防止快速切换导致的错误
+                        const playPromise = hoverSfx.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(e => {});
+                        }
                     }
                 });
             }
@@ -1476,7 +1492,10 @@
             el.addEventListener('click', () => {
                 if(clickSfx) {
                     clickSfx.currentTime = 0;
-                    clickSfx.play().catch(e => {});
+                    const playPromise = clickSfx.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(e => {});
+                    }
                 }
             });
         });
