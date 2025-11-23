@@ -69,8 +69,8 @@
         
         /* --- EVA REBUILD 视觉增强核心 --- */
         body { 
-            /* 深渊渐变背景：模拟驾驶舱深邃感，中心微亮 */
-            background: radial-gradient(circle at 50% 50%, #1a0b2e 0%, #0f0518 40%, #000000 100%);
+            /* 深渊渐变背景：提亮中心区域和整体基调，不再死黑 */
+            background: radial-gradient(circle at 50% 50%, #2d1b4e 0%, #1a0b2e 45%, #0a0a0a 100%);
             min-height: 100vh; 
             color: white; 
             transition: background 0.3s ease, color 0.3s ease; 
@@ -91,7 +91,7 @@
                 linear-gradient(60deg, var(--grid-color) 25%, transparent 25.5%, transparent 75%, var(--grid-color) 75%, var(--grid-color));
             background-size: 20px 35px;
             background-position: 0 0, 0 0, 10px 18px, 10px 18px, 0 0, 10px 18px;
-            opacity: 0.12; /* 亮度微调：0.08 -> 0.12 */
+            opacity: 0.18; /* 再次提亮：0.12 -> 0.18 */
             mix-blend-mode: screen;
         }
 
@@ -324,7 +324,7 @@
             mask-image: linear-gradient(to bottom, black 20%, transparent 90%); 
             animation: bg-scroll 60s linear infinite; 
             transition: background-image 0.3s;
-            opacity: 0.4; /* 提高可见度 */
+            opacity: 0.5; /* 微调亮度 0.4 -> 0.5 */
             filter: drop-shadow(0 0 2px var(--grid-color));
             mix-blend-mode: screen;
         }
