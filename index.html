@@ -1427,11 +1427,12 @@
         }
 
         // --- LLM 聊天逻辑 ---
-        // ⚠️ 生产环境建议将 API Key 放在后端
+        // ⚠️ 警告：API Key 已直接写入前端，仅供演示。生产环境建议通过后端转发。
         const API_KEY = "AIzaSyDOokn1y7wv7PGkNG8QtzIvpVZIwlDTMA8"; 
-        
-        // 修正：使用 gemini-1.5-flash (目前最快且稳定的模型)
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+        // 根据用户指示，尝试使用 gemini-2.5-flash
+        const API_URL_25 = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+        // 保留 1.5 作为备份，防止 2.5 暂时不可用导致功能瘫痪
+        const API_URL_15 = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
         const SYSTEM_PROMPT = `
 你现在是 MAGI 系统的对外人格接口，代号 'ERIRI'。设定：
@@ -1488,11 +1489,22 @@
             };
 
             try {
-                const response = await fetch(API_URL, {
+                // 优先尝试 gemini-2.5-flash
+                let response = await fetch(API_URL_25, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
+
+                // 如果 2.5 失败，回退到 1.5
+                if (!response.ok) {
+                    console.warn(`Gemini 2.5 Flash failed (${response.status}), attempting fallback to 1.5 Flash...`);
+                    response = await fetch(API_URL_15, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                }
 
                 if (!response.ok) {
                     const errText = await response.text();
