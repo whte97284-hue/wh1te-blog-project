@@ -1420,7 +1420,7 @@
                     clearInterval(window.currentSpeechInterval); 
                     statusEl.innerText = "ONLINE"; 
                     statusEl.classList.remove("text-primary");
-                    // 延长显示时间以便阅读
+                    // 8秒后自动关闭气泡 (稍微延长一点阅读时间)
                     window.speechTimeout = setTimeout(() => { bubble.classList.add('hidden'); }, 8000);
                 }
             }, 50);
@@ -1428,15 +1428,13 @@
 
         // --- LLM 聊天逻辑 ---
         // ⚠️ 警告：API Key 已直接写入前端，仅供演示。生产环境建议通过后端转发。
-        // 自动去除可能的空格
         const API_KEY = "AIzaSyDOokn1y7wv7PGkNG8QtzIvpVZIwlDTMA8".trim(); 
         
-        // 定义尝试的模型列表，按优先级排序
+        // 修正模型列表：使用真实存在的模型名称
         const MODEL_LIST = [
-            "gemini-2.5-flash",           // 用户指定 (如果存在)
-            "gemini-2.5-flash-preview",   // 可能的预览版名称
-            "gemini-1.5-flash",           // 当前最稳定快速的版本
-            "gemini-pro"                  // 备用
+            "gemini-2.0-flash-exp",       // 修正：目前最新的 Flash 版本是 2.0-exp
+            "gemini-1.5-flash",           // 稳定且快速
+            "gemini-1.5-pro",             // 更智能
         ];
 
         const SYSTEM_PROMPT = `
@@ -1507,11 +1505,10 @@
 
                     if (!response.ok) {
                         const status = response.status;
-                        // 如果是 404 (模型未找到) 或 400 (请求错误)，尝试下一个
-                        // 如果是 429 (配额不足)，也尝试下一个
-                        console.warn(`Node ${model} failed: ${status}`);
+                        // 记录具体的失败原因
+                        console.warn(`Node ${model} failed with status: ${status}`);
                         finalError = `HTTP ${status}`;
-                        continue; 
+                        continue; // 尝试下一个模型
                     }
 
                     const data = await response.json();
@@ -1527,6 +1524,7 @@
                     
                     showAiSpeech(aiResponseText);
                     success = true;
+                    console.log(`MAGI connected via ${model}`);
                     break; // 成功则退出循环
 
                 } catch (error) {
@@ -1537,7 +1535,7 @@
 
             if (!success) {
                 console.error("All MAGI nodes failed.");
-                showAiSpeech(`MAGI 全节点离线。最后错误: ${finalError || "未知中断"}。请检查 API Key。`);
+                showAiSpeech(`MAGI 全节点离线。最后错误: ${finalError || "未知中断"}。请检查控制台日志。`);
             }
 
             if(aiStatus) {
