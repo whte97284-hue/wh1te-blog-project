@@ -819,9 +819,17 @@
             <aside class="lg:col-span-4 space-y-10 lg:sticky lg:top-32 h-fit">
                 <!-- AI CARD -->
                 <div class="relative z-50">
-                     <div id="ai-speech-bubble" class="hidden absolute -top-32 left-0 w-full z-[100] animate-pop-in pointer-events-none">
-                        <div class="bg-bg border-2 border-secondary p-4 relative shadow-[0_0_20px_var(--secondary-color)] before:content-[''] before:absolute before:-bottom-3 before:left-8 before:w-6 before:h-6 before:bg-bg before:border-b-2 before:border-r-2 before:border-secondary before:rotate-45">
-                             <p id="ai-speech-text" class="text-xs font-bold font-mono text-secondary leading-relaxed drop-shadow-[0_0_2px_rgba(0,255,0,0.8)]"></p>
+                     <!-- 
+                        修改点说明：
+                        1. 定位改为 bottom-full mb-4：让气泡自动位于卡片正上方，不再飘在半空。
+                        2. bg-black/90 backdrop-blur-md：强制深色玻璃背景，保证文字在任何模式下都清晰炸裂。
+                        3. text-sm md:text-base：增大字号。
+                        4. shadow 和 drop-shadow：增加发光强度。
+                     -->
+                     <div id="ai-speech-bubble" class="hidden absolute bottom-full mb-4 left-0 w-full z-[100] animate-pop-in pointer-events-none">
+                        <div class="bg-black/90 backdrop-blur-md border-2 border-secondary p-5 relative shadow-[0_0_30px_rgba(57,255,20,0.4)] 
+                                    before:content-[''] before:absolute before:-bottom-3 before:left-10 before:w-6 before:h-6 before:bg-black/90 before:border-b-2 before:border-r-2 before:border-secondary before:rotate-45">
+                             <p id="ai-speech-text" class="text-sm md:text-base font-bold font-mono text-secondary leading-relaxed tracking-wide drop-shadow-[0_0_5px_rgba(57,255,20,1)]" style="text-shadow: 0 0 10px rgba(var(--secondary-color), 0.8);"></p>
                         </div>
                     </div>
                     <div id="ai-card" class="eva-card ai-card-container cursor-pointer group hover:bg-secondary/10 transition-colors" onclick="triggerAiSpeech()">
@@ -1428,7 +1436,7 @@
 
         // --- LLM 聊天逻辑 ---
         // ⚠️ 警告：API Key 已直接写入前端，仅供演示。生产环境建议通过后端转发。
-        const API_KEY = "AIzaSyC7NABHQBWj8viCwEcnpTBSBu835DMJdHM".trim(); 
+        const API_KEY = "AIzaSyDOokn1y7wv7PGkNG8QtzIvpVZIwlDTMA8".trim(); 
         
         // 定义尝试的模型列表，按优先级排序
         // 根据您的指示，优先使用 gemini-2.5-flash
@@ -1819,4 +1827,3 @@
     </script>
 </body>
 </html>
-
