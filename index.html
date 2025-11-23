@@ -1420,7 +1420,7 @@
                     clearInterval(window.currentSpeechInterval); 
                     statusEl.innerText = "ONLINE"; 
                     statusEl.classList.remove("text-primary");
-                    // 8秒后自动关闭气泡 (稍微延长一点阅读时间)
+                    // 延长显示时间以便阅读
                     window.speechTimeout = setTimeout(() => { bubble.classList.add('hidden'); }, 8000);
                 }
             }, 50);
@@ -1428,11 +1428,16 @@
 
         // --- LLM 聊天逻辑 ---
         // ⚠️ 警告：API Key 已直接写入前端，仅供演示。生产环境建议通过后端转发。
-        const API_KEY = "AIzaSyDOokn1y7wv7PGkNG8QtzIvpVZIwlDTMA8"; 
-        // 根据用户指示，尝试使用 gemini-2.5-flash
-        const API_URL_25 = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
-        // 保留 1.5 作为备份，防止 2.5 暂时不可用导致功能瘫痪
-        const API_URL_15 = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+        // 自动去除可能的空格
+        const API_KEY = "AIzaSyDOokn1y7wv7PGkNG8QtzIvpVZIwlDTMA8".trim(); 
+        
+        // 定义尝试的模型列表，按优先级排序
+        const MODEL_LIST = [
+            "gemini-2.5-flash",           // 用户指定 (如果存在)
+            "gemini-2.5-flash-preview",   // 可能的预览版名称
+            "gemini-1.5-flash",           // 当前最稳定快速的版本
+            "gemini-pro"                  // 备用
+        ];
 
         const SYSTEM_PROMPT = `
 你现在是 MAGI 系统的对外人格接口，代号 'ERIRI'。设定：
@@ -1474,64 +1479,69 @@
                 aiStatus.classList.add("text-emergency", "animate-pulse");
             }
             
-            // 构建符合 Gemini REST API 标准的请求体
+            // 构建请求体
             const payload = {
                 contents: [{
                     parts: [{ text: SYSTEM_PROMPT + "\n\n用户输入: " + userText }]
                 }],
-                // 安全设置，防止模型因为过于激烈的扮演被拦截
                 safetySettings: [
                     { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
-                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
-                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
-                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
+                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" }
                 ]
             };
 
-            try {
-                // 优先尝试 gemini-2.5-flash
-                let response = await fetch(API_URL_25, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+            let success = false;
+            let finalError = null;
 
-                // 如果 2.5 失败，回退到 1.5
-                if (!response.ok) {
-                    console.warn(`Gemini 2.5 Flash failed (${response.status}), attempting fallback to 1.5 Flash...`);
-                    response = await fetch(API_URL_15, {
+            // 循环尝试模型列表
+            for (const model of MODEL_LIST) {
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
+                
+                try {
+                    console.log(`Trying connect to MAGI via node: ${model}...`);
+                    const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
-                }
 
-                if (!response.ok) {
-                    const errText = await response.text();
-                    console.error("Gemini API Error Details:", errText);
-                    throw new Error(`HTTP Error: ${response.status}`);
-                }
+                    if (!response.ok) {
+                        const status = response.status;
+                        // 如果是 404 (模型未找到) 或 400 (请求错误)，尝试下一个
+                        // 如果是 429 (配额不足)，也尝试下一个
+                        console.warn(`Node ${model} failed: ${status}`);
+                        finalError = `HTTP ${status}`;
+                        continue; 
+                    }
 
-                const data = await response.json();
-                
-                // 解析数据，增加安全性检查
-                let aiResponseText = "MAGI 拒绝响应 // ACCESS DENIED";
-                
-                if (data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
-                    aiResponseText = data.candidates[0].content.parts[0].text;
-                } else if (data.promptFeedback && data.promptFeedback.blockReason) {
-                    aiResponseText = `[系统拦截] ${data.promptFeedback.blockReason}`;
-                }
-                
-                showAiSpeech(aiResponseText);
+                    const data = await response.json();
+                    
+                    // 解析数据
+                    let aiResponseText = "MAGI 数据流为空 // NULL_RESPONSE";
+                    
+                    if (data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
+                        aiResponseText = data.candidates[0].content.parts[0].text;
+                    } else if (data.promptFeedback && data.promptFeedback.blockReason) {
+                        aiResponseText = `[系统拦截] ${data.promptFeedback.blockReason}`;
+                    }
+                    
+                    showAiSpeech(aiResponseText);
+                    success = true;
+                    break; // 成功则退出循环
 
-            } catch (error) {
-                console.error("MAGI CONNECTION LOST", error);
-                showAiSpeech("MAGI 连接中断... 检查神经链路 (API Key/Network)！");
-            } finally {
-                if(aiStatus) {
-                    aiStatus.classList.remove("text-emergency", "animate-pulse");
+                } catch (error) {
+                    console.warn(`Connection error on ${model}:`, error);
+                    finalError = error.message;
                 }
+            }
+
+            if (!success) {
+                console.error("All MAGI nodes failed.");
+                showAiSpeech(`MAGI 全节点离线。最后错误: ${finalError || "未知中断"}。请检查 API Key。`);
+            }
+
+            if(aiStatus) {
+                aiStatus.classList.remove("text-emergency", "animate-pulse");
             }
         }
         
