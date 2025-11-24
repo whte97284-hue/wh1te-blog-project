@@ -1653,17 +1653,18 @@
             }, 50);
         }
 
-        // --- LLM 聊天逻辑 (MAGI LINK V4.0 - PURE MEMORY) ---
-        // 本版本移除了 localStorage 记忆，仅使用临时内存，保证绝对稳定
+        // --- LLM 聊天逻辑 (MAGI LINK V3.0 - ERIRI PERSONA & MEMORY & NON-STREAMING) ---
         const BASE_URL = "https://eva-proxy.whte97284.workers.dev"; 
 
         // 内存级对话历史 (页面刷新后重置)
         let chatHistory = [];
 
+        // 2025-01-26: Adjusted model list for robustness
+        // 2.5 is restored as the primary model
         const MODEL_LIST = [
-            "gemini-2.5-flash",           
+            "gemini-2.5-flash", 
             "gemini-1.5-flash",           
-            "gemini-1.5-pro"              
+            "gemini-1.5-pro"
         ];
 
         // 泽村·斯潘塞·英梨梨 完整人格配置
