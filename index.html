@@ -1472,8 +1472,9 @@
         // --- LLM 聊天逻辑 ---
         // ⚠️ 警告：API Key 已直接写入前端，仅供演示。生产环境建议通过后端转发。
         // 自动去除可能的空格
-        const API_KEY = "AIzaSyC7NABHQBWj8viCwEcnpTBSBu835DMJdHM".trim(); 
-        
+        const API_KEY = "".trim(); 
+        const BASE_URL = "https://eva-proxy.whte97284.workers.dev"; 
+
         // 定义尝试的模型列表，按优先级排序
         // 根据您的指示，优先使用 gemini-2.5-flash
         const MODEL_LIST = [
@@ -1540,7 +1541,7 @@
             for (const model of MODEL_LIST) {
                 // 依然使用 v1beta，因为它是目前大多数 Flash 模型的标准接入点
                 // 如果 gemini-2.5-flash 需要 v1，可以尝试手动修改，但 v1beta 通常兼容性更好
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
+                const apiUrl = `${BASE_URL}/v1beta/models/${model}:generateContent`;
                 
                 try {
                     console.log(`[MAGI] Trying connection via node: ${model}...`);
