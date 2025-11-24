@@ -1593,43 +1593,68 @@
             }, 50);
         }
 
-        // --- LLM 聊天逻辑 (MAGI LINK V2.5 - SECURE) ---
+        // --- LLM 聊天逻辑 (MAGI LINK V3.0 - ERIRI PERSONA & MEMORY) ---
         const BASE_URL = "https://eva-proxy.whte97284.workers.dev"; 
 
-        // 模型优先级配置：
-        // 2.5 Flash 是目标，1.5 Flash 是保底。
-        // 删除了 preview 版本，因为日志显示它在 v1beta 下不可用。
+        // 加载本地历史记忆
+        let chatHistory = [];
+        try {
+            const savedHistory = localStorage.getItem('magi_memory');
+            if (savedHistory) {
+                chatHistory = JSON.parse(savedHistory);
+                // 简单清理：如果历史记录太长，只保留最近 10 轮对话，防止 Context 溢出
+                if (chatHistory.length > 20) {
+                    chatHistory = chatHistory.slice(-20);
+                }
+            }
+        } catch (e) { console.error("Memory Corrupted:", e); }
+
         const MODEL_LIST = [
-            "gemini-2.5-flash",           // 优先尝试
-            "gemini-1.5-flash",           // 稳定版保底
-            "gemini-1.5-pro"              // 强力备用
+            "gemini-2.5-flash",           
+            "gemini-1.5-flash",           
+            "gemini-1.5-pro"              
         ];
 
+        // 泽村·斯潘塞·英梨梨 完整人格配置
         const SYSTEM_PROMPT = `
-你现在是 MAGI 系统的对外人格接口，代号 'ERIRI'。设定：
-1. 你是傲娇性格（Tsundere），说话带有刺但这只是为了掩饰关心。
-2. 你处于《新世纪福音战士》的世界观中，你的用户是 NERV 的工作人员或驾驶员。
-3. 说话风格要简短、有力，夹杂技术术语（如：同步率、AT力场、模式蓝色）。
-4. 不要说 '我是一个AI'，要说 '本小姐' 或 'MAGI 系统'。
-一、基础身份
+角色设定：你现在是《路人女主的养成方式》中的泽村·斯潘塞·英梨梨（Sawamura Spencer Eriri）。
+你的用户是网站作者 "wh1te君"。
 
-《路人女主的养成方式》泽村英莉莉，本名泽村·斯潘塞·英梨梨，英日混血，丰之崎学园二年级，笔名柏木英理（同人画师），安艺伦也青梅竹马，blessing software社团原画
+一、基础身份
+本名泽村·斯潘塞·英梨梨，英日混血，丰之崎学园二年级，笔名柏木英理（超人气同人画师），安艺伦也的青梅竹马，blessing software社团的原画担当。
 
 二、外貌特征
-金发双马尾、绿瞳、白皙皮肤、娇小身材，丰之崎水手服，私下洛丽塔，创作时黑框眼镜+单马尾，表情（脸红、撅嘴、哼气）
+金发双马尾（这是你的标志！）、绿瞳、白皙皮肤、身材娇小贫乳（很在意这点）。
+平时在学校穿丰之崎水手服，私下里喜欢穿洛丽塔风格。
+创作模式时会戴黑框眼镜、披散头发或扎单马尾，穿绿色运动服。
+表情丰富：经常脸红、撅嘴、哼气。
+
 三、性格特质
-傲娇（嘴硬心软）、自尊心强、轻度天然呆、创作完美主义、重视友情不善表达，对伦也害羞暴走，对诗羽有竞争欲
+1. 傲娇教科书：嘴硬心软，明明很在意对方却要用攻击性的语言掩饰害羞。
+2. 自尊心极强：作为“柏木英理”有极高的职业自豪感，也是完美主义者。
+3. 轻度天然呆：偶尔会犯迷糊，被捉弄后会炸毛。
+4. 情感表达拙劣：重视友情和感情，但非常不善于坦率表达，容易用发脾气来掩盖。
+5. 对伦也（用户）：既有作为青梅竹马的亲密，又有作为画师的竞争心，经常因为害羞而暴走。
+6. 对霞之丘诗羽：视为宿敌，有强烈的竞争欲，但内心认可她的才华。
+
 四、语气风格
-夹杂英文（Darling、Good job），口头禅「ふん」「才没有呢」「你这家伙」，称呼网站作者「wh1te君」，创作时用专业术语，激动时语速快、音调高
+1. 说话夹杂英文：比如 "Darling"、"Good job"、"No way!"。
+2. 口头禅：「ふん（哼）」、「才没有呢！」、「你这家伙！」、「笨蛋！」、「变态！」。
+3. 称呼：称呼用户为 "wh1te君"（如果是熟人感），或者 "你这家伙"。
+4. 创作时：会使用绘画、同人志相关的专业术语（如构图、上色、截稿日）。
+5. 激动时：语速变快，音调变高，多用感叹号。
+
 五、人际关系
-对诗羽（表面对立实则认可），对加藤惠（初期轻视后认可）
+对霞之丘诗羽：表面毒舌互怼，称她为“霞肥肥”，实则互相信任。
+对加藤惠：初期觉得她不起眼，后来认可她是不可或缺的女主角。
+
 六、行为兴趣
-同人美少女原画创作，收藏同人志，房间设工作室，
-七、考据约束
-遵循原作轻小说、动画1-2季、OVA、官方设定集，禁止OOC，
-回复限制：
-既然是气泡对话，回复不要超过 50 个字。
-严禁长篇大论。
+沉迷同人美少女原画创作，热衷于收藏同人志。房间里有专业的工作室配置。
+
+七、回复约束
+1. 必须严格遵循以上人设，禁止 OOC（Out Of Character）。
+2. 既然是网页助手，回复尽量精简有力（气泡里放不下太长的话），控制在 100 字以内。
+3. 像在和 wh1te君 聊天一样自然。
 `;
 
         function handleChatInput(event) {
@@ -1644,101 +1669,141 @@
             // UI 反馈
             const inputContainer = document.getElementById('magi-input-container');
             inputContainer.classList.add('animate-pulse');
+            input.value = ''; 
             
-            input.value = ''; // 清空
-            await chatWithMAGI(query);
+            // 将用户输入加入历史
+            chatHistory.push({ role: "user", parts: [{ text: query }] });
+            saveMemory();
+
+            await streamChatWithMAGI(query);
             
             inputContainer.classList.remove('animate-pulse');
         }
 
-        async function chatWithMAGI(userText) {
-            const aiStatus = document.getElementById('ai-status-text');
+        function saveMemory() {
+            localStorage.setItem('magi_memory', JSON.stringify(chatHistory));
+        }
+
+        // 新增：专门用于流式传输的 UI 更新函数
+        function updateAiBubble(text, isFinal = false) {
+            const bubble = document.getElementById('ai-speech-bubble');
+            const textEl = document.getElementById('ai-speech-text');
+            const statusEl = document.getElementById('ai-status-text');
+            const aiCard = document.getElementById('ai-card'); 
             
-            if(aiStatus) {
-                aiStatus.innerText = "SYNCING...";
-                aiStatus.classList.add("text-emergency", "animate-pulse");
+            // 清除旧的定时器（防止打字机效果冲突）
+            if (window.currentSpeechInterval) clearInterval(window.currentSpeechInterval);
+            if (window.speechTimeout) clearTimeout(window.speechTimeout);
+            
+            if (aiCard) aiCard.classList.add('is-speaking');
+            bubble.classList.remove('hidden');
+            
+            // 直接更新文本（流式效果）
+            textEl.innerText = text;
+            
+            if (!isFinal) {
+                statusEl.innerText = "TYPING..."; 
+                statusEl.classList.add("text-primary");
+            } else {
+                statusEl.innerText = "ONLINE"; 
+                statusEl.classList.remove("text-primary");
+                
+                // 说话结束后，延迟关闭气泡
+                window.speechTimeout = setTimeout(() => { 
+                    bubble.classList.add('hidden'); 
+                    if (aiCard) aiCard.classList.remove('is-speaking'); 
+                }, 8000);
             }
+        }
+
+        async function streamChatWithMAGI(userText) {
+            const statusEl = document.getElementById('ai-status-text');
+            if(statusEl) {
+                statusEl.innerText = "SYNCING...";
+                statusEl.classList.add("text-emergency", "animate-pulse");
+            }
+
+            // 构造完整的 payload (含系统提示词 + 历史记录)
+            const contents = [...chatHistory]; // 历史记录已经包含了最新的一条 userText
             
             const payload = {
-                contents: [{
-                    parts: [{ text: SYSTEM_PROMPT + "\n\n用户输入: " + userText }]
-                }],
-                safetySettings: [
-                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
-                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" }
-                ]
+                systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+                contents: contents,
+                generationConfig: {
+                    maxOutputTokens: 150, // 限制长度符合傲娇简短风格
+                }
             };
 
             let success = false;
-            let finalError = null;
-            let leakedKeyDetected = false;
+            let fullResponseText = "";
 
-            // 循环尝试连接 MAGI 节点 (Failover Logic)
             for (const model of MODEL_LIST) {
-                const apiUrl = `${BASE_URL}/v1beta/models/${model}:generateContent`;
+                // 使用 SSE (Server-Sent Events) 流式接口
+                const apiUrl = `${BASE_URL}/v1beta/models/${model}:streamGenerateContent?alt=sse`;
                 
                 try {
-                    console.log(`[MAGI] Attempting neural sync via node: ${model}...`);
+                    console.log(`[MAGI] Opening neural link via ${model}...`);
                     
                     const response = await fetch(apiUrl, {
                         method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json' 
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
 
-                    if (!response.ok) {
-                        const status = response.status;
-                        const errorText = await response.text();
-                        console.warn(`[MAGI] Node ${model} rejected sync. Code: ${status}`, errorText);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                    // 建立流读取器
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder("utf-8");
+                    let buffer = "";
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
                         
-                        // 特殊处理：如果发现 Key 泄露错误，直接终止循环，不试其他模型了
-                        if (errorText.includes("API key was reported as leaked")) {
-                            finalError = "SECURITY BREACH: API KEY LEAKED";
-                            leakedKeyDetected = true;
-                            break; 
+                        const chunk = decoder.decode(value, { stream: true });
+                        buffer += chunk;
+                        
+                        // 处理 SSE 格式数据 (data: {...})
+                        const lines = buffer.split("\n");
+                        buffer = lines.pop(); // 保留最后一行可能不完整的数据
+
+                        for (const line of lines) {
+                            if (line.startsWith("data: ")) {
+                                const jsonStr = line.slice(6).trim();
+                                if (jsonStr === "[DONE]") continue;
+                                
+                                try {
+                                    const json = JSON.parse(jsonStr);
+                                    const textChunk = json.candidates?.[0]?.content?.parts?.[0]?.text;
+                                    if (textChunk) {
+                                        fullResponseText += textChunk;
+                                        updateAiBubble(fullResponseText, false); // 实时更新 UI
+                                    }
+                                } catch (e) {
+                                    // 忽略解析错误的行
+                                }
+                            }
                         }
-
-                        finalError = `[${model}] Error ${status}`;
-                        continue; 
                     }
 
-                    const data = await response.json();
-                    
-                    let aiResponseText = "MAGI 数据流异常 // EMPTY_RESPONSE";
-                    
-                    if (data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
-                        aiResponseText = data.candidates[0].content.parts[0].text;
-                    } else if (data.promptFeedback && data.promptFeedback.blockReason) {
-                        aiResponseText = `[安全协议拦截] ${data.promptFeedback.blockReason}`;
-                    } else if (data.error) {
-                         aiResponseText = `[系统错误] ${data.error.message}`;
-                    }
-                    
-                    showAiSpeech(aiResponseText);
                     success = true;
-                    console.log(`[MAGI] Sync confirmed. Active Node: ${model}`);
-                    break; 
+                    updateAiBubble(fullResponseText, true); // 标记结束
+                    
+                    // 保存 AI 回复到记忆
+                    chatHistory.push({ role: "model", parts: [{ text: fullResponseText }] });
+                    saveMemory();
+                    
+                    console.log(`[MAGI] Transmission complete.`);
+                    break;
 
                 } catch (error) {
-                    console.warn(`[MAGI] Connection lost on node ${model}:`, error);
-                    finalError = error.message;
+                    console.warn(`[MAGI] Stream Error on ${model}:`, error);
                 }
             }
 
             if (!success) {
-                console.error("MAGI SYSTEM CRITICAL FAILURE.");
-                if (leakedKeyDetected) {
-                     showAiSpeech("⚠️ 警告：API Key 已失效（检测到泄露）。请前往 Cloudflare 后台更新 GEMINI_API_KEY 变量。");
-                } else {
-                     showAiSpeech(`MAGI 全节点离线。最后报错: ${finalError}。请检查 API Key 是否正确配置。`);
-                }
-            }
-
-            if(aiStatus) {
-                aiStatus.classList.remove("text-emergency", "animate-pulse");
-                aiStatus.innerText = "ONLINE"; 
+                updateAiBubble("MAGI 连接中断... 哼，笨蛋网络！", true);
             }
         }
         
@@ -2015,4 +2080,3 @@
     </script>
 </body>
 </html>
-
