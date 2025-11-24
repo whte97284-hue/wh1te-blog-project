@@ -1469,14 +1469,16 @@
             }, 50);
         }
 
-        // --- LLM 聊天逻辑 (MAGI LINK V2.5) ---
+        // --- LLM 聊天逻辑 (MAGI LINK V2.5 - SECURE) ---
         const BASE_URL = "https://eva-proxy.whte97284.workers.dev"; 
 
-        // 模型优先级配置：强制先用 2.5
+        // 模型优先级配置：
+        // 2.5 Flash 是目标，1.5 Flash 是保底。
+        // 删除了 preview 版本，因为日志显示它在 v1beta 下不可用。
         const MODEL_LIST = [
-            "gemini-2.5-flash",           // 用户确认的目标模型
-            "gemini-2.5-flash-preview",   // 备选命名
-            "gemini-1.5-flash"            // 灾备冗余
+            "gemini-2.5-flash",           // 优先尝试
+            "gemini-1.5-flash",           // 稳定版保底
+            "gemini-1.5-pro"              // 强力备用
         ];
 
         const SYSTEM_PROMPT = `
@@ -1530,10 +1532,10 @@
 
             let success = false;
             let finalError = null;
+            let leakedKeyDetected = false;
 
             // 循环尝试连接 MAGI 节点 (Failover Logic)
             for (const model of MODEL_LIST) {
-                // 拼接 API 路径，Worker 必须支持透明转发
                 const apiUrl = `${BASE_URL}/v1beta/models/${model}:generateContent`;
                 
                 try {
@@ -1547,13 +1549,20 @@
                         body: JSON.stringify(payload)
                     });
 
-                    // 404 处理：如果这个模型名不存在，Worker 可能会透传 404
                     if (!response.ok) {
                         const status = response.status;
                         const errorText = await response.text();
                         console.warn(`[MAGI] Node ${model} rejected sync. Code: ${status}`, errorText);
+                        
+                        // 特殊处理：如果发现 Key 泄露错误，直接终止循环，不试其他模型了
+                        if (errorText.includes("API key was reported as leaked")) {
+                            finalError = "SECURITY BREACH: API KEY LEAKED";
+                            leakedKeyDetected = true;
+                            break; 
+                        }
+
                         finalError = `[${model}] Error ${status}`;
-                        continue; // 尝试下一个模型
+                        continue; 
                     }
 
                     const data = await response.json();
@@ -1580,8 +1589,12 @@
             }
 
             if (!success) {
-                console.error("MAGI SYSTEM CRITICAL FAILURE: All nodes unreachable.");
-                showAiSpeech(`MAGI 全节点离线。最后报错: ${finalError}。请检查 API Key 或 Worker 配置。`);
+                console.error("MAGI SYSTEM CRITICAL FAILURE.");
+                if (leakedKeyDetected) {
+                     showAiSpeech("⚠️ 警告：API Key 已失效（检测到泄露）。请前往 Cloudflare 后台更新 GEMINI_API_KEY 变量。");
+                } else {
+                     showAiSpeech(`MAGI 全节点离线。最后报错: ${finalError}。请检查 API Key 是否正确配置。`);
+                }
             }
 
             if(aiStatus) {
