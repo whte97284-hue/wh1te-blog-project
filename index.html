@@ -378,33 +378,16 @@
             text-shadow: 0 0 5px rgba(var(--secondary-color), 0.5);
         }
 
-        /* LCL Mode Switch specific styles */
-        body.lcl-mode .switch-box-inner-lcl { opacity: 1; }
-        body.lcl-mode .tactical-switch-lcl {
-            color: #ffa500; border-color: #ffa500;
-            text-shadow: 0 0 5px rgba(255, 165, 0, 0.5);
-        }
-        .switch-box-inner-lcl {
-            width: 6px; height: 6px; background: #ffa500;
-            opacity: 0; transition: opacity 0.2s;
-        }
-
         /* Existing styles... */
         [data-theme="unit-02"] { --primary-color: #ffae00; --secondary-color: #ff0000; --bg-color: #140202; --surface-color: rgba(40, 10, 10, 0.6); --grid-color: rgba(255, 0, 0, 0.15); --lock-color: #ffae00; }
         [data-theme="unit-00"] { --primary-color: #ffffff; --secondary-color: #0091ff; --bg-color: #020a14; --surface-color: rgba(10, 20, 40, 0.6); --grid-color: rgba(0, 145, 255, 0.15); --lock-color: #ffffff; }
         [data-theme="unit-08"] { --primary-color: #ff5cab; --secondary-color: #50c878; --bg-color: #14020d; --surface-color: rgba(40, 10, 30, 0.6); --grid-color: rgba(255, 0, 153, 0.15); --lock-color: #ff5cab; }
         
-        /* Cleaned up emergency styles */
-        
-        #matrix-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -3; opacity: 0.15; pointer-events: none; transition: opacity 0.5s; }
-        body.lcl-mode #matrix-bg { opacity: 0; } /* Hide matrix rain when LCL is on */
+        body.emergency-mode { --primary-color: #ff0000 !important; --secondary-color: #ff0000 !important; --bg-color: #0a0000 !important; --surface-color: rgba(40, 0, 0, 0.5) !important; --grid-color: rgba(255, 0, 0, 0.3) !important; }
+        body.emergency-mode .hex-bg { animation: none; background-image: url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ff0000' stroke-opacity='0.4' stroke-width='2'/%3E%3C/svg%3E"); }
+        body.emergency-mode .emergency-overlay { display: flex !important; animation: red-alert 2s ease-in-out infinite; }
 
-        /* LCL Canvas Style */
-        #lcl-bg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -3; opacity: 0; pointer-events: none;
-            transition: opacity 1s ease;
-        }
-        body.lcl-mode #lcl-bg { opacity: 1; }
+        #matrix-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -3; opacity: 0.15; pointer-events: none; }
         
         /* Hex BG 增强：更高的对比度和全息感 */
         .hex-bg { 
@@ -424,9 +407,7 @@
         .hex-flash { position: absolute; width: 60px; height: 104px; background: var(--secondary-color); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); opacity: 0; animation: hexFlash 4s infinite; box-shadow: 0 0 20px var(--secondary-color); }
         @keyframes hexFlash { 0%, 90% { opacity: 0; } 92% { opacity: 0.3; } 94% { opacity: 0; } }
         
-        #particles-container { position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden; perspective: 1000px; transition: opacity 0.5s; }
-        body.lcl-mode #particles-container { opacity: 0; } /* Hide green particles in LCL mode */
-
+        #particles-container { position: fixed; inset: 0; pointer-events: none; z-index: -1; overflow: hidden; perspective: 1000px; }
         .particle { position: absolute; background: var(--secondary-color); opacity: 0; bottom: -50px; transition: background-color 0.3s; }
         .particle.bubble { border-radius: 50%; box-shadow: 0 0 8px var(--secondary-color); }
         .particle.bit { height: 1px !important; box-shadow: 0 0 4px var(--secondary-color); }
@@ -447,6 +428,11 @@
         
         .cockpit-side-meter { position: fixed; top: 20%; bottom: 20%; width: 4px; z-index: 80; pointer-events: none; background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent); opacity: 0.25; transition: background 0.3s; }
         .meter-left { left: 40px; } .meter-right { right: 40px; }
+        
+        .emergency-overlay { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; pointer-events: none; backdrop-filter: blur(5px); }
+        .emergency-hex { width: 400px; height: 460px; background: rgba(255, 0, 0, 0.1); border: 6px solid #ff0000; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: 0 0 80px #ff0000, inset 0 0 30px #ff0000; color: #ff0000; animation: pulse-slow 4s ease-in-out infinite; }
+        @keyframes pulse-slow { 0%, 100% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(1.05); opacity: 1; } }
+        .emergency-text-big { font-family: 'Times New Roman', serif; font-weight: 900; font-size: 4rem; letter-spacing: 0.1em; transform: scaleY(1.2); margin-bottom: 1rem; text-shadow: 0 0 20px #ff0000; animation: glitch-text 0.3s infinite; }
         
         #cursor-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; background-image: radial-gradient(circle var(--cursor-size) at var(--mouse-x) var(--mouse-y), var(--grid-color) 0%, transparent 60%); transition: --cursor-size 0.1s ease; will-change: background-image; mix-blend-mode: screen; }
         
@@ -611,63 +597,6 @@
             display: inline-block;
             min-width: 1em;
         }
-
-        /* --- 新增：EVA 风格对话框 --- */
-        .eva-bubble-container {
-            background: rgba(0, 0, 0, 0.92);
-            border: 2px solid var(--secondary-color);
-            box-shadow: 0 0 15px rgba(var(--secondary-color), 0.4), inset 0 0 10px rgba(var(--secondary-color), 0.2);
-            clip-path: polygon(
-                10px 0, 100% 0, 100% calc(100% - 10px), 
-                calc(100% - 10px) 100%, 0 100%, 0 10px
-            );
-            padding: 4px; 
-            position: relative;
-            margin-bottom: 10px; /* Spacing */
-        }
-        
-        .eva-bubble-inner {
-            border: 1px solid rgba(var(--secondary-color), 0.3);
-            padding: 1rem;
-            position: relative;
-            min-height: 60px;
-            display: flex;
-            align-items: center;
-        }
-
-        .eva-bubble-header {
-            position: absolute;
-            top: 0;
-            right: 0;
-            background: var(--secondary-color);
-            color: #000;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.6rem;
-            font-weight: 900;
-            padding: 2px 6px;
-            letter-spacing: 1px;
-            z-index: 10;
-        }
-        
-        .eva-bubble-deco {
-            position: absolute;
-            background: var(--secondary-color);
-        }
-        .ebd-tl { top: 0; left: 0; width: 15px; height: 2px; }
-        .ebd-tl2 { top: 0; left: 0; width: 2px; height: 15px; }
-        .ebd-br { bottom: 0; right: 0; width: 15px; height: 2px; }
-        .ebd-br2 { bottom: 0; right: 0; width: 2px; height: 15px; }
-
-        /* Font simulation for Matisse-EB */
-        .eva-font {
-            font-family: "Noto Serif SC", serif;
-            font-weight: 900;
-            letter-spacing: -0.05em;
-            transform: scale(1, 1.1); /* Vertical stretch */
-            transform-origin: left center;
-            line-height: 1.4;
-        }
-
     </style>
 </head>
 <body class="antialiased overflow-x-hidden font-sans selection:bg-secondary selection:text-black">
@@ -712,12 +641,17 @@
 
     <!-- Matrix Code Rain Canvas -->
     <canvas id="matrix-bg"></canvas>
-    
-    <!-- LCL Fluid Canvas -->
-    <canvas id="lcl-bg"></canvas>
 
     <!-- Rebuild Overlay (Honeycomb Interference) -->
     <div class="rebuild-overlay"></div>
+
+    <div class="emergency-overlay">
+        <div class="emergency-hex">
+            <div class="emergency-text-big" data-text="EMERGENCY">EMERGENCY</div>
+            <div class="emergency-text-sub border-t-2 border-b-2 border-red-600 py-2 font-black tracking-[0.5em]">HEX: PATTERN BLUE</div>
+            <div class="mt-8 font-mono text-xs tracking-widest animate-pulse">ANGEL DETECTED // ANALYSIS FAILED</div>
+        </div>
+    </div>
 
     <!-- 视觉增强 -->
     <div class="cockpit-overlay"></div>
@@ -822,7 +756,10 @@
                     <span class="text-2xl font-black tracking-tighter leading-none text-white group-hover:text-primary transition-colors italic font-serif" style="font-family: 'Noto Serif SC', serif;">WH1TE.LOG</span>
                 </a>
                 
-                <div class="flex items-center gap-4 mt-2">
+                <div class="flex items-center gap-2 mt-2">
+                    <!-- Emergency Button -->
+                    <button onclick="toggleEmergency()" class="border border-secondary/50 px-2 py-0.5 text-[9px] font-mono text-secondary/70 hover:bg-secondary hover:text-black hover:border-secondary transition-all tracking-widest uppercase hover:shadow-[0_0_10px_var(--secondary-color)] cursor-pointer">[ EMERGENCY ]</button>
+                    
                     <!-- TACTICAL MODE SWITCH -->
                     <div class="tactical-switch" onclick="toggleTacticalMode()">
                         <div class="switch-box">
@@ -831,20 +768,12 @@
                         <span>TACTICAL</span>
                     </div>
 
-                    <!-- LIGHT MODE SWITCH -->
+                    <!-- LIGHT MODE SWITCH (New) -->
                     <div class="tactical-switch" onclick="toggleLightMode()">
                         <div class="switch-box">
                             <div class="switch-box-inner" id="light-mode-indicator"></div>
                         </div>
                         <span>VISUAL</span>
-                    </div>
-
-                    <!-- NEW: LCL MODE SWITCH -->
-                    <div class="tactical-switch tactical-switch-lcl" onclick="toggleLCLMode()">
-                        <div class="switch-box" style="border-color: inherit;">
-                            <div class="switch-box-inner switch-box-inner-lcl"></div>
-                        </div>
-                        <span style="color: inherit;">LCL FLUID</span>
                     </div>
                 </div>
             </div>
@@ -922,18 +851,15 @@
                 <div class="relative z-50">
                      <!-- 
                         修改点说明：
-                        改为 EVA NERV 风格气泡框
+                        1. 定位改为 bottom-full mb-4：让气泡自动位于卡片正上方，不再飘在半空。
+                        2. bg-black/90 backdrop-blur-md：强制深色玻璃背景，保证文字在任何模式下都清晰炸裂。
+                        3. text-sm md:text-base：增大字号。
+                        4. shadow 和 drop-shadow：增加发光强度。
                      -->
                      <div id="ai-speech-bubble" class="hidden absolute bottom-full mb-4 left-0 w-full z-[100] animate-pop-in pointer-events-none">
-                        <div class="eva-bubble-container">
-                            <div class="eva-bubble-header">SOUND_ONLY // ERIRI</div>
-                            <div class="eva-bubble-inner">
-                                <div class="eva-bubble-deco eva-bubble-deco-line ebd-tl"></div>
-                                <div class="eva-bubble-deco eva-bubble-deco-line ebd-tl2"></div>
-                                <div class="eva-bubble-deco eva-bubble-deco-line ebd-br"></div>
-                                <div class="eva-bubble-deco eva-bubble-deco-line ebd-br2"></div>
-                                <p id="ai-speech-text" class="text-secondary eva-font leading-relaxed" style="min-height: 1.5em;"></p>
-                            </div>
+                        <div class="bg-black/90 backdrop-blur-md border-2 border-secondary p-5 relative shadow-[0_0_30px_rgba(57,255,20,0.4)] 
+                                    before:content-[''] before:absolute before:-bottom-3 before:left-10 before:w-6 before:h-6 before:bg-black/90 before:border-b-2 before:border-r-2 before:border-secondary before:rotate-45">
+                             <p id="ai-speech-text" class="text-sm md:text-base font-bold font-mono text-secondary leading-relaxed tracking-wide drop-shadow-[0_0_5px_rgba(57,255,20,1)]" style="text-shadow: 0 0 10px rgba(var(--secondary-color), 0.8);"></p>
                         </div>
                     </div>
                     <div id="ai-card" class="eva-card ai-card-container cursor-pointer group hover:bg-secondary/10 transition-colors" onclick="triggerAiSpeech()">
@@ -1179,112 +1105,6 @@
             document.documentElement.setAttribute('data-mode', 'light');
             if(lightModeIndicator) lightModeIndicator.style.opacity = 1;
         }
-
-        /* --- LCL MODE TOGGLE LOGIC (NEW) --- */
-        const lclCanvas = document.getElementById('lcl-bg');
-        let lclAnimationId;
-
-        function toggleLCLMode() {
-            const isLCL = document.body.classList.contains('lcl-mode');
-            if (isLCL) {
-                document.body.classList.remove('lcl-mode');
-                localStorage.setItem('lclMode', 'off');
-                // Stop animation to save resources
-                if (lclAnimationId) cancelAnimationFrame(lclAnimationId);
-            } else {
-                document.body.classList.add('lcl-mode');
-                localStorage.setItem('lclMode', 'on');
-                initLCL(); // Start animation
-            }
-        }
-
-        // Init LCL Mode State
-        const savedLCLMode = localStorage.getItem('lclMode');
-        if (savedLCLMode === 'on') {
-            document.body.classList.add('lcl-mode');
-            // Defer init slightly to ensure canvas is ready
-            requestAnimationFrame(initLCL);
-        }
-
-        /* ==========================================================================
-           LCL FLUID SIMULATION (CANVAS)
-           ========================================================================== */
-        function initLCL() {
-            const ctx = lclCanvas.getContext('2d');
-            let bubbles = [];
-            
-            function resize() {
-                lclCanvas.width = window.innerWidth;
-                lclCanvas.height = window.innerHeight;
-            }
-            window.addEventListener('resize', resize);
-            resize();
-
-            // LCL Colors: Orange/Amber gradient
-            const colors = ['rgba(255, 165, 0, 0.4)', 'rgba(255, 69, 0, 0.3)', 'rgba(255, 140, 0, 0.2)'];
-
-            class Bubble {
-                constructor() {
-                    this.reset(true);
-                }
-                
-                reset(initial) {
-                    this.x = Math.random() * lclCanvas.width;
-                    this.y = initial ? Math.random() * lclCanvas.height : lclCanvas.height + Math.random() * 100;
-                    this.size = Math.random() * 15 + 5;
-                    this.speed = Math.random() * 1 + 0.5;
-                    this.color = colors[Math.floor(Math.random() * colors.length)];
-                    this.wobble = Math.random() * Math.PI * 2;
-                    this.wobbleSpeed = Math.random() * 0.05;
-                }
-
-                update() {
-                    this.y -= this.speed;
-                    this.wobble += this.wobbleSpeed;
-                    this.x += Math.sin(this.wobble) * 0.5;
-
-                    if (this.y < -50) this.reset(false);
-                }
-
-                draw() {
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                    ctx.fillStyle = this.color;
-                    ctx.fill();
-                    // Shine effect
-                    ctx.beginPath();
-                    ctx.arc(this.x - this.size * 0.3, this.y - this.size * 0.3, this.size * 0.2, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-                    ctx.fill();
-                }
-            }
-
-            // Create bubbles
-            for(let i=0; i<100; i++) bubbles.push(new Bubble());
-
-            function animateLCL() {
-                if (!document.body.classList.contains('lcl-mode')) return;
-
-                ctx.clearRect(0, 0, lclCanvas.width, lclCanvas.height);
-                
-                // Draw LCL Fluid Background (Gradient)
-                const gradient = ctx.createLinearGradient(0, 0, 0, lclCanvas.height);
-                gradient.addColorStop(0, 'rgba(255, 140, 0, 0.1)'); // Top: lighter orange
-                gradient.addColorStop(1, 'rgba(139, 0, 0, 0.4)');   // Bottom: deep red
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, lclCanvas.width, lclCanvas.height);
-
-                bubbles.forEach(b => {
-                    b.update();
-                    b.draw();
-                });
-
-                lclAnimationId = requestAnimationFrame(animateLCL);
-            }
-            
-            animateLCL();
-        }
-
 
         /* ==========================================================================
            OPTIMIZED CURSOR SYSTEM (CONDITIONAL RENDERING)
@@ -1655,12 +1475,8 @@
             }, 50);
         }
 
-        // --- LLM 聊天逻辑 (MAGI LINK V4.0 - PURE MEMORY) ---
-        // 本版本移除了 localStorage 记忆，仅使用临时内存，保证绝对稳定
+        // --- LLM 聊天逻辑 (MAGI LINK V8.0 - STABLE + ERIRI) ---
         const BASE_URL = "https://eva-proxy.whte97284.workers.dev"; 
-
-        // 内存级对话历史 (页面刷新后重置)
-        let chatHistory = [];
 
         const MODEL_LIST = [
             "gemini-2.5-flash",           
@@ -1724,9 +1540,7 @@
             inputContainer.classList.add('animate-pulse');
             input.value = ''; 
             
-            // 将用户输入加入临时历史
-            chatHistory.push({ role: "user", parts: [{ text: query }] });
-
+            // 不再保存本地历史，只进行一次性对话
             await chatWithMAGI(query);
             
             inputContainer.classList.remove('animate-pulse');
@@ -1739,12 +1553,11 @@
                 statusEl.classList.add("text-emergency", "animate-pulse");
             }
 
-            // 构造 Context
-            const contents = [...chatHistory];
-            
+            // 构造 payload (只包含当前对话，无记忆，确保无状态稳定)
             const payload = {
-                systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-                contents: contents,
+                contents: [{
+                    parts: [{ text: SYSTEM_PROMPT + "\n\n用户输入: " + userText }]
+                }],
                 generationConfig: { maxOutputTokens: 150 } 
             };
 
@@ -1752,7 +1565,6 @@
             let finalError = null;
 
             for (const model of MODEL_LIST) {
-                // 非流式接口
                 const apiUrl = `${BASE_URL}/v1beta/models/${model}:generateContent`;
                 
                 try {
@@ -1781,9 +1593,6 @@
 
                     success = true;
                     
-                    // 1. 保存记忆 (仅在内存中)
-                    chatHistory.push({ role: "model", parts: [{ text: aiResponseText }] });
-
                     // 2. 调用打字机显示
                     showAiSpeech(aiResponseText);
                     
@@ -1798,8 +1607,6 @@
 
             if (!success) {
                 showAiSpeech(`MAGI 连接中断。错误: ${finalError}`);
-                // 如果失败，回滚刚才的用户输入，防止下次请求带上错误的历史
-                chatHistory.pop(); 
             }
             
              if(statusEl) {
