@@ -1469,18 +1469,14 @@
             }, 50);
         }
 
-        // --- LLM 聊天逻辑 ---
-        // ⚠️ 警告：API Key 已直接写入前端，仅供演示。生产环境建议通过后端转发。
-        // 自动去除可能的空格
-        const API_KEY = "".trim(); 
+        // --- LLM 聊天逻辑 (MAGI LINK V2.5) ---
         const BASE_URL = "https://eva-proxy.whte97284.workers.dev"; 
 
-        // 定义尝试的模型列表，按优先级排序
-        // 根据您的指示，优先使用 gemini-2.5-flash
+        // 模型优先级配置：强制先用 2.5
         const MODEL_LIST = [
-            "gemini-2.5-flash",           // 用户指定最新版
-            "gemini-1.5-flash",           // 稳定版回退
-            "gemini-1.5-pro"              // 强力备用
+            "gemini-2.5-flash",           // 用户确认的目标模型
+            "gemini-2.5-flash-preview",   // 备选命名
+            "gemini-1.5-flash"            // 灾备冗余
         ];
 
         const SYSTEM_PROMPT = `
@@ -1504,11 +1500,11 @@
             const query = input.value.trim();
             if (!query) return;
             
-            // 显示用户输入 feedback
+            // UI 反馈
             const inputContainer = document.getElementById('magi-input-container');
             inputContainer.classList.add('animate-pulse');
             
-            input.value = ''; // 清空输入框
+            input.value = ''; // 清空
             await chatWithMAGI(query);
             
             inputContainer.classList.remove('animate-pulse');
@@ -1517,13 +1513,11 @@
         async function chatWithMAGI(userText) {
             const aiStatus = document.getElementById('ai-status-text');
             
-            // UI 状态更新
             if(aiStatus) {
-                aiStatus.innerText = "CALCULATING...";
+                aiStatus.innerText = "SYNCING...";
                 aiStatus.classList.add("text-emergency", "animate-pulse");
             }
             
-            // 构建请求体
             const payload = {
                 contents: [{
                     parts: [{ text: SYSTEM_PROMPT + "\n\n用户输入: " + userText }]
@@ -1537,57 +1531,62 @@
             let success = false;
             let finalError = null;
 
-            // 循环尝试模型列表
+            // 循环尝试连接 MAGI 节点 (Failover Logic)
             for (const model of MODEL_LIST) {
-                // 依然使用 v1beta，因为它是目前大多数 Flash 模型的标准接入点
-                // 如果 gemini-2.5-flash 需要 v1，可以尝试手动修改，但 v1beta 通常兼容性更好
+                // 拼接 API 路径，Worker 必须支持透明转发
                 const apiUrl = `${BASE_URL}/v1beta/models/${model}:generateContent`;
                 
                 try {
-                    console.log(`[MAGI] Trying connection via node: ${model}...`);
+                    console.log(`[MAGI] Attempting neural sync via node: ${model}...`);
+                    
                     const response = await fetch(apiUrl, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json' 
+                        },
                         body: JSON.stringify(payload)
                     });
 
+                    // 404 处理：如果这个模型名不存在，Worker 可能会透传 404
                     if (!response.ok) {
                         const status = response.status;
-                        // 记录具体的失败原因
-                        console.warn(`[MAGI] Node ${model} failed with status: ${status}`);
-                        finalError = `HTTP ${status}`;
+                        const errorText = await response.text();
+                        console.warn(`[MAGI] Node ${model} rejected sync. Code: ${status}`, errorText);
+                        finalError = `[${model}] Error ${status}`;
                         continue; // 尝试下一个模型
                     }
 
                     const data = await response.json();
                     
-                    // 解析数据
-                    let aiResponseText = "MAGI 数据流为空 // NULL_RESPONSE";
+                    let aiResponseText = "MAGI 数据流异常 // EMPTY_RESPONSE";
                     
                     if (data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
                         aiResponseText = data.candidates[0].content.parts[0].text;
                     } else if (data.promptFeedback && data.promptFeedback.blockReason) {
-                        aiResponseText = `[系统拦截] ${data.promptFeedback.blockReason}`;
+                        aiResponseText = `[安全协议拦截] ${data.promptFeedback.blockReason}`;
+                    } else if (data.error) {
+                         aiResponseText = `[系统错误] ${data.error.message}`;
                     }
                     
                     showAiSpeech(aiResponseText);
                     success = true;
-                    console.log(`[MAGI] Connected successfully via ${model}`);
-                    break; // 成功则退出循环
+                    console.log(`[MAGI] Sync confirmed. Active Node: ${model}`);
+                    break; 
 
                 } catch (error) {
-                    console.warn(`[MAGI] Connection error on ${model}:`, error);
+                    console.warn(`[MAGI] Connection lost on node ${model}:`, error);
                     finalError = error.message;
                 }
             }
 
             if (!success) {
-                console.error("All MAGI nodes failed.");
-                showAiSpeech(`MAGI 全节点离线。最后错误: ${finalError || "未知中断"}。请检查控制台日志。`);
+                console.error("MAGI SYSTEM CRITICAL FAILURE: All nodes unreachable.");
+                showAiSpeech(`MAGI 全节点离线。最后报错: ${finalError}。请检查 API Key 或 Worker 配置。`);
             }
 
             if(aiStatus) {
                 aiStatus.classList.remove("text-emergency", "animate-pulse");
+                aiStatus.innerText = "ONLINE"; 
             }
         }
         
