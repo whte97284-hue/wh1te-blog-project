@@ -1666,11 +1666,11 @@
         } catch (e) { console.error("Memory Corrupted:", e); }
 
         // 2025-01-26: Adjusted model list for robustness
-        // 移除 2.5 版本以避免崩溃，优先使用 1.5
+        // 2.5 is restored as the primary model
         const MODEL_LIST = [
-            "gemini-2.5-flash",           
-            "gemini-1.5-pro",
-            "gemini-1.0-pro"              
+            "gemini-2.5-flash", 
+            "gemini-1.5-flash",           
+            "gemini-1.5-pro"
         ];
 
         // 泽村·斯潘塞·英梨梨 完整人格配置
@@ -2090,4 +2090,3 @@
     </script>
 </body>
 </html>
-
