@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>WH1TE_LOG // HUMAN_INSTRUMENTALITY</title>
+    <!-- 屏蔽 favicon 404 错误 -->
+    <link rel="icon" href="data:,">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@300;500;700;900&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Serif+SC:wght@700;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -1653,18 +1655,17 @@
             }, 50);
         }
 
-        // --- LLM 聊天逻辑 (MAGI LINK V3.0 - ERIRI PERSONA & MEMORY & NON-STREAMING) ---
+        // --- LLM 聊天逻辑 (MAGI LINK V4.0 - PURE MEMORY) ---
+        // 本版本移除了 localStorage 记忆，仅使用临时内存，保证绝对稳定
         const BASE_URL = "https://eva-proxy.whte97284.workers.dev"; 
 
         // 内存级对话历史 (页面刷新后重置)
         let chatHistory = [];
 
-        // 2025-01-26: Adjusted model list for robustness
-        // 2.5 is restored as the primary model
         const MODEL_LIST = [
-            "gemini-2.5-flash", 
+            "gemini-2.5-flash",           
             "gemini-1.5-flash",           
-            "gemini-1.5-pro"
+            "gemini-1.5-pro"              
         ];
 
         // 泽村·斯潘塞·英梨梨 完整人格配置
