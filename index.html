@@ -871,7 +871,7 @@
                      <div id="ai-speech-bubble" class="hidden absolute bottom-full mb-4 left-0 w-full z-[100] animate-pop-in pointer-events-none">
                         <div class="bg-black/90 backdrop-blur-md border-2 border-secondary p-5 relative shadow-[0_0_30px_rgba(57,255,20,0.4)] 
                                     before:content-[''] before:absolute before:-bottom-3 before:left-10 before:w-6 before:h-6 before:bg-black/90 before:border-b-2 before:border-r-2 before:border-secondary before:rotate-45">
-                             <p id="ai-speech-text" class="text-sm md:text-base font-bold font-mono text-secondary leading-relaxed tracking-wide drop-shadow-[0_0_5px_rgba(57,255,20,1)]" style="text-shadow: 0 0 10px rgba(var(--secondary-color), 0.8); min-height: 1.5em;"></p>
+                             <p id="ai-speech-text" class="text-sm md:text-base font-bold font-mono text-secondary leading-relaxed tracking-wide drop-shadow-[0_0_5px_rgba(57,255,20,1)]" style="text-shadow: 0 0 10px rgba(var(--secondary-color), 0.8);"></p>
                         </div>
                     </div>
                     <div id="ai-card" class="eva-card ai-card-container cursor-pointer group hover:bg-secondary/10 transition-colors" onclick="triggerAiSpeech()">
@@ -1593,7 +1593,7 @@
             }, 50);
         }
 
-        // --- LLM 聊天逻辑 (MAGI LINK V3.0 - ERIRI PERSONA & MEMORY & NON-STREAMING) ---
+        // --- LLM 聊天逻辑 (MAGI LINK V3.0 - ERIRI PERSONA & MEMORY) ---
         const BASE_URL = "https://eva-proxy.whte97284.workers.dev"; 
 
         // 加载本地历史记忆
@@ -1675,7 +1675,7 @@
             chatHistory.push({ role: "user", parts: [{ text: query }] });
             saveMemory();
 
-            await chatWithMAGI(query);
+            await streamChatWithMAGI(query);
             
             inputContainer.classList.remove('animate-pulse');
         }
@@ -1684,31 +1684,66 @@
             localStorage.setItem('magi_memory', JSON.stringify(chatHistory));
         }
 
-        async function chatWithMAGI(userText) {
+        // 新增：专门用于流式传输的 UI 更新函数
+        function updateAiBubble(text, isFinal = false) {
+            const bubble = document.getElementById('ai-speech-bubble');
+            const textEl = document.getElementById('ai-speech-text');
+            const statusEl = document.getElementById('ai-status-text');
+            const aiCard = document.getElementById('ai-card'); 
+            
+            // 清除旧的定时器（防止打字机效果冲突）
+            if (window.currentSpeechInterval) clearInterval(window.currentSpeechInterval);
+            if (window.speechTimeout) clearTimeout(window.speechTimeout);
+            
+            if (aiCard) aiCard.classList.add('is-speaking');
+            bubble.classList.remove('hidden');
+            
+            // 直接更新文本（流式效果）
+            textEl.innerText = text;
+            
+            if (!isFinal) {
+                statusEl.innerText = "TYPING..."; 
+                statusEl.classList.add("text-primary");
+            } else {
+                statusEl.innerText = "ONLINE"; 
+                statusEl.classList.remove("text-primary");
+                
+                // 说话结束后，延迟关闭气泡
+                window.speechTimeout = setTimeout(() => { 
+                    bubble.classList.add('hidden'); 
+                    if (aiCard) aiCard.classList.remove('is-speaking'); 
+                }, 8000);
+            }
+        }
+
+        async function streamChatWithMAGI(userText) {
             const statusEl = document.getElementById('ai-status-text');
             if(statusEl) {
                 statusEl.innerText = "SYNCING...";
                 statusEl.classList.add("text-emergency", "animate-pulse");
             }
 
-            // 构造 Context
-            const contents = [...chatHistory];
+            // 构造完整的 payload (含系统提示词 + 历史记录)
+            const contents = [...chatHistory]; // 历史记录已经包含了最新的一条 userText
             
             const payload = {
                 systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
                 contents: contents,
-                generationConfig: { maxOutputTokens: 150 } 
+                generationConfig: {
+                    maxOutputTokens: 150, // 限制长度符合傲娇简短风格
+                }
             };
 
             let success = false;
-            let finalError = null;
+            let fullResponseText = "";
 
             for (const model of MODEL_LIST) {
-                // 非流式接口
-                const apiUrl = `${BASE_URL}/v1beta/models/${model}:generateContent`;
+                // 使用 SSE (Server-Sent Events) 流式接口
+                const apiUrl = `${BASE_URL}/v1beta/models/${model}:streamGenerateContent?alt=sse`;
                 
                 try {
-                    console.log(`[MAGI] Connecting via ${model}...`);
+                    console.log(`[MAGI] Opening neural link via ${model}...`);
+                    
                     const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1717,40 +1752,58 @@
 
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-                    const data = await response.json();
-                    
-                    let aiResponseText = "MAGI 数据解析错误";
-                    
-                    if (data.candidates && data.candidates[0].content) {
-                        aiResponseText = data.candidates[0].content.parts[0].text;
-                    } else if (data.promptFeedback) {
-                        aiResponseText = `[被拦截] ${data.promptFeedback.blockReason}`;
+                    // 建立流读取器
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder("utf-8");
+                    let buffer = "";
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        
+                        const chunk = decoder.decode(value, { stream: true });
+                        buffer += chunk;
+                        
+                        // 处理 SSE 格式数据 (data: {...})
+                        const lines = buffer.split("\n");
+                        buffer = lines.pop(); // 保留最后一行可能不完整的数据
+
+                        for (const line of lines) {
+                            if (line.startsWith("data: ")) {
+                                const jsonStr = line.slice(6).trim();
+                                if (jsonStr === "[DONE]") continue;
+                                
+                                try {
+                                    const json = JSON.parse(jsonStr);
+                                    const textChunk = json.candidates?.[0]?.content?.parts?.[0]?.text;
+                                    if (textChunk) {
+                                        fullResponseText += textChunk;
+                                        updateAiBubble(fullResponseText, false); // 实时更新 UI
+                                    }
+                                } catch (e) {
+                                    // 忽略解析错误的行
+                                }
+                            }
+                        }
                     }
 
                     success = true;
+                    updateAiBubble(fullResponseText, true); // 标记结束
                     
-                    // 1. 保存记忆
-                    chatHistory.push({ role: "model", parts: [{ text: aiResponseText }] });
+                    // 保存 AI 回复到记忆
+                    chatHistory.push({ role: "model", parts: [{ text: fullResponseText }] });
                     saveMemory();
-
-                    // 2. 调用打字机显示
-                    showAiSpeech(aiResponseText);
                     
-                    console.log(`[MAGI] Sync Complete.`);
+                    console.log(`[MAGI] Transmission complete.`);
                     break;
 
                 } catch (error) {
-                    console.warn(`[MAGI] Error on ${model}:`, error);
-                    finalError = error.message;
+                    console.warn(`[MAGI] Stream Error on ${model}:`, error);
                 }
             }
 
             if (!success) {
-                showAiSpeech(`MAGI 连接中断。错误: ${finalError}`);
-            }
-            
-             if(statusEl) {
-                statusEl.classList.remove("text-emergency", "animate-pulse");
+                updateAiBubble("MAGI 连接中断... 哼，笨蛋网络！", true);
             }
         }
         
