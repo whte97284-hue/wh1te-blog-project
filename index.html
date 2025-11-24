@@ -1645,12 +1645,11 @@
             }
         }
 
-        // 恢复缺失的每日追番相关函数
         const mockData = [{ id: 388296, name: "香格里拉·开拓异境", rating: { score: "8.1" }, images: { large: "https://lain.bgm.tv/pic/cover/l/13/9a/388296_7787Y.jpg" } }];
         async function loadAnimeData() {
             const dateDisplay = document.getElementById('anime-date');
             const today = new Date();
-            if(dateDisplay) dateDisplay.innerHTML = `${today.getMonth()+1}/${today.getDate()}`;
+            dateDisplay.innerHTML = `${today.getMonth()+1}/${today.getDate()}`;
             let bangumiWeekday = today.getDay() === 0 ? 7 : today.getDay();
             try {
                 const response = await fetch('https://corsproxy.io/?' + encodeURIComponent('https://api.bgm.tv/calendar'));
@@ -1659,14 +1658,11 @@
                 const todayData = data.find(day => day.weekday.id === bangumiWeekday);
                 renderList(todayData && todayData.items.length > 0 ? todayData.items : mockData);
             } catch (error) {
-                console.log('Anime load failed, using mock data');
-                renderList(mockData); 
-                if(dateDisplay) dateDisplay.innerHTML += ' <span class="text-red-500">OFFLINE</span>';
+                renderList(mockData); dateDisplay.innerHTML += ' <span class="text-red-500">OFFLINE</span>';
             }
         }
         const renderList = (items) => {
              const container = document.getElementById('anime-list');
-             if(!container) return;
              container.innerHTML = items.map(item => {
                     const title = item.name_cn || item.name;
                     const score = item.rating?.score || 'N/A';
@@ -1717,6 +1713,128 @@
         function searchArticles() { const query = document.getElementById('search-input').value.toLowerCase(); document.querySelectorAll('.eva-card').forEach(card => { const text = card.textContent.toLowerCase(); const tags = card.dataset.tags ? card.dataset.tags.toLowerCase() : ''; card.style.display = (text.includes(query) || tags.includes(query)) ? '' : 'none'; }); }
         function filterByTag(tag) { document.getElementById('search-input').value = tag; searchArticles(); }
 
+        startHeroGlitch();
+        loadAnimeData();
+        createParticles(); 
+
+        /* ==========================================================================
+           NEW ENHANCEMENTS LOGIC (PHASE 1 & 2)
+           ========================================================================== */
+
+        // --- 1. MAGI TEXT DECODER SYSTEM ---
+        class TextScramble {
+            constructor(el) {
+                this.el = el;
+                this.chars = '!<>-_\\/[]{}—=+*^?#________';
+                this.update = this.update.bind(this);
+            }
+            setText(newText) {
+                const oldText = this.el.innerText;
+                const length = Math.max(oldText.length, newText.length);
+                const promise = new Promise((resolve) => this.resolve = resolve);
+                this.queue = [];
+                for (let i = 0; i < length; i++) {
+                    const from = oldText[i] || '';
+                    const to = newText[i] || '';
+                    const start = Math.floor(Math.random() * 40);
+                    const end = start + Math.floor(Math.random() * 40);
+                    this.queue.push({ from, to, start, end });
+                }
+                cancelAnimationFrame(this.frameRequest);
+                this.frame = 0;
+                this.update();
+                return promise;
+            }
+            update() {
+                let output = '';
+                let complete = 0;
+                for (let i = 0, n = this.queue.length; i < n; i++) {
+                    let { from, to, start, end, char } = this.queue[i];
+                    if (this.frame >= end) {
+                        complete++;
+                        output += to;
+                    } else if (this.frame >= start) {
+                        if (!char || Math.random() < 0.28) {
+                            char = this.chars[Math.floor(Math.random() * this.chars.length)];
+                            this.queue[i].char = char;
+                        }
+                        output += `<span class="text-secondary opacity-50">${char}</span>`;
+                    } else {
+                        output += from;
+                    }
+                }
+                this.el.innerHTML = output;
+                if (complete === this.queue.length) {
+                    this.resolve();
+                } else {
+                    this.frameRequest = requestAnimationFrame(this.update);
+                    this.frame++;
+                }
+            }
+        }
+
+        // Text Decoder: Mobile vs Desktop Strategy
+        const scrambleElements = document.querySelectorAll('h3, .eva-header span');
+        
+        if (!isTouchDevice) {
+            // Desktop: Trigger on hover
+            scrambleElements.forEach(el => {
+                const fx = new TextScramble(el);
+                let originalText = el.innerText;
+                el.parentElement.addEventListener('mouseenter', () => { fx.setText(originalText); });
+            });
+        } else {
+            // Mobile: Trigger on scroll into view
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const el = entry.target;
+                        const fx = new TextScramble(el);
+                        fx.setText(el.innerText);
+                        observer.unobserve(el); // Play once per session
+                    }
+                });
+            }, { threshold: 0.5 });
+            
+            scrambleElements.forEach(el => observer.observe(el));
+        }
+
+        // --- 2. AUDIO SFX SYSTEM ---
+        // Initialize sound objects only once
+        const hoverSfx = document.getElementById('sfx-hover');
+        const clickSfx = document.getElementById('sfx-click');
+        
+        if(hoverSfx) hoverSfx.volume = 0.15; 
+        if(clickSfx) clickSfx.volume = 0.3;
+
+        const sfxElements = document.querySelectorAll('a, button, .eva-card, .tactical-switch, input');
+        
+        sfxElements.forEach(el => {
+            // Hover sound only on PC
+            if(!isTouchDevice) {
+                el.addEventListener('mouseenter', () => {
+                    if(hoverSfx && document.body.classList.contains('tactical-mode')) {
+                        hoverSfx.currentTime = 0;
+                        // 安全播放：防止快速切换导致的错误
+                        const playPromise = hoverSfx.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(e => {});
+                        }
+                    }
+                });
+            }
+            
+            el.addEventListener('click', () => {
+                if(clickSfx) {
+                    clickSfx.currentTime = 0;
+                    const playPromise = clickSfx.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(e => {});
+                    }
+                }
+            });
+        });
+
         // --- 3. 3D HOLOGRAPHIC CARD EFFECT (PC ONLY) ---
         // Disable on mobile to prevent scroll jank and save battery
         if (!isTouchDevice) {
@@ -1741,12 +1859,6 @@
                 });
             });
         }
-        
-        // 初始化所有功能
-        startHeroGlitch();
-        createParticles();
-        // 确保在最后调用番剧加载函数
-        loadAnimeData();
 
     </script>
 </body>
