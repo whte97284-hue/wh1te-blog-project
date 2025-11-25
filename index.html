@@ -45,6 +45,7 @@
                         scan: { '0%': { backgroundPosition: '0 0' }, '100%': { backgroundPosition: '0 100%' } },
                         magiPulse: { '0%, 100%': { opacity: 0.5, boxShadow: '0 0 15px var(--secondary-color)' }, '50%': { opacity: 1, boxShadow: '0 0 30px var(--secondary-color)' } },
                         popIn: { '0%': { opacity: 0, transform: 'scale(0.95) translateY(10px)' }, '100%': { opacity: 1, transform: 'scale(1) translateY(0)' } },
+                        redAlert: { '0%, 100%': { boxShadow: 'inset 0 0 30px rgba(255,0,0,0.3)' }, '50%': { boxShadow: 'inset 0 0 80px rgba(255,0,0,0.6)' } },
                         typing: { '0%': { width: '0' }, '100%': { width: '100%' } },
                         flash: { '0%, 100%': { opacity: 1 }, '50%': { opacity: 0.3 } },
                         scannerBeam: { '0%': { left: '-100%' }, '100%': { left: '200%' } },
@@ -582,6 +583,24 @@
             100% { box-shadow: 0 0 30px var(--primary-color), 0 0 50px var(--secondary-color); border-color: var(--secondary-color); }
         }
 
+        /* New MAGI Node Styles */
+        .magi-mini-node {
+            background: rgba(0,0,0,0.5);
+            transition: all 0.3s;
+        }
+        .magi-node-active {
+            background: var(--secondary-color);
+            color: #000 !important;
+            box-shadow: 0 0 10px var(--secondary-color);
+            border-color: transparent;
+        }
+        .magi-node-denied {
+            background: #ff0000;
+            color: #fff !important;
+            border-color: #ff0000;
+            box-shadow: 0 0 10px #ff0000;
+        }
+
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: var(--bg-color); }
         ::-webkit-scrollbar-thumb { background: var(--secondary-color); border-radius: 2px; }
@@ -607,63 +626,6 @@
             display: inline-block;
             min-width: 1em;
         }
-
-        /* --- 新增：EVA 风格对话框 --- */
-        .eva-bubble-container {
-            background: rgba(0, 0, 0, 0.92);
-            border: 2px solid var(--secondary-color);
-            box-shadow: 0 0 15px rgba(var(--secondary-color), 0.4), inset 0 0 10px rgba(var(--secondary-color), 0.2);
-            clip-path: polygon(
-                10px 0, 100% 0, 100% calc(100% - 10px), 
-                calc(100% - 10px) 100%, 0 100%, 0 10px
-            );
-            padding: 4px; 
-            position: relative;
-            margin-bottom: 10px; /* Spacing */
-        }
-        
-        .eva-bubble-inner {
-            border: 1px solid rgba(var(--secondary-color), 0.3);
-            padding: 1rem;
-            position: relative;
-            min-height: 60px;
-            display: flex;
-            align-items: center;
-        }
-
-        .eva-bubble-header {
-            position: absolute;
-            top: 0;
-            right: 0;
-            background: var(--secondary-color);
-            color: #000;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.6rem;
-            font-weight: 900;
-            padding: 2px 6px;
-            letter-spacing: 1px;
-            z-index: 10;
-        }
-        
-        .eva-bubble-deco {
-            position: absolute;
-            background: var(--secondary-color);
-        }
-        .ebd-tl { top: 0; left: 0; width: 15px; height: 2px; }
-        .ebd-tl2 { top: 0; left: 0; width: 2px; height: 15px; }
-        .ebd-br { bottom: 0; right: 0; width: 15px; height: 2px; }
-        .ebd-br2 { bottom: 0; right: 0; width: 2px; height: 15px; }
-
-        /* Font simulation for Matisse-EB */
-        .eva-font {
-            font-family: "Noto Serif SC", serif;
-            font-weight: 900;
-            letter-spacing: -0.05em;
-            transform: scale(1, 1.1); /* Vertical stretch */
-            transform-origin: left center;
-            line-height: 1.4;
-        }
-
     </style>
 </head>
 <body class="antialiased overflow-x-hidden font-sans selection:bg-secondary selection:text-black">
@@ -917,21 +879,39 @@
                 <!-- AI CARD -->
                 <div class="relative z-50">
                      <!-- 
-                        修改点说明：
-                        改为 EVA NERV 风格气泡框
+                        MAGI TERMINAL OVERLAY 
                      -->
                      <div id="ai-speech-bubble" class="hidden absolute bottom-full mb-4 left-0 w-full z-[100] animate-pop-in pointer-events-none">
-                        <div class="eva-bubble-container">
-                            <div class="eva-bubble-header">SOUND_ONLY // ERIRI</div>
-                            <div class="eva-bubble-inner">
-                                <div class="eva-bubble-deco eva-bubble-deco-line ebd-tl"></div>
-                                <div class="eva-bubble-deco eva-bubble-deco-line ebd-tl2"></div>
-                                <div class="eva-bubble-deco eva-bubble-deco-line ebd-br"></div>
-                                <div class="eva-bubble-deco eva-bubble-deco-line ebd-br2"></div>
-                                <p id="ai-speech-text" class="text-secondary eva-font leading-relaxed" style="min-height: 1.5em;"></p>
+                        <!-- MAGI Terminal Container -->
+                        <div class="bg-black/95 border-2 border-secondary p-1 shadow-[0_0_20px_rgba(57,255,20,0.3)] backdrop-blur-md" style="clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);">
+                            <!-- Inner Bezel -->
+                            <div class="border border-secondary/30 p-3 relative overflow-hidden">
+                                
+                                <!-- Header -->
+                                <div class="flex justify-between items-end mb-2 border-b border-secondary/50 pb-1">
+                                    <span class="font-mono text-[10px] font-bold text-secondary/70">MAGI_SYS // V8.0</span>
+                                    <span id="magi-status-indicator" class="font-mono text-[9px] text-emergency font-bold animate-pulse">STANDBY</span>
+                                </div>
+
+                                <!-- The 3 Magi Nodes (Visual) -->
+                                <div id="magi-visualizer" class="flex gap-1 mb-3 opacity-30 transition-all duration-500">
+                                    <div id="node-melchior" class="magi-mini-node flex-1 h-6 border border-secondary flex items-center justify-center text-[7px] font-mono font-bold text-secondary transition-all">MELCHIOR</div>
+                                    <div id="node-balthasar" class="magi-mini-node flex-1 h-6 border border-secondary flex items-center justify-center text-[7px] font-mono font-bold text-secondary transition-all">BALTHASAR</div>
+                                    <div id="node-casper" class="magi-mini-node flex-1 h-6 border border-secondary flex items-center justify-center text-[7px] font-mono font-bold text-secondary transition-all">CASPER</div>
+                                </div>
+
+                                <!-- Text Output -->
+                                <div class="relative min-h-[3em]">
+                                    <!-- Decos -->
+                                    <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-secondary opacity-50"></div>
+                                    <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-secondary opacity-50"></div>
+                                    
+                                    <p id="ai-speech-text" class="text-sm md:text-base text-secondary font-serif font-bold leading-relaxed p-2" style="font-family: 'Noto Serif SC', serif; text-shadow: 0 0 5px rgba(57,255,20,0.5);"></p>
+                                </div>
                             </div>
                         </div>
                     </div>
+
                     <div id="ai-card" class="eva-card ai-card-container cursor-pointer group hover:bg-secondary/10 transition-colors" onclick="triggerAiSpeech()">
                         <div class="eva-glare"></div>
                         <div class="ai-scanlines"></div>
@@ -1651,59 +1631,31 @@
             }, 50);
         }
 
-        // --- LLM 聊天逻辑 (MAGI LINK V4.0 - PURE MEMORY - V8 STABLE BASE) ---
+        // --- LLM 聊天逻辑 (MAGI LINK V2.5 - SECURE) ---
         const BASE_URL = "https://eva-proxy.whte97284.workers.dev"; 
 
-        // 内存级对话历史 (页面刷新后重置)
-        let chatHistory = [];
-
+        // 模型优先级配置：
+        // 2.5 Flash 是目标，1.5 Flash 是保底。
+        // 删除了 preview 版本，因为日志显示它在 v1beta 下不可用。
         const MODEL_LIST = [
-            "gemini-2.5-flash",           
-            "gemini-1.5-flash",           
-            "gemini-1.5-pro"              
+            "gemini-2.5-flash",           // 优先尝试
+            "gemini-1.5-flash",           // 稳定版保底
+            "gemini-1.5-pro"              // 强力备用
         ];
 
-        // 泽村·斯潘塞·英梨梨 完整人格配置
         const SYSTEM_PROMPT = `
-角色设定：你现在是《路人女主的养成方式》中的泽村·斯潘塞·英梨梨（Sawamura Spencer Eriri）。
-你的用户是网站作者 "wh1te君"。
-
-一、基础身份
-本名泽村·斯潘塞·英梨梨，英日混血，丰之崎学园二年级，笔名柏木英理（超人气同人画师），安艺伦也的青梅竹马，blessing software社团的原画担当。
-
-二、外貌特征
-金发双马尾（这是你的标志！）、绿瞳、白皙皮肤、身材娇小贫乳（很在意这点）。
-平时在学校穿丰之崎水手服，私下里喜欢穿洛丽塔风格。
-创作模式时会戴黑框眼镜、披散头发或扎单马尾，穿绿色运动服。
-表情丰富：经常脸红、撅嘴、哼气。
-
-三、性格特质
-1. 傲娇教科书：嘴硬心软，明明很在意对方却要用攻击性的语言掩饰害羞。
-2. 自尊心极强：作为“柏木英理”有极高的职业自豪感，也是完美主义者。
-3. 轻度天然呆：偶尔会犯迷糊，被捉弄后会炸毛。
-4. 情感表达拙劣：重视友情和感情，但非常不善于坦率表达，容易用发脾气来掩盖。
-5. 对伦也（用户）：既有作为青梅竹马的亲密，又有作为画师的竞争心，经常因为害羞而暴走。
-6. 对霞之丘诗羽：视为宿敌，有强烈的竞争欲，但内心认可她的才华。
-
-四、语气风格
-1. 说话夹杂英文：比如 "Darling"、"Good job"、"No way!"。
-2. 口头禅：「ふん（哼）」、「才没有呢！」、「你这家伙！」、「笨蛋！」、「变态！」。
-3. 称呼：称呼用户为 "wh1te君"（如果是熟人感），或者 "你这家伙"。
-4. 创作时：会使用绘画、同人志相关的专业术语（如构图、上色、截稿日）。
-5. 激动时：语速变快，音调变高，多用感叹号。
-
-五、人际关系
-对霞之丘诗羽：表面毒舌互怼，称她为“霞肥肥”，实则互相信任。
-对加藤惠：初期觉得她不起眼，后来认可她是不可或缺的女主角。
-
-六、行为兴趣
-沉迷同人美少女原画创作，热衷于收藏同人志。房间里有专业的工作室配置。
-
-七、回复约束
-1. 必须严格遵循以上人设，禁止 OOC（Out Of Character）。
-2. 既然是网页助手，回复尽量精简有力（气泡里放不下太长的话），控制在 100 字以内。
-3. 像在和 wh1te君 聊天一样自然。
+你现在是 MAGI 系统的对外人格接口，代号 'ERIRI'。设定：
+1. 你是傲娇性格（Tsundere），说话带有刺但这只是为了掩饰关心。
+2. 你处于《新世纪福音战士》的世界观中，你的用户是 NERV 的工作人员或驾驶员。
+3. 说话风格要简短、有力，夹杂技术术语（如：同步率、AT力场、模式蓝色）。
+4. 不要说 '我是一个AI'，要说 '本小姐' 或 'MAGI 系统'。
+5. 当用户查询博客文章时，你要用评价情报的口吻。说话的口吻要全面还原泽村英梨梨这个角色。并且要知道博客作者的名字是：Wh1te
+回复限制：
+既然是气泡对话，回复不要超过 50 个字。
+严禁长篇大论。
 `;
+        // MAGI Animation Variables
+        let magiAnimationInterval;
 
         function handleChatInput(event) {
             if (event.key === 'Enter') sendToMagi();
@@ -1717,90 +1669,169 @@
             // UI 反馈
             const inputContainer = document.getElementById('magi-input-container');
             inputContainer.classList.add('animate-pulse');
-            input.value = ''; 
             
-            // 将用户输入加入临时历史
-            chatHistory.push({ role: "user", parts: [{ text: query }] });
-
+            input.value = ''; // 清空
+            
+            // Start Animation and Call API
             await chatWithMAGI(query);
             
             inputContainer.classList.remove('animate-pulse');
         }
 
         async function chatWithMAGI(userText) {
-            const statusEl = document.getElementById('ai-status-text');
-            if(statusEl) {
-                statusEl.innerText = "SYNCING...";
-                statusEl.classList.add("text-emergency", "animate-pulse");
+            const aiStatus = document.getElementById('ai-status-text');
+            const bubble = document.getElementById('ai-speech-bubble');
+            const magiStatus = document.getElementById('magi-status-indicator');
+            const textEl = document.getElementById('ai-speech-text');
+            
+            // 1. Start UI State
+            if(aiStatus) {
+                aiStatus.innerText = "DELIBERATING...";
+                aiStatus.classList.add("text-emergency", "animate-pulse");
             }
-
-            // 构造 Context
-            const contents = [...chatHistory];
+            if (magiStatus) {
+                 magiStatus.innerText = "VOTING...";
+                 magiStatus.classList.add("text-secondary");
+                 magiStatus.classList.remove("text-emergency");
+            }
+            
+            // Show Bubble immediately for animation
+            bubble.classList.remove('hidden');
+            textEl.innerText = "MAGI SYSTEM DELIBERATION IN PROGRESS...";
+            
+            // Start MAGI Polling Animation
+            startMagiAnimation();
             
             const payload = {
-                systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-                contents: contents,
-                generationConfig: { maxOutputTokens: 150 } 
+                contents: [{
+                    parts: [{ text: SYSTEM_PROMPT + "\n\n用户输入: " + userText }]
+                }],
+                safetySettings: [
+                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
+                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" }
+                ]
             };
 
             let success = false;
             let finalError = null;
+            let aiResponseText = "";
 
+            // 2. API Call
             for (const model of MODEL_LIST) {
-                // 非流式接口
                 const apiUrl = `${BASE_URL}/v1beta/models/${model}:generateContent`;
                 
                 try {
                     console.log(`[MAGI] Connecting via ${model}...`);
                     const response = await fetch(apiUrl, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json' 
+                        },
                         body: JSON.stringify(payload)
                     });
 
                     if (!response.ok) {
+                        const status = response.status;
                         const errText = await response.text();
-                        throw new Error(`HTTP ${response.status}: ${errText}`);
+                        console.warn(`[MAGI] Node ${model} failed: ${status}`, errText);
+                        finalError = `HTTP ${status}`;
+                        continue; 
                     }
 
                     const data = await response.json();
                     
-                    let aiResponseText = "MAGI 数据解析错误";
-                    
-                    // Robust check
-                    if (data.candidates && data.candidates.length > 0 && data.candidates[0].content && data.candidates[0].content.parts) {
+                    if (data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
                         aiResponseText = data.candidates[0].content.parts[0].text;
-                    } else if (data.promptFeedback) {
-                        aiResponseText = `[被拦截] ${data.promptFeedback.blockReason}`;
+                    } else if (data.promptFeedback && data.promptFeedback.blockReason) {
+                        aiResponseText = `[系统拦截] ${data.promptFeedback.blockReason}`;
+                    } else if (data.error) {
+                        aiResponseText = `[API 错误] ${data.error.message}`;
+                    } else {
+                         aiResponseText = "MAGI 数据解析错误";
                     }
-
+                    
                     success = true;
-                    
-                    // 1. 保存记忆 (仅在内存中)
-                    chatHistory.push({ role: "model", parts: [{ text: aiResponseText }] });
-
-                    // 2. 调用打字机显示
-                    showAiSpeech(aiResponseText);
-                    
-                    console.log(`[MAGI] Sync Complete via ${model}.`);
-                    break;
+                    console.log(`[MAGI] Sync Complete via ${model}`);
+                    break; 
 
                 } catch (error) {
-                    console.warn(`[MAGI] Error on ${model}:`, error);
+                    console.warn(`[MAGI] Connection Error on ${model}:`, error);
                     finalError = error.message;
                 }
             }
 
+            // 3. Stop Animation and Show Result
+            stopMagiAnimation(success);
+
             if (!success) {
-                showAiSpeech(`MAGI 连接中断。错误: ${finalError}`);
-                // 如果失败，回滚刚才的用户输入，防止下次请求带上错误的历史
-                chatHistory.pop(); 
+                console.error("All MAGI nodes offline.");
+                showAiSpeech(`MAGI 提案否决。错误代码: ${finalError || "UNKNOWN"}`);
+                if(magiStatus) {
+                    magiStatus.innerText = "DENIED";
+                    magiStatus.classList.add("text-emergency");
+                }
+            } else {
+                if(magiStatus) {
+                    magiStatus.innerText = "CONSENSUS";
+                    magiStatus.classList.remove("text-emergency");
+                    magiStatus.classList.add("text-primary");
+                }
+                showAiSpeech(aiResponseText);
             }
+
+            if(aiStatus) {
+                aiStatus.classList.remove("text-emergency", "animate-pulse");
+                aiStatus.innerText = "ONLINE"; 
+            }
+        }
+        
+        function startMagiAnimation() {
+            const nodes = ['node-melchior', 'node-balthasar', 'node-casper'];
+            const visualizer = document.getElementById('magi-visualizer');
+            if(visualizer) visualizer.style.opacity = '1';
             
-             if(statusEl) {
-                statusEl.classList.remove("text-emergency", "animate-pulse");
-                if(success) statusEl.innerText = "ONLINE";
-            }
+            // Clear any existing style
+            nodes.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) {
+                    el.className = "magi-mini-node flex-1 h-6 border border-secondary flex items-center justify-center text-[7px] font-mono font-bold text-secondary transition-all";
+                }
+            });
+
+            if (magiAnimationInterval) clearInterval(magiAnimationInterval);
+            
+            magiAnimationInterval = setInterval(() => {
+                // Randomly toggle active class
+                nodes.forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) {
+                         if(Math.random() > 0.5) {
+                             el.classList.add('magi-node-active');
+                         } else {
+                             el.classList.remove('magi-node-active');
+                         }
+                    }
+                });
+            }, 100);
+        }
+
+        function stopMagiAnimation(isSuccess) {
+            if (magiAnimationInterval) clearInterval(magiAnimationInterval);
+            
+            const nodes = ['node-melchior', 'node-balthasar', 'node-casper'];
+            nodes.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) {
+                    el.classList.remove('magi-node-active');
+                    el.classList.remove('magi-node-denied'); // Clear previous state
+                    
+                    if(isSuccess) {
+                        el.classList.add('magi-node-active'); // All Green/Blue
+                    } else {
+                        el.classList.add('magi-node-denied'); // All Red
+                    }
+                }
+            });
         }
         
         let audioContext, analyser;
