@@ -35,6 +35,7 @@
                         'scan': 'scan 4s linear infinite', 
                         'magi-pulse': 'magiPulse 4s ease-in-out infinite',
                         'pop-in': 'popIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'red-alert': 'redAlert 2s ease-in-out infinite',
                         'typing': 'typing 3.5s steps(40, end)',
                         'flash': 'flash 2s infinite',
                         'scanner-beam': 'scannerBeam 4s ease-in-out infinite',
@@ -393,15 +394,17 @@
         [data-theme="unit-00"] { --primary-color: #ffffff; --secondary-color: #0091ff; --bg-color: #020a14; --surface-color: rgba(10, 20, 40, 0.6); --grid-color: rgba(0, 145, 255, 0.15); --lock-color: #ffffff; }
         [data-theme="unit-08"] { --primary-color: #ff5cab; --secondary-color: #50c878; --bg-color: #14020d; --surface-color: rgba(40, 10, 30, 0.6); --grid-color: rgba(255, 0, 153, 0.15); --lock-color: #ff5cab; }
         
+        /* Cleaned up emergency styles */
+        
+        #matrix-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -3; opacity: 0.15; pointer-events: none; transition: opacity 0.5s; }
+        body.lcl-mode #matrix-bg { opacity: 0; } /* Hide matrix rain when LCL is on */
+
         /* LCL Canvas Style */
         #lcl-bg {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -3; opacity: 0; pointer-events: none;
             transition: opacity 1s ease;
         }
         body.lcl-mode #lcl-bg { opacity: 1; }
-
-        #matrix-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -3; opacity: 0.15; pointer-events: none; transition: opacity 0.5s; }
-        body.lcl-mode #matrix-bg { opacity: 0; } /* Hide matrix rain when LCL is on */
         
         /* Hex BG 增强：更高的对比度和全息感 */
         .hex-bg { 
@@ -941,7 +944,7 @@
                     </div>
                 </div>
                 
-                <!-- Anime Feed (EVA Style) -->
+                <!-- Anime Feed (EVA Style: Hex-Core Upgrade) -->
                 <div class="">
                     <div class="eva-card p-6 relative overflow-hidden">
                         <div class="eva-glare"></div>
@@ -949,7 +952,8 @@
                             <div class="flex items-center"><div class="eva-header-deco"></div><span>ANIME_FEED</span></div>
                             <span id="anime-date" class="text-primary">...</span>
                         </div>
-                        <div id="anime-list" class="space-y-3 font-mono text-[10px] text-gray-300 max-h-64 overflow-y-auto pr-2 custom-scrollbar"></div>
+                        <!-- Updated Container for Hex Cards -->
+                        <div id="anime-list" class="space-y-3 font-mono text-[10px] text-gray-300 max-h-80 overflow-y-auto pr-2 custom-scrollbar"></div>
                     </div>
                 </div>
 
@@ -1610,18 +1614,16 @@
             if (aiCard) aiCard.classList.add('is-speaking');
 
             bubble.classList.remove('hidden');
-            statusEl.innerText = "SPEAKING..."; 
-            statusEl.classList.add("text-primary");
             
+            // Clear previous text
             textEl.innerText = ""; 
+            
             let i = 0;
             window.currentSpeechInterval = setInterval(() => {
                 if (i < text.length) { 
                     textEl.innerText += text.charAt(i); i++; 
                 } else {
                     clearInterval(window.currentSpeechInterval); 
-                    statusEl.innerText = "ONLINE"; 
-                    statusEl.classList.remove("text-primary");
                     // 8秒后自动关闭气泡 (稍微延长一点阅读时间)
                     window.speechTimeout = setTimeout(() => { 
                         bubble.classList.add('hidden'); 
@@ -1905,13 +1907,57 @@
                 renderList(mockData); dateDisplay.innerHTML += ' <span class="text-red-500">OFFLINE</span>';
             }
         }
+        
+        // --- HEXAGONAL CARD RENDERER ---
         const renderList = (items) => {
              const container = document.getElementById('anime-list');
              container.innerHTML = items.map(item => {
                     const title = item.name_cn || item.name;
-                    const score = item.rating?.score || 'N/A';
+                    const score = item.rating?.score || 0;
                     const image = item.images?.large || item.images?.common || '';
-                    return `<div class="flex justify-between items-center group cursor-pointer hover:bg-white/5 p-2 border-b border-white/10 hover:border-secondary transition-all" onclick='openAnimeModal("${title.replace(/"/g, '&quot;')}", "${score}", "${image}", "${item.id}")'><span class="text-gray-400 truncate w-3/4 group-hover:text-white font-bold text-[10px]">${title}</span><span class="text-secondary text-[9px] border border-secondary/30 px-1 font-mono">${score}</span></div>`;
+                    
+                    // Determine Sync Rate Color based on score
+                    let syncColor = 'var(--secondary-color)'; // Green (High Sync)
+                    if (score < 6) syncColor = '#ff0000'; // Red (Low Sync)
+                    else if (score < 8) syncColor = '#ffae00'; // Orange (Medium Sync)
+
+                    return `
+                    <div class="flex items-center gap-4 group cursor-pointer hover:bg-white/5 p-2 pr-3 border-b border-white/10 hover:border-secondary transition-all" onclick='openAnimeModal("${title.replace(/"/g, '&quot;')}", "${score}", "${image}", "${item.id}")'>
+                        
+                        <!-- Hex Image Container -->
+                        <div class="relative w-14 h-14 shrink-0">
+                            <!-- Hex Mask for Image -->
+                            <div class="w-full h-full relative overflow-hidden transition-transform duration-500 group-hover:scale-110 group-hover:rotate-[30deg]" style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);">
+                                <img src="${image}" class="w-full h-full object-cover group-hover:rotate-[-30deg] transition-transform duration-500" onerror="this.style.display='none'">
+                                <div class="absolute inset-0 bg-secondary/20 group-hover:bg-transparent transition-colors"></div>
+                            </div>
+                            <!-- Decorative Border -->
+                            <div class="absolute inset-0 pointer-events-none border border-secondary/50" style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);"></div>
+                        </div>
+
+                        <!-- Info Block -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-baseline mb-1">
+                                <span class="text-gray-300 truncate font-bold text-[11px] group-hover:text-white transition-colors font-sans tracking-wide">${title}</span>
+                                <span class="font-mono text-[9px] text-secondary/70">#${item.id}</span>
+                            </div>
+                            
+                            <!-- Sync Rate Visualizer -->
+                            <div class="relative">
+                                <div class="flex justify-between text-[8px] font-mono text-gray-500 mb-0.5">
+                                    <span class="tracking-widest">SYNC_RATE</span>
+                                    <span style="color: ${syncColor}" class="font-bold">${score * 10}%</span>
+                                </div>
+                                <!-- Waveform Bar Container -->
+                                <div class="w-full h-1.5 bg-black/50 border border-white/10 relative overflow-hidden">
+                                    <!-- The Bar -->
+                                    <div class="h-full transition-all duration-1000 ease-out" style="width: ${score * 10}%; background-color: ${syncColor}; box-shadow: 0 0 8px ${syncColor};"></div>
+                                    <!-- Scanline overlay on bar -->
+                                    <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjMDAwIiBmaWxsLW9wYWNpdHk9IjAuMiIvPgo8L3N2Zz4=')] opacity-50"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
                 }).join('');
         };
         
