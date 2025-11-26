@@ -7,7 +7,7 @@
     <!-- 屏蔽 favicon 404 错误 -->
     <link rel="icon" href="data:,">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@300;500;700;900&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Serif+SC:wght@700;900&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@300;500;700;900&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Serif+SC:wght@700;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <script>
@@ -20,7 +20,6 @@
                         sans: ['"Space Grotesk"', '"Noto Sans JP"', 'sans-serif'],
                         serif: ['"Noto Serif SC"', 'serif'],
                         mono: ['"JetBrains Mono"', '"Noto Sans JP"', 'monospace'],
-                        lcd: ['"Orbitron"', 'monospace'], /* New font for S-DAT */
                     },
                     colors: {
                         primary: 'var(--primary-color)',
@@ -44,7 +43,6 @@
                         'speaking-shake': 'speakingShake 0.5s infinite',
                         'hologram-flicker': 'hologramFlicker 3s infinite',
                         'chromatic-move': 'chromaticMove 5s infinite alternate',
-                        'reel-spin': 'spin 2s linear infinite', /* Cassette reel spin */
                     },
                     keyframes: {
                         scan: { '0%': { backgroundPosition: '0 0' }, '100%': { backgroundPosition: '0 100%' } },
@@ -94,17 +92,6 @@
             --surface-color: rgba(20, 10, 30, 0.6); 
             --grid-color: rgba(125, 42, 232, 0.15); 
             --lock-color: #ff0055; 
-            
-            /* S-DAT Colors */
-            --sdat-body: #1a1a1a;
-            --sdat-metal: #2d2d2d;
-            --sdat-accent: #ff6600; /* Orange paint */
-            --sdat-lcd-bg: #4a5c4a;
-            --sdat-lcd-text: #000000;
-            
-            /* Audio Reactivity Variables */
-            --audio-bass: 1; /* Scale factor based on bass */
-            --audio-mid: 0; /* Opacity factor based on mids */
             
             /* 背景渐变 - 暗色 */
             --bg-gradient: radial-gradient(circle at 50% 50%, #2d1b4e 0%, #1a0b2e 45%, #0a0a0a 100%);
@@ -442,8 +429,7 @@
             mask-image: linear-gradient(to bottom, black 20%, transparent 90%); 
             animation: bg-scroll 60s linear infinite; 
             transition: background-image 0.3s;
-            /* Audio Reactivity Hook: Hex Brightness */
-            opacity: calc(0.5 + var(--audio-mid)); 
+            opacity: 0.5; /* 微调亮度 0.4 -> 0.5 */
             filter: drop-shadow(0 0 2px var(--grid-color));
             mix-blend-mode: var(--blend-mode); /* 随主题变化 */
         }
@@ -704,97 +690,6 @@
         }
         .rage-mode .rage-overlay { display: block; }
         .rage-mode .holo-overlay { background: repeating-linear-gradient(0deg, transparent 0px, rgba(255, 0, 0, 0.1) 1px, transparent 2px); }
-
-        /* --- S-DAT 播放器样式 (S-DAT Player Styles) --- */
-        .s-dat-player {
-            width: 280px;
-            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
-            border: 2px solid #333;
-            border-radius: 4px;
-            padding: 10px;
-            box-shadow: 10px 10px 30px rgba(0,0,0,0.5), inset 1px 1px 2px rgba(255,255,255,0.1);
-            position: relative;
-            transform-style: preserve-3d;
-            transition: transform 0.3s;
-        }
-        
-        /* 橙色装饰条 */
-        .s-dat-stripe {
-            position: absolute; top: 0; left: 20px; width: 4px; height: 100%; background: var(--sdat-accent);
-            z-index: 0; box-shadow: 0 0 5px rgba(255, 102, 0, 0.5);
-        }
-
-        .s-dat-window {
-            background: #000;
-            border: 1px solid #444;
-            border-radius: 2px;
-            height: 80px;
-            margin-bottom: 10px;
-            position: relative;
-            overflow: hidden;
-            display: flex; justify-content: center; align-items: center; gap: 15px;
-            box-shadow: inset 0 0 10px #000;
-            z-index: 10;
-        }
-
-        /* 磁带卷轴 */
-        .reel {
-            width: 40px; height: 40px; border-radius: 50%;
-            border: 4px solid #fff;
-            position: relative;
-            opacity: 0.8;
-            background: radial-gradient(circle, #333 30%, transparent 31%);
-        }
-        .reel::after {
-            content: ''; position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: #fff; transform: translateY(-50%);
-        }
-        .reel::before {
-            content: ''; position: absolute; left: 50%; top: 0; height: 100%; width: 2px; background: #fff; transform: translateX(-50%);
-        }
-        .reel-left.spinning, .reel-right.spinning { animation: reel-spin 3s linear infinite; }
-        .reel-right.spinning { animation-direction: reverse; }
-
-        /* LCD 屏幕 */
-        .s-dat-lcd {
-            background: var(--sdat-lcd-bg);
-            color: var(--sdat-lcd-text);
-            font-family: 'Orbitron', monospace;
-            padding: 4px 8px;
-            border-radius: 2px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: inset 1px 1px 3px rgba(0,0,0,0.5);
-            margin-bottom: 10px;
-            position: relative;
-            height: 24px;
-            z-index: 10;
-        }
-        .lcd-text { font-size: 10px; font-weight: bold; }
-        .lcd-time { font-size: 12px; font-weight: 700; letter-spacing: 1px; }
-
-        .s-dat-controls {
-            display: flex; gap: 4px; justify-content: space-between; z-index: 10; position: relative;
-        }
-
-        .s-dat-btn {
-            width: 40px; height: 25px;
-            background: linear-gradient(to bottom, #dcdcdc, #999);
-            border: 1px solid #666;
-            border-radius: 2px 2px 0 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            cursor: pointer;
-            transition: transform 0.1s, box-shadow 0.1s;
-        }
-        .s-dat-btn:active { transform: translateY(2px); box-shadow: none; background: #999; }
-        .s-dat-btn.active-btn { transform: translateY(2px); background: #888; box-shadow: inset 0 1px 3px rgba(0,0,0,0.4); }
-
-        .s-dat-btn-icon { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; opacity: 0.7; }
-
-        /* Global Rhythm: Bass Pulse */
-        .bass-pulse-target {
-            transition: transform 0.05s ease-out, opacity 0.05s ease-out;
-            will-change: transform;
-        }
-
     </style>
 </head>
 <body class="antialiased overflow-x-hidden font-sans selection:bg-secondary selection:text-black">
@@ -857,8 +752,8 @@
     
     <!-- 背景 -->
     <div id="bg-layer">
-        <!-- SVG MAGI Rings (Audio Reactive) -->
-        <svg id="magi-rings" viewBox="0 0 800 800" fill="none" class="bass-pulse-target fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[130vmax] h-[130vmax] pointer-events-none opacity-30 transition-opacity duration-500" style="filter: drop-shadow(0 0 10px var(--secondary-color)); transform: translate(-50%, -50%) scale(var(--audio-bass, 1));">
+        <!-- SVG MAGI Rings -->
+        <svg id="magi-rings" viewBox="0 0 800 800" fill="none" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[130vmax] h-[130vmax] pointer-events-none opacity-30 transition-opacity duration-500" style="filter: drop-shadow(0 0 10px var(--secondary-color));">
             <g stroke="var(--secondary-color)" stroke-width="1.5">
                 <circle cx="400" cy="400" r="150" stroke-dasharray="20 10" class="animate-[spin_25s_linear_infinite]" />
                 <circle cx="400" cy="400" r="250" stroke-dasharray="40 20" class="animate-[spin_40s_linear_infinite_reverse]" stroke-opacity="0.8" />
@@ -922,46 +817,21 @@
          <source src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" type="audio/mp3">
     </audio>
 
-    <!-- 音乐控制：S-DAT 风格播放器 -->
+    <!-- 音乐控制 -->
     <div class="fixed bottom-16 left-8 z-50">
-        <!-- 隐藏式音频可视化 Canvas（用于数据分析） -->
-        <canvas id="audio-visualizer" class="hidden"></canvas>
-
-        <!-- S-DAT Player UI -->
-        <div id="s-dat-deck" class="s-dat-player group">
-            <div class="s-dat-stripe"></div>
-            <div class="absolute top-2 right-2 text-[10px] font-bold text-gray-400 font-mono" style="z-index: 20;">DAT-25</div>
-            
-            <!-- Cassette Window -->
-            <div class="s-dat-window">
-                <div id="reel-left" class="reel reel-left"></div>
-                <div id="reel-right" class="reel reel-right"></div>
+        <div id="sonic-deck" class="flex items-center gap-3 bg-black/60 border border-secondary p-2 pr-4 group hover:shadow-[0_0_30px_var(--secondary-color)] transition-all duration-300 backdrop-blur-md eva-card">
+            <canvas id="audio-visualizer" class="absolute bottom-0 left-0 w-full h-full opacity-30 pointer-events-none"></canvas>
+            <div id="music-trigger" class="w-12 h-12 flex items-center justify-center cursor-pointer bg-secondary/10 hover:bg-secondary/20 transition-colors border border-secondary/30 relative z-20" onclick="toggleMusic()">
+                <div id="deck-wave" class="absolute border border-secondary w-full h-full animate-ping hidden"></div>
+                <i id="icon-disc" data-lucide="disc" class="w-6 h-6 text-secondary animate-spin-slow"></i>
+                <i id="icon-pause" data-lucide="pause" class="w-6 h-6 text-secondary hidden"></i>
             </div>
-
-            <!-- LCD Display -->
-            <div class="s-dat-lcd">
-                <span class="lcd-text">TRK <span id="track-num">25</span></span>
-                <!-- Mini visualizer bars in LCD -->
-                <div class="flex gap-px items-end h-3 w-12 opacity-50">
-                    <div class="w-1 bg-black h-full animate-[bounce_0.5s_infinite]"></div>
-                    <div class="w-1 bg-black h-2/3 animate-[bounce_0.6s_infinite]"></div>
-                    <div class="w-1 bg-black h-1/3 animate-[bounce_0.4s_infinite]"></div>
-                    <div class="w-1 bg-black h-full animate-[bounce_0.7s_infinite]"></div>
+            <div class="flex flex-col w-0 group-hover:w-48 overflow-hidden transition-all duration-300 opacity-0 group-hover:opacity-100 pl-2 relative z-20">
+                <div class="text-[10px] font-mono text-primary whitespace-nowrap font-bold">SOUND_ONLY // TRACK_01</div>
+                <div class="flex items-center gap-2 mt-1">
+                     <span class="text-[8px] text-secondary">VOL</span>
+                     <input type="range" class="w-full h-1 bg-white/20 appearance-none cursor-pointer" min="0" max="1" step="0.1" oninput="setVolume(this.value)">
                 </div>
-                <span class="lcd-time" id="music-timer">00:00</span>
-            </div>
-
-            <!-- Controls -->
-            <div class="s-dat-controls">
-                <button class="s-dat-btn" onclick="prevTrack()"><div class="s-dat-btn-icon"><i data-lucide="skip-back" class="w-3 h-3 text-black"></i></div></button>
-                <button class="s-dat-btn" onclick="stopMusic()"><div class="s-dat-btn-icon"><i data-lucide="square" class="w-3 h-3 text-black"></i></div></button>
-                <button class="s-dat-btn" id="play-btn" onclick="toggleMusic()"><div class="s-dat-btn-icon"><i id="play-icon" data-lucide="play" class="w-3 h-3 text-black"></i></div></button>
-                <button class="s-dat-btn" onclick="nextTrack()"><div class="s-dat-btn-icon"><i data-lucide="skip-forward" class="w-3 h-3 text-black"></i></div></button>
-            </div>
-            
-            <!-- Volume Slider (Hidden on side, shows on hover) -->
-            <div class="absolute -right-8 top-1/2 -translate-y-1/2 -rotate-90 origin-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/80 px-2 py-1 rounded">
-                <input type="range" class="w-24 h-1 bg-white/20 appearance-none cursor-pointer" min="0" max="1" step="0.1" oninput="setVolume(this.value)">
             </div>
         </div>
     </div>
@@ -2116,162 +1986,54 @@
             });
         }
         
-        /* ==========================================================================
-           S-DAT MUSIC PLAYER & GLOBAL RHYTHM SYSTEM
-           ========================================================================== */
-        
         let audioContext, analyser;
         const audioEl = document.getElementById('background-music');
-        let timerInterval;
-
-        // Music Tracks (S-DAT Style)
-        const tracks = [
-            { id: 25, src: './audio/bgm.mp3' }, // Default
-            { id: 26, src: './audio/bgm_piano.mp3' }, // Placeholder for piano ver
-        ];
-        let currentTrackIndex = 0;
-
         function toggleMusic() {
-            const playIcon = document.getElementById('play-icon');
-            const playBtn = document.getElementById('play-btn');
-            const reels = document.querySelectorAll('.reel');
-
             if(!audioContext) {
-                // Init Audio Context on first interaction
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 audioContext = new AudioContext();
                 analyser = audioContext.createAnalyser();
-                // Connect Audio Element to Analyser to Speakers
                 const source = audioContext.createMediaElementSource(audioEl);
-                source.connect(analyser); 
-                analyser.connect(audioContext.destination);
-                
-                analyser.fftSize = 256; // Smaller size is enough for visualizer
+                source.connect(analyser); analyser.connect(audioContext.destination);
+                analyser.fftSize = 64;
                 drawVisualizer();
             }
-
+            const wave = document.getElementById('deck-wave');
+            const iconDisc = document.getElementById('icon-disc');
+            const iconPause = document.getElementById('icon-pause');
             if(audioEl.paused) { 
+                // 核心修复：捕获 play() 的错误，防止 AbortError
                 const playPromise = audioEl.play();
                 if (playPromise !== undefined) {
-                    playPromise.catch(error => console.log("Audio Play Error:", error));
+                    playPromise.catch(error => {
+                        console.log("Autoplay prevented or interrupted:", error);
+                    });
                 }
-                
-                // UI Updates
-                playIcon.setAttribute('data-lucide', 'pause');
-                playBtn.classList.add('active-btn');
-                reels.forEach(r => r.classList.add('spinning'));
-                startTimer();
-                lucide.createIcons();
+                wave.classList.remove('hidden'); iconDisc.classList.add('hidden'); iconPause.classList.remove('hidden'); 
             } 
             else { 
                 audioEl.pause(); 
-                // UI Updates
-                playIcon.setAttribute('data-lucide', 'play');
-                playBtn.classList.remove('active-btn');
-                reels.forEach(r => r.classList.remove('spinning'));
-                stopTimer();
-                lucide.createIcons();
+                wave.classList.add('hidden'); iconDisc.classList.remove('hidden'); iconPause.classList.add('hidden'); 
             }
         }
-        
-        function stopMusic() {
-             audioEl.pause();
-             audioEl.currentTime = 0;
-             const playIcon = document.getElementById('play-icon');
-             const playBtn = document.getElementById('play-btn');
-             const reels = document.querySelectorAll('.reel');
-             
-             playIcon.setAttribute('data-lucide', 'play');
-             playBtn.classList.remove('active-btn');
-             reels.forEach(r => r.classList.remove('spinning'));
-             stopTimer();
-             document.getElementById('music-timer').innerText = "00:00";
-             lucide.createIcons();
-        }
-        
-        function startTimer() {
-            if(timerInterval) clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                const mins = Math.floor(audioEl.currentTime / 60).toString().padStart(2, '0');
-                const secs = Math.floor(audioEl.currentTime % 60).toString().padStart(2, '0');
-                document.getElementById('music-timer').innerText = `${mins}:${secs}`;
-            }, 1000);
-        }
-        function stopTimer() {
-            if(timerInterval) clearInterval(timerInterval);
-        }
-
         function setVolume(val) { audioEl.volume = val; }
-
-        function nextTrack() {
-            // Visual feedback only for now as we have 1 file usually
-            const trackNum = document.getElementById('track-num');
-            let current = parseInt(trackNum.innerText);
-            current = current >= 26 ? 25 : current + 1;
-            trackNum.innerText = current;
-            
-            // Restart spin effect
-            stopMusic();
-            setTimeout(toggleMusic, 200);
-        }
-        
-        function prevTrack() {
-             const trackNum = document.getElementById('track-num');
-             let current = parseInt(trackNum.innerText);
-             current = current <= 25 ? 26 : current - 1;
-             trackNum.innerText = current;
-             stopMusic();
-             setTimeout(toggleMusic, 200);
-        }
-
-        /* --- GLOBAL RHYTHM VISUALIZER --- */
         function drawVisualizer() {
             const canvas = document.getElementById('audio-visualizer');
             const ctx = canvas.getContext('2d');
-            
+            // Throttle visualizer slightly or rely on rAF, which is fine
             requestAnimationFrame(drawVisualizer);
             
-            if (audioEl.paused) {
-                // Reset visual effects when paused
-                document.documentElement.style.setProperty('--audio-bass', '1');
-                document.documentElement.style.setProperty('--audio-mid', '0');
-                return;
-            }
+            // If audio is paused, skip drawing to save power
+            if (audioEl.paused) return;
 
             const bufferLength = analyser.frequencyBinCount;
             const dataArray = new Uint8Array(bufferLength);
             analyser.getByteFrequencyData(dataArray);
-
-            // 1. Calculate Bass Energy (Low frequencies: ~0-10 index)
-            let bassSum = 0;
-            for(let i = 0; i < 10; i++) {
-                bassSum += dataArray[i];
-            }
-            const bassAverage = bassSum / 10;
-            
-            // 2. Calculate Mid/High Energy
-            let midSum = 0;
-            for(let i = 20; i < 50; i++) {
-                midSum += dataArray[i];
-            }
-            const midAverage = midSum / 30;
-
-            // 3. Normalize and apply to CSS Variables
-            // Bass Scale: 1.0 to 1.2
-            const bassScale = 1 + (bassAverage / 255) * 0.2; 
-            
-            // Mid Opacity/Brightness: 0 to 0.5
-            const midOpacity = (midAverage / 255) * 0.5;
-
-            // Apply to CSS for Global Rhythm
-            document.documentElement.style.setProperty('--audio-bass', bassScale);
-            document.documentElement.style.setProperty('--audio-mid', midOpacity);
-            
-            // Optional: Draw debug bars in the hidden canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             const barWidth = (canvas.width / bufferLength) * 2;
             let x = 0;
-            ctx.fillStyle = '#39ff14';
+            const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim();
+            ctx.fillStyle = primaryColor;
             for(let i = 0; i < bufferLength; i++) {
                 const barHeight = dataArray[i] / 2;
                 ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
