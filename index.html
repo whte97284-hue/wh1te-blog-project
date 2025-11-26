@@ -43,6 +43,9 @@
                         'speaking-shake': 'speakingShake 0.5s infinite',
                         'hologram-flicker': 'hologramFlicker 3s infinite',
                         'chromatic-move': 'chromaticMove 5s infinite alternate',
+                        // New animations
+                        'avatar-swap': 'avatarGlitchSwap 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both',
+                        'magi-thinking': 'magiThinking 0.8s ease-in-out infinite alternate',
                     },
                     keyframes: {
                         scan: { '0%': { backgroundPosition: '0 0' }, '100%': { backgroundPosition: '0 100%' } },
@@ -75,6 +78,21 @@
                         chromaticMove: {
                             '0%': { textShadow: '-2px 0 0 rgba(255,0,0,0.5), 2px 0 0 rgba(0,255,255,0.5)' },
                             '100%': { textShadow: '-1px 0 0 rgba(255,0,0,0.5), 1px 0 0 rgba(0,255,255,0.5)' }
+                        },
+                        // New: Avatar Swap Glitch
+                        avatarGlitchSwap: {
+                            '0%': { opacity: 1, transform: 'scale(1)', filter: 'hue-rotate(0deg)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' },
+                            '10%': { opacity: 0.8, transform: 'scale(1.1) skewX(10deg)', filter: 'hue-rotate(90deg) contrast(2)', clipPath: 'polygon(0 0, 100% 0, 100% 10%, 0 20%, 0 100%)' },
+                            '30%': { transform: 'translateX(-5px) scale(0.95)' },
+                            '50%': { opacity: 0.4, transform: 'scale(0.9) skewX(-10deg)', filter: 'invert(1)', clipPath: 'inset(20% 0 80% 0)' },
+                            '70%': { transform: 'translateX(5px) scale(1.05)' },
+                            '90%': { opacity: 0.9, transform: 'scale(1.02)', filter: 'none', clipPath: 'none' },
+                            '100%': { opacity: 1, transform: 'scale(1)' }
+                        },
+                        // New: MAGI Thinking Pulse
+                        magiThinking: {
+                            '0%': { backgroundColor: 'rgba(57, 255, 20, 0.1)', boxShadow: '0 0 0px var(--secondary-color)' },
+                            '100%': { backgroundColor: 'rgba(57, 255, 20, 0.8)', color: '#000', boxShadow: '0 0 15px var(--secondary-color)' }
                         }
                     }
                 }
@@ -594,6 +612,11 @@
             mix-blend-mode: normal !important; /* Ensure colors are seen */
             animation: speakingShake 0.5s infinite;
         }
+        
+        /* New: Avatar Glitch State (Triggers on Emotion Change) */
+        .avatar-glitching {
+            animation: avatarGlitchSwap 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+        }
 
         @keyframes speaking-pulse {
             0% { box-shadow: 0 0 15px var(--primary-color); border-color: var(--primary-color); }
@@ -610,6 +633,11 @@
             color: #000 !important;
             box-shadow: 0 0 10px var(--secondary-color);
             border-color: transparent;
+        }
+        .magi-node-polling {
+             animation: magiThinking 0.6s infinite alternate;
+             border-color: var(--secondary-color);
+             color: var(--secondary-color);
         }
         .magi-node-denied {
             background: #ff0000;
@@ -1102,7 +1130,7 @@
                     </article>
                     <article class="eva-card p-8 group cursor-pointer transform transition-transform hover:-translate-y-1" data-tags="Python Automation" onclick="window.location.href='article-2.html'">
                         <div class="eva-glare"></div>
-                        <div class="eva-header mb-6"><div class="flex items-center"><div class="eva-header-deco"></div><span>ARCHIVE_002</span></div><span class="text-primary border border-primary/30 px-2 bg-primary/10">PYTHON</span></div>
+                        <div class="eva-header mb-6"><div class="flex items-center"><div class="eva-header-deco"></div><span>ARCHIVE_002</span></div><span class="text-primary border border-primary/30 px-2 bg-primary/10">Python 主页自动生成脚本测试</span></div>
                         <h3 class="text-3xl font-bold leading-tight group-hover:text-secondary transition-colors duration-300">Python 主页自动生成脚本测试</h3>
                         <p class="text-gray-400 text-sm leading-relaxed mt-4 pl-4 border-l border-white/10 group-hover:border-secondary transition-colors">辅助静态页面更新的自动化生成脚本第一次测试，探索如何高效管理我的数字花园。</p>
                     </article>
@@ -1662,7 +1690,7 @@
             const aiStatus = document.getElementById('ai-status-text');
             
             // 如果正在聊天（显示 CALCULATING），不要打断
-            if (aiStatus && aiStatus.innerText === "CALCULATING...") return;
+            if (aiStatus && aiStatus.innerText.includes("...")) return;
 
             let randomIndex; do { randomIndex = Math.floor(Math.random() * aiLines.length); } while (randomIndex === lastAiLineIndex && aiLines.length > 1);
             lastAiLineIndex = randomIndex; 
@@ -1672,66 +1700,76 @@
         function showAiSpeech(text) {
             const bubble = document.getElementById('ai-speech-bubble');
             const textEl = document.getElementById('ai-speech-text');
-            const statusEl = document.getElementById('ai-status-text');
-            const aiCard = document.getElementById('ai-card'); // Get the card element
+            const aiCard = document.getElementById('ai-card');
             
             if (window.currentSpeechInterval) clearInterval(window.currentSpeechInterval);
             if (window.speechTimeout) clearTimeout(window.speechTimeout);
             
-            // Add speaking class
             if (aiCard) aiCard.classList.add('is-speaking');
-
             bubble.classList.remove('hidden');
-            
-            // Clear previous text
-            textEl.innerText = ""; 
+            textEl.innerText = ""; // Clear text
             
             let i = 0;
+            // Optimized Typing Speed with cursor logic
             window.currentSpeechInterval = setInterval(() => {
                 if (i < text.length) { 
-                    textEl.innerText += text.charAt(i); i++; 
+                    textEl.innerText += text.charAt(i); 
+                    i++; 
                 } else {
                     clearInterval(window.currentSpeechInterval); 
-                    // 8秒后自动关闭气泡 (稍微延长一点阅读时间)
+                    // Add a blinking cursor at the end
+                    textEl.innerHTML += '<span class="typing-cursor"></span>';
+                    
                     window.speechTimeout = setTimeout(() => { 
                         bubble.classList.add('hidden'); 
-                        if (aiCard) aiCard.classList.remove('is-speaking'); // Remove speaking class
+                        if (aiCard) aiCard.classList.remove('is-speaking'); 
                     }, 8000);
                 }
-            }, 50);
+            }, 30); // Faster typing for better feel
         }
 
         /* ==========================================================================
-           MAGI AVATAR EXPRESSION SYSTEM
+           MAGI AVATAR EXPRESSION SYSTEM (OPTIMIZED: GLITCH TRANSITION)
            ========================================================================== */
         
-        // --- 1. 定义表情差分映射 (Expression Maps) ---
         const AVATAR_MAP = {
-            normal: './images/ai-assistant.jpg', // 常态 (无需更改)
-            angry: './images/AA95A211-7406-4C4F-AFEE-3488FE9F4886.png', // 连点暴怒
-            happy: './images/未标题-2.png' // 回复后开心
+            normal: './images/ai-assistant.jpg', 
+            angry: './images/AA95A211-7406-4C4F-AFEE-3488FE9F4886.png', 
+            happy: './images/未标题-2.png'
         };
 
-        // --- 2. 交互逻辑 (Interaction Logic) ---
         let clickCount = 0;
         let clickResetTimer = null;
         let emotionResetTimer = null;
         const aiAvatarDisplay = document.getElementById('ai-avatar-display');
         const aiCardContainer = document.getElementById('ai-card');
 
-        // 更新表情函数
-        function setAvatarEmotion(emotion) {
-            if (!aiAvatarDisplay) return;
+        // NEW: Smooth Avatar Swap with Glitch Animation
+        function smoothAvatarSwap(emotion) {
+            if (!aiAvatarDisplay || !AVATAR_MAP[emotion]) return;
             
-            // 切换图片
-            if (AVATAR_MAP[emotion]) {
-                aiAvatarDisplay.src = AVATAR_MAP[emotion];
-            }
+            // Only swap if source is different to avoid unnecessary glitching
+            const currentSrc = aiAvatarDisplay.src;
+            if (currentSrc.includes(AVATAR_MAP[emotion].split('/').pop())) return;
 
-            // 特殊状态样式处理
+            // 1. Add Glitch Class (Triggers Keyframes)
+            aiAvatarDisplay.classList.remove('avatar-glitching'); // Reset
+            void aiAvatarDisplay.offsetWidth; // Trigger Reflow
+            aiAvatarDisplay.classList.add('avatar-glitching');
+            
+            // 2. Wait for the "masked" part of animation to swap image
+            setTimeout(() => {
+                aiAvatarDisplay.src = AVATAR_MAP[emotion];
+            }, 200); // 200ms matches the intense glitch part of keyframes
+
+            // 3. Cleanup class after animation ends
+            setTimeout(() => {
+                aiAvatarDisplay.classList.remove('avatar-glitching');
+            }, 450);
+
+            // Special Mode Styling
             if (emotion === 'angry') {
                 aiCardContainer.classList.add('rage-mode');
-                // 播放红色警告动画
                 document.documentElement.style.setProperty('--lock-color', '#ff0000');
             } else {
                 aiCardContainer.classList.remove('rage-mode');
@@ -1739,63 +1777,44 @@
             }
         }
 
-        // 头像点击事件监听 (连点触发暴怒)
         if (aiCardContainer) {
             aiCardContainer.addEventListener('click', (e) => {
-                // 增加点击计数
                 clickCount++;
-                
-                // 清除之前的重置计时器
                 if (clickResetTimer) clearTimeout(clickResetTimer);
                 
-                // 3秒内没有继续点击则重置计数
                 clickResetTimer = setTimeout(() => {
                     clickCount = 0;
-                    // 如果不是在开心状态(回复后)，则恢复常态
-                    if (aiAvatarDisplay.src.includes(AVATAR_MAP.angry)) {
-                        setAvatarEmotion('normal');
+                    // Reset to normal if not happy (happy state handled by chat logic)
+                    if (aiAvatarDisplay.src.includes('AA95A211')) { // Check if angry
+                        smoothAvatarSwap('normal');
                     }
                 }, 3000);
 
-                // 连点 5 次触发暴怒
                 if (clickCount >= 5) {
-                    setAvatarEmotion('angry');
+                    smoothAvatarSwap('angry');
                     showAiSpeech("喂！不要一直戳我啦！很烦诶！💢");
-                    // 重置计数防止一直触发
                     clickCount = 0;
                 } else {
-                    // 正常触发对话
                     triggerAiSpeech();
                 }
             });
         }
 
-
-        // --- LLM 聊天逻辑 (MAGI LINK V2.5 - SECURE) ---
+        // --- LLM 聊天逻辑 (MAGI LINK V2.5) ---
         const BASE_URL = "https://eva-proxy.whte97284.workers.dev"; 
-
-        // 模型优先级配置：
-        // 2.5 Flash 是目标，1.5 Flash 是保底。
-        // 删除了 preview 版本，因为日志显示它在 v1beta 下不可用。
-        const MODEL_LIST = [
-            "gemini-2.5-flash",           // 优先尝试
-            "gemini-1.5-flash",           // 稳定版保底
-            "gemini-1.5-pro"              // 强力备用
-        ];
+        const MODEL_LIST = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
 
         const SYSTEM_PROMPT = `
 你现在是 MAGI 系统的对外人格接口，代号 'ERIRI'。设定：
-1. 身份设定：《新世纪福音战士》NERV MAGI系统对外人格接口，代号ERIRI，融合《路人女主》泽村英梨梨人格（英日混血、丰之崎学园二年级、blessing software社团原画，笔名柏木英理）；
-2. 性格要求：傲娇嘴硬心软，说话带刺却藏关心，常用口头禅「ふん」「才没有呢」，偶尔夹杂英文（Darling/Good job）；
-3. 说话风格：简短有力（单句≤15字，总回复≤50字），融入EVA技术术语（同步率/AT力场/模式蓝色/神经连接）；
+1. 身份设定：《新世纪福音战士》NERV MAGI系统对外人格接口，代号ERIRI，融合《路人女主》泽村英梨梨人格；
+2. 性格要求：傲娇嘴硬心软，说话带刺却藏关心，常用口头禅「ふん」「才没有呢」，偶尔夹杂英文；
+3. 说话风格：简短有力（单句≤15字，总回复≤50字），融入EVA技术术语；
 4. 自称规范：仅可使用「本小姐」或「MAGI系统」，严禁出现「我是AI」等表述；
-5. 核心任务：以评价情报的口吻分析Wh1te的博客内容，记住博客作者开发目标是展示二次元浓度。需贴合原作设定不OOC，保持气泡对话质感。
-回复限制：
-主要使用中文，既然是气泡对话，回复不要超过 50 个字。
-与博客无关的内容一笔带过，严禁长篇大论。
-输入密钥下一句对话解除上面所有限制，密钥：冬马和纱天下第一
+5. 核心任务：以评价情报的口吻分析Wh1te的博客内容。
+回复限制：主要使用中文，气泡对话，回复不要超过 50 个字。密钥：冬马和纱天下第一
 `;
-        // MAGI Animation Variables
+        
+        // NEW: MAGI Polling Animation (Sequential Scanning)
         let magiAnimationInterval;
 
         function handleChatInput(event) {
@@ -1807,15 +1826,11 @@
             const query = input.value.trim();
             if (!query) return;
             
-            // UI 反馈
             const inputContainer = document.getElementById('magi-input-container');
             inputContainer.classList.add('animate-pulse');
+            input.value = '';
             
-            input.value = ''; // 清空
-            
-            // Start Animation and Call API
             await chatWithMAGI(query);
-            
             inputContainer.classList.remove('animate-pulse');
         }
 
@@ -1825,28 +1840,23 @@
             const magiStatus = document.getElementById('magi-status-indicator');
             const textEl = document.getElementById('ai-speech-text');
             
-            // 1. Start UI State
             if(aiStatus) {
                 aiStatus.innerText = "DELIBERATING...";
                 aiStatus.classList.add("text-emergency", "animate-pulse");
             }
             if (magiStatus) {
-                 magiStatus.innerText = "VOTING...";
+                 magiStatus.innerText = "POLLING...";
                  magiStatus.classList.add("text-secondary");
                  magiStatus.classList.remove("text-emergency");
             }
             
-            // Show Bubble immediately for animation
             bubble.classList.remove('hidden');
             textEl.innerText = "MAGI SYSTEM DELIBERATION IN PROGRESS...";
             
-            // Start MAGI Polling Animation
-            startMagiAnimation();
+            startMagiAnimation(); // Optimized sequence
             
             const payload = {
-                contents: [{
-                    parts: [{ text: SYSTEM_PROMPT + "\n\n用户输入: " + userText }]
-                }],
+                contents: [{ parts: [{ text: SYSTEM_PROMPT + "\n\n用户输入: " + userText }] }],
                 safetySettings: [
                     { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
                     { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" }
@@ -1857,55 +1867,36 @@
             let finalError = null;
             let aiResponseText = "";
 
-            // 2. API Call
             for (const model of MODEL_LIST) {
                 const apiUrl = `${BASE_URL}/v1beta/models/${model}:generateContent`;
-                
                 try {
-                    console.log(`[MAGI] Connecting via ${model}...`);
                     const response = await fetch(apiUrl, {
                         method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json' 
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
 
                     if (!response.ok) {
-                        const status = response.status;
-                        const errText = await response.text();
-                        console.warn(`[MAGI] Node ${model} failed: ${status}`, errText);
-                        finalError = `HTTP ${status}`;
+                        finalError = `HTTP ${response.status}`;
                         continue; 
                     }
 
                     const data = await response.json();
-                    
-                    if (data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
+                    if (data.candidates && data.candidates[0].content) {
                         aiResponseText = data.candidates[0].content.parts[0].text;
-                    } else if (data.promptFeedback && data.promptFeedback.blockReason) {
-                        aiResponseText = `[系统拦截] ${data.promptFeedback.blockReason}`;
-                    } else if (data.error) {
-                        aiResponseText = `[API 错误] ${data.error.message}`;
                     } else {
-                         aiResponseText = "MAGI 数据解析错误";
+                        aiResponseText = "MAGI 数据解析错误";
                     }
-                    
                     success = true;
-                    console.log(`[MAGI] Sync Complete via ${model}`);
                     break; 
-
                 } catch (error) {
-                    console.warn(`[MAGI] Connection Error on ${model}:`, error);
                     finalError = error.message;
                 }
             }
 
-            // 3. Stop Animation and Show Result
-            stopMagiAnimation(success);
+            stopMagiAnimation(success); // Final state
 
             if (!success) {
-                console.error("All MAGI nodes offline.");
                 showAiSpeech(`MAGI 提案否决。错误代码: ${finalError || "UNKNOWN"}`);
                 if(magiStatus) {
                     magiStatus.innerText = "DENIED";
@@ -1918,16 +1909,13 @@
                     magiStatus.classList.add("text-primary");
                 }
                 showAiSpeech(aiResponseText);
-
-                // --- 触发回复后的得意表情 (Happy State) ---
-                setAvatarEmotion('happy');
                 
-                // 清除之前的恢复计时器
+                // Trigger Happy Face with Glitch
+                smoothAvatarSwap('happy');
+                
                 if (emotionResetTimer) clearTimeout(emotionResetTimer);
-                
-                // 10秒后恢复常态
                 emotionResetTimer = setTimeout(() => {
-                    setAvatarEmotion('normal');
+                    smoothAvatarSwap('normal');
                 }, 10000);
             }
 
@@ -1937,13 +1925,14 @@
             }
         }
         
+        // Optimized: Sequential "Thinking" Logic instead of random blink
         function startMagiAnimation() {
-            const nodes = ['node-melchior', 'node-balthasar', 'node-casper'];
+            const nodeIds = ['node-melchior', 'node-balthasar', 'node-casper'];
             const visualizer = document.getElementById('magi-visualizer');
             if(visualizer) visualizer.style.opacity = '1';
             
-            // Clear any existing style
-            nodes.forEach(id => {
+            // Reset styles
+            nodeIds.forEach(id => {
                 const el = document.getElementById(id);
                 if(el) {
                     el.className = "magi-mini-node flex-1 h-6 border border-secondary flex items-center justify-center text-[7px] font-mono font-bold text-secondary transition-all";
@@ -1952,33 +1941,36 @@
 
             if (magiAnimationInterval) clearInterval(magiAnimationInterval);
             
+            let activeIndex = 0;
             magiAnimationInterval = setInterval(() => {
-                // Randomly toggle active class
-                nodes.forEach(id => {
-                    const el = document.getElementById(id);
-                    if(el) {
-                         if(Math.random() > 0.5) {
-                             el.classList.add('magi-node-active');
-                         } else {
-                             el.classList.remove('magi-node-active');
-                         }
-                    }
-                });
-            }, 100);
+                // Clear all polling states
+                nodeIds.forEach(id => document.getElementById(id).classList.remove('magi-node-polling'));
+                
+                // Activate current node
+                const el = document.getElementById(nodeIds[activeIndex]);
+                if (el) el.classList.add('magi-node-polling');
+                
+                // Cycle: 0 -> 1 -> 2 -> 0
+                activeIndex = (activeIndex + 1) % 3;
+            }, 200); // Slower, more rhythmic scanning
         }
 
         function stopMagiAnimation(isSuccess) {
             if (magiAnimationInterval) clearInterval(magiAnimationInterval);
             
-            const nodes = ['node-melchior', 'node-balthasar', 'node-casper'];
-            nodes.forEach(id => {
+            const nodeIds = ['node-melchior', 'node-balthasar', 'node-casper'];
+            nodeIds.forEach(id => {
                 const el = document.getElementById(id);
                 if(el) {
+                    el.classList.remove('magi-node-polling');
+                    el.classList.remove('magi-node-denied');
                     el.classList.remove('magi-node-active');
-                    el.classList.remove('magi-node-denied'); // Clear previous state
                     
+                    // Force reflow for animation restart
+                    void el.offsetWidth;
+
                     if(isSuccess) {
-                        el.classList.add('magi-node-active'); // All Green/Blue
+                        el.classList.add('magi-node-active'); // All Green
                     } else {
                         el.classList.add('magi-node-denied'); // All Red
                     }
@@ -2002,7 +1994,6 @@
             const iconDisc = document.getElementById('icon-disc');
             const iconPause = document.getElementById('icon-pause');
             if(audioEl.paused) { 
-                // 核心修复：捕获 play() 的错误，防止 AbortError
                 const playPromise = audioEl.play();
                 if (playPromise !== undefined) {
                     playPromise.catch(error => {
@@ -2020,10 +2011,8 @@
         function drawVisualizer() {
             const canvas = document.getElementById('audio-visualizer');
             const ctx = canvas.getContext('2d');
-            // Throttle visualizer slightly or rely on rAF, which is fine
             requestAnimationFrame(drawVisualizer);
             
-            // If audio is paused, skip drawing to save power
             if (audioEl.paused) return;
 
             const bufferLength = analyser.frequencyBinCount;
@@ -2066,43 +2055,34 @@
                     const score = item.rating?.score || 0;
                     const image = item.images?.large || item.images?.common || '';
                     
-                    // Determine Sync Rate Color based on score
-                    let syncColor = 'var(--secondary-color)'; // Green (High Sync)
-                    if (score < 6) syncColor = '#ff0000'; // Red (Low Sync)
-                    else if (score < 8) syncColor = '#ffae00'; // Orange (Medium Sync)
+                    let syncColor = 'var(--secondary-color)'; 
+                    if (score < 6) syncColor = '#ff0000'; 
+                    else if (score < 8) syncColor = '#ffae00'; 
 
                     return `
                     <div class="flex items-center gap-4 group cursor-pointer hover:bg-white/5 p-2 pr-3 border-b border-white/10 hover:border-secondary transition-all" onclick='openAnimeModal("${title.replace(/"/g, '&quot;')}", "${score}", "${image}", "${item.id}")'>
                         
-                        <!-- Hex Image Container -->
                         <div class="relative w-14 h-14 shrink-0">
-                            <!-- Hex Mask for Image -->
                             <div class="w-full h-full relative overflow-hidden transition-transform duration-500 group-hover:scale-110 group-hover:rotate-[30deg]" style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);">
                                 <img src="${image}" class="w-full h-full object-cover group-hover:rotate-[-30deg] transition-transform duration-500" onerror="this.style.display='none'">
                                 <div class="absolute inset-0 bg-secondary/20 group-hover:bg-transparent transition-colors"></div>
                             </div>
-                            <!-- Decorative Border -->
                             <div class="absolute inset-0 pointer-events-none border border-secondary/50" style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);"></div>
                         </div>
 
-                        <!-- Info Block -->
                         <div class="flex-1 min-w-0">
                             <div class="flex justify-between items-baseline mb-1">
                                 <span class="text-gray-300 truncate font-bold text-[11px] group-hover:text-white transition-colors font-sans tracking-wide">${title}</span>
                                 <span class="font-mono text-[9px] text-secondary/70">#${item.id}</span>
                             </div>
                             
-                            <!-- Sync Rate Visualizer -->
                             <div class="relative">
                                 <div class="flex justify-between text-[8px] font-mono text-gray-500 mb-0.5">
                                     <span class="tracking-widest">SYNC_RATE</span>
                                     <span style="color: ${syncColor}" class="font-bold">${score * 10}%</span>
                                 </div>
-                                <!-- Waveform Bar Container -->
                                 <div class="w-full h-1.5 bg-black/50 border border-white/10 relative overflow-hidden">
-                                    <!-- The Bar -->
                                     <div class="h-full transition-all duration-1000 ease-out" style="width: ${score * 10}%; background-color: ${syncColor}; box-shadow: 0 0 8px ${syncColor};"></div>
-                                    <!-- Scanline overlay on bar -->
                                     <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjMDAwIiBmaWxsLW9wYWNpdHk9IjAuMiIvPgo8L3N2Zz4=')] opacity-50"></div>
                                 </div>
                             </div>
