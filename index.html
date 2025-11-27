@@ -43,6 +43,7 @@
                         'speaking-shake': 'speakingShake 0.5s infinite',
                         'hologram-flicker': 'hologramFlicker 3s infinite',
                         'chromatic-move': 'chromaticMove 5s infinite alternate',
+                        'data-stream': 'dataStream 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards',
                     },
                     keyframes: {
                         scan: { '0%': { backgroundPosition: '0 0' }, '100%': { backgroundPosition: '0 100%' } },
@@ -75,6 +76,10 @@
                         chromaticMove: {
                             '0%': { textShadow: '-2px 0 0 rgba(255,0,0,0.5), 2px 0 0 rgba(0,255,255,0.5)' },
                             '100%': { textShadow: '-1px 0 0 rgba(255,0,0,0.5), 1px 0 0 rgba(0,255,255,0.5)' }
+                        },
+                        dataStream: {
+                            '0%': { opacity: 0, transform: 'translateX(-10px)' },
+                            '100%': { opacity: 1, transform: 'translateX(0)' }
                         }
                     }
                 }
@@ -600,23 +605,86 @@
             100% { box-shadow: 0 0 30px var(--primary-color), 0 0 50px var(--secondary-color); border-color: var(--secondary-color); }
         }
 
-        /* New MAGI Node Styles */
-        .magi-mini-node {
-            background: rgba(0,0,0,0.5);
+        /* --- New MAGI Hex Node Styles (Replaced old mini-nodes) --- */
+        .magi-hex-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px; /* 更紧凑的布局 */
+            margin-bottom: 8px;
+            opacity: 0.8;
             transition: all 0.3s;
         }
-        .magi-node-active {
+        
+        .magi-hex {
+            width: 60px;
+            height: 24px;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid var(--secondary-color);
+            color: var(--secondary-color);
+            font-family: 'JetBrains Mono';
+            font-size: 8px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            /* Hexagon Shape via clip-path */
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+            transition: all 0.2s;
+            box-shadow: inset 0 0 5px rgba(var(--secondary-color), 0.2);
+        }
+        
+        /* 状态颜色 */
+        .magi-hex.active {
             background: var(--secondary-color);
-            color: #000 !important;
-            box-shadow: 0 0 10px var(--secondary-color);
+            color: #000;
+            box-shadow: 0 0 15px var(--secondary-color);
             border-color: transparent;
         }
-        .magi-node-denied {
+        .magi-hex.denied {
             background: #ff0000;
-            color: #fff !important;
+            color: #fff;
             border-color: #ff0000;
-            box-shadow: 0 0 10px #ff0000;
+            box-shadow: 0 0 15px #ff0000;
         }
+        
+        /* --- MAGI POLLING ANIMATION (Thinking State) --- */
+        /* 核心修改：使用关键帧实现轮询闪烁 */
+        @keyframes magi-poll {
+            0% { background: rgba(0,0,0,0.6); border-color: var(--secondary-color); color: var(--secondary-color); box-shadow: none; transform: scale(1); }
+            30% { background: #ffa500; border-color: #fff; color: #fff; box-shadow: 0 0 15px #ffa500; transform: scale(1.05); } /* 橙色高亮 */
+            100% { background: rgba(0,0,0,0.6); border-color: var(--secondary-color); color: var(--secondary-color); box-shadow: none; transform: scale(1); }
+        }
+
+        .magi-hex.thinking {
+            animation: magi-poll 0.9s infinite ease-in-out; /* 总循环时间 */
+        }
+        
+        /* 错开动画时间，形成轮询效果 */
+        #node-melchior.thinking { animation-delay: 0s; }
+        #node-balthasar.thinking { animation-delay: 0.3s; }
+        #node-casper.thinking { animation-delay: 0.6s; }
+        
+
+        /* --- Sync Rate Waveform Canvas --- */
+        #sync-wave-canvas {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 120px; /* Cover lower part of avatar */
+            pointer-events: none;
+            z-index: 5;
+            mix-blend-mode: screen; /* Holographic overlay effect */
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+        [data-mode="light"] #sync-wave-canvas {
+            mix-blend-mode: multiply; /* Darker waves on light bg */
+            opacity: 0.6;
+        }
+
 
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: var(--bg-color); }
@@ -690,6 +758,39 @@
         }
         .rage-mode .rage-overlay { display: block; }
         .rage-mode .holo-overlay { background: repeating-linear-gradient(0deg, transparent 0px, rgba(255, 0, 0, 0.1) 1px, transparent 2px); }
+
+        /* --- EVA Day Selector & New List Animations --- */
+        .day-btn {
+            font-family: 'JetBrains Mono';
+            font-size: 10px;
+            padding: 4px 8px;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(0,0,0,0.2);
+            cursor: pointer;
+            margin-right: 4px;
+            clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+        }
+        .day-btn:hover {
+            border-color: var(--secondary-color);
+            color: var(--secondary-color);
+            box-shadow: 0 0 10px rgba(var(--secondary-color), 0.2);
+        }
+        .day-btn.active {
+            background: var(--secondary-color);
+            color: #000;
+            border-color: var(--secondary-color);
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(var(--secondary-color), 0.4);
+            transform: translateY(-2px);
+        }
+        
+        /* List enter animation */
+        .anime-item-enter {
+            opacity: 0;
+            animation: dataStream 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
     </style>
 </head>
 <body class="antialiased overflow-x-hidden font-sans selection:bg-secondary selection:text-black">
@@ -957,11 +1058,11 @@
                                     <span id="magi-status-indicator" class="font-mono text-[9px] text-emergency font-bold animate-pulse">STANDBY</span>
                                 </div>
 
-                                <!-- The 3 Magi Nodes (Visual) -->
-                                <div id="magi-visualizer" class="flex gap-1 mb-3 opacity-30 transition-all duration-500">
-                                    <div id="node-melchior" class="magi-mini-node flex-1 h-6 border border-secondary flex items-center justify-center text-[7px] font-mono font-bold text-secondary transition-all">MELCHIOR</div>
-                                    <div id="node-balthasar" class="magi-mini-node flex-1 h-6 border border-secondary flex items-center justify-center text-[7px] font-mono font-bold text-secondary transition-all">BALTHASAR</div>
-                                    <div id="node-casper" class="magi-mini-node flex-1 h-6 border border-secondary flex items-center justify-center text-[7px] font-mono font-bold text-secondary transition-all">CASPER</div>
+                                <!-- UPGRADED MAGI VISUALIZER (Hex Nodes) -->
+                                <div id="magi-visualizer" class="magi-hex-container transition-all duration-500">
+                                    <div id="node-melchior" class="magi-hex">MELCHIOR</div>
+                                    <div id="node-balthasar" class="magi-hex">BALTHASAR</div>
+                                    <div id="node-casper" class="magi-hex">CASPER</div>
                                 </div>
 
                                 <!-- Text Output -->
@@ -976,7 +1077,7 @@
                         </div>
                     </div>
 
-                    <!-- AI CARD CONTAINER (MODIFIED FOR HOLOGRAM) -->
+                    <!-- AI CARD CONTAINER -->
                     <div id="ai-card" class="eva-card ai-card-container cursor-pointer group hover:bg-secondary/10 transition-colors holo-container">
                         <div class="eva-glare"></div>
                         <!-- 青色扫描线覆盖层 -->
@@ -985,11 +1086,14 @@
                         <div class="rage-overlay"></div>
                         
                         <div class="w-full relative aspect-[4/5] overflow-hidden bg-black/40">
-                            <!-- 立绘图片 - 添加了 breathing 和 RGB glitch 类 -->
-                            <img id="ai-avatar-display" src="./images/ai-assistant.jpg" onerror="this.src='./images/ai-assistant.jpg'" alt="AI" class="ai-avatar-img w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity mix-blend-lighten filter contrast-125 grayscale group-hover:grayscale-0 duration-500 holo-glitch-effect holo-breathing">
+                            <!-- 立绘图片 -->
+                            <img id="ai-avatar-display" src="./images/ai-assistant.jpg" onerror="this.src='./images/ai-assistant.jpg'" alt="AI" class="ai-avatar-img w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity mix-blend-lighten filter contrast-125 grayscale group-hover:grayscale-0 duration-500 holo-glitch-effect holo-breathing relative z-10">
                             
-                            <div class="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent"></div>
-                            <div class="absolute top-2 right-2 text-[9px] font-mono text-black bg-secondary px-1 font-bold">LIVE</div>
+                            <!-- NEW: Sync Rate Waveform Canvas -->
+                            <canvas id="sync-wave-canvas"></canvas>
+                            
+                            <div class="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent z-20"></div>
+                            <div class="absolute top-2 right-2 text-[9px] font-mono text-black bg-secondary px-1 font-bold z-30">LIVE</div>
                         </div>
                         <div class="p-5 border-t border-secondary/30 relative overflow-hidden">
                             <div class="flex items-center justify-between mb-2 relative z-10">
@@ -1012,16 +1116,36 @@
                     </div>
                 </div>
                 
-                <!-- Anime Feed (EVA Style: Hex-Core Upgrade) -->
+                <!-- Anime Feed (EVA Style: Hex-Core Upgrade with Weekly Timeline) -->
                 <div class="">
                     <div class="eva-card p-6 relative overflow-hidden">
                         <div class="eva-glare"></div>
                         <div class="eva-header">
                             <div class="flex items-center"><div class="eva-header-deco"></div><span>ANIME_FEED</span></div>
-                            <span id="anime-date" class="text-primary">...</span>
+                            <div class="flex items-center gap-2">
+                                <span id="anime-date" class="text-primary text-[10px] font-mono border border-primary/30 px-1">...</span>
+                                <div class="w-1.5 h-1.5 bg-secondary animate-pulse"></div>
+                            </div>
                         </div>
+                        
+                        <!-- NEW: Weekly Timeline Deck (NERV Style) -->
+                        <div id="week-selector" class="flex justify-between mb-4 border-b border-white/10 pb-2 overflow-x-auto no-scrollbar" style="scrollbar-width: none;">
+                            <!-- Generated by JS -->
+                        </div>
+
                         <!-- Updated Container for Hex Cards -->
-                        <div id="anime-list" class="space-y-3 font-mono text-[10px] text-gray-300 max-h-80 overflow-y-auto pr-2 custom-scrollbar"></div>
+                        <div id="anime-list" class="space-y-3 font-mono text-[10px] text-gray-300 max-h-80 overflow-y-auto pr-2 custom-scrollbar relative min-h-[100px]">
+                            <!-- Loading State -->
+                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-50">
+                                <span class="animate-pulse">CONNECTING...</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Footer Info -->
+                        <div class="mt-3 pt-2 border-t border-white/5 flex justify-between text-[8px] font-mono text-gray-500">
+                            <span>DATA_SOURCE: BANGUMI.TV</span>
+                            <span id="update-time">LAST_SYNC: 00:00</span>
+                        </div>
                     </div>
                 </div>
 
@@ -1843,6 +1967,9 @@
             // Start MAGI Polling Animation
             startMagiAnimation();
             
+            // Increase wave frequency
+            if(window.setWaveState) window.setWaveState('thinking');
+
             const payload = {
                 contents: [{
                     parts: [{ text: SYSTEM_PROMPT + "\n\n用户输入: " + userText }]
@@ -1911,6 +2038,7 @@
                     magiStatus.innerText = "DENIED";
                     magiStatus.classList.add("text-emergency");
                 }
+                if(window.setWaveState) window.setWaveState('flat'); // Stop wave
             } else {
                 if(magiStatus) {
                     magiStatus.innerText = "CONSENSUS";
@@ -1918,6 +2046,8 @@
                     magiStatus.classList.add("text-primary");
                 }
                 showAiSpeech(aiResponseText);
+                
+                if(window.setWaveState) window.setWaveState('speaking'); // Speak wave
 
                 // --- 触发回复后的得意表情 (Happy State) ---
                 setAvatarEmotion('happy');
@@ -1928,6 +2058,7 @@
                 // 10秒后恢复常态
                 emotionResetTimer = setTimeout(() => {
                     setAvatarEmotion('normal');
+                    if(window.setWaveState) window.setWaveState('normal');
                 }, 10000);
             }
 
@@ -1946,45 +2077,122 @@
             nodes.forEach(id => {
                 const el = document.getElementById(id);
                 if(el) {
-                    el.className = "magi-mini-node flex-1 h-6 border border-secondary flex items-center justify-center text-[7px] font-mono font-bold text-secondary transition-all";
+                    // Reset to base + thinking state
+                    el.className = "magi-hex thinking"; 
                 }
             });
-
-            if (magiAnimationInterval) clearInterval(magiAnimationInterval);
-            
-            magiAnimationInterval = setInterval(() => {
-                // Randomly toggle active class
-                nodes.forEach(id => {
-                    const el = document.getElementById(id);
-                    if(el) {
-                         if(Math.random() > 0.5) {
-                             el.classList.add('magi-node-active');
-                         } else {
-                             el.classList.remove('magi-node-active');
-                         }
-                    }
-                });
-            }, 100);
         }
 
         function stopMagiAnimation(isSuccess) {
-            if (magiAnimationInterval) clearInterval(magiAnimationInterval);
-            
             const nodes = ['node-melchior', 'node-balthasar', 'node-casper'];
             nodes.forEach(id => {
                 const el = document.getElementById(id);
                 if(el) {
-                    el.classList.remove('magi-node-active');
-                    el.classList.remove('magi-node-denied'); // Clear previous state
+                    el.classList.remove('thinking');
+                    el.classList.remove('active');
+                    el.classList.remove('denied'); // Clear previous state
                     
                     if(isSuccess) {
-                        el.classList.add('magi-node-active'); // All Green/Blue
+                        el.classList.add('active'); // All Green
                     } else {
-                        el.classList.add('magi-node-denied'); // All Red
+                        el.classList.add('denied'); // All Red
                     }
                 }
             });
         }
+
+        /* --- SYNC RATE WAVEFORM VISUALIZER --- */
+        function initSyncRateWave() {
+            const canvas = document.getElementById('sync-wave-canvas');
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
+            let width, height;
+            let phase = 0;
+            let speed = 0.05;
+            let amplitude = 10;
+            let frequency = 0.02;
+            let waveState = 'normal'; // normal, thinking, speaking, flat
+
+            function resize() {
+                // Match parent container size
+                const parent = canvas.parentElement;
+                if(parent) {
+                    width = parent.clientWidth;
+                    height = parent.clientHeight; // Use full height for positioning
+                    canvas.width = width;
+                    canvas.height = 120; // Fixed height for canvas draw area
+                }
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            // Expose state setter globally
+            window.setWaveState = (state) => {
+                waveState = state;
+            };
+
+            function draw() {
+                if(!ctx) return;
+                ctx.clearRect(0, 0, width, 120);
+
+                // Update params based on state
+                if (waveState === 'normal') {
+                    speed = 0.05; amplitude = 5; frequency = 0.02;
+                } else if (waveState === 'hover') {
+                    speed = 0.1; amplitude = 15; frequency = 0.05;
+                } else if (waveState === 'thinking') {
+                    speed = 0.2; amplitude = 8; frequency = 0.08;
+                } else if (waveState === 'speaking') {
+                    speed = 0.15; 
+                    amplitude = 20 * Math.random(); // Chaotic
+                    frequency = 0.1;
+                } else if (waveState === 'flat') {
+                    amplitude = 1; speed = 0.01;
+                }
+
+                // Get current color from CSS variable
+                const style = getComputedStyle(document.documentElement);
+                const color = style.getPropertyValue('--secondary-color').trim();
+
+                ctx.beginPath();
+                ctx.lineWidth = 1.5;
+                ctx.strokeStyle = color;
+                
+                // Draw Sine Wave
+                for (let x = 0; x < width; x++) {
+                    // Combine two sine waves for more "biological" look
+                    const y = 60 + Math.sin(x * frequency + phase) * amplitude 
+                                 + Math.sin(x * frequency * 2 + phase * 1.5) * (amplitude / 2);
+                    if (x === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+
+                // Draw fill under wave
+                ctx.lineTo(width, 120);
+                ctx.lineTo(0, 120);
+                ctx.fillStyle = color.replace(')', ', 0.1)').replace('rgb', 'rgba'); // Make it transparent
+                ctx.fill();
+
+                phase += speed;
+                requestAnimationFrame(draw);
+            }
+            draw();
+
+            // Hook into hover events of the card
+            const card = document.getElementById('ai-card');
+            if(card) {
+                card.addEventListener('mouseenter', () => {
+                    if(waveState === 'normal') waveState = 'hover';
+                });
+                card.addEventListener('mouseleave', () => {
+                    if(waveState === 'hover') waveState = 'normal';
+                });
+            }
+        }
+        // Initialize after DOM load
+        window.addEventListener('DOMContentLoaded', initSyncRateWave);
         
         let audioContext, analyser;
         const audioEl = document.getElementById('background-music');
@@ -2041,38 +2249,108 @@
             }
         }
 
+        /* ==========================================================================
+           UPGRADED ANIME DATA FETCH & WEEKLY TIMELINE
+           ========================================================================== */
+        
         const mockData = [{ id: 388296, name: "香格里拉·开拓异境", rating: { score: "8.1" }, images: { large: "https://lain.bgm.tv/pic/cover/l/13/9a/388296_7787Y.jpg" } }];
+        
+        let animeCalendarData = [];
+        const weekMap = { 1: 'MON', 2: 'TUE', 3: 'WED', 4: 'THU', 5: 'FRI', 6: 'SAT', 7: 'SUN' };
+        let currentSelectedDay = null;
+
         async function loadAnimeData() {
             const dateDisplay = document.getElementById('anime-date');
+            const updateTime = document.getElementById('update-time');
             const today = new Date();
-            dateDisplay.innerHTML = `${today.getMonth()+1}/${today.getDate()}`;
-            let bangumiWeekday = today.getDay() === 0 ? 7 : today.getDay();
+            let bangumiWeekday = today.getDay() === 0 ? 7 : today.getDay(); // 1-7
+            
+            // Set Update Time
+            const now = new Date();
+            if(updateTime) updateTime.innerText = `LAST_SYNC: ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+            
             try {
+                // Fetch full calendar (Sun-Sat)
                 const response = await fetch('https://corsproxy.io/?' + encodeURIComponent('https://api.bgm.tv/calendar'));
                 if (!response.ok) throw new Error('API Error');
-                const data = await response.json();
-                const todayData = data.find(day => day.weekday.id === bangumiWeekday);
-                renderList(todayData && todayData.items.length > 0 ? todayData.items : mockData);
+                
+                animeCalendarData = await response.json();
+                
+                // Init Week Selector
+                initWeekSelector(bangumiWeekday);
+
+                // Render Today
+                switchDay(bangumiWeekday);
+
             } catch (error) {
-                renderList(mockData); dateDisplay.innerHTML += ' <span class="text-red-500">OFFLINE</span>';
+                console.error("Anime Fetch Error:", error);
+                renderList(mockData); 
+                dateDisplay.innerHTML = ' <span class="text-red-500">OFFLINE</span>';
             }
         }
-        
-        // --- HEXAGONAL CARD RENDERER ---
+
+        function initWeekSelector(currentWeekday) {
+            const selector = document.getElementById('week-selector');
+            if(!selector) return;
+            
+            selector.innerHTML = ''; // Clear
+            
+            // Generate buttons for 1-7 (Mon-Sun)
+            for(let i = 1; i <= 7; i++) {
+                const btn = document.createElement('button');
+                btn.className = `day-btn ${i === currentWeekday ? 'active' : ''}`;
+                btn.innerText = weekMap[i];
+                btn.onclick = () => switchDay(i);
+                btn.id = `day-btn-${i}`;
+                selector.appendChild(btn);
+            }
+        }
+
+        function switchDay(weekday) {
+            currentSelectedDay = weekday;
+            
+            // Update UI State
+            document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+            const activeBtn = document.getElementById(`day-btn-${weekday}`);
+            if(activeBtn) activeBtn.classList.add('active');
+            
+            // Update Date Header
+            const dateDisplay = document.getElementById('anime-date');
+            if(dateDisplay) dateDisplay.innerText = `DAY_${weekMap[weekday]}`;
+
+            // Find data for this day
+            if(animeCalendarData.length > 0) {
+                const dayData = animeCalendarData.find(d => d.weekday.id === weekday);
+                renderList(dayData && dayData.items.length > 0 ? dayData.items : []);
+            }
+        }
+
+        // --- HEXAGONAL CARD RENDERER (ENHANCED) ---
         const renderList = (items) => {
              const container = document.getElementById('anime-list');
-             container.innerHTML = items.map(item => {
+             
+             if(items.length === 0) {
+                 container.innerHTML = `<div class="p-4 text-center text-gray-500 text-[10px]">NO_DATA_AVAILABLE // SLEEP_MODE</div>`;
+                 return;
+             }
+
+             // Render with slight stagger animation
+             container.innerHTML = items.map((item, index) => {
                     const title = item.name_cn || item.name;
                     const score = item.rating?.score || 0;
                     const image = item.images?.large || item.images?.common || '';
                     
-                    // Determine Sync Rate Color based on score
+                    // Determine Sync Rate Color
                     let syncColor = 'var(--secondary-color)'; // Green (High Sync)
                     if (score < 6) syncColor = '#ff0000'; // Red (Low Sync)
                     else if (score < 8) syncColor = '#ffae00'; // Orange (Medium Sync)
+                    
+                    // Add random "Pattern" status for flavor
+                    const patterns = ['BLUE', 'ORANGE', 'GREEN'];
+                    const pattern = patterns[Math.floor(Math.random() * patterns.length)];
 
                     return `
-                    <div class="flex items-center gap-4 group cursor-pointer hover:bg-white/5 p-2 pr-3 border-b border-white/10 hover:border-secondary transition-all" onclick='openAnimeModal("${title.replace(/"/g, '&quot;')}", "${score}", "${image}", "${item.id}")'>
+                    <div class="flex items-center gap-4 group cursor-pointer hover:bg-white/5 p-2 pr-3 border-b border-white/10 hover:border-secondary transition-all anime-item-enter" style="animation-delay: ${index * 0.05}s" onclick='openAnimeModal("${title.replace(/"/g, '&quot;')}", "${score}", "${image}", "${item.id}")'>
                         
                         <!-- Hex Image Container -->
                         <div class="relative w-14 h-14 shrink-0">
@@ -2089,14 +2367,14 @@
                         <div class="flex-1 min-w-0">
                             <div class="flex justify-between items-baseline mb-1">
                                 <span class="text-gray-300 truncate font-bold text-[11px] group-hover:text-white transition-colors font-sans tracking-wide">${title}</span>
-                                <span class="font-mono text-[9px] text-secondary/70">#${item.id}</span>
+                                <span class="font-mono text-[8px] text-secondary/70 bg-secondary/10 px-1 rounded-sm">${pattern}</span>
                             </div>
                             
                             <!-- Sync Rate Visualizer -->
                             <div class="relative">
                                 <div class="flex justify-between text-[8px] font-mono text-gray-500 mb-0.5">
                                     <span class="tracking-widest">SYNC_RATE</span>
-                                    <span style="color: ${syncColor}" class="font-bold">${score * 10}%</span>
+                                    <span style="color: ${syncColor}" class="font-bold">${score > 0 ? score * 10 + '%' : 'N/A'}</span>
                                 </div>
                                 <!-- Waveform Bar Container -->
                                 <div class="w-full h-1.5 bg-black/50 border border-white/10 relative overflow-hidden">
@@ -2154,7 +2432,7 @@
         function filterByTag(tag) { document.getElementById('search-input').value = tag; searchArticles(); }
 
         startHeroGlitch();
-        loadAnimeData();
+        loadAnimeData(); // New function call
         createParticles(); 
 
         /* ==========================================================================
@@ -2247,7 +2525,7 @@
         if(hoverSfx) hoverSfx.volume = 0.15; 
         if(clickSfx) clickSfx.volume = 0.3;
 
-        const sfxElements = document.querySelectorAll('a, button, .eva-card, .tactical-switch, input');
+        const sfxElements = document.querySelectorAll('a, button, .eva-card, .tactical-switch, input, .day-btn');
         
         sfxElements.forEach(el => {
             // Hover sound only on PC
