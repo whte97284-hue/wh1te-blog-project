@@ -43,6 +43,7 @@
                         'speaking-shake': 'speakingShake 0.5s infinite',
                         'hologram-flicker': 'hologramFlicker 3s infinite',
                         'chromatic-move': 'chromaticMove 5s infinite alternate',
+                        /* data-stream 动画在这里定义了，但如果是 CDN 模式，可能因为 HTML 里没直接写 class="animate-data-stream" 而被清除 */
                         'data-stream': 'dataStream 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards',
                     },
                     keyframes: {
@@ -825,10 +826,24 @@
             box-shadow: 0 0 8px var(--secondary-color);
         }
         
+        /* --- 修复核心：确保动画 Keyframes 在纯 CSS 中可用 --- */
         /* List enter animation */
         .anime-item-enter {
             opacity: 0;
             animation: dataStream 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        
+        @keyframes dataStream {
+            0% { opacity: 0; transform: translateX(-10px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+
+        /* 兼容性增强：如果用户系统开启了减弱动画，直接显示 */
+        @media (prefers-reduced-motion: reduce) {
+            .anime-item-enter {
+                opacity: 1;
+                animation: none;
+            }
         }
     </style>
 </head>
@@ -2301,14 +2316,54 @@
         }
 
         /* ==========================================================================
-           UPGRADED ANIME DATA FETCH & WEEKLY TIMELINE
+           UPGRADED ANIME DATA FETCH & WEEKLY TIMELINE (REPAIRED)
            ========================================================================== */
         
-        const mockData = [{ id: 388296, name: "香格里拉·开拓异境", rating: { score: 8.1 }, images: { large: "https://lain.bgm.tv/pic/cover/l/13/9a/388296_7787Y.jpg" } }];
-        
+        /* NERV DATABASE (FALLBACK MOCK DATA)
+           This ensures the UI is never empty even if the API is down.
+           Structure mirrors the Bangumi Calendar API.
+        */
+        const FALLBACK_CALENDAR = [
+            { weekday: { id: 1 }, items: [{ id: 1, name: "新世纪福音战士", rating: { score: 9.8 }, images: { large: "https://lain.bgm.tv/pic/cover/l/70/ec/265_G213C.jpg" } }] },
+            { weekday: { id: 2 }, items: [{ id: 2, name: "命运石之门", rating: { score: 9.5 }, images: { large: "https://lain.bgm.tv/pic/cover/l/74/4e/4970_iO00o.jpg" } }] },
+            { weekday: { id: 3 }, items: [{ id: 3, name: "边缘行者", rating: { score: 9.2 }, images: { large: "https://lain.bgm.tv/pic/cover/l/56/66/302593_d333H.jpg" } }] },
+            { weekday: { id: 4 }, items: [{ id: 4, name: "EVA: 终", rating: { score: 8.9 }, images: { large: "https://lain.bgm.tv/pic/cover/l/42/97/34524_2Fj7j.jpg" } }] },
+            { weekday: { id: 5 }, items: [{ id: 5, name: "86 -不存在的战区-", rating: { score: 9.0 }, images: { large: "https://lain.bgm.tv/pic/cover/l/10/7c/315183_R6I33.jpg" } }] },
+            { weekday: { id: 6 }, items: [{ id: 6, name: "孤独摇滚!", rating: { score: 9.3 }, images: { large: "https://lain.bgm.tv/pic/cover/l/b8/1d/363650_h4303.jpg" } }] },
+            { weekday: { id: 7 }, items: [{ id: 7, name: "进击的巨人", rating: { score: 9.6 }, images: { large: "https://lain.bgm.tv/pic/cover/l/4d/95/67448_850pa.jpg" } }] }
+        ];
+
         let animeCalendarData = [];
         const weekMap = { 1: "MON", 2: "TUE", 3: "WED", 4: "THU", 5: "FRI", 6: "SAT", 7: "SUN" };
         let currentSelectedDay = null;
+
+        /* Proxy Chain for better stability */
+        const PROXIES = [
+            'https://api.allorigins.win/raw?url=',  /* More stable usually */
+            'https://corsproxy.io/?',               /* Backup */
+            'https://cors-anywhere.herokuapp.com/'  /* Last resort (rarely works public) */
+        ];
+
+        async function fetchWithFallback(targetUrl) {
+            for (const proxy of PROXIES) {
+                try {
+                    const encodedUrl = encodeURIComponent(targetUrl);
+                    /* Some proxies behave differently with encoded vs raw, 
+                       allorigins handles raw param 'url' 
+                    */
+                    const fullUrl = proxy.includes('allorigins') ? `${proxy}${targetUrl}` : `${proxy}${encodedUrl}`;
+                    
+                    console.log(`[DATA] Trying proxy: ${proxy}`);
+                    const response = await fetch(fullUrl);
+                    
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return await response.json();
+                } catch (e) {
+                    console.warn(`[DATA] Proxy ${proxy} failed:`, e);
+                }
+            }
+            throw new Error("All proxies failed");
+        }
 
         async function loadAnimeData() {
             const dateDisplay = document.getElementById('anime-date');
@@ -2321,22 +2376,23 @@
             if(updateTime) updateTime.innerText = `LAST_SYNC: ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
             
             try {
-                /* Fetch full calendar (Sun-Sat) */
-                const response = await fetch('https://corsproxy.io/?' + encodeURIComponent('https://api.bgm.tv/calendar'));
-                if (!response.ok) throw new Error('API Error');
+                /* Attempt to fetch real data */
+                animeCalendarData = await fetchWithFallback('https://api.bgm.tv/calendar');
                 
-                animeCalendarData = await response.json();
-                
-                /* Init Week Selector */
+                /* Render normally */
                 initWeekSelector(bangumiWeekday);
-
-                /* Render Today */
                 switchDay(bangumiWeekday);
 
             } catch (error) {
-                console.error("Anime Fetch Error", error);
-                renderList(mockData); 
-                dateDisplay.innerHTML = ' <span class="text-red-500">OFFLINE</span>';
+                console.error("Anime Fetch Critical Error", error);
+                
+                /* ACTIVATE OFFLINE MODE */
+                if(dateDisplay) dateDisplay.innerHTML = ' <span class="text-red-500 font-bold animate-pulse">OFFLINE MODE</span>';
+                
+                /* Load Fallback Data so UI is not empty */
+                animeCalendarData = FALLBACK_CALENDAR;
+                initWeekSelector(bangumiWeekday);
+                switchDay(bangumiWeekday);
             }
         }
 
@@ -2367,12 +2423,18 @@
             
             /* Update Date Header */
             const dateDisplay = document.getElementById('anime-date');
-            if(dateDisplay) dateDisplay.innerText = `DAY_${weekMap[weekday]}`;
+            /* Don't overwrite Offline text if offline */
+            if(dateDisplay && !dateDisplay.innerHTML.includes('OFFLINE')) {
+                dateDisplay.innerText = `DAY_${weekMap[weekday]}`;
+            }
 
             /* Find data for this day */
-            if(animeCalendarData.length > 0) {
+            /* Safety check: animeCalendarData might be empty if init failed completely */
+            if(animeCalendarData && animeCalendarData.length > 0) {
                 const dayData = animeCalendarData.find(d => d.weekday.id === weekday);
-                renderList(dayData && dayData.items.length > 0 ? dayData.items : []);
+                renderList(dayData && dayData.items ? dayData.items : []);
+            } else {
+                renderList([]);
             }
         }
 
@@ -2380,16 +2442,23 @@
         const renderList = (items) => {
              const container = document.getElementById('anime-list');
              
-             if(items.length === 0) {
-                 container.innerHTML = `<div class="p-4 text-center text-gray-500 text-[10px]">NO_DATA_AVAILABLE | SLEEP_MODE</div>`;
+             if(!items || items.length === 0) {
+                 container.innerHTML = `<div class="p-4 text-center text-gray-500 text-[10px] animate-pulse">NO_TARGETS_DETECTED | SLEEP_MODE</div>`;
                  return;
              }
 
               /* Render with slight stagger animation */
              container.innerHTML = items.map((item, index) => {
-                    const title = item.name_cn || item.name;
+                    const title = (item.name_cn || item.name || "UNKNOWN_TARGET").replace(/"/g, '&quot;');
                     const score = item.rating?.score || 0;
-                    const image = item.images?.large || item.images?.common || '';
+                    
+                    /* Image Fallback Logic */
+                    let image = './images/placeholder.jpg'; /* Default local placeholder if available */
+                    if (item.images) {
+                        image = item.images.large || item.images.common || item.images.medium || item.images.small || '';
+                    }
+                    /* Use transparent pixel if completely empty to avoid broken icon, CSS handles fallback bg */
+                    if (!image) image = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
                     
                     /* Determine Sync Rate Color */
                     let syncColor = 'var(--secondary-color)'; /* Green (High Sync) */
@@ -2401,14 +2470,14 @@
                     const pattern = patterns[Math.floor(Math.random() * patterns.length)];
 
                     return `
-                    <div class="anime-card-tech flex items-center gap-3 p-2 group cursor-pointer anime-item-enter relative overflow-hidden" style="animation-delay: ${index * 0.05}s" onclick='openAnimeModal("${title.replace(/"/g, '&quot;')}", ${score}, "${image}", ${item.id})'>
+                    <div class="anime-card-tech flex items-center gap-3 p-2 group cursor-pointer anime-item-enter relative overflow-hidden" style="animation-delay: ${index * 0.05}s" onclick='openAnimeModal("${title}", ${score}, "${image}", ${item.id})'>
                         <!-- Selection Marker (Hidden by default, shown on hover) -->
                         <div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         
                         <!-- Hex Image Container -->
                         <div class="relative w-12 h-12 shrink-0 ml-1">
-                            <div class="w-full h-full relative overflow-hidden transition-transform duration-500 group-hover:scale-105" style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);">
-                                <img src="${image}" class="w-full h-full object-cover transition-transform duration-500 filter grayscale group-hover:grayscale-0" onerror="this.style.display='none'">
+                            <div class="w-full h-full relative overflow-hidden transition-transform duration-500 group-hover:scale-105" style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); background: rgba(255,255,255,0.1);">
+                                <img src="${image}" class="w-full h-full object-cover transition-transform duration-500 filter grayscale group-hover:grayscale-0" onerror="this.onerror=null; this.src='https://dummyimage.com/100x100/000/fff&text=NO+IMG';">
                                 <div class="absolute inset-0 bg-secondary/10 group-hover:bg-transparent transition-colors"></div>
                             </div>
                             <!-- Rotating Ring on Hover -->
@@ -2453,11 +2522,13 @@
 
             if(id) { 
                 try { 
-                    const res = await fetch(`https://corsproxy.io/?${encodeURIComponent('https://api.bgm.tv/v0/subjects/'+id)}`); 
+                    /* Fallback to mock text if API fails */
+                    const res = await fetchWithFallback(`https://api.bgm.tv/v0/subjects/${id}`); 
                     const data = await res.json(); 
                     document.getElementById('modal-summary').innerText = data.summary || "RESTRICTED DATA. SUMMARY UNAVAILABLE."; 
                 } catch(e) { 
-                    document.getElementById('modal-summary').innerText = "CONNECTION LOST. UNABLE TO RETRIEVE ARCHIVE DATA."; 
+                     /* Mock Summary for Offline Mode */
+                    document.getElementById('modal-summary').innerText = "CONNECTION LOST. UNABLE TO RETRIEVE ARCHIVE DATA. \n\n[MAGI SYSTEM NOTE]: This data is retrieved from local cache due to network interference (AT Field detected)."; 
                 } 
             }
         }
