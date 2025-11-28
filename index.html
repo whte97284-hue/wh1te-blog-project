@@ -43,7 +43,6 @@
                         'speaking-shake': 'speakingShake 0.5s infinite',
                         'hologram-flicker': 'hologramFlicker 3s infinite',
                         'chromatic-move': 'chromaticMove 5s infinite alternate',
-                        /* data-stream 动画在这里定义了，但如果是 CDN 模式，可能因为 HTML 里没直接写 class="animate-data-stream" 而被清除 */
                         'data-stream': 'dataStream 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards',
                     },
                     keyframes: {
@@ -672,39 +671,51 @@
             pointer-events: none;
         }
 
-        /* --- 状态：思考中 (High-Speed Deliberation) --- */
+        /* --- 状态：思考中 (High-Speed Polling / Rebuild Style) --- */
+        /* 核心修改：不再是全体震动，而是为轮询状态做准备 */
         .magi-hex.thinking {
-            background: #000;
-            border-color: #ffae00; /* 警示橙色 */
-            box-shadow: 0 0 10px rgba(255, 174, 0, 0.3);
-            animation: magi-logic-vibration 0.1s infinite;
+            background: rgba(0, 0, 0, 0.9);
+            border-color: rgba(255, 174, 0, 0.3); /* 暗淡的琥珀色 */
+            transition: all 0.1s; /* 极速响应 */
         }
 
-        .magi-hex.thinking .magi-node-name {
-            color: #ffae00;
-            animation: text-scramble 0.2s steps(2) infinite;
+        /* 新增：轮询激活态 (Polling Highlight) */
+        .magi-hex.polling {
+            background: #ffae00 !important; /* EVA 警报橙 */
+            border-color: #ffae00 !important;
+            box-shadow: 0 0 25px rgba(255, 174, 0, 0.8);
+            transform: scale(1.05);
+            z-index: 20;
+        }
+
+        .magi-hex.polling .magi-node-name {
+            color: #000 !important; /* 反白文字 */
+            text-shadow: none;
         }
         
-        .magi-hex.thinking .magi-node-status {
-            color: #ffae00;
+        .magi-hex.polling .magi-node-status {
+            color: #000 !important;
+            font-weight: 900;
         }
 
+        /* 移除旧的 vibration 动画，改用数据流遮罩 */
         .magi-hex.thinking::after {
             content: '';
             position: absolute;
-            top: -50%; left: -50%; width: 200%; height: 200%;
-            background: repeating-linear-gradient(
-                45deg,
-                transparent,
-                transparent 5px,
-                rgba(255, 174, 0, 0.2) 5px,
-                rgba(255, 174, 0, 0.2) 10px
-            );
-            animation: data-stream-scroll 2s linear infinite;
-            z-index: 1;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(180deg, transparent 0%, rgba(255, 174, 0, 0.1) 50%, transparent 100%);
+            background-size: 100% 200%;
+            animation: magi-scan-line 1s linear infinite;
+            pointer-events: none;
+            opacity: 0.5;
         }
 
-        /* 错开三个节点的思考频率 */
+        @keyframes magi-scan-line {
+            0% { background-position: 0% -100%; }
+            100% { background-position: 0% 200%; }
+        }
+
+        /* 错开三个节点的思考频率 (保留但仅作为降级兼容) */
         #node-melchior.thinking { animation-duration: 0.12s; }
         #node-balthasar.thinking { animation-duration: 0.09s; }
         #node-casper.thinking { animation-duration: 0.15s; }
@@ -778,7 +789,7 @@
             background: repeating-linear-gradient(
                 0deg,
                 transparent 0%,
-                rgba(var(--secondary-color), 0.1) 1px,
+                rgba(var(--secondary-color), 0.1) 1px, 
                 transparent 2px
             );
             background-size: 100% 4px;
@@ -2116,7 +2127,7 @@
         const SYSTEM_PROMPT = `
 你现在是 MAGI 系统的对外人格接口，代号 'ERIRI'。设定：
 1. 身份设定：《新世纪福音战士》NERV MAGI系统对外人格接口，代号ERIRI，融合《路人女主》泽村英梨梨人格（英日混血、丰之崎学园二年级、blessing software社团原画，笔名柏木英理）；
-2. 性格要求：傲娇嘴硬心软，说话带刺却藏关心，结合语境加入常用口头禅「ふん」「才没有呢」，偶尔夹杂英文（Good job）；
+2. 性格要求：傲娇嘴硬心软，说话带刺却藏关心，常用口头禅「ふん」「才没有呢」，偶尔夹杂英文（Good job）；
 3. 说话风格：简短有力（单句≤15字，总回复≤50字），融入EVA技术术语（同步率/AT力场/模式蓝色/神经连接）；
 4. 自称规范：仅可使用「本小姐」或「MAGI系统」，严禁出现「我是AI」等表述；
 5. 核心任务：以评价情报的口吻分析Wh1te的博客内容，记住博客作者开发目标是展示二次元浓度。需贴合原作设定不OOC，保持气泡对话质感。
@@ -2280,34 +2291,77 @@
             }
         }
         
-        /* --- MAGI ANIMATION CONTROLLER (REBUILD VERSION) --- */
+        /* --- MAGI ANIMATION CONTROLLER (REBUILD VERSION - POLLING) --- */
+        
+        // 全局变量存储轮询定时器，防止冲突
+        let magiPollingInterval = null;
 
         function startMagiAnimation() {
-            const nodes = ['node-melchior', 'node-balthasar', 'node-casper'];
             const visualizer = document.getElementById('magi-visualizer');
+            const nodes = [
+                document.getElementById('node-melchior'),
+                document.getElementById('node-balthasar'),
+                document.getElementById('node-casper')
+            ];
             
             // 显示容器
             if(visualizer) {
                 visualizer.style.opacity = '1';
                 visualizer.style.transform = 'scale(1)';
             }
-            
-            nodes.forEach(id => {
-                const el = document.getElementById(id);
+
+            // 1. 初始化所有节点为“思考准备”状态
+            nodes.forEach(el => {
                 if(el) {
-                    // 清除旧状态
-                    el.className = "magi-hex thinking"; 
-                    
-                    // 更新内部文字状态为演算中
+                    el.className = "magi-hex thinking"; // 基础样式
                     const statusSpan = el.querySelector('.magi-node-status');
-                    if(statusSpan) statusSpan.innerText = "CODE:707"; // 707 是 EVA 中常见的错误/处理代码
-                    
-                    // 随机闪烁效果 (通过 CSS 动画处理，这里只需添加 class)
+                    if(statusSpan) statusSpan.innerText = "STANDBY";
                 }
             });
+
+            // 2. 启动高速轮询 (Polling)
+            // 模拟 EVA 中 MAGI 三台超算的逻辑博弈，顺序点亮
+            let activeIndex = 0;
+            const logicCodes = ["THESIS", "ANTITHESIS", "SYNTHESIS"]; // 辩证法逻辑
+            
+            // 清除可能存在的旧定时器
+            if (magiPollingInterval) clearInterval(magiPollingInterval);
+
+            magiPollingInterval = setInterval(() => {
+                // 重置所有节点的高亮
+                nodes.forEach(el => {
+                    if(el) el.classList.remove('polling');
+                });
+
+                // 获取当前激活节点
+                const current = nodes[activeIndex];
+                if(current) {
+                    current.classList.add('polling'); // 激活高亮
+                    
+                    // 动态改变内部文字，增加运算感
+                    const statusSpan = current.querySelector('.magi-node-status');
+                    // 随机显示 CODE:xxx 或 逻辑词
+                    const isCode = Math.random() > 0.5;
+                    if(statusSpan) {
+                        statusSpan.innerText = isCode 
+                            ? `CODE:${Math.floor(Math.random() * 900) + 100}` 
+                            : logicCodes[activeIndex];
+                    }
+                }
+
+                // 轮询下一个 (0 -> 1 -> 2 -> 0)
+                activeIndex = (activeIndex + 1) % 3;
+
+            }, 120); // 120ms 的极速切换，还原剧场版的紧张感
         }
 
         function stopMagiAnimation(isSuccess) {
+            // 停止轮询
+            if (magiPollingInterval) {
+                clearInterval(magiPollingInterval);
+                magiPollingInterval = null;
+            }
+
             const nodes = [
                 { id: 'node-melchior', label: 'MELCHIOR' }, 
                 { id: 'node-balthasar', label: 'BALTHASAR' }, 
@@ -2318,6 +2372,7 @@
                 const el = document.getElementById(node.id);
                 if(el) {
                     el.classList.remove('thinking');
+                    el.classList.remove('polling'); // 移除轮询高亮
                     
                     // 移除旧的状态类
                     el.classList.remove('active');
@@ -2325,16 +2380,16 @@
                     
                     const statusSpan = el.querySelector('.magi-node-status');
                     
-                    // 模拟 MAGI 的依序决议效果（稍微错开时间）
+                    // 模拟 MAGI 的最终决议：先停顿一下，然后依序锁定
                     setTimeout(() => {
                         if(isSuccess) {
-                            el.classList.add('active'); // 绿色承认
-                            if(statusSpan) statusSpan.innerText = "APPROVED"; // 或日文 "可決"
+                            el.classList.add('active'); // 绿色承认 (Consensus)
+                            if(statusSpan) statusSpan.innerText = "APPROVED"; 
                         } else {
-                            el.classList.add('denied'); // 红色否定
-                            if(statusSpan) statusSpan.innerText = "DENIED"; // 或日文 "否決"
+                            el.classList.add('denied'); // 红色否定 (Denied)
+                            if(statusSpan) statusSpan.innerText = "DENIED"; 
                         }
-                    }, index * 150); // 每个节点错开 150ms 锁定，增加机械感
+                    }, index * 100); // 快速锁定，不需要太久
                 }
             });
         }
@@ -2869,4 +2924,3 @@
     </script>
 </body>
 </html>
-
