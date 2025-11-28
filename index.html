@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>WH1TE_LOG | HUMAN_INSTRUMENTALITY</title>
-    <!-- 屏蔽 favicon 404 错误 -->
     <link rel="icon" href="data:,">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@300;500;700;900&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Serif+SC:wght@700;900&display=swap" rel="stylesheet">
@@ -679,24 +678,48 @@
             transition: all 0.1s; /* 极速响应 */
         }
 
-        /* 新增：轮询激活态 (Polling Highlight) */
+        /* 新增：轮询激活态 (Polling Highlight) - REBUILD SCHEME */
         .magi-hex.polling {
-            background: #ffae00 !important; /* EVA 警报橙 */
-            border-color: #ffae00 !important;
-            box-shadow: 0 0 25px rgba(255, 174, 0, 0.8);
             transform: scale(1.05);
             z-index: 20;
+            background: #000 !important; /* 保持黑色背景以突出边框光效 */
         }
 
-        .magi-hex.polling .magi-node-name {
-            color: #000 !important; /* 反白文字 */
-            text-shadow: none;
+        /* Melchior - 科学家 - 逻辑冷青 */
+        #node-melchior.polling {
+            border-color: #00ccff !important;
+            box-shadow: 0 0 15px rgba(0, 204, 255, 0.6), inset 0 0 10px rgba(0, 204, 255, 0.3);
         }
-        
-        .magi-hex.polling .magi-node-status {
-            color: #000 !important;
-            font-weight: 900;
+        #node-melchior.polling .magi-node-name,
+        #node-melchior.polling .magi-node-status {
+            color: #00ccff !important;
+            text-shadow: 0 0 5px #00ccff;
         }
+
+        /* Balthasar - 母亲 - 经典琥珀橙 */
+        #node-balthasar.polling {
+            border-color: #ffae00 !important;
+            box-shadow: 0 0 15px rgba(255, 174, 0, 0.6), inset 0 0 10px rgba(255, 174, 0, 0.3);
+        }
+        #node-balthasar.polling .magi-node-name,
+        #node-balthasar.polling .magi-node-status {
+            color: #ffae00 !important;
+            text-shadow: 0 0 5px #ffae00;
+        }
+
+        /* Casper - 女人 - 偏执洋红 */
+        #node-casper.polling {
+            border-color: #ff0055 !important;
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.6), inset 0 0 10px rgba(255, 0, 85, 0.3);
+        }
+        #node-casper.polling .magi-node-name,
+        #node-casper.polling .magi-node-status {
+            color: #ff0055 !important;
+            text-shadow: 0 0 5px #ff0055;
+        }
+
+        /* 覆盖原来的通用样式 */
+        .magi-hex.polling .magi-node-name { text-shadow: none; }
 
         /* 移除旧的 vibration 动画，改用数据流遮罩 */
         .magi-hex.thinking::after {
@@ -991,24 +1014,17 @@
 </head>
 <body class="antialiased overflow-x-hidden font-sans selection:bg-secondary selection:text-black">
 
-    <!-- 战术光标系统 (多层结构) - 仅在 PC 端显示 -->
     <div id="tactical-cursor">
-        <!-- 主光标 (EVA HUD 风格) -->
         <div id="cursor-main" class="cursor-layer cursor-main">
             <div class="cursor-wrapper">
-                <!-- 中心点 -->
                 <div class="cursor-center"></div>
-                <!-- 十字准星 -->
                 <div class="cursor-cross-v"></div>
                 <div class="cursor-cross-h"></div>
-                <!-- 旋转扫描环 -->
                 <div class="cursor-ring"></div>
-                <!-- 锁定括号 -->
                 <div class="cursor-bracket cb-tl"></div>
                 <div class="cursor-bracket cb-tr"></div>
                 <div class="cursor-bracket cb-bl"></div>
                 <div class="cursor-bracket cb-br"></div>
-                <!-- 文字信息 -->
                 <div class="cursor-info-wrapper">
                     <div class="cursor-mode">STD</div>
                     <div class="cursor-coords">000,000</div>
@@ -1016,7 +1032,6 @@
             </div>
         </div>
         
-        <!-- 拖尾残影 (简化版) -->
         <div id="cursor-trail-1" class="cursor-layer cursor-trail-1">
             <div class="cursor-wrapper">
                 <div class="cursor-center"></div>
@@ -1029,16 +1044,12 @@
         </div>
     </div>
 
-    <!-- Matrix Code Rain Canvas -->
     <canvas id="matrix-bg"></canvas>
     
-    <!-- LCL Fluid Canvas -->
     <canvas id="lcl-bg"></canvas>
 
-    <!-- Rebuild Overlay (Honeycomb Interference) -->
     <div class="rebuild-overlay"></div>
 
-    <!-- 视觉增强 -->
     <div class="cockpit-overlay"></div>
     <div class="cockpit-reticle"></div>
     <div class="cockpit-side-meter meter-left"></div>
@@ -1047,9 +1058,7 @@
     <div class="scan-bar"></div>
     <div id="particles-container"></div>
     
-    <!-- 背景 -->
     <div id="bg-layer">
-        <!-- SVG MAGI Rings - 已修复：现在使用 translate(-50%, -50%) 确保在屏幕正中心 -->
         <svg id="magi-rings" viewBox="0 0 800 800" fill="none" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[130vmax] h-[130vmax] pointer-events-none opacity-30 transition-opacity duration-500" style="filter: drop-shadow(0 0 10px var(--secondary-color));">
             <g stroke="var(--secondary-color)" stroke-width="1.5">
                 <circle cx="400" cy="400" r="150" stroke-dasharray="20 10" class="animate-[spin_25s_linear_infinite]" />
@@ -1067,12 +1076,9 @@
     
     <div id="cursor-glow"></div>
     
-    <!-- 双模态底部状态栏容器 -->
     <div class="bottom-bar-container">
-        <!-- 全息战术数据链 (常驻) -->
         <div id="holo-bar" class="holo-status-bar">
-            <div class="holo-scanner"></div> <!-- 扫描光束 -->
-            <canvas id="holo-wave" class="holo-wave-canvas"></canvas>
+            <div class="holo-scanner"></div> <canvas id="holo-wave" class="holo-wave-canvas"></canvas>
             
             <div class="holo-segment">
                 <div class="holo-hex-deco"></div>
@@ -1081,11 +1087,9 @@
                 <div><span class="holo-label">SYNC</span><span class="holo-val">400%</span></div>
             </div>
             
-            <!-- 滚动容器 -->
             <div class="holo-marquee-container" id="marquee-container">
                 <div class="holo-marquee-wrapper" id="marquee-wrapper">
-                    <!-- JS 将在这里动态插入足够的内容 -->
-                </div>
+                    </div>
             </div>
             
             <div class="holo-segment justify-end">
@@ -1096,7 +1100,6 @@
         </div>
     </div>
 
-    <!-- HUD -->
     <div class="hud-corner hud-tl"></div>
     <div class="hud-corner hud-tr"></div>
     <div class="hud-corner hud-bl"></div>
@@ -1106,7 +1109,6 @@
         <source src="./audio/bgm.mp3" type="audio/mp3">
     </audio>
     
-    <!-- SFX Audio Channels (Tactical Mode) -->
     <audio id="sfx-hover" preload="auto">
          <source src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" type="audio/mp3">
     </audio>
@@ -1114,7 +1116,6 @@
          <source src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" type="audio/mp3">
     </audio>
 
-    <!-- 音乐控制 -->
     <div class="fixed bottom-16 left-8 z-50">
         <div id="sonic-deck" class="flex items-center gap-3 bg-black/60 border border-secondary p-2 pr-4 group hover:shadow-[0_0_30px_var(--secondary-color)] transition-all duration-300 backdrop-blur-md eva-card">
             <canvas id="audio-visualizer" class="absolute bottom-0 left-0 w-full h-full opacity-30 pointer-events-none"></canvas>
@@ -1137,12 +1138,10 @@
         <div class="flex items-center gap-6">
             <div class="flex flex-col">
                 <a href="index.html" class="group w-fit">
-                    <!-- Updated Logo Text -->
                     <span class="text-2xl font-black tracking-tighter leading-none text-white group-hover:text-primary transition-colors italic font-serif" style="font-family: 'Noto Serif SC', serif;">WH1TE.LOG</span>
                 </a>
                 
                 <div class="flex items-center gap-4 mt-2">
-                    <!-- TACTICAL MODE SWITCH -->
                     <div class="tactical-switch" onclick="toggleTacticalMode()">
                         <div class="switch-box">
                             <div class="switch-box-inner"></div>
@@ -1150,7 +1149,6 @@
                         <span>TACTICAL</span>
                     </div>
 
-                    <!-- LIGHT MODE SWITCH -->
                     <div class="tactical-switch" onclick="toggleLightMode()">
                         <div class="switch-box">
                             <div class="switch-box-inner" id="light-mode-indicator"></div>
@@ -1158,7 +1156,6 @@
                         <span>VISUAL</span>
                     </div>
 
-                    <!-- NEW LCL MODE SWITCH -->
                     <div class="tactical-switch tactical-switch-lcl" onclick="toggleLCLMode()">
                         <div class="switch-box" style="border-color: inherit;">
                             <div class="switch-box-inner switch-box-inner-lcl"></div>
@@ -1189,14 +1186,12 @@
             <div class="magi-node w-56 h-12 skew-x-12 ml-24 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold shadow-[0_0_15px_var(--secondary-color)] bg-black/60 backdrop-blur-sm" style="animation-delay: 2s;">CASPER - 3</div>
         </div>
         <div class="space-y-8 animate-pop-in w-full relative z-10 max-w-3xl">
-            <!-- Updated System Status Bar -->
             <div class="flex items-center gap-3 mb-2">
                 <span class="px-3 py-1 bg-secondary text-black font-mono text-[10px] font-black uppercase tracking-widest border border-secondary/50 shadow-[0_0_10px_var(--secondary-color)]">INTERNAL STATE</span>
                 <span class="w-24 h-px bg-secondary/50"></span>
                 <span class="font-mono text-[10px] text-primary typing-cursor">SYNC RATE 400%</span>
             </div>
             
-            <!-- Updated Title Area with NERV Decor -->
             <div class="relative inline-block group">
                 <div class="absolute -top-6 -left-6 w-12 h-12 border-t-2 border-l-2 border-secondary/50 pointer-events-none"></div>
                 <div class="absolute -bottom-4 -right-6 w-12 h-12 border-b-2 border-r-2 border-secondary/50 pointer-events-none"></div>
@@ -1208,7 +1203,6 @@
                 <h1 class="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-none text-stroke-layer absolute top-0 left-0 w-full h-full translate-x-[2px] translate-y-[2px] opacity-50 group-hover:translate-x-[4px] group-hover:translate-y-[4px] transition-transform font-serif text-transparent" style="font-family: 'Noto Serif SC', serif; -webkit-text-stroke: 1px var(--secondary-color);">WH1TE_LOG</h1>
             </div>
 
-            <!-- Updated Subtitle Area -->
             <div class="flex items-center gap-4 pl-4 border-l-4 border-secondary bg-gradient-to-r from-secondary/10 to-transparent py-3 relative overflow-hidden">
                 <div class="absolute inset-0 opacity-10 animate-scan pointer-events-none" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, #000 2px, #000 4px);"></div>
                 
@@ -1237,42 +1231,32 @@
     <main class="max-w-screen-xl mx-auto px-6 md:px-12 pb-32 relative z-20">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-16">
             <aside class="lg:col-span-4 space-y-10 lg:sticky lg:top-32 h-fit">
-                <!-- AI CARD -->
                 <div class="relative z-50">
-                     <!-- 
-                        MAGI TERMINAL OVERLAY 
-                     -->
                      <div id="ai-speech-bubble" class="hidden absolute bottom-full mb-4 left-0 w-full z-[100] animate-pop-in pointer-events-none">
-                        <!-- MAGI Terminal Container -->
                         <div class="magi-terminal-container bg-black/95 border-2 border-secondary p-1 shadow-[0_0_20px_rgba(57,255,20,0.3)] backdrop-blur-md transition-colors duration-500" style="clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);">
-                            <!-- Inner Bezel -->
                             <div class="magi-terminal-border border border-secondary/30 p-3 relative overflow-hidden transition-colors duration-300">
                                 
-                                <!-- Header -->
                                 <div class="flex justify-between items-end mb-2 border-b border-secondary/50 pb-1 relative z-10">
                                     <span class="font-mono text-[10px] font-bold text-secondary/70">MAGI_SYS | V8.0</span>
                                     <span id="magi-status-indicator" class="font-mono text-[9px] text-emergency font-bold animate-pulse">STANDBY</span>
                                 </div>
 
-                                <!-- UPGRADED MAGI VISUALIZER (Rebuild Style) -->
                                 <div id="magi-visualizer" class="magi-hex-container transition-all duration-500 relative z-10" style="opacity: 0;">
                                     <div id="node-melchior" class="magi-hex">
-                                        <span class="magi-node-name">MELCHIOR</span>
-                                        <span class="magi-node-status">1</span>
+                                        <span class="magi-node-name text-[10px]">メルキオール•1</span>
+                                        <span class="magi-node-status">STANDBY</span>
                                     </div>
                                     <div id="node-balthasar" class="magi-hex">
-                                        <span class="magi-node-name">BALTHASAR</span>
-                                        <span class="magi-node-status">2</span>
+                                        <span class="magi-node-name text-[10px]">バルタザール•2</span>
+                                        <span class="magi-node-status">STANDBY</span>
                                     </div>
                                     <div id="node-casper" class="magi-hex">
-                                        <span class="magi-node-name">CASPER</span>
-                                        <span class="magi-node-status">3</span>
+                                        <span class="magi-node-name text-[10px]">カスパー•3</span>
+                                        <span class="magi-node-status">STANDBY</span>
                                     </div>
                                 </div>
 
-                                <!-- Text Output -->
                                 <div class="relative min-h-[3em] z-10">
-                                    <!-- Decos -->
                                     <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-secondary opacity-50"></div>
                                     <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-secondary opacity-50"></div>
                                     
@@ -1282,19 +1266,14 @@
                         </div>
                     </div>
 
-                    <!-- AI CARD CONTAINER -->
                     <div id="ai-card" class="eva-card ai-card-container cursor-pointer group hover:bg-secondary/10 transition-colors holo-container">
                         <div class="eva-glare"></div>
-                        <!-- 青色扫描线覆盖层 -->
                         <div class="holo-overlay"></div>
-                        <!-- 暴怒模式红色覆盖 -->
                         <div class="rage-overlay"></div>
                         
                         <div class="w-full relative aspect-[4/5] overflow-hidden bg-black/40">
-                            <!-- 立绘图片 -->
                             <img id="ai-avatar-display" src="./images/ai-assistant.jpg" onerror="this.src='./images/ai-assistant.jpg'" alt="AI" class="ai-avatar-img w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity mix-blend-lighten filter contrast-125 grayscale group-hover:grayscale-0 duration-500 holo-glitch-effect holo-breathing relative z-10">
                             
-                            <!-- NEW Sync Rate Waveform Canvas -->
                             <canvas id="sync-wave-canvas"></canvas>
                             
                             <div class="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent z-20"></div>
@@ -1309,7 +1288,6 @@
                         </div>
                     </div>
                     
-                    <!-- AI Chat Input (New) -->
                     <div id="magi-input-container" class="mt-4 relative group">
                         <div class="absolute -top-2 left-2 text-[8px] font-mono text-secondary bg-bg px-1 z-10">MAGI_LINK</div>
                         <div class="flex border border-secondary/50 bg-black/20 backdrop-blur-sm">
@@ -1321,11 +1299,9 @@
                     </div>
                 </div>
                 
-                <!-- Anime Feed (UPGRADED: TACTICAL MONITOR STYLE) -->
                 <div class="">
                     <div class="eva-card p-0 relative overflow-hidden flex flex-col" style="border-width: 2px;">
                         <div class="eva-glare"></div>
-                        <!-- Tactical Header -->
                         <div class="bg-black/40 border-b border-secondary/30 p-3 flex justify-between items-center relative">
                             <div class="absolute top-0 left-0 w-2 h-2 bg-secondary"></div>
                             <div class="absolute top-0 right-0 w-2 h-2 bg-secondary"></div>
@@ -1337,18 +1313,13 @@
                             <span id="anime-date" class="text-primary text-[10px] font-mono border border-primary/30 px-2 py-0.5 bg-primary/5">LOADING...</span>
                         </div>
                         
-                        <!-- NEW Weekly Timeline (Monolith Style Buttons) -->
                         <div id="week-selector" class="flex justify-between px-2 py-2 bg-black/20 overflow-x-auto no-scrollbar" style="scrollbar-width: none;">
-                            <!-- Generated by JS -->
-                        </div>
+                            </div>
 
-                        <!-- Data List Container -->
                         <div class="bg-black/10 relative min-h-[150px]">
-                            <!-- Grid Background -->
                             <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); background-size: 10px 10px;"></div>
                             
                             <div id="anime-list" class="space-y-1 p-2 max-h-96 overflow-y-auto custom-scrollbar relative">
-                                <!-- Loading State -->
                                 <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-50 space-y-2">
                                     <div class="w-8 h-8 border-2 border-secondary border-t-transparent rounded-full animate-spin"></div>
                                     <span class="font-mono text-[9px] tracking-widest text-secondary">CONNECTING TO MAGI...</span>
@@ -1356,7 +1327,6 @@
                             </div>
                         </div>
                         
-                        <!-- Footer Info -->
                         <div class="p-2 border-t border-secondary/30 bg-black/30 flex justify-between text-[8px] font-mono text-gray-500">
                             <span class="text-secondary/50">DATA_SOURCE: BANGUMI.TV</span>
                             <span id="update-time">LAST_SYNC: 0000</span>
@@ -1364,7 +1334,6 @@
                     </div>
                 </div>
 
-                <!-- Social Uplink (Optimized Animation) -->
                 <div class="eva-card p-6 relative overflow-hidden">
                      <div class="eva-glare"></div>
                      <div class="eva-header">
@@ -1372,7 +1341,6 @@
                         <span class="w-2 h-2 bg-secondary animate-pulse"></span>
                      </div>
                      <div class="grid grid-cols-3 gap-3">
-                        <!-- GitHub -->
                         <a href="https://github.com/whte97284-hue/wh1te-blog-project/tree/main" target="_blank" class="social-btn group h-16 bg-white/5 border border-white/10 flex items-center justify-center cursor-pointer">
                             <div class="social-shutter"></div>
                             <span class="social-text font-mono text-[10px] tracking-widest text-gray-400 group-hover:text-secondary relative z-10">GH_REPO</span>
@@ -1381,7 +1349,6 @@
                             </div>
                         </a>
                         
-                        <!-- Bilibili -->
                         <a href="https://space.bilibili.com/551898501" target="_blank" class="social-btn group h-16 bg-white/5 border border-white/10 flex items-center justify-center cursor-pointer">
                             <div class="social-shutter" style="background: #ff69b4;"></div>
                             <span class="social-text font-mono text-[10px] tracking-widest text-gray-400 group-hover:text-[#ff69b4] relative z-10">BL_SPACE</span>
@@ -1396,7 +1363,6 @@
                             </div>
                         </a>
                         
-                        <!-- Douyin -->
                         <a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw?from_tab_name=main" target="_blank" class="social-btn group h-16 bg-white/5 border border-white/10 flex items-center justify-center cursor-pointer">
                             <div class="social-shutter" style="background: white;"></div>
                             <span class="social-text font-mono text-[10px] tracking-widest text-gray-400 group-hover:text-white relative z-10">DY_USER</span>
@@ -1423,7 +1389,6 @@
                 </div>
             </aside>
 
-            <!-- 右侧内容区 -->
             <div class="lg:col-span-8 space-y-10">
                 <div class="flex items-center justify-between border-b-2 border-white/10 pb-4">
                     <h2 class="text-3xl font-black tracking-tighter text-white glitch-text" data-text="DATA_LOGS">DATA_LOGS</h2>
@@ -1456,14 +1421,11 @@
         </div>
     </main>
 
-    <!-- Anime Detail Modal (Added) -->
     <div id="anime-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-300" onclick="if(event.target === this) closeAnimeModal()">
         <div class="eva-card w-[90%] max-w-2xl bg-bg border border-secondary relative p-6 transform scale-95 transition-transform duration-300" style="box-shadow: 0 0 50px rgba(var(--secondary-color), 0.2);">
-            <!-- Corner decos -->
             <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-primary"></div>
             <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-primary"></div>
             
-            <!-- Header -->
             <div class="flex justify-between items-center border-b border-white/10 pb-4 mb-6">
                 <div class="flex items-center gap-2">
                     <div class="w-2 h-2 bg-secondary animate-pulse"></div>
@@ -1473,7 +1435,6 @@
             </div>
 
             <div class="flex flex-col md:flex-row gap-6">
-                <!-- Cover Image -->
                 <div class="w-full md:w-1/3 shrink-0">
                     <div class="relative aspect-[2/3] overflow-hidden border border-white/10 group">
                         <img id="modal-cover" src="" alt="Cover" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
@@ -1482,7 +1443,6 @@
                     </div>
                 </div>
 
-                <!-- Info -->
                 <div class="flex-1 space-y-4">
                     <div>
                         <div class="font-mono text-[10px] text-gray-500 mb-1">SUBJECT_ID: <span id="modal-id" class="text-primary">00000</span></div>
@@ -2310,19 +2270,19 @@
                 visualizer.style.transform = 'scale(1)';
             }
 
-            // 1. 初始化所有节点为“思考准备”状态
+            // 1. 初始化所有节点为“待机”状态
             nodes.forEach(el => {
                 if(el) {
                     el.className = "magi-hex thinking"; // 基础样式
                     const statusSpan = el.querySelector('.magi-node-status');
-                    if(statusSpan) statusSpan.innerText = "STANDBY";
+                    if(statusSpan) statusSpan.innerText = "待機中"; // Japanese Standby
                 }
             });
 
             // 2. 启动高速轮询 (Polling)
-            // 模拟 EVA 中 MAGI 三台超算的逻辑博弈，顺序点亮
+            // 还原 EVA 剧场版中的辩证法逻辑：提坦 (Thesis) -> 反提坦 (Antithesis) -> 综合 (Synthesis)
             let activeIndex = 0;
-            const logicCodes = ["THESIS", "ANTITHESIS", "SYNTHESIS"]; // 辩证法逻辑
+            const logicCodes = ["提題", "反提題", "統合"]; // Thesis, Antithesis, Synthesis (Japanese Philosophy Terms)
             
             // 清除可能存在的旧定时器
             if (magiPollingInterval) clearInterval(magiPollingInterval);
@@ -2340,11 +2300,11 @@
                     
                     // 动态改变内部文字，增加运算感
                     const statusSpan = current.querySelector('.magi-node-status');
-                    // 随机显示 CODE:xxx 或 逻辑词
-                    const isCode = Math.random() > 0.5;
+                    // 随机显示 CODE:xxx 或 逻辑词，增加数据流动的错乱感
+                    const isCode = Math.random() > 0.6;
                     if(statusSpan) {
                         statusSpan.innerText = isCode 
-                            ? `CODE:${Math.floor(Math.random() * 900) + 100}` 
+                            ? `CODE:${Math.floor(Math.random() * 999)}` 
                             : logicCodes[activeIndex];
                     }
                 }
@@ -2352,7 +2312,7 @@
                 // 轮询下一个 (0 -> 1 -> 2 -> 0)
                 activeIndex = (activeIndex + 1) % 3;
 
-            }, 120); // 120ms 的极速切换，还原剧场版的紧张感
+            }, 100); // 100ms 极速切换，还原剧场版的高速思考感
         }
 
         function stopMagiAnimation(isSuccess) {
@@ -2363,13 +2323,12 @@
             }
 
             const nodes = [
-                { id: 'node-melchior', label: 'MELCHIOR' }, 
-                { id: 'node-balthasar', label: 'BALTHASAR' }, 
-                { id: 'node-casper', label: 'CASPER' }
+                document.getElementById('node-melchior'),
+                document.getElementById('node-balthasar'),
+                document.getElementById('node-casper')
             ];
 
-            nodes.forEach((node, index) => {
-                const el = document.getElementById(node.id);
+            nodes.forEach((el, index) => {
                 if(el) {
                     el.classList.remove('thinking');
                     el.classList.remove('polling'); // 移除轮询高亮
@@ -2380,16 +2339,16 @@
                     
                     const statusSpan = el.querySelector('.magi-node-status');
                     
-                    // 模拟 MAGI 的最终决议：先停顿一下，然后依序锁定
+                    // 模拟 MAGI 的最终决议：依序锁定
                     setTimeout(() => {
                         if(isSuccess) {
                             el.classList.add('active'); // 绿色承认 (Consensus)
-                            if(statusSpan) statusSpan.innerText = "APPROVED"; 
+                            if(statusSpan) statusSpan.innerText = "可決"; // Approved
                         } else {
                             el.classList.add('denied'); // 红色否定 (Denied)
-                            if(statusSpan) statusSpan.innerText = "DENIED"; 
+                            if(statusSpan) statusSpan.innerText = "拒絶"; // Denied
                         }
-                    }, index * 100); // 快速锁定，不需要太久
+                    }, index * 120); // 依次锁定的节奏感
                 }
             });
         }
@@ -2698,27 +2657,22 @@
 
                     return `
                     <div class="anime-card-tech flex items-center gap-3 p-2 group cursor-pointer anime-item-enter relative overflow-hidden" style="animation-delay: ${index * 0.05}s" onclick='openAnimeModal("${title}", ${score}, "${image}", ${item.id})'>
-                        <!-- Selection Marker (Hidden by default, shown on hover) -->
                         <div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         
-                        <!-- Hex Image Container -->
                         <div class="relative w-12 h-12 shrink-0 ml-1">
                             <div class="w-full h-full relative overflow-hidden transition-transform duration-500 group-hover:scale-105" style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); background: rgba(255,255,255,0.1);">
                                 <img src="${image}" class="w-full h-full object-cover transition-transform duration-500 filter grayscale group-hover:grayscale-0" onerror="this.onerror=null; this.src='https://dummyimage.com/100x100/000/fff&text=NO+IMG';">
                                 <div class="absolute inset-0 bg-secondary/10 group-hover:bg-transparent transition-colors"></div>
                             </div>
-                            <!-- Rotating Ring on Hover -->
                             <div class="absolute -inset-1 border border-dashed border-secondary/50 rounded-full opacity-0 group-hover:opacity-100 animate-[spin_4s_linear_infinite]"></div>
                         </div>
 
-                        <!-- Info Block -->
                         <div class="flex-1 min-w-0 flex flex-col justify-center">
                             <div class="flex justify-between items-center mb-1">
                                 <span class="text-white font-bold text-[10px] truncate font-sans tracking-tight group-hover:text-secondary transition-colors">${title}</span>
                                 <span class="font-mono text-[8px] text-secondary border border-secondary/30 px-1 bg-black/50">PATTERN:${pattern}</span>
                             </div>
                             
-                            <!-- Sync Rate Visualizer -->
                             <div class="flex items-center gap-2">
                                 <span class="text-[8px] font-mono text-gray-500">SYNC</span>
                                 <div class="flex-1 h-1.5 bg-black/80 border border-white/10 relative overflow-hidden">
