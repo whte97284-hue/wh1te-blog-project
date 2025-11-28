@@ -608,24 +608,25 @@
 
         /* --- MAGI SYSTEM VISUALIZER REBUILD [Evangelion 3.0+1.0 Style] --- */
 
-        /* 容器布局优化 */
+        /* 容器布局优化：宽距撑满 */
         .magi-hex-container {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 4px;
-            margin-bottom: 10px;
-            perspective: 1000px; /* 为3D翻转做准备 */
+            justify-content: space-between; /* 确保撑满两端 */
+            gap: 6px; /* 间隙微调 */
+            width: 100%; /* 强制占满宽度 */
+            margin-bottom: 12px;
+            perspective: 1000px;
         }
 
-        /* 节点基础样式 */
+        /* 节点基础样式：自适应宽度 */
         .magi-hex {
             position: relative;
-            width: 60px;
-            height: 28px;
+            flex: 1; /* 核心：自动伸缩填充 */
+            height: 36px; /* 稍微增高以容纳状态信息 */
             background: rgba(0, 0, 0, 0.8);
             border: 1px solid var(--secondary-color);
-            /* 还原 Rebuild 风格的倒角矩形而非纯六边形，更贴合界面 UI */
+            /* 还原 Rebuild 风格的倒角矩形 */
             clip-path: polygon(0 0, 100% 0, 100% 70%, 85% 100%, 0 100%); 
             display: flex;
             flex-direction: column;
@@ -646,10 +647,10 @@
         }
 
         .magi-node-status {
-            font-family: 'Noto Sans JP', sans-serif; /* 用于显示“否定/承认” */
+            font-family: 'Noto Sans JP', sans-serif;
             font-size: 6px;
             font-weight: 700;
-            margin-top: 1px;
+            margin-top: 2px;
             z-index: 2;
             opacity: 0.7;
             color: var(--secondary-color);
@@ -663,7 +664,7 @@
             background: repeating-linear-gradient(
                 0deg,
                 transparent 0px,
-                rgba(57, 255, 20, 0.1) 1px, /* var(--secondary-color) with opacity */
+                rgba(57, 255, 20, 0.1) 1px, 
                 transparent 2px
             );
             z-index: 0;
@@ -672,17 +673,20 @@
         }
 
         /* --- 状态：思考中 (High-Speed Deliberation) --- */
-        /* 核心：模拟 CPU 满载时的高频噪点和逻辑震荡 */
         .magi-hex.thinking {
             background: #000;
-            border-color: #ffae00; /* 思考时转为警示橙色 */
+            border-color: #ffae00; /* 警示橙色 */
             box-shadow: 0 0 10px rgba(255, 174, 0, 0.3);
             animation: magi-logic-vibration 0.1s infinite;
         }
 
         .magi-hex.thinking .magi-node-name {
             color: #ffae00;
-            animation: text-scramble 0.2s steps(2) infinite; /* 文字乱码跳动 */
+            animation: text-scramble 0.2s steps(2) infinite;
+        }
+        
+        .magi-hex.thinking .magi-node-status {
+            color: #ffae00;
         }
 
         .magi-hex.thinking::after {
@@ -696,11 +700,11 @@
                 rgba(255, 174, 0, 0.2) 5px,
                 rgba(255, 174, 0, 0.2) 10px
             );
-            animation: data-stream-scroll 2s linear infinite; /* 背景数据流 */
+            animation: data-stream-scroll 2s linear infinite;
             z-index: 1;
         }
 
-        /* 错开三个节点的思考频率，制造不同步的真实感 */
+        /* 错开三个节点的思考频率 */
         #node-melchior.thinking { animation-duration: 0.12s; }
         #node-balthasar.thinking { animation-duration: 0.09s; }
         #node-casper.thinking { animation-duration: 0.15s; }
@@ -711,6 +715,7 @@
             border-color: var(--secondary-color);
             box-shadow: 0 0 20px var(--secondary-color);
             transform: scale(1.05);
+            z-index: 10;
         }
         .magi-hex.active .magi-node-name,
         .magi-hex.active .magi-node-status {
@@ -730,9 +735,7 @@
             color: #fff;
         }
 
-        /* --- 关键帧动画 --- */
-
-        /* 逻辑震荡：模拟电压不稳/高速运算 */
+        /* 动画关键帧 */
         @keyframes magi-logic-vibration {
             0% { transform: translate(0, 0); opacity: 1; }
             25% { transform: translate(0.5px, 0.5px); opacity: 0.9; }
@@ -741,20 +744,18 @@
             100% { transform: translate(0, 0); opacity: 1; }
         }
 
-        /* 数据流滚动 */
         @keyframes data-stream-scroll {
             0% { transform: translateY(0); }
             100% { transform: translateY(-20px); }
         }
 
-        /* 否决时的剧烈抖动 */
         @keyframes rejection-shake {
             0%, 100% { transform: translateX(0); }
             20%, 60% { transform: translateX(-5px); }
             40%, 80% { transform: translateX(5px); }
         }
 
-        /* 亮色模式适配 (保持高对比度) */
+        /* 亮色模式适配 */
         [data-mode="light"] .magi-hex {
             background: rgba(255, 255, 255, 0.9);
             border-color: #000;
