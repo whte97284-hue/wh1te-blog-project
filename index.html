@@ -606,67 +606,197 @@
             100% { box-shadow: 0 0 30px var(--primary-color), 0 0 50px var(--secondary-color); border-color: var(--secondary-color); }
         }
 
-        /* --- New MAGI Hex Node Styles (Replaced old mini-nodes) --- */
+        /* --- MAGI SYSTEM VISUALIZER REBUILD [Evangelion 3.0+1.0 Style] --- */
+
+        /* 容器布局优化 */
         .magi-hex-container {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 2px; /* 更紧凑的布局 */
-            margin-bottom: 8px;
-            opacity: 0.8;
-            transition: all 0.3s;
-        }
-        
-        .magi-hex {
-            width: 60px;
-            height: 24px;
-            background: rgba(0,0,0,0.6);
-            border: 1px solid var(--secondary-color);
-            color: var(--secondary-color);
-            font-family: 'JetBrains Mono';
-            font-size: 8px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            /* Hexagon Shape via clip-path */
-            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
-            transition: all 0.2s;
-            box-shadow: inset 0 0 5px rgba(var(--secondary-color), 0.2);
-        }
-        
-        /* 状态颜色 */
-        .magi-hex.active {
-            background: var(--secondary-color);
-            color: #000;
-            box-shadow: 0 0 15px var(--secondary-color);
-            border-color: transparent;
-        }
-        .magi-hex.denied {
-            background: #ff0000;
-            color: #fff;
-            border-color: #ff0000;
-            box-shadow: 0 0 15px #ff0000;
-        }
-        
-        /* --- MAGI POLLING ANIMATION (Thinking State) --- */
-        /* 核心修改：使用关键帧实现轮询闪烁 */
-        @keyframes magi-poll {
-            0% { background: rgba(0,0,0,0.6); border-color: var(--secondary-color); color: var(--secondary-color); box-shadow: none; transform: scale(1); }
-            30% { background: #ffa500; border-color: #fff; color: #fff; box-shadow: 0 0 15px #ffa500; transform: scale(1.05); } /* 橙色高亮 */
-            100% { background: rgba(0,0,0,0.6); border-color: var(--secondary-color); color: var(--secondary-color); box-shadow: none; transform: scale(1); }
+            gap: 4px;
+            margin-bottom: 10px;
+            perspective: 1000px; /* 为3D翻转做准备 */
         }
 
+        /* 节点基础样式 */
+        .magi-hex {
+            position: relative;
+            width: 60px;
+            height: 28px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--secondary-color);
+            /* 还原 Rebuild 风格的倒角矩形而非纯六边形，更贴合界面 UI */
+            clip-path: polygon(0 0, 100% 0, 100% 70%, 85% 100%, 0 100%); 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        /* 节点内的文字排版 */
+        .magi-node-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8px;
+            font-weight: 800;
+            line-height: 1;
+            z-index: 2;
+            color: var(--secondary-color);
+        }
+
+        .magi-node-status {
+            font-family: 'Noto Sans JP', sans-serif; /* 用于显示“否定/承认” */
+            font-size: 6px;
+            font-weight: 700;
+            margin-top: 1px;
+            z-index: 2;
+            opacity: 0.7;
+            color: var(--secondary-color);
+        }
+
+        /* 背景扫描线纹理 */
+        .magi-hex::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent 0px,
+                rgba(57, 255, 20, 0.1) 1px, /* var(--secondary-color) with opacity */
+                transparent 2px
+            );
+            z-index: 0;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* --- 状态：思考中 (High-Speed Deliberation) --- */
+        /* 核心：模拟 CPU 满载时的高频噪点和逻辑震荡 */
         .magi-hex.thinking {
-            animation: magi-poll 0.9s infinite ease-in-out; /* 总循环时间 */
+            background: #000;
+            border-color: #ffae00; /* 思考时转为警示橙色 */
+            box-shadow: 0 0 10px rgba(255, 174, 0, 0.3);
+            animation: magi-logic-vibration 0.1s infinite;
+        }
+
+        .magi-hex.thinking .magi-node-name {
+            color: #ffae00;
+            animation: text-scramble 0.2s steps(2) infinite; /* 文字乱码跳动 */
+        }
+
+        .magi-hex.thinking::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 5px,
+                rgba(255, 174, 0, 0.2) 5px,
+                rgba(255, 174, 0, 0.2) 10px
+            );
+            animation: data-stream-scroll 2s linear infinite; /* 背景数据流 */
+            z-index: 1;
+        }
+
+        /* 错开三个节点的思考频率，制造不同步的真实感 */
+        #node-melchior.thinking { animation-duration: 0.12s; }
+        #node-balthasar.thinking { animation-duration: 0.09s; }
+        #node-casper.thinking { animation-duration: 0.15s; }
+
+        /* --- 状态：决议一致 (Consensus) --- */
+        .magi-hex.active {
+            background: var(--secondary-color);
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 20px var(--secondary-color);
+            transform: scale(1.05);
+        }
+        .magi-hex.active .magi-node-name,
+        .magi-hex.active .magi-node-status {
+            color: #000; /* 反白显示 */
+            text-shadow: none;
+        }
+
+        /* --- 状态：否决 (Denied) --- */
+        .magi-hex.denied {
+            background: #ff0000;
+            border-color: #ff0000;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+            animation: rejection-shake 0.4s ease-in-out;
+        }
+        .magi-hex.denied .magi-node-name,
+        .magi-hex.denied .magi-node-status {
+            color: #fff;
+        }
+
+        /* --- 关键帧动画 --- */
+
+        /* 逻辑震荡：模拟电压不稳/高速运算 */
+        @keyframes magi-logic-vibration {
+            0% { transform: translate(0, 0); opacity: 1; }
+            25% { transform: translate(0.5px, 0.5px); opacity: 0.9; }
+            50% { transform: translate(-0.5px, -0.5px); opacity: 1; }
+            75% { transform: translate(-0.5px, 0.5px); opacity: 0.9; }
+            100% { transform: translate(0, 0); opacity: 1; }
+        }
+
+        /* 数据流滚动 */
+        @keyframes data-stream-scroll {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-20px); }
+        }
+
+        /* 否决时的剧烈抖动 */
+        @keyframes rejection-shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+
+        /* 亮色模式适配 (保持高对比度) */
+        [data-mode="light"] .magi-hex {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: #000;
+        }
+        [data-mode="light"] .magi-node-name { color: #000; }
+        [data-mode="light"] .magi-hex.thinking {
+            background: #fff;
+            border-color: #ffae00;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
         }
         
-        /* 错开动画时间，形成轮询效果 */
-        #node-melchior.thinking { animation-delay: 0s; }
-        #node-balthasar.thinking { animation-delay: 0.3s; }
-        #node-casper.thinking { animation-delay: 0.6s; }
+        /* --- Speech Bubble Processing State --- */
+        .ai-speech-bubble-processing {
+            position: relative;
+        }
+        .ai-speech-bubble-processing::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent 0%,
+                rgba(var(--secondary-color), 0.1) 1px,
+                transparent 2px
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 0;
+            animation: processing-scan 2s linear infinite;
+        }
+        .ai-speech-bubble-processing .magi-terminal-container {
+            animation: border-alert-pulse 1s infinite alternate;
+        }
         
+        @keyframes processing-scan {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 100%; }
+        }
+        @keyframes border-alert-pulse {
+            0% { border-color: rgba(var(--secondary-color), 0.5); box-shadow: 0 0 10px rgba(var(--secondary-color), 0.1); }
+            100% { border-color: var(--primary-color); box-shadow: 0 0 20px rgba(var(--primary-color), 0.4); }
+        }
 
         /* --- Sync Rate Waveform Canvas --- */
         #sync-wave-canvas {
@@ -1102,25 +1232,34 @@
                      -->
                      <div id="ai-speech-bubble" class="hidden absolute bottom-full mb-4 left-0 w-full z-[100] animate-pop-in pointer-events-none">
                         <!-- MAGI Terminal Container -->
-                        <div class="bg-black/95 border-2 border-secondary p-1 shadow-[0_0_20px_rgba(57,255,20,0.3)] backdrop-blur-md" style="clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);">
+                        <div class="magi-terminal-container bg-black/95 border-2 border-secondary p-1 shadow-[0_0_20px_rgba(57,255,20,0.3)] backdrop-blur-md transition-colors duration-500" style="clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);">
                             <!-- Inner Bezel -->
-                            <div class="border border-secondary/30 p-3 relative overflow-hidden">
+                            <div class="magi-terminal-border border border-secondary/30 p-3 relative overflow-hidden transition-colors duration-300">
                                 
                                 <!-- Header -->
-                                <div class="flex justify-between items-end mb-2 border-b border-secondary/50 pb-1">
+                                <div class="flex justify-between items-end mb-2 border-b border-secondary/50 pb-1 relative z-10">
                                     <span class="font-mono text-[10px] font-bold text-secondary/70">MAGI_SYS | V8.0</span>
                                     <span id="magi-status-indicator" class="font-mono text-[9px] text-emergency font-bold animate-pulse">STANDBY</span>
                                 </div>
 
-                                <!-- UPGRADED MAGI VISUALIZER (Hex Nodes) -->
-                                <div id="magi-visualizer" class="magi-hex-container transition-all duration-500">
-                                    <div id="node-melchior" class="magi-hex">MELCHIOR</div>
-                                    <div id="node-balthasar" class="magi-hex">BALTHASAR</div>
-                                    <div id="node-casper" class="magi-hex">CASPER</div>
+                                <!-- UPGRADED MAGI VISUALIZER (Rebuild Style) -->
+                                <div id="magi-visualizer" class="magi-hex-container transition-all duration-500 relative z-10" style="opacity: 0;">
+                                    <div id="node-melchior" class="magi-hex">
+                                        <span class="magi-node-name">MELCHIOR</span>
+                                        <span class="magi-node-status">1</span>
+                                    </div>
+                                    <div id="node-balthasar" class="magi-hex">
+                                        <span class="magi-node-name">BALTHASAR</span>
+                                        <span class="magi-node-status">2</span>
+                                    </div>
+                                    <div id="node-casper" class="magi-hex">
+                                        <span class="magi-node-name">CASPER</span>
+                                        <span class="magi-node-status">3</span>
+                                    </div>
                                 </div>
 
                                 <!-- Text Output -->
-                                <div class="relative min-h-[3em]">
+                                <div class="relative min-h-[3em] z-10">
                                     <!-- Decos -->
                                     <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-secondary opacity-50"></div>
                                     <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-secondary opacity-50"></div>
@@ -2028,6 +2167,9 @@
             
             /* Show Bubble immediately for animation */
             bubble.classList.remove('hidden');
+            /* Add processing class for new scan effects */
+            bubble.classList.add('ai-speech-bubble-processing');
+
             textEl.innerText = "MAGI SYSTEM DELIBERATION IN PROGRESS...";
             
             /* Start MAGI Polling Animation */
@@ -2096,6 +2238,9 @@
 
             /* 3. Stop Animation and Show Result */
             stopMagiAnimation(success);
+            
+            /* Remove processing class */
+            bubble.classList.remove('ai-speech-bubble-processing');
 
             if (!success) {
                 console.error("All MAGI nodes offline.");
@@ -2134,35 +2279,61 @@
             }
         }
         
+        /* --- MAGI ANIMATION CONTROLLER (REBUILD VERSION) --- */
+
         function startMagiAnimation() {
             const nodes = ['node-melchior', 'node-balthasar', 'node-casper'];
             const visualizer = document.getElementById('magi-visualizer');
-            if(visualizer) visualizer.style.opacity = '1';
             
-            /* Clear any existing style */
+            // 显示容器
+            if(visualizer) {
+                visualizer.style.opacity = '1';
+                visualizer.style.transform = 'scale(1)';
+            }
+            
             nodes.forEach(id => {
                 const el = document.getElementById(id);
                 if(el) {
-                    /* Reset to base + thinking state */
+                    // 清除旧状态
                     el.className = "magi-hex thinking"; 
+                    
+                    // 更新内部文字状态为演算中
+                    const statusSpan = el.querySelector('.magi-node-status');
+                    if(statusSpan) statusSpan.innerText = "CODE:707"; // 707 是 EVA 中常见的错误/处理代码
+                    
+                    // 随机闪烁效果 (通过 CSS 动画处理，这里只需添加 class)
                 }
             });
         }
 
         function stopMagiAnimation(isSuccess) {
-            const nodes = ['node-melchior', 'node-balthasar', 'node-casper'];
-            nodes.forEach(id => {
-                const el = document.getElementById(id);
+            const nodes = [
+                { id: 'node-melchior', label: 'MELCHIOR' }, 
+                { id: 'node-balthasar', label: 'BALTHASAR' }, 
+                { id: 'node-casper', label: 'CASPER' }
+            ];
+
+            nodes.forEach((node, index) => {
+                const el = document.getElementById(node.id);
                 if(el) {
                     el.classList.remove('thinking');
-                    el.classList.remove('active');
-                    el.classList.remove('denied'); /* Clear previous state */
                     
-                    if(isSuccess) {
-                        el.classList.add('active'); /* All Green */
-                    } else {
-                        el.classList.add('denied'); /* All Red */
-                    }
+                    // 移除旧的状态类
+                    el.classList.remove('active');
+                    el.classList.remove('denied');
+                    
+                    const statusSpan = el.querySelector('.magi-node-status');
+                    
+                    // 模拟 MAGI 的依序决议效果（稍微错开时间）
+                    setTimeout(() => {
+                        if(isSuccess) {
+                            el.classList.add('active'); // 绿色承认
+                            if(statusSpan) statusSpan.innerText = "APPROVED"; // 或日文 "可決"
+                        } else {
+                            el.classList.add('denied'); // 红色否定
+                            if(statusSpan) statusSpan.innerText = "DENIED"; // 或日文 "否決"
+                        }
+                    }, index * 150); // 每个节点错开 150ms 锁定，增加机械感
                 }
             });
         }
@@ -2697,4 +2868,3 @@
     </script>
 </body>
 </html>
-
