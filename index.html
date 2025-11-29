@@ -2748,83 +2748,139 @@ EVA术语：同步率、AT力场、LCL浓度、模式蓝色、神经连接、人
         }
 
         /* ==========================================================================
-           UPGRADED ANIME DATA FETCH & WEEKLY TIMELINE (REPAIRED)
+           UPGRADED ANIME DATA FETCH & LOCAL CACHE SYSTEM
+           功能：API 请求、本地缓存(6小时)、收藏系统
            ========================================================================== */
         
-        /* NERV DATABASE (FALLBACK MOCK DATA)
-           This ensures the UI is never empty even if the API is down.
-           Structure mirrors the Bangumi Calendar API.
-        */
-        const FALLBACK_CALENDAR = [
-            { weekday: { id: 1 }, items: [{ id: 1, name: "新世纪福音战士", rating: { score: 9.8 }, images: { large: "https://lain.bgm.tv/pic/cover/l/70/ec/265_G213C.jpg" } }] },
-            { weekday: { id: 2 }, items: [{ id: 2, name: "命运石之门", rating: { score: 9.5 }, images: { large: "https://lain.bgm.tv/pic/cover/l/74/4e/4970_iO00o.jpg" } }] },
-            { weekday: { id: 3 }, items: [{ id: 3, name: "边缘行者", rating: { score: 9.2 }, images: { large: "https://lain.bgm.tv/pic/cover/l/56/66/302593_d333H.jpg" } }] },
-            { weekday: { id: 4 }, items: [{ id: 4, name: "EVA: 终", rating: { score: 8.9 }, images: { large: "https://lain.bgm.tv/pic/cover/l/42/97/34524_2Fj7j.jpg" } }] },
-            { weekday: { id: 5 }, items: [{ id: 5, name: "86 -不存在的战区-", rating: { score: 9.0 }, images: { large: "https://lain.bgm.tv/pic/cover/l/10/7c/315183_R6I33.jpg" } }] },
-            { weekday: { id: 6 }, items: [{ id: 6, name: "孤独摇滚!", rating: { score: 9.3 }, images: { large: "https://lain.bgm.tv/pic/cover/l/b8/1d/363650_h4303.jpg" } }] },
-            { weekday: { id: 7 }, items: [{ id: 7, name: "进击的巨人", rating: { score: 9.6 }, images: { large: "https://lain.bgm.tv/pic/cover/l/4d/95/67448_850pa.jpg" } }] }
-        ];
+        // 配置常量
+        const CACHE_KEY = 'nerv_anime_data_v2';      // 数据缓存键
+        const CACHE_TIME_KEY = 'nerv_anime_timestamp'; // 时间戳键
+        const FAV_KEY = 'nerv_priority_targets';     // 收藏列表键
+        const CACHE_DURATION = 6 * 60 * 60 * 1000;   // 缓存有效期：6小时
 
+        // 状态变量
         let animeCalendarData = [];
-        const weekMap = { 1: "MON", 2: "TUE", 3: "WED", 4: "THU", 5: "FRI", 6: "SAT", 7: "SUN" };
         let currentSelectedDay = null;
+        const weekMap = { 1: "MON", 2: "TUE", 3: "WED", 4: "THU", 5: "FRI", 6: "SAT", 7: "SUN", 8: "PRIORITY" };
 
-        /* Proxy Chain for better stability */
+        /* 1. 收藏系统逻辑 (Priority Targets) */
+        function getFavorites() {
+            const saved = localStorage.getItem(FAV_KEY);
+            return saved ? JSON.parse(saved) : [];
+        }
+
+        function toggleAnimeFavorite(event, id) {
+            // 阻止冒泡，防止触发卡片点击打开详情
+            event.stopPropagation();
+            
+            const btn = event.currentTarget;
+            let favs = getFavorites();
+            const index = favs.indexOf(id);
+            
+            if (index === -1) {
+                // 添加收藏
+                favs.push(id);
+                btn.classList.add('text-yellow-400');
+                btn.classList.remove('text-gray-600');
+                // 播放音效
+                const clickSfx = document.getElementById('sfx-click');
+                if(clickSfx) clickSfx.play().catch(()=>{});
+            } else {
+                // 取消收藏
+                favs.splice(index, 1);
+                btn.classList.remove('text-yellow-400');
+                btn.classList.add('text-gray-600');
+            }
+            
+            localStorage.setItem(FAV_KEY, JSON.stringify(favs));
+            
+            // 如果当前在收藏页，需要刷新列表
+            if (currentSelectedDay === 8) {
+                switchDay(8);
+            }
+        }
+
+        /* 2. 数据获取逻辑 (带缓存) */
         const PROXIES = [
-            'https://api.allorigins.win/raw?url=',  /* More stable usually */
-            'https://corsproxy.io/?',               /* Backup */
-            'https://cors-anywhere.herokuapp.com/'  /* Last resort (rarely works public) */
+            'https://api.allorigins.win/raw?url=',
+            'https://corsproxy.io/?',
+            'https://cors-anywhere.herokuapp.com/'
         ];
 
         async function fetchWithFallback(targetUrl) {
             for (const proxy of PROXIES) {
                 try {
-                    const encodedUrl = encodeURIComponent(targetUrl);
-                    /* Some proxies behave differently with encoded vs raw, 
-                       allorigins handles raw param 'url' 
-                    */
-                    const fullUrl = proxy.includes('allorigins') ? `${proxy}${targetUrl}` : `${proxy}${encodedUrl}`;
-                    
-                    console.log(`[DATA] Trying proxy: ${proxy}`);
+                    const fullUrl = proxy.includes('allorigins') ? `${proxy}${targetUrl}` : `${proxy}${encodeURIComponent(targetUrl)}`;
+                    console.log(`[MAGI NET] Requesting via proxy: ${proxy}...`);
                     const response = await fetch(fullUrl);
-                    
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     return await response.json();
                 } catch (e) {
-                    console.warn(`[DATA] Proxy ${proxy} failed:`, e);
+                    console.warn(`[MAGI NET] Proxy failed:`, e);
                 }
             }
-            throw new Error("All proxies failed");
+            throw new Error("All MAGI nodes offline.");
         }
 
         async function loadAnimeData() {
             const dateDisplay = document.getElementById('anime-date');
             const updateTime = document.getElementById('update-time');
             const today = new Date();
-            let bangumiWeekday = today.getDay() === 0 ? 7 : today.getDay(); /* 1-7 */
+            let bangumiWeekday = today.getDay() === 0 ? 7 : today.getDay(); // 1-7
             
-            /* Set Update Time */
-            const now = new Date();
-            if(updateTime) updateTime.innerText = `LAST_SYNC: ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-            
+            // 检查缓存
+            const cachedData = localStorage.getItem(CACHE_KEY);
+            const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+            const now = Date.now();
+
+            if (cachedData && cachedTime && (now - parseInt(cachedTime) < CACHE_DURATION)) {
+                // --- 使用本地缓存 ---
+                console.log("[MAGI MEMORY] Loading data from LCL Cache...");
+                animeCalendarData = JSON.parse(cachedData);
+                
+                if(updateTime) {
+                    const dateObj = new Date(parseInt(cachedTime));
+                    updateTime.innerText = `LAST_SYNC: ${dateObj.getHours().toString().padStart(2,'0')}:${dateObj.getMinutes().toString().padStart(2,'0')} (CACHE)`;
+                }
+                
+                initWeekSelector(bangumiWeekday);
+                switchDay(bangumiWeekday);
+                return;
+            }
+
+            // --- 发起网络请求 ---
             try {
-                /* Attempt to fetch real data */
+                if(dateDisplay) dateDisplay.innerHTML = 'SYNCING...';
+                
+                // 获取真实数据
                 animeCalendarData = await fetchWithFallback('https://api.bgm.tv/calendar');
                 
-                /* Render normally */
+                // 存入缓存
+                localStorage.setItem(CACHE_KEY, JSON.stringify(animeCalendarData));
+                localStorage.setItem(CACHE_TIME_KEY, now.toString());
+                
+                if(updateTime) {
+                    const d = new Date();
+                    updateTime.innerText = `LAST_SYNC: ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')} (LIVE)`;
+                }
+
                 initWeekSelector(bangumiWeekday);
                 switchDay(bangumiWeekday);
 
             } catch (error) {
                 console.error("Anime Fetch Critical Error", error);
+                if(dateDisplay) dateDisplay.innerHTML = '<span class="text-emergency font-bold animate-pulse">OFFLINE</span>';
                 
-                /* ACTIVATE OFFLINE MODE */
-                if(dateDisplay) dateDisplay.innerHTML = ' <span class="text-red-500 font-bold animate-pulse">OFFLINE MODE</span>';
-                
-                /* Load Fallback Data so UI is not empty */
-                animeCalendarData = FALLBACK_CALENDAR;
-                initWeekSelector(bangumiWeekday);
-                switchDay(bangumiWeekday);
+                // 失败时加载 Fallback 数据 (定义在之前代码中，这里为了完整性简写，实际会复用旧数据的逻辑)
+                // 这里假设至少能从缓存读旧数据，如果连缓存都没有，列表为空
+                if (cachedData) {
+                     animeCalendarData = JSON.parse(cachedData);
+                     initWeekSelector(bangumiWeekday);
+                     switchDay(bangumiWeekday);
+                } else {
+                     // 彻底没数据，显示空状态
+                     renderList([]); 
+                }
             }
         }
 
@@ -2832,15 +2888,23 @@ EVA术语：同步率、AT力场、LCL浓度、模式蓝色、神经连接、人
             const selector = document.getElementById('week-selector');
             if(!selector) return;
             
-            selector.innerHTML = ''; /* Clear */
+            selector.innerHTML = ''; 
             
-            /* Generate buttons for 1-7 (Mon-Sun) */
+            // 生成 1-7 (周一至周日)
             for(let i = 1; i <= 7; i++) {
+                createDayBtn(i, weekMap[i], i === currentWeekday);
+            }
+            
+            // 生成 8 (收藏/优先目标)
+            createDayBtn(8, "★", false); // 收藏按钮
+
+            function createDayBtn(id, text, isActive) {
                 const btn = document.createElement('button');
-                btn.className = `day-btn ${i === currentWeekday ? 'active' : ''}`;
-                btn.innerText = weekMap[i];
-                btn.onclick = () => switchDay(i);
-                btn.id = `day-btn-${i}`;
+                btn.className = `day-btn ${isActive ? 'active' : ''}`;
+                btn.innerText = text;
+                btn.onclick = () => switchDay(id);
+                btn.id = `day-btn-${id}`;
+                if (id === 8) btn.style.color = 'var(--primary-color)'; // 收藏按钮特殊色
                 selector.appendChild(btn);
             }
         }
@@ -2848,58 +2912,78 @@ EVA术语：同步率、AT力场、LCL浓度、模式蓝色、神经连接、人
         function switchDay(weekday) {
             currentSelectedDay = weekday;
             
-            /* Update UI State */
+            // 更新按钮状态
             document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
             const activeBtn = document.getElementById(`day-btn-${weekday}`);
             if(activeBtn) activeBtn.classList.add('active');
             
-            /* Update Date Header */
+            // 更新标题
             const dateDisplay = document.getElementById('anime-date');
-            /* Don't overwrite Offline text if offline */
             if(dateDisplay && !dateDisplay.innerHTML.includes('OFFLINE')) {
-                dateDisplay.innerText = `DAY_${weekMap[weekday]}`;
+                dateDisplay.innerText = weekday === 8 ? "PRIORITY_TARGETS" : `DAY_${weekMap[weekday]}`;
             }
 
-            /* Find data for this day */
-            /* Safety check: animeCalendarData might be empty if init failed completely */
-            if(animeCalendarData && animeCalendarData.length > 0) {
-                const dayData = animeCalendarData.find(d => d.weekday.id === weekday);
-                renderList(dayData && dayData.items ? dayData.items : []);
+            // 筛选数据
+            let displayItems = [];
+            
+            if (weekday === 8) {
+                // --- 收藏模式：遍历所有天数查找 ID ---
+                const favs = getFavorites();
+                if (favs.length === 0) {
+                    renderList([], true); // 空收藏状态
+                    return;
+                }
+                
+                // 扁平化所有番剧数据
+                if(animeCalendarData) {
+                    animeCalendarData.forEach(day => {
+                        if(day.items) {
+                            day.items.forEach(item => {
+                                if(favs.includes(item.id)) displayItems.push(item);
+                            });
+                        }
+                    });
+                }
             } else {
-                renderList([]);
+                // --- 普通星期模式 ---
+                if(animeCalendarData && animeCalendarData.length > 0) {
+                    const dayData = animeCalendarData.find(d => d.weekday.id === weekday);
+                    displayItems = dayData && dayData.items ? dayData.items : [];
+                }
             }
+            
+            renderList(displayItems, weekday === 8 && displayItems.length === 0);
         }
 
-        /* --- HEXAGONAL CARD RENDERER (ENHANCED) --- */
-        const renderList = (items) => {
+        const renderList = (items, isEmptyFav = false) => {
              const container = document.getElementById('anime-list');
+             const favs = getFavorites();
+             
+             if(isEmptyFav) {
+                 container.innerHTML = `<div class="p-4 text-center text-gray-500 text-[10px] font-mono">NO PRIORITY TARGETS SET.<br>SELECT TARGETS TO TRACK.</div>`;
+                 return;
+             }
              
              if(!items || items.length === 0) {
                  container.innerHTML = `<div class="p-4 text-center text-gray-500 text-[10px] animate-pulse">NO_TARGETS_DETECTED | SLEEP_MODE</div>`;
                  return;
              }
 
-              /* Render with slight stagger animation */
              container.innerHTML = items.map((item, index) => {
                     const title = (item.name_cn || item.name || "UNKNOWN_TARGET").replace(/"/g, '&quot;');
                     const score = item.rating?.score || 0;
                     
-                    /* Image Fallback Logic */
-                    let image = './images/placeholder.jpg'; /* Default local placeholder if available */
-                    if (item.images) {
-                        image = item.images.large || item.images.common || item.images.medium || item.images.small || '';
-                    }
-                    /* Use transparent pixel if completely empty to avoid broken icon, CSS handles fallback bg */
+                    let image = './images/placeholder.jpg'; 
+                    if (item.images) image = item.images.large || item.images.common || item.images.medium || '';
                     if (!image) image = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
                     
-                    /* Determine Sync Rate Color */
-                    let syncColor = 'var(--secondary-color)'; /* Green (High Sync) */
-                    if (score < 6) syncColor = '#ff0000'; /* Red (Low Sync) */
-                    else if (score < 8) syncColor = '#ffae00'; /* Orange (Medium Sync) */
+                    let syncColor = 'var(--secondary-color)'; 
+                    if (score < 6) syncColor = '#ff0000'; 
+                    else if (score < 8) syncColor = '#ffae00'; 
                     
-                    /* Add random Pattern status for flavor */
-                    const patterns = ['BLUE', 'ORANGE', 'GREEN'];
-                    const pattern = patterns[Math.floor(Math.random() * patterns.length)];
+                    const isFav = favs.includes(item.id);
+                    // 收藏图标样式：已收藏为黄色实心，未收藏为灰色
+                    const favIconClass = isFav ? 'text-yellow-400 fill-current' : 'text-gray-600 hover:text-white';
 
                     return `
                     <div class="anime-card-tech flex items-center gap-3 p-2 group cursor-pointer anime-item-enter relative overflow-hidden" style="animation-delay: ${index * 0.05}s" onclick='openAnimeModal("${title}", ${score}, "${image}", ${item.id})'>
@@ -2908,15 +2992,15 @@ EVA术语：同步率、AT力场、LCL浓度、模式蓝色、神经连接、人
                         <div class="relative w-12 h-12 shrink-0 ml-1">
                             <div class="w-full h-full relative overflow-hidden transition-transform duration-500 group-hover:scale-105" style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); background: rgba(255,255,255,0.1);">
                                 <img src="${image}" class="w-full h-full object-cover transition-transform duration-500 filter grayscale group-hover:grayscale-0" onerror="this.onerror=null; this.src='https://dummyimage.com/100x100/000/fff&text=NO+IMG';">
-                                <div class="absolute inset-0 bg-secondary/10 group-hover:bg-transparent transition-colors"></div>
                             </div>
-                            <div class="absolute -inset-1 border border-dashed border-secondary/50 rounded-full opacity-0 group-hover:opacity-100 animate-[spin_4s_linear_infinite]"></div>
                         </div>
 
                         <div class="flex-1 min-w-0 flex flex-col justify-center">
                             <div class="flex justify-between items-center mb-1">
-                                <span class="text-white font-bold text-[10px] truncate font-sans tracking-tight group-hover:text-secondary transition-colors">${title}</span>
-                                <span class="font-mono text-[8px] text-secondary border border-secondary/30 px-1 bg-black/50">PATTERN:${pattern}</span>
+                                <span class="text-white font-bold text-[10px] truncate font-sans tracking-tight group-hover:text-secondary transition-colors w-3/4">${title}</span>
+                                <button onclick="toggleAnimeFavorite(event, ${item.id})" class="z-20 p-1 transition-all transform active:scale-90 ${favIconClass}" title="PRIORITY TARGET">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                                </button>
                             </div>
                             
                             <div class="flex items-center gap-2">
@@ -2948,15 +3032,23 @@ EVA术语：同步率、AT力场、LCL浓度、模式蓝色、神经连接、人
             }, 10);
 
             if(id) { 
-                try { 
-                    /* Fallback to mock text if API fails */
-                    const res = await fetchWithFallback(`https://api.bgm.tv/v0/subjects/${id}`); 
-                    const data = await res.json(); 
-                    document.getElementById('modal-summary').innerText = data.summary || "RESTRICTED DATA. SUMMARY UNAVAILABLE."; 
-                } catch(e) { 
-                     /* Mock Summary for Offline Mode */
-                    document.getElementById('modal-summary').innerText = "CONNECTION LOST. UNABLE TO RETRIEVE ARCHIVE DATA. \n\n[MAGI SYSTEM NOTE]: This data is retrieved from local cache due to network interference (AT Field detected)."; 
-                } 
+                // 详情页缓存 (可选优化：简单缓存详情描述，防止每次点开都请求)
+                const cacheKey = `nerv_subject_${id}`;
+                const cachedDesc = localStorage.getItem(cacheKey);
+                
+                if (cachedDesc) {
+                    document.getElementById('modal-summary').innerText = cachedDesc;
+                } else {
+                    try { 
+                        const res = await fetchWithFallback(`https://api.bgm.tv/v0/subjects/${id}`); 
+                        const data = await res.json(); 
+                        const desc = data.summary || "RESTRICTED DATA. SUMMARY UNAVAILABLE.";
+                        document.getElementById('modal-summary').innerText = desc;
+                        localStorage.setItem(cacheKey, desc); // 缓存详情
+                    } catch(e) { 
+                        document.getElementById('modal-summary').innerText = "CONNECTION LOST. UNABLE TO RETRIEVE ARCHIVE DATA."; 
+                    } 
+                }
             }
         }
 
@@ -2965,7 +3057,6 @@ EVA术语：同步率、AT力场、LCL浓度、模式蓝色、神经连接、人
             modal.classList.add('opacity-0');
             modal.querySelector('div').classList.remove('scale-100');
             modal.querySelector('div').classList.add('scale-95');
-            
             setTimeout(() => {
                 modal.classList.add('hidden'); 
                 modal.classList.remove('flex'); 
