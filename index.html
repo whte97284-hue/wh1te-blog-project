@@ -1896,15 +1896,62 @@
             if (!initial) setTimeout(() => p.remove(), duration * 1000);
         }
 
-        const characterMap = { 'default': './images/shinji.png', 'unit-02': './images/asuka.png', 'unit-00': './images/rei.png', 'unit-08': './images/mari.png' };
+        const characterMap = { 
+            'default': './images/shinji.png', 
+            'unit-02': './images/asuka.png', 
+            'unit-00': './images/rei.png', 
+            'unit-08': './images/mari.png' 
+        };
+
         function setTheme(themeName) {
+            // 1. 设置主题属性
             document.documentElement.setAttribute('data-theme', themeName);
             localStorage.setItem('theme', themeName);
-            document.querySelectorAll('.theme-btn').forEach(btn => { btn.classList.remove('active'); if(btn.getAttribute('onclick').includes(themeName)) btn.classList.add('active'); });
+
+            // 2. 核心修复：清除 JS 设置的内联样式污染
+            // 切换主题时，必须移除之前可能由"暴怒模式"或"交互"写死的颜色
+            // 这样 CSS 中的 var(--secondary-color) 才能重新生效，光标颜色才能跟随主题
+            document.documentElement.style.removeProperty('--lock-color');
+            document.documentElement.style.removeProperty('--primary-color');
+            document.documentElement.style.removeProperty('--secondary-color');
+
+            // 3. 重置 UI 状态（退出暴怒模式/特殊的卡片状态）
+            const aiCard = document.getElementById('ai-card');
+            if (aiCard) {
+                aiCard.classList.remove('rage-mode');
+            }
+
+            // 4. 更新顶部按钮激活状态
+            document.querySelectorAll('.theme-btn').forEach(btn => { 
+                btn.classList.remove('active'); 
+                if(btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(themeName)) {
+                    btn.classList.add('active'); 
+                }
+            });
+
+            // 5. 切换立绘 (带淡入淡出，防止闪烁)
             const heroImg = document.getElementById('hero-character');
             if (heroImg && characterMap[themeName]) {
                  heroImg.style.opacity = 0;
-                 setTimeout(() => { heroImg.src = characterMap[themeName]; heroImg.onload = () => { heroImg.style.opacity = 1; }; }, 200);
+                 
+                 setTimeout(() => { 
+                     heroImg.src = characterMap[themeName]; 
+                     // 图片加载完成后再显示
+                     heroImg.onload = () => { heroImg.style.opacity = 1; }; 
+                     // 保底：如果缓存很快，onload可能不触发，加个延时兜底
+                     setTimeout(() => { heroImg.style.opacity = 1; }, 100);
+                 }, 200);
+            }
+            
+            // 6. 强制刷新光标颜色 (触发重绘，解决偶发的颜色卡死)
+            const cursorWrapper = document.querySelector('.cursor-wrapper');
+            if(cursorWrapper) {
+                // 临时移除 transition 以便立即变色，体验更跟手
+                const oldTransition = cursorWrapper.style.transition;
+                cursorWrapper.style.transition = 'none';
+                // 强制浏览器重算样式
+                void cursorWrapper.offsetWidth; 
+                cursorWrapper.style.transition = oldTransition;
             }
         }
         const savedTheme = localStorage.getItem('theme') || 'default'; setTheme(savedTheme);
