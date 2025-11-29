@@ -1422,6 +1422,7 @@
         </div>
     </div>
 
+
     <script>
         lucide.createIcons();
 
@@ -1675,6 +1676,67 @@
             renderCursorLoop();
         }
 
+        /* ==========================================================================
+           MAGI SYSTEM HEARTBEAT (CONNECTION MONITOR)
+           ========================================================================== */
+        let heartbeatInterval;
+        const statusElement = document.getElementById('magi-status-indicator');
+
+        const MAGI_STATES = [
+            { text: "待機中", color: "text-secondary" },       // Standby
+            { text: "正常稼働", color: "text-primary" },       // Normal
+            { text: "回線良好", color: "text-secondary" },     // Connection Good
+            { text: "探索中", color: "text-secondary" },       // Searching
+            { text: "自律モード", color: "text-secondary" },   // Autonomous
+            { text: "パターン青", color: "text-primary" },     // Pattern Blue
+            { text: "座標固定", color: "text-secondary" }      // Position Fixed
+        ];
+
+        function startMagiHeartbeat() {
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            heartbeatInterval = setInterval(() => {
+                const isOnline = navigator.onLine;
+                if (!statusElement) return;
+
+                const currentText = statusElement.innerText;
+                // 避让正在对话的状态
+                if (currentText.includes("VOTING") || currentText.includes("DELIBERATING") || currentText.includes("DENIED") || currentText.includes("CONSENSUS")) {
+                    return;
+                }
+
+                if (!isOnline) {
+                    updateStatusGlitch("接続断绝", "text-emergency");
+                } else {
+                    const randomState = MAGI_STATES[Math.floor(Math.random() * MAGI_STATES.length)];
+                    if (Math.random() > 0.7) {
+                        const fakePing = Math.floor(Math.random() * 40) + 10;
+                        updateStatusGlitch(`応答速度:${fakePing}ms`, "text-secondary");
+                    } else {
+                        updateStatusGlitch(randomState.text, randomState.color);
+                    }
+                }
+            }, 3000);
+        }
+
+        function updateStatusGlitch(text, colorClass) {
+            if (!statusElement) return;
+            const chars = '!<>-_[]{}—=+*^?#________';
+            const originalText = text;
+            let iterations = 0;
+            const interval = setInterval(() => {
+                statusElement.innerText = originalText.split('').map((letter, index) => {
+                    if (index < iterations) return originalText[index];
+                    return chars[Math.floor(Math.random() * chars.length)];
+                }).join('');
+                statusElement.className = `font-mono text-[9px] font-bold animate-pulse ${colorClass}`;
+                if (iterations >= originalText.length) clearInterval(interval);
+                iterations += 1 / 2;
+            }, 30);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            startMagiHeartbeat();
+        });
         /* --- Optimized Matrix Rain (Enhanced for Rebuild Style & Light Mode) --- */
         const canvas = document.getElementById('matrix-bg');
         const ctx = canvas.getContext('2d');
