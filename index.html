@@ -2808,18 +2808,46 @@ EVA术语：同步率、AT力场、LCL浓度、模式蓝色、神经连接、人
         ];
 
         async function fetchWithFallback(targetUrl) {
+            const PROXIES = [
+                'https://api.allorigins.win/get?url=', // 比较稳定，但需要二次解析
+                'https://corsproxy.io/?'               // 备用
+            ];
+
             for (const proxy of PROXIES) {
                 try {
-                    const fullUrl = proxy.includes('allorigins') ? `${proxy}${targetUrl}` : `${proxy}${encodeURIComponent(targetUrl)}`;
-                    console.log(`[MAGI NET] Requesting via proxy: ${proxy}...`);
+                    const isAllOrigins = proxy.includes('allorigins');
+                    // AllOrigins 需要对 URL 进行完全编码
+                    const fullUrl = isAllOrigins 
+                        ? `${proxy}${encodeURIComponent(targetUrl)}` 
+                        : `${proxy}${encodeURIComponent(targetUrl)}`;
+
+                    console.log(`[MAGI NET] Linking via: ${proxy}...`);
                     const response = await fetch(fullUrl);
+                    
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    return await response.json();
+                    
+                    const data = await response.json();
+
+                    // --- 核心修复：针对 AllOrigins 的数据解包 ---
+                    if (isAllOrigins) {
+                        if (data.contents) {
+                            // contents 里面通常是字符串形式的 JSON，需要再次 Parse
+                            try {
+                                return JSON.parse(data.contents);
+                            } catch (e) {
+                                // 如果不是 JSON 字符串，直接返回内容
+                                return data.contents;
+                            }
+                        }
+                        throw new Error("Proxy response empty");
+                    }
+
+                    return data; // 其他代理通常直接返回 JSON
                 } catch (e) {
-                    console.warn(`[MAGI NET] Proxy failed:`, e);
+                    console.warn(`[MAGI NET] Node failed:`, e);
                 }
             }
-            throw new Error("All MAGI nodes offline.");
+            throw new Error("All MAGI network nodes offline.");
         }
 
         async function loadAnimeData() {
@@ -3017,12 +3045,15 @@ EVA术语：同步率、AT力场、LCL浓度、模式蓝色、神经连接、人
         
         async function openAnimeModal(title, rating, imageUrl, id) {
             const modal = document.getElementById('anime-modal');
-            document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-rating').innerText = rating;
-            document.getElementById('modal-cover').src = imageUrl;
-            document.getElementById('modal-id').innerText = id;
-            document.getElementById('modal-summary').innerText = "ACCESSING MAGI ARCHIVE...";
             
+            // 1. 填充基础信息 (立即显示)
+            document.getElementById('modal-title').innerText = title || "UNKNOWN";
+            document.getElementById('modal-rating').innerText = rating || "0.0";
+            document.getElementById('modal-cover').src = imageUrl || "";
+            document.getElementById('modal-id').innerText = id || "00000";
+            document.getElementById('modal-summary').innerText = "ACCESSING MAGI ARCHIVE..."; // 加载状态
+            
+            // 2. 显示动画
             modal.classList.remove('hidden');
             modal.classList.add('flex');
             setTimeout(() => {
@@ -3031,23 +3062,32 @@ EVA术语：同步率、AT力场、LCL浓度、模式蓝色、神经连接、人
                 modal.querySelector('div').classList.add('scale-100');
             }, 10);
 
-            if(id) { 
-                // 详情页缓存 (可选优化：简单缓存详情描述，防止每次点开都请求)
-                const cacheKey = `nerv_subject_${id}`;
-                const cachedDesc = localStorage.getItem(cacheKey);
-                
-                if (cachedDesc) {
-                    document.getElementById('modal-summary').innerText = cachedDesc;
-                } else {
-                    try { 
-                        const res = await fetchWithFallback(`https://api.bgm.tv/v0/subjects/${id}`); 
-                        const data = await res.json(); 
-                        const desc = data.summary || "RESTRICTED DATA. SUMMARY UNAVAILABLE.";
-                        document.getElementById('modal-summary').innerText = desc;
-                        localStorage.setItem(cacheKey, desc); // 缓存详情
-                    } catch(e) { 
-                        document.getElementById('modal-summary').innerText = "CONNECTION LOST. UNABLE TO RETRIEVE ARCHIVE DATA."; 
-                    } 
+            if(!id) return;
+
+            // 3. 获取详情 (优先读缓存，无缓存则请求)
+            const cacheKey = `nerv_subject_desc_${id}`;
+            const cachedDesc = localStorage.getItem(cacheKey);
+
+            if (cachedDesc && cachedDesc.length > 5) {
+                console.log("[MAGI CACHE] Summary loaded from local storage.");
+                document.getElementById('modal-summary').innerText = cachedDesc;
+            } else {
+                try {
+                    // 请求 Bangumi API
+                    const data = await fetchWithFallback(`https://api.bgm.tv/v0/subjects/${id}`);
+                    
+                    // 容错处理：确保 summary 存在
+                    const desc = data.summary || "DATA CORRUPTED. NO SUMMARY AVAILABLE.";
+                    
+                    document.getElementById('modal-summary').innerText = desc;
+                    
+                    // 写入缓存 (避免下次点击再次请求)
+                    localStorage.setItem(cacheKey, desc);
+                    
+                } catch(e) {
+                    console.error("Summary Fetch Error", e);
+                    document.getElementById('modal-summary').innerText = 
+                        "CONNECTION INTERFERENCE DETECTED (AT FIELD).\nUNABLE TO RETRIEVE ARCHIVE DATA.\n\n[MAGI ERROR]: " + e.message;
                 }
             }
         }
