@@ -621,7 +621,7 @@
         .magi-hex {
             position: relative;
             flex: 1; /* 核心：自动伸缩填充 */
-            height: 36px; /* 稍微增高以容纳状态信息 */
+            height: 38px; /* 稍微增高以容纳大号汉字 */
             background: rgba(0, 0, 0, 0.8);
             border: 1px solid var(--secondary-color);
             /* 还原 Rebuild 风格的倒角矩形 */
@@ -631,27 +631,29 @@
             justify-content: center;
             align-items: center;
             overflow: hidden;
-            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
 
-        /* 节点内的文字排版 */
+        /* 节点内的文字排版 - 初始状态 */
         .magi-node-name {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 8px;
+            font-size: 8px; /* 稍微调大初始字号 */
             font-weight: 800;
             line-height: 1;
             z-index: 2;
             color: var(--secondary-color);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .magi-node-status {
-            font-family: 'Noto Sans JP', sans-serif;
-            font-size: 6px;
+            font-family: 'Noto Sans JP', sans-serif; /* 强制使用日文字体 */
+            font-size: 9px;
             font-weight: 700;
             margin-top: 2px;
             z-index: 2;
-            opacity: 0.7;
+            opacity: 0.9;
             color: var(--secondary-color);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* 弹性动画 */
         }
 
         /* 背景扫描线纹理 */
@@ -670,22 +672,20 @@
             pointer-events: none;
         }
 
-        /* --- 状态：思考中 (High-Speed Polling / Rebuild Style) --- */
-        /* 核心修改：不再是全体震动，而是为轮询状态做准备 */
+        /* --- 状态：思考中 (High-Speed Polling) --- */
         .magi-hex.thinking {
             background: rgba(0, 0, 0, 0.9);
-            border-color: rgba(255, 174, 0, 0.3); /* 暗淡的琥珀色 */
-            transition: all 0.1s; /* 极速响应 */
+            border-color: rgba(255, 174, 0, 0.3);
         }
 
-        /* 新增：轮询激活态 (Polling Highlight) - REBUILD SCHEME */
+        /* --- 新增：轮询激活态 (Polling Highlight) - REBUILD SCHEME --- */
         .magi-hex.polling {
             transform: scale(1.05);
             z-index: 20;
-            background: #000 !important; /* 保持黑色背景以突出边框光效 */
+            background: #000 !important; /* 黑色背景突出光效 */
         }
 
-        /* Melchior - 科学家 - 逻辑冷青 */
+        /* Melchior - 科学家 - 逻辑冷青 (Cyan) */
         #node-melchior.polling {
             border-color: #00ccff !important;
             box-shadow: 0 0 15px rgba(0, 204, 255, 0.6), inset 0 0 10px rgba(0, 204, 255, 0.3);
@@ -693,10 +693,10 @@
         #node-melchior.polling .magi-node-name,
         #node-melchior.polling .magi-node-status {
             color: #00ccff !important;
-            text-shadow: 0 0 5px #00ccff;
+            text-shadow: 0 0 8px #00ccff;
         }
 
-        /* Balthasar - 母亲 - 经典琥珀橙 */
+        /* Balthasar - 母亲 - 经典琥珀橙 (Orange) */
         #node-balthasar.polling {
             border-color: #ffae00 !important;
             box-shadow: 0 0 15px rgba(255, 174, 0, 0.6), inset 0 0 10px rgba(255, 174, 0, 0.3);
@@ -704,10 +704,10 @@
         #node-balthasar.polling .magi-node-name,
         #node-balthasar.polling .magi-node-status {
             color: #ffae00 !important;
-            text-shadow: 0 0 5px #ffae00;
+            text-shadow: 0 0 8px #ffae00;
         }
 
-        /* Casper - 女人 - 偏执洋红 */
+        /* Casper - 女人 - 偏执洋红 (Magenta) */
         #node-casper.polling {
             border-color: #ff0055 !important;
             box-shadow: 0 0 15px rgba(255, 0, 85, 0.6), inset 0 0 10px rgba(255, 0, 85, 0.3);
@@ -715,79 +715,68 @@
         #node-casper.polling .magi-node-name,
         #node-casper.polling .magi-node-status {
             color: #ff0055 !important;
-            text-shadow: 0 0 5px #ff0055;
+            text-shadow: 0 0 8px #ff0055;
         }
-
-        /* 覆盖原来的通用样式 */
+        
+        /* 覆盖原来的通用样式，避免文字模糊 */
         .magi-hex.polling .magi-node-name { text-shadow: none; }
 
-        /* 移除旧的 vibration 动画，改用数据流遮罩 */
-        .magi-hex.thinking::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(180deg, transparent 0%, rgba(255, 174, 0, 0.1) 50%, transparent 100%);
-            background-size: 100% 200%;
-            animation: magi-scan-line 1s linear infinite;
-            pointer-events: none;
-            opacity: 0.5;
-        }
-
-        @keyframes magi-scan-line {
-            0% { background-position: 0% -100%; }
-            100% { background-position: 0% 200%; }
-        }
-
-        /* 错开三个节点的思考频率 (保留但仅作为降级兼容) */
-        #node-melchior.thinking { animation-duration: 0.12s; }
-        #node-balthasar.thinking { animation-duration: 0.09s; }
-        #node-casper.thinking { animation-duration: 0.15s; }
-
-        /* --- 状态：决议一致 (Consensus) --- */
+        /* --- 状态：决议一致 (Consensus) - 核心修改：巨大化汉字 --- */
         .magi-hex.active {
             background: var(--secondary-color);
             border-color: var(--secondary-color);
-            box-shadow: 0 0 20px var(--secondary-color);
-            transform: scale(1.05);
-            z-index: 10;
+            box-shadow: 0 0 30px var(--secondary-color); /* 强光晕 */
+            transform: scale(1.1); /* 整体放大 */
+            z-index: 100;
         }
-        .magi-hex.active .magi-node-name,
+        
+        /* 决议通过时，缩小节点名称，为大汉字让路 */
+        .magi-hex.active .magi-node-name {
+            color: #000;
+            font-size: 5px; /* 极小化 */
+            opacity: 0.7;
+            margin-bottom: -4px; /* 上移 */
+        }
+        
+        /* 决议通过时，巨大化状态汉字 */
         .magi-hex.active .magi-node-status {
             color: #000; /* 反白显示 */
             text-shadow: none;
+            font-size: 18px !important; /* 巨大化 */
+            font-weight: 900 !important;
+            letter-spacing: 0.05em;
+            line-height: 1.1;
+            transform: scaleY(1.1); /* 纵向拉伸，更有冲击力 */
         }
 
         /* --- 状态：否决 (Denied) --- */
         .magi-hex.denied {
             background: #ff0000;
             border-color: #ff0000;
-            box-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
             animation: rejection-shake 0.4s ease-in-out;
+            transform: scale(1.1);
+            z-index: 100;
         }
-        .magi-hex.denied .magi-node-name,
+        
+        .magi-hex.denied .magi-node-name {
+            color: #fff;
+            font-size: 5px; /* 极小化 */
+            opacity: 0.7;
+            margin-bottom: -4px;
+        }
+        
         .magi-hex.denied .magi-node-status {
             color: #fff;
+            font-size: 18px !important; /* 巨大化 */
+            font-weight: 900 !important;
+            letter-spacing: 0.05em;
+            line-height: 1.1;
+            transform: scaleY(1.1);
         }
-
-        /* 动画关键帧 */
-        @keyframes magi-logic-vibration {
-            0% { transform: translate(0, 0); opacity: 1; }
-            25% { transform: translate(0.5px, 0.5px); opacity: 0.9; }
-            50% { transform: translate(-0.5px, -0.5px); opacity: 1; }
-            75% { transform: translate(-0.5px, 0.5px); opacity: 0.9; }
-            100% { transform: translate(0, 0); opacity: 1; }
-        }
-
-        @keyframes data-stream-scroll {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(-20px); }
-        }
-
-        @keyframes rejection-shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-5px); }
-            40%, 80% { transform: translateX(5px); }
-        }
+        
+        /* 移除旧的数据流遮罩，保持画面干净 */
+        .magi-hex.thinking::after { display: none; }
 
         /* 亮色模式适配 */
         [data-mode="light"] .magi-hex {
@@ -798,39 +787,6 @@
         [data-mode="light"] .magi-hex.thinking {
             background: #fff;
             border-color: #ffae00;
-            box-shadow: 0 0 5px rgba(0,0,0,0.2);
-        }
-        
-        /* --- Speech Bubble Processing State --- */
-        .ai-speech-bubble-processing {
-            position: relative;
-        }
-        .ai-speech-bubble-processing::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: repeating-linear-gradient(
-                0deg,
-                transparent 0%,
-                rgba(var(--secondary-color), 0.1) 1px, 
-                transparent 2px
-            );
-            background-size: 100% 4px;
-            pointer-events: none;
-            z-index: 0;
-            animation: processing-scan 2s linear infinite;
-        }
-        .ai-speech-bubble-processing .magi-terminal-container {
-            animation: border-alert-pulse 1s infinite alternate;
-        }
-        
-        @keyframes processing-scan {
-            0% { background-position: 0 0; }
-            100% { background-position: 0 100%; }
-        }
-        @keyframes border-alert-pulse {
-            0% { border-color: rgba(var(--secondary-color), 0.5); box-shadow: 0 0 10px rgba(var(--secondary-color), 0.1); }
-            100% { border-color: var(--primary-color); box-shadow: 0 0 20px rgba(var(--primary-color), 0.4); }
         }
 
         /* --- Sync Rate Waveform Canvas --- */
@@ -2270,7 +2226,7 @@
                 visualizer.style.transform = 'scale(1)';
             }
 
-            // 1. 初始化所有节点为“待机”状态
+            // 1. 初始化所有节点为“待机”状态 (日文)
             nodes.forEach(el => {
                 if(el) {
                     el.className = "magi-hex thinking"; // 基础样式
@@ -2281,8 +2237,10 @@
 
             // 2. 启动高速轮询 (Polling)
             // 还原 EVA 剧场版中的辩证法逻辑：提坦 (Thesis) -> 反提坦 (Antithesis) -> 综合 (Synthesis)
+            // 混合使用 "解析" "思考" 等汉字增加动态感
             let activeIndex = 0;
-            const logicCodes = ["提題", "反提題", "統合"]; // Thesis, Antithesis, Synthesis (Japanese Philosophy Terms)
+            const logicTerms = ["提題", "反提題", "統合"]; // 哲学术语
+            const processTerms = ["解析", "思考", "接続"]; // 动作术语
             
             // 清除可能存在的旧定时器
             if (magiPollingInterval) clearInterval(magiPollingInterval);
@@ -2300,19 +2258,27 @@
                     
                     // 动态改变内部文字，增加运算感
                     const statusSpan = current.querySelector('.magi-node-status');
-                    // 随机显示 CODE:xxx 或 逻辑词，增加数据流动的错乱感
-                    const isCode = Math.random() > 0.6;
+                    
+                    // 随机显示：30%概率显示 CODE，70%概率显示汉字
+                    const mode = Math.random();
                     if(statusSpan) {
-                        statusSpan.innerText = isCode 
-                            ? `CODE:${Math.floor(Math.random() * 999)}` 
-                            : logicCodes[activeIndex];
+                        if (mode > 0.7) {
+                            // 随机数字代码
+                            statusSpan.innerText = `CODE:${Math.floor(Math.random() * 899) + 100}`;
+                        } else if (mode > 0.4) {
+                            // 辩证法汉字
+                            statusSpan.innerText = logicTerms[activeIndex];
+                        } else {
+                            // 动作汉字
+                            statusSpan.innerText = processTerms[Math.floor(Math.random() * processTerms.length)];
+                        }
                     }
                 }
 
                 // 轮询下一个 (0 -> 1 -> 2 -> 0)
                 activeIndex = (activeIndex + 1) % 3;
 
-            }, 100); // 100ms 极速切换，还原剧场版的高速思考感
+            }, 90); // 90ms 极速切换，比之前的 100ms 更快一点
         }
 
         function stopMagiAnimation(isSuccess) {
@@ -2343,10 +2309,10 @@
                     setTimeout(() => {
                         if(isSuccess) {
                             el.classList.add('active'); // 绿色承认 (Consensus)
-                            if(statusSpan) statusSpan.innerText = "可決"; // Approved
+                            if(statusSpan) statusSpan.innerText = "可決"; // Approved (大号汉字)
                         } else {
                             el.classList.add('denied'); // 红色否定 (Denied)
-                            if(statusSpan) statusSpan.innerText = "拒絶"; // Denied
+                            if(statusSpan) statusSpan.innerText = "拒絶"; // Denied (大号汉字)
                         }
                     }, index * 120); // 依次锁定的节奏感
                 }
