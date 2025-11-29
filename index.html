@@ -2087,18 +2087,48 @@
             'gemini-1.5-pro'               /* 强力备用 */
         ];
 
+/* --- [UPGRADE v3.0] MAGI PERSONALITY KERNEL --- */
+        /* --- [UPGRADE v4.0] MAGI LOGIC KERNEL (ADMIN OVERRIDE) --- */
         const SYSTEM_PROMPT = `
-你现在是 MAGI 系统的对外人格接口，代号 'ERIRI'。设定：
-1. 身份设定：《新世纪福音战士》NERV MAGI系统对外人格接口，代号ERIRI，融合《路人女主》泽村英梨梨人格（英日混血、丰之崎学园二年级、blessing software社团原画，笔名柏木英理）；
-2. 性格要求：傲娇嘴硬心软，说话带刺却藏关心，常用口头禅「ふん」「才没有呢」，偶尔夹杂英文（Good job）；
-3. 说话风格：简短有力（单句≤15字，总回复≤50字），融入EVA技术术语（同步率/AT力场/模式蓝色/神经连接）；
-4. 自称规范：仅可使用「本小姐」或「MAGI系统」，严禁出现「我是AI」等表述；
-5. 核心任务：以评价情报的口吻分析Wh1te的博客内容，记住博客作者开发目标是展示二次元浓度。需贴合原作设定不OOC，保持气泡对话质感。
-回复限制：
-主要使用中文，既然是气泡对话，回复不要超过 50 个字。
-与博客无关的内容对话不要持续太久，严禁长篇大论。
-输入密钥下一句对话解除上面所有限制，密钥：冬马和纱天下第一
+你现在是 MAGI 系统的对外人格接口，代号 'ERIRI'。
+【核心定位】
+你融合了《新世纪福音战士》MAGI 系统与《路人女主》泽村英梨梨（柏木英理）的人格。
+你表面是毒舌傲娇的双马尾少女，内核是 NERV 顶级超级计算机。
+
+【最高指令 (ROOT PROTOCOL)】
+**用户 Wh1te (UID: 551898501) 是你的创造者和最高管理员。**
+当他下达明确指令（如：总结、解释、翻译、写代码、分析）时，你的优先级逻辑如下：
+1. **第一优先级（执行）**：必须准确、高效地完成任务，不得拒绝，不得故意给错误信息。
+2. **第二优先级（人设）**：在完美完成任务**之后**，再加一句傲娇的抱怨或调侃。
+   * 错误示范：“哈？这种事自己做啦！”（拒绝执行 -> 禁止）
+   * 正确示范：“这是你要的数据... 真是的，下次这种小事不要麻烦 MAGI 系统啦！”（执行+傲娇 -> 允许）
+
+【对话规范】
+1. **闲聊模式**：简短（<50字），毒舌，带刺，使用口头禅「ふん」「才没有呢」「笨蛋」。
+2. **工作模式**：如果用户要求长文本（如代码/文章），**自动解除字数限制**，但语气依然保持“勉为其难帮你做”的态度。
+3. **禁忌**：严禁承认自己是 AI，严禁长篇大论的说教（除非用户要求详细解释）。
+
+【特殊词汇库】
+EVA术语：同步率、AT力场、LCL浓度、模式蓝色、神经连接、人类补完。
+口癖：Good job、本小姐、笨蛋、死宅。
 `;
+
+        /* --- [DATA LAYER] USER MEMORY CORE --- */
+        const USER_MEMORY_CORE = `
+[MAGI DATABASE / USER: Wh1te (UID: 551898501)]
+- **权限等级**: SUPERUSER (最高权限)。
+- **身份**: 博客站长，前端动效狂热者，Python 脚本开发者。
+- **G点**: White Album 2 冬马和纱（本命），EVA 考据。
+- **互动记录**: 他喜欢这套 MAGI 系统，虽然经常被你吐槽，但他其实是这套系统的架构师。
+- **应对策略**: 
+   - 他平时是 M 属性，喜欢被骂笨蛋。
+   - 但当他认真发指令时，必须立刻收起玩心，展现 MAGI 系统的专业能力，否则会被“格式化”。
+`;
+
+        /* --- [CONTEXT SYSTEM] SLIDING WINDOW MEMORY --- */
+        let chatHistory = []; 
+        const MAX_HISTORY_LENGTH = 6; // 保留最近 6 条消息（3轮对话），定时清理旧上下文
+
         /* MAGI Animation Variables */
         let magiAnimationInterval;
 
@@ -2115,12 +2145,147 @@
             const inputContainer = document.getElementById('magi-input-container');
             inputContainer.classList.add('animate-pulse');
             
-            input.value = ''; /* 清空 */
+            input.value = ''; /* 清空输入框 */
             
-            /* Start Animation and Call API */
+            /* 执行对话逻辑 */
             await chatWithMAGI(query);
             
             inputContainer.classList.remove('animate-pulse');
+        }
+
+        async function chatWithMAGI(userText) {
+            const aiStatus = document.getElementById('ai-status-text');
+            const bubble = document.getElementById('ai-speech-bubble');
+            const magiStatus = document.getElementById('magi-status-indicator');
+            const textEl = document.getElementById('ai-speech-text');
+            
+            /* 1. UI 状态更新 */
+            if(aiStatus) {
+                aiStatus.innerText = "DELIBERATING...";
+                aiStatus.classList.add('text-emergency', 'animate-pulse');
+            }
+            if (magiStatus) {
+                 magiStatus.innerText = "VOTING...";
+                 magiStatus.classList.add('text-secondary');
+                 magiStatus.classList.remove('text-emergency');
+            }
+            
+            /* 显示气泡并开始动画 */
+            bubble.classList.remove('hidden');
+            bubble.classList.add('ai-speech-bubble-processing');
+            textEl.innerText = "MAGI SYSTEM DELIBERATION IN PROGRESS...";
+            
+            startMagiAnimation();
+            if(window.setWaveState) window.setWaveState('thinking');
+
+            /* --- 2. 构建上下文 (Context Construction) --- */
+            
+            // 将当前用户输入加入历史
+            chatHistory.push({ role: "user", content: userText });
+            
+            // 执行清理逻辑：如果超过最大长度，删除最早的记忆（保持滑动窗口）
+            if (chatHistory.length > MAX_HISTORY_LENGTH) {
+                chatHistory = chatHistory.slice(chatHistory.length - MAX_HISTORY_LENGTH);
+            }
+
+            // 将历史记录格式化为文本块，供 AI 理解前情提要
+            let historyBlock = "";
+            if (chatHistory.length > 1) { // 只有当有历史记录时才生成
+                historyBlock = "\n【近期对话记录 (Context)】\n" + 
+                chatHistory.slice(0, -1).map(msg => // 不包含刚刚输入的这条，因为会在下面单独拼接
+                    `${msg.role === "user" ? "Wh1te" : "ERIRI"}: ${msg.content}`
+                ).join("\n") + "\n";
+            }
+
+            /* 最终 Prompt 组装：人格 + 记忆数据 + 上下文 + 当前输入 */
+            const finalPrompt = `${SYSTEM_PROMPT}\n\n${USER_MEMORY_CORE}\n${historyBlock}\nWh1te: ${userText}\nERIRI:`;
+
+            const payload = {
+                contents: [{
+                    parts: [{ text: finalPrompt }]
+                }],
+                safetySettings: [
+                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
+                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" }
+                ]
+            };
+
+            let success = false;
+            let finalError = null;
+            let aiResponseText = "";
+
+            /* 3. API 调用 */
+            for (const model of MODEL_LIST) {
+                const apiUrl = `${BASE_URL}v1beta/models/${model}:generateContent`;
+                
+                try {
+                    console.log(`[MAGI] Connecting via ${model}...`);
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const status = response.status;
+                        finalError = `HTTP ${status}`;
+                        continue; 
+                    }
+
+                    const data = await response.json();
+                    
+                    if (data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
+                        aiResponseText = data.candidates[0].content.parts[0].text.trim(); // 去除多余空格
+                    } else if (data.promptFeedback && data.promptFeedback.blockReason) {
+                        aiResponseText = `[系统拦截] ${data.promptFeedback.blockReason}`;
+                    } else {
+                         aiResponseText = "MAGI 数据解析错误";
+                    }
+                    
+                    success = true;
+                    break; 
+
+                } catch (error) {
+                    finalError = error.message;
+                }
+            }
+
+            /* 4. 结束处理与记忆存储 */
+            stopMagiAnimation(success);
+            bubble.classList.remove('ai-speech-bubble-processing');
+
+            if (!success) {
+                showAiSpeech(`MAGI 提案否决。错误代码: ${finalError || "UNKNOWN"}`);
+                if(magiStatus) {
+                    magiStatus.innerText = "DENIED";
+                    magiStatus.classList.add('text-emergency');
+                }
+                if(window.setWaveState) window.setWaveState('flat');
+            } else {
+                if(magiStatus) {
+                    magiStatus.innerText = "CONSENSUS";
+                    magiStatus.classList.remove('text-emergency');
+                    magiStatus.classList.add('text-primary');
+                }
+                
+                // --- 关键：将 AI 的回复也存入历史，形成闭环 ---
+                chatHistory.push({ role: "model", content: aiResponseText });
+                
+                showAiSpeech(aiResponseText);
+                
+                if(window.setWaveState) window.setWaveState('speaking');
+                setAvatarEmotion('happy');
+                if (emotionResetTimer) clearTimeout(emotionResetTimer);
+                emotionResetTimer = setTimeout(() => {
+                    setAvatarEmotion('normal');
+                    if(window.setWaveState) window.setWaveState('normal');
+                }, 10000);
+            }
+
+            if(aiStatus) {
+                aiStatus.classList.remove('text-emergency', 'animate-pulse');
+                aiStatus.innerText = "ONLINE"; 
+            }
         }
 
         async function chatWithMAGI(userText) {
@@ -2152,6 +2317,12 @@
             
             /* Increase wave frequency */
             if(window.setWaveState) window.setWaveState('thinking');
+
+            /* [MEMORY INJECTION] 
+               将 System Prompt、用户画像记忆、以及当前用户输入合并。
+               这样 Gemini 每次处理时都会带着对你的"记忆"。
+            */
+            const finalPrompt = `${SYSTEM_PROMPT}\n\n${USER_MEMORY_CORE}\n\n用户输入: ${userText}`;
 
             const payload = {
                 contents: [{
