@@ -2205,9 +2205,36 @@ EVA术语：同步率、AT力场、LCL浓度、模式蓝色、神经连接、人
    - 但当他认真发指令时，必须立刻收起玩心，展现 MAGI 系统的专业能力，否则会被“格式化”。
 `;
 
-        /* --- [CONTEXT SYSTEM] SLIDING WINDOW MEMORY --- */
-        let chatHistory = []; 
-        const MAX_HISTORY_LENGTH = 6; // 保留最近 6 条消息（3轮对话），定时清理旧上下文
+        /* --- [CONTEXT SYSTEM] GLOBAL PERSISTENT MEMORY (V2 FIX) --- */
+        /* 修复逻辑：全局变量单例管理 + 启动时加载 + 整体式 Prompt 注入 */
+        
+        const MAX_HISTORY_LENGTH = 10; // 增加记忆深度到 10 条 (5轮对话)
+
+        // 1. 全局历史记录变量 (Single Source of Truth)
+        let chatHistory = [];
+
+        // 2. 初始化：页面加载时立即同步本地存储
+        try {
+            const saved = sessionStorage.getItem('magi_chat_history');
+            if (saved) {
+                chatHistory = JSON.parse(saved);
+                console.log("[MAGI SYSTEM] Memory Core Loaded:", chatHistory.length, "entries");
+            }
+        } catch(e) {
+            console.warn("[MAGI SYSTEM] Memory Core Corrupted, Resetting...");
+            chatHistory = [];
+        }
+
+        // 3. 持久化函数
+        function persistMemory() {
+            try {
+                // 滑动窗口清理 (保持最近 N 条)
+                if (chatHistory.length > MAX_HISTORY_LENGTH) {
+                    chatHistory = chatHistory.slice(chatHistory.length - MAX_HISTORY_LENGTH);
+                }
+                sessionStorage.setItem('magi_chat_history', JSON.stringify(chatHistory));
+            } catch (e) { console.error("Memory Write Error"); }
+        }
 
         /* MAGI Animation Variables */
         let magiAnimationInterval;
@@ -2221,13 +2248,19 @@ EVA术语：同步率、AT力场、LCL浓度、模式蓝色、神经连接、人
             const query = input.value.trim();
             if (!query) return;
             
-            /* UI 反馈 */
+            /* 调试指令：重置记忆 */
+            if (query === '/reset') {
+                chatHistory = [];
+                sessionStorage.removeItem('magi_chat_history');
+                showAiSpeech("记忆体已格式化。Memory Formatted.");
+                input.value = '';
+                return;
+            }
+
             const inputContainer = document.getElementById('magi-input-container');
             inputContainer.classList.add('animate-pulse');
+            input.value = ''; 
             
-            input.value = ''; /* 清空输入框 */
-            
-            /* 执行对话逻辑 */
             await chatWithMAGI(query);
             
             inputContainer.classList.remove('animate-pulse');
@@ -2239,7 +2272,7 @@ EVA术语：同步率、AT力场、LCL浓度、模式蓝色、神经连接、人
             const magiStatus = document.getElementById('magi-status-indicator');
             const textEl = document.getElementById('ai-speech-text');
             
-            /* 1. UI 状态更新 */
+            /* UI 状态更新 */
             if(aiStatus) {
                 aiStatus.innerText = "DELIBERATING...";
                 aiStatus.classList.add('text-emergency', 'animate-pulse');
@@ -2250,35 +2283,37 @@ EVA术语：同步率、AT力场、LCL浓度、模式蓝色、神经连接、人
                  magiStatus.classList.remove('text-emergency');
             }
             
-            /* 显示气泡并开始动画 */
             bubble.classList.remove('hidden');
             bubble.classList.add('ai-speech-bubble-processing');
-            textEl.innerText = "MAGI SYSTEM DELIBERATION IN PROGRESS...";
+            textEl.innerText = "MAGI SYSTEM DELIBERATING...";
             
             startMagiAnimation();
             if(window.setWaveState) window.setWaveState('thinking');
 
-            /* --- 2. 构建上下文 (Context Construction) --- */
+            /* --- 核心修复：先存入历史，再生成 Prompt --- */
             
-            // 将当前用户输入加入历史
+            // 1. 将当前用户输入直接推入全局历史
             chatHistory.push({ role: "user", content: userText });
-            
-            // 执行清理逻辑：如果超过最大长度，删除最早的记忆（保持滑动窗口）
-            if (chatHistory.length > MAX_HISTORY_LENGTH) {
-                chatHistory = chatHistory.slice(chatHistory.length - MAX_HISTORY_LENGTH);
-            }
+            persistMemory(); // 立即保存
 
-            // 将历史记录格式化为文本块，供 AI 理解前情提要
-            let historyBlock = "";
-            if (chatHistory.length > 1) { // 只有当有历史记录时才生成
-                historyBlock = "\n【近期对话记录 (Context)】\n" + 
-                chatHistory.slice(0, -1).map(msg => // 不包含刚刚输入的这条，因为会在下面单独拼接
-                    `${msg.role === "user" ? "Wh1te" : "ERIRI"}: ${msg.content}`
-                ).join("\n") + "\n";
-            }
+            // 2. 将整个历史记录转换为文本块 (ChatML 风格格式化)
+            // 这样 AI 能看到完整的对话流：A说 -> B说 -> A说(当前)
+            let fullConversation = chatHistory.map(msg => {
+                const speaker = msg.role === "user" ? "Wh1te" : "ERIRI";
+                return `${speaker}: ${msg.content}`;
+            }).join("\n");
 
-            /* 最终 Prompt 组装：人格 + 记忆数据 + 上下文 + 当前输入 */
-            const finalPrompt = `${SYSTEM_PROMPT}\n\n${USER_MEMORY_CORE}\n${historyBlock}\nWh1te: ${userText}\nERIRI:`;
+            // 3. 组装最终 Prompt
+            // 结构：系统设定 + 用户画像 + 完整历史 + AI即将回复的标记
+            const finalPrompt = `
+${SYSTEM_PROMPT}
+
+${USER_MEMORY_CORE}
+
+【当前对话历史 (Conversation History)】
+${fullConversation}
+ERIRI:`; 
+/* 注意：这里末尾留了 ERIRI: 引导 AI 接话，且 finalPrompt 不再额外拼接 userText，因为 fullConversation 里已经包含了 */
 
             const payload = {
                 contents: [{
@@ -2294,12 +2329,10 @@ EVA术语：同步率、AT力场、LCL浓度、模式蓝色、神经连接、人
             let finalError = null;
             let aiResponseText = "";
 
-            /* 3. API 调用 */
+            /* API 调用 */
             for (const model of MODEL_LIST) {
                 const apiUrl = `${BASE_URL}v1beta/models/${model}:generateContent`;
-                
                 try {
-                    console.log(`[MAGI] Connecting via ${model}...`);
                     const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -2307,30 +2340,25 @@ EVA术语：同步率、AT力场、LCL浓度、模式蓝色、神经连接、人
                     });
 
                     if (!response.ok) {
-                        const status = response.status;
-                        finalError = `HTTP ${status}`;
+                        finalError = `HTTP ${response.status}`;
                         continue; 
                     }
 
                     const data = await response.json();
-                    
                     if (data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
-                        aiResponseText = data.candidates[0].content.parts[0].text.trim(); // 去除多余空格
+                        aiResponseText = data.candidates[0].content.parts[0].text.trim();
                     } else if (data.promptFeedback && data.promptFeedback.blockReason) {
                         aiResponseText = `[系统拦截] ${data.promptFeedback.blockReason}`;
                     } else {
                          aiResponseText = "MAGI 数据解析错误";
                     }
-                    
                     success = true;
                     break; 
-
                 } catch (error) {
                     finalError = error.message;
                 }
             }
 
-            /* 4. 结束处理与记忆存储 */
             stopMagiAnimation(success);
             bubble.classList.remove('ai-speech-bubble-processing');
 
@@ -2341,6 +2369,10 @@ EVA术语：同步率、AT力场、LCL浓度、模式蓝色、神经连接、人
                     magiStatus.classList.add('text-emergency');
                 }
                 if(window.setWaveState) window.setWaveState('flat');
+                
+                // 失败回滚：删除刚才那条用户记录，防止变成"自言自语"
+                chatHistory.pop();
+                persistMemory();
             } else {
                 if(magiStatus) {
                     magiStatus.innerText = "CONSENSUS";
@@ -2348,8 +2380,9 @@ EVA术语：同步率、AT力场、LCL浓度、模式蓝色、神经连接、人
                     magiStatus.classList.add('text-primary');
                 }
                 
-                // --- 关键：将 AI 的回复也存入历史，形成闭环 ---
+                // --- 闭环：将 AI 回复存入全局历史 ---
                 chatHistory.push({ role: "model", content: aiResponseText });
+                persistMemory(); // 保存完整闭环
                 
                 showAiSpeech(aiResponseText);
                 
