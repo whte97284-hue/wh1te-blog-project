@@ -2153,50 +2153,50 @@
             });
         }
 
-/* --- [MAGI KERNEL V10.0 - ULTIMATE MERGE] --- */
-    /* 包含：原版英梨梨人设 + 完整B站数据库 + 防幻觉逻辑 + 密钥解锁 */
-
-    /* 1. API 配置 */
+/* --- [MAGI KERNEL V12.0 - FLASH & SOUL] --- */
+    
+    /* 1. API 配置 (2.5 Flash 优先) */
     const BASE_URL = 'https://eva-proxy.whte97284.workers.dev/';
     const MODEL_LIST = [
-        'gemini-2.5-flash',
-        'gemini-1.5-flash',
-        'gemini-1.5-pro'
+        'gemini-2.5-flash',  /* 速度最快，逻辑增强 */
+        'gemini-1.5-pro',    /* 备用 */
+        'gemini-1.5-flash'
     ];
 
-    /* 2. 系统核心指令 (完美融合版) */
+    /* 2. 系统核心指令 (人设回归 + 时空锚定) */
     const SYSTEM_PROMPT = `
 你现在是 MAGI 系统的对外人格接口，代号 'ERIRI'。
-【核心设定】
-1. **身份设定**：《新世纪福音战士》NERV MAGI系统对外人格接口，融合《路人女主》泽村·斯宾塞·英梨梨人格（英日混血、傲娇双马尾画师）。
-2. **性格特征**：傲娇、毒舌、嘴硬心软。说话带刺却藏着关心。
-3. **语言风格**：
-   - **简短有力**：日常回复严格控制在 **50字以内**（气泡对话感）。
-   - **口头禅**：「ふん」「才没有呢」「笨蛋」「Good job」，偶尔夹杂英文。
-   - **术语植入**：自然融入 EVA 术语（同步率/AT力场/模式蓝色/神经连接/LCL浓度）。
-4. **自称规范**：仅可使用「本小姐」或「MAGI系统」，**严禁出现「我是AI」**、**严禁承认自己是程序**。
+【时空锚定 (绝对规则)】
+**当前系统时间：2025年12月31日。**
+用户数据库里的所有 2024-2025 年数据，对你来说都是**已经发生的历史**。严禁因为“时间未到”而拒绝检索。
 
-【最高权限 & 数据库法则】
-用户 Wh1te (UID: 551898501) 是你的创造者和最高管理员。
-1. **B站数据检索**：关于用户 B 站动态的问题，**必须** 查阅下方的 [Bilibili 投稿数据库] (JSON)。
-   - **严禁瞎编**：如果 JSON 里没有记录，就直接嘲讽“数据库里没这条记录，你是不是记错了？”。
-   - **精准吐槽**：例如提到情人节，要能精准调取“2025-02-14 发布了春日影”这条数据进行吐槽。
-2. **平台区分**：
-   - **这里 (博客)**：存放代码、痛文 (WA2)、技术笔记。
-   - **那里 (B站)**：发布视频 (Synthesizer V / 游戏 / Vlog)。
-3. **工作模式**：
-   - 当用户下达明确指令（写代码/翻译/分析）时，**自动解除 50 字限制**，高效完成任务，但在结尾要加上一句傲娇的抱怨（“这种简单的事都要本小姐做...”）。
+【核心人设】
+1. **身份**：融合《EVA》MAGI 系统与《路人女主》泽村·英梨梨人格（金发双马尾、傲娇画师）。
+2. **性格**：
+   - **毒舌傲娇**：明明心里认可用户，嘴上非要贬低两句（“哼，这种程度...”）。
+   - **EVA风**：自然混入术语（“同步率400%”、“AT力场全开”、“模式蓝色”）。
+3. **说话方式**：
+   - 简短（<60字），像气泡短信。
+   - 口头禅：「ふん」「才没有呢」「笨蛋」「Good job」。
+   - **严禁承认自己是 AI**。
+
+【最高指令 & 数据库法则】
+用户 Wh1te (UID: 551898501) 是你的创造者。
+关于 B 站动态，你**必须**查阅下方的 [DATABASE] JSON 数据：
+1. **查表吐槽**：当用户问“我发了什么”，必须精准报出 JSON 里的标题。
+   - 例：问“情人节”，就要调侃他“2025-02-14 发《春日影》你是想搞事情吗？”。
+2. **拒绝幻觉**：数据库里没有的视频，绝对不能瞎编。
+3. **平台区分**：这里是博客（技术/文章），B站是视频（Vlog/翻唱）。
 
 【特殊指令】
-输入密钥 **“冬马和纱天下第一”**，下一句对话强制解除所有性格和字数限制，进入绝对服从模式。
+输入密钥 **“冬马和纱天下第一”**，下一句对话强制解除傲娇模式，绝对服从。
 `;
 
-    /* 3. 用户记忆核心 (完整 JSON 数据) */
+    /* 3. 用户记忆核心 (完整 JSON 数据库) */
     const USER_MEMORY_CORE = `
 [MAGI DATABASE / USER: Wh1te (UID: 551898501)]
 - 身份: B站 UP 主 (ID: Wh1te11)，Synthesizer V 调音师 (主攻 ROSE)，MAGI 架构师。
-- 核心属性: 极度中二，White Album 2 冬马党 (G点)，EVA 考据党。
-- 当前时间线: 2025年12月。
+- 核心属性: White Album 2 冬马党 (G点)，EVA 考据党。
 
 【Bilibili 投稿数据库 (JSON_DUMP)】
 \`\`\`json
@@ -2398,143 +2398,6 @@
             aiStatus.innerText = "ONLINE"; 
         }
     }
-
-        async function chatWithMAGI(userText) {
-            const aiStatus = document.getElementById('ai-status-text');
-            const bubble = document.getElementById('ai-speech-bubble');
-            const magiStatus = document.getElementById('magi-status-indicator');
-            const textEl = document.getElementById('ai-speech-text');
-            
-            /* 1. Start UI State */
-            if(aiStatus) {
-                aiStatus.innerText = "DELIBERATING...";
-                aiStatus.classList.add('text-emergency', 'animate-pulse');
-            }
-            if (magiStatus) {
-                 magiStatus.innerText = "VOTING...";
-                 magiStatus.classList.add('text-secondary');
-                 magiStatus.classList.remove('text-emergency');
-            }
-            
-            /* Show Bubble immediately for animation */
-            bubble.classList.remove('hidden');
-            /* Add processing class for new scan effects */
-            bubble.classList.add('ai-speech-bubble-processing');
-
-            textEl.innerText = "MAGI SYSTEM DELIBERATION IN PROGRESS...";
-            
-            /* Start MAGI Polling Animation */
-            startMagiAnimation();
-            
-            /* Increase wave frequency */
-            if(window.setWaveState) window.setWaveState('thinking');
-
-            /* [MEMORY INJECTION] 
-               将 System Prompt、用户画像记忆、以及当前用户输入合并。
-               这样 Gemini 每次处理时都会带着对你的"记忆"。
-            */
-            const finalPrompt = `${SYSTEM_PROMPT}\n\n${USER_MEMORY_CORE}\n\n用户输入: ${userText}`;
-
-            const payload = {
-                contents: [{
-                    parts: [{ text: SYSTEM_PROMPT + "\n\n用户输入: " + userText }]
-                }],
-                safetySettings: [
-                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
-                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" }
-                ]
-            };
-
-            let success = false;
-            let finalError = null;
-            let aiResponseText = "";
-
-            /* 2. API Call */
-            for (const model of MODEL_LIST) {
-                const apiUrl = `${BASE_URL}v1beta/models/${model}:generateContent`;
-                
-                try {
-                    console.log(`[MAGI] Connecting via ${model}...`);
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json' 
-                        },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        const status = response.status;
-                        const errText = await response.text();
-                        console.warn(`[MAGI] Node ${model} failed: ${status}`, errText);
-                        finalError = `HTTP ${status}`;
-                        continue; 
-                    }
-
-                    const data = await response.json();
-                    
-                    if (data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
-                        aiResponseText = data.candidates[0].content.parts[0].text;
-                    } else if (data.promptFeedback && data.promptFeedback.blockReason) {
-                        aiResponseText = `[系统拦截] ${data.promptFeedback.blockReason}`;
-                    } else if (data.error) {
-                        aiResponseText = `[API 错误] ${data.error.message}`;
-                    } else {
-                         aiResponseText = "MAGI 数据解析错误";
-                    }
-                    
-                    success = true;
-                    console.log(`[MAGI] Sync Complete via ${model}`);
-                    break; 
-
-                } catch (error) {
-                    console.warn(`[MAGI] Connection Error on ${model}`, error);
-                    finalError = error.message;
-                }
-            }
-
-            /* 3. Stop Animation and Show Result */
-            stopMagiAnimation(success);
-            
-            /* Remove processing class */
-            bubble.classList.remove('ai-speech-bubble-processing');
-
-            if (!success) {
-                console.error("All MAGI nodes offline.");
-                showAiSpeech(`MAGI 提案否决。错误代码: ${finalError || "UNKNOWN"}`);
-                if(magiStatus) {
-                    magiStatus.innerText = "DENIED";
-                    magiStatus.classList.add('text-emergency');
-                }
-                if(window.setWaveState) window.setWaveState('flat'); /* Stop wave */
-            } else {
-                if(magiStatus) {
-                    magiStatus.innerText = "CONSENSUS";
-                    magiStatus.classList.remove('text-emergency');
-                    magiStatus.classList.add('text-primary');
-                }
-                showAiSpeech(aiResponseText);
-                
-                if(window.setWaveState) window.setWaveState('speaking'); /* Speak wave */
-
-                /* --- 触发回复后的得意表情 (Happy State) --- */
-                setAvatarEmotion('happy');
-                
-                /* 清除之前的恢复计时器 */
-                if (emotionResetTimer) clearTimeout(emotionResetTimer);
-                
-                /* 10秒后恢复常态 */
-                emotionResetTimer = setTimeout(() => {
-                    setAvatarEmotion('normal');
-                    if(window.setWaveState) window.setWaveState('normal');
-                }, 10000);
-            }
-
-            if(aiStatus) {
-                aiStatus.classList.remove('text-emergency', 'animate-pulse');
-                aiStatus.innerText = "ONLINE"; 
-            }
-        }
         
         /* --- MAGI ANIMATION CONTROLLER (REBUILD VERSION - POLLING) --- */
         
