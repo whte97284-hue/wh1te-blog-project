@@ -3218,6 +3218,77 @@
                 });
             });
         }
+
+        /* --- 4. 缺失的模态框与网络逻辑 (补丁) --- */
+
+        // 网络请求辅助函数 (用于获取详情简介)
+        async function fetchWithFallback(targetUrl) {
+            const PROXIES = [
+                'https://api.allorigins.win/raw?url=',
+                'https://corsproxy.io/?' 
+            ];
+            for (const proxy of PROXIES) {
+                try {
+                    const res = await fetch(proxy + encodeURIComponent(targetUrl));
+                    if(res.ok) return await res.json();
+                } catch(e) {}
+            }
+            throw new Error("Network Error");
+        }
+
+        // 打开详情页
+        async function openAnimeModal(title, rating, imageUrl, id) {
+            const modal = document.getElementById('anime-modal');
+            
+            // 1. 填充基础信息
+            document.getElementById('modal-title').innerText = title || "UNKNOWN";
+            document.getElementById('modal-rating').innerText = rating || "0.0";
+            document.getElementById('modal-cover').src = imageUrl || "";
+            document.getElementById('modal-id').innerText = id || "00000";
+            document.getElementById('modal-summary').innerText = "ACCESSING MAGI ARCHIVE..."; 
+            
+            // 2. 显示动画
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            // 强制重绘以触发 transition
+            requestAnimationFrame(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+                modal.querySelector('div').classList.add('scale-100');
+            });
+
+            if(!id) return;
+
+            // 3. 获取简介 (优先读缓存)
+            const cacheKey = `nerv_subject_desc_${id}`;
+            const cachedDesc = localStorage.getItem(cacheKey);
+
+            if (cachedDesc && cachedDesc.length > 5) {
+                document.getElementById('modal-summary').innerText = cachedDesc;
+            } else {
+                try {
+                    // 请求 Bangumi API 获取简介
+                    const data = await fetchWithFallback(`https://api.bgm.tv/v0/subjects/${id}`);
+                    const desc = data.summary || "DATA CORRUPTED. NO SUMMARY AVAILABLE.";
+                    document.getElementById('modal-summary').innerText = desc;
+                    localStorage.setItem(cacheKey, desc);
+                } catch(e) {
+                    document.getElementById('modal-summary').innerText = "UNABLE TO RETRIEVE ARCHIVE DATA.\n(NETWORK INTERFERENCE)";
+                }
+            }
+        }
+
+        // 关闭详情页
+        function closeAnimeModal() { 
+            const modal = document.getElementById('anime-modal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.remove('scale-100');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden'); 
+                modal.classList.remove('flex'); 
+            }, 300);
+        }
     </script>
 </body>
 </html>
