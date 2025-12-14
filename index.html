@@ -1006,28 +1006,51 @@
         }
         .progress-btn:hover { background: var(--secondary-color); color: black; }
 
-        /* 2. 环形菜单 (Ring Menu) */
-        #tactical-ring-menu {
-            position: fixed; z-index: 9999; width: 150px; height: 150px;
-            pointer-events: none; opacity: 0; transition: opacity 0.2s;
-            transform: translate(-50%, -50%);
+        /* --- TACTICAL BUTTONS (强制水平修正版) --- */
+        .tactical-controls {
+            display: flex !important;       /* 强制 Flex 布局 */
+            flex-direction: row !important; /* 强制水平排列 */
+            flex-wrap: nowrap !important;   /* 禁止换行 */
+            align-items: center;
+            width: 100%;                    /* 占满容器宽度 */
+            gap: 2px; 
+            margin-top: 6px; 
+            padding-top: 4px;
+            border-top: 1px dashed rgba(255,255,255,0.15);
         }
-        #tactical-ring-menu.active { pointer-events: auto; opacity: 1; }
         
-        .ring-option {
-            position: absolute; top: 50%; left: 50%; width: 40px; height: 40px;
-            margin-left: -20px; margin-top: -20px;
-            border: 1px solid var(--secondary-color); background: rgba(0,0,0,0.9);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: all 0.3s;
-            font-size: 8px; font-weight: bold; color: var(--secondary-color);
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        .ctrl-btn {
+            flex: 1 1 0% !important;        /* 强制均分宽度，允许压缩 */
+            display: flex !important; 
+            align-items: center; 
+            justify-content: center;
+            gap: 2px;
+            white-space: nowrap;            /* 禁止文字换行 */
+            
+            text-align: center; 
+            font-size: 9px; 
+            font-weight: bold;
+            height: 20px;                   /* 固定高度，防止被拉长 */
+            line-height: 20px;
+            
+            cursor: pointer; 
+            border: 1px solid var(--border-color);
+            background: rgba(0,0,0,0.4); 
+            color: var(--text-muted); 
+            transition: all 0.2s;
+            font-family: 'Noto Sans JP', sans-serif;
+            border-radius: 2px;
+            min-width: 0;                   /* 关键：允许 Flex 子项缩小到内容以下 */
         }
-        .ring-option:hover { background: var(--secondary-color); color: black; box-shadow: 0 0 15px var(--secondary-color); transform: scale(1.1); }
-        .ring-center {
-            position: absolute; top: 50%; left: 50%; width: 10px; height: 10px;
-            background: var(--secondary-color); border-radius: 50%; transform: translate(-50%, -50%);
-        }
+        
+        .ctrl-btn:hover { background: var(--secondary-color); color: black; border-color: var(--secondary-color); }
+        .ctrl-btn svg { width: 10px; height: 10px; flex-shrink: 0; } /* 防止图标被压扁 */
+
+        /* 激活状态颜色保持不变 */
+        .ctrl-btn.active-watching { background: #39ff14; color: black; border-color: #39ff14; }
+        .ctrl-btn.active-todo { background: #ffae00; color: black; border-color: #ffae00; }
+        .ctrl-btn.active-watched { background: #ff2a2a; color: white; border-color: #ff2a2a; }
+        .ctrl-btn.active-dropped { background: #555; color: #aaa; border-color: #555; }
 
         /* 3. 分组标题 */
         .group-header {
@@ -2725,19 +2748,15 @@
         const DB_KEY = 'nerv_anime_db_v1';
         let animeCalendarData = [];
         let currentSelectedDay = null;
-        let currentContextId = null; // 右键选中的ID
-        
-        // 星期映射
         const weekMap = { 1: "MON", 2: "TUE", 3: "WED", 4: "THU", 5: "FRI", 6: "SAT", 7: "SUN", 8: "COMMAND_CENTER" };
 
-        /* --- 1. 数据管理器 (Data Core) --- */
+        /* --- 1. 核心管理器 (AnimeManager) --- */
         const AnimeManager = {
-            // 初始化：数据迁移 (Array -> Object)
+            // 初始化
             init() {
+                // 尝试迁移旧数据
                 const oldFavs = localStorage.getItem('nerv_priority_targets');
                 let db = this.getDB();
-                
-                // 如果发现旧数据且新数据库为空，执行迁移
                 if (oldFavs && Object.keys(db).length === 0) {
                     try {
                         const oldList = JSON.parse(oldFavs);
@@ -2747,120 +2766,84 @@
                                 db[id] = { status: 'watching', eps: 0, total: 12, ts: Date.now() };
                             });
                             this.saveDB(db);
-                            localStorage.removeItem('nerv_priority_targets'); // 清除旧数据
+                            localStorage.removeItem('nerv_priority_targets');
                         }
                     } catch(e) {}
                 }
             },
 
             getDB() {
-                try {
-                    return JSON.parse(localStorage.getItem(DB_KEY)) || {};
-                } catch(e) { return {}; }
+                try { return JSON.parse(localStorage.getItem(DB_KEY)) || {}; } 
+                catch(e) { return {}; }
             },
 
             saveDB(data) {
                 localStorage.setItem(DB_KEY, JSON.stringify(data));
-                // 刷新界面
-                if (currentSelectedDay === 8) switchDay(8);
-                else if (currentSelectedDay) switchDay(currentSelectedDay); // 刷新当前列表状态
+                // 实时刷新界面
+                if (typeof switchDay === 'function') {
+                    if (currentSelectedDay === 8) switchDay(8);
+                    else if (currentSelectedDay) switchDay(currentSelectedDay);
+                }
             },
 
-            // 获取单个番剧状态
-            get(id) {
-                return this.getDB()[id];
-            },
-
-            // 设置状态 (右键菜单/点击星星)
+            // 设置状态 (点击实体按钮触发)
             setStatus(id, status, totalEps = 12) {
                 let db = this.getDB();
                 if (status === 'remove') {
-                    delete db[id];
+                    delete db[id]; // 移除
                 } else {
-                    if (!db[id]) db[id] = { status: status, eps: 0, total: totalEps, ts: Date.now() };
-                    else {
+                    if (!db[id]) {
+                        db[id] = { status: status, eps: 0, total: totalEps || 12, ts: Date.now() };
+                    } else {
                         db[id].status = status;
                         db[id].ts = Date.now();
-                        // 如果切换到 watching 且没有总集数，更新一下
                         if(totalEps) db[id].total = totalEps;
                     }
                 }
                 this.saveDB(db);
-                hideRingMenu();
+                
+                // 播放音效
+                const sfx = document.getElementById('sfx-click');
+                if(sfx) { sfx.currentTime=0; sfx.play().catch(()=>{}); }
             },
 
-            // 增加进度
+            // 增加进度 (+号触发)
             addProgress(e, id) {
-                e.stopPropagation(); // 防止打开详情
+                e.stopPropagation();
                 let db = this.getDB();
                 if (db[id]) {
                     db[id].eps = (db[id].eps || 0) + 1;
                     
-                    // 完结检测
+                    // 完结撒花
                     if (db[id].eps >= db[id].total && db[id].total > 0) {
                         db[id].status = 'watched';
-                        showAiSpeech(`目标 [${id}] 补完确认。同步率 100%。`);
-                    } else {
-                        // 播放音效
-                        const sfx = document.getElementById('sfx-click');
-                        if(sfx) { sfx.currentTime=0; sfx.play().catch(()=>{}); }
+                        if(typeof showAiSpeech === 'function') showAiSpeech(`目标 [${id}] 补完确认。`);
                     }
                     
                     this.saveDB(db);
-                }
-            },
-
-            // 切换星星点击 (默认行为: 加入Watching / 移除)
-            toggleFav(e, id, totalEps) {
-                e.stopPropagation();
-                const item = this.get(id);
-                if (item) {
-                    this.setStatus(id, 'remove');
-                } else {
-                    this.setStatus(id, 'watching', totalEps);
+                    
+                    // 播放音效
                     const sfx = document.getElementById('sfx-click');
                     if(sfx) { sfx.currentTime=0; sfx.play().catch(()=>{}); }
                 }
             }
         };
 
-        // 初始化迁移
+        // ⚠️ 极其重要：挂载到全局，否则 HTML 里的 onclick 找不到它
+        window.AnimeManager = AnimeManager;
         AnimeManager.init();
 
-        /* --- 2. 交互逻辑 (Interaction) --- */
-        
-        // 环形菜单逻辑
-        document.addEventListener('click', hideRingMenu);
-        document.addEventListener('contextmenu', (e) => {
-           // 如果不是在番剧卡片上右键，忽略
-           // (具体逻辑集成在卡片渲染中)
-        });
-
-        function showRingMenu(e, id) {
-            e.preventDefault();
-            currentContextId = id;
-            const menu = document.getElementById('tactical-ring-menu');
-            menu.style.left = `${e.clientX}px`;
-            menu.style.top = `${e.clientY}px`;
-            menu.classList.add('active');
-        }
-
-        function hideRingMenu() {
-            document.getElementById('tactical-ring-menu').classList.remove('active');
-        }
-
-        /* --- 3. 数据加载与渲染 (Rendering) --- */
-
+        /* --- 2. 数据加载逻辑 (Load Data) --- */
         async function loadAnimeData() {
             const dateDisplay = document.getElementById('anime-date');
             const updateTime = document.getElementById('update-time');
             const today = new Date();
             let bangumiWeekday = today.getDay() === 0 ? 7 : today.getDay(); // 1-7
             
-            // 简单缓存逻辑 (同原版)
-            const CACHE_KEY = 'nerv_anime_cache_raw';
+            // 简单缓存
+            const CACHE_KEY = 'nerv_anime_cache_v2';
             const cachedData = localStorage.getItem(CACHE_KEY);
-            const cachedTime = localStorage.getItem('nerv_anime_ts');
+            const cachedTime = localStorage.getItem('nerv_anime_ts_v2');
             const now = Date.now();
 
             if (cachedData && cachedTime && (now - parseInt(cachedTime) < 3600 * 1000 * 6)) {
@@ -2873,17 +2856,19 @@
 
             try {
                 if(dateDisplay) dateDisplay.innerHTML = 'SYNCING...';
+                // 使用 AllOrigins 代理解决跨域
                 const res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://api.bgm.tv/calendar'));
                 animeCalendarData = await res.json();
                 
                 localStorage.setItem(CACHE_KEY, JSON.stringify(animeCalendarData));
-                localStorage.setItem('nerv_anime_ts', now.toString());
+                localStorage.setItem('nerv_anime_ts_v2', now.toString());
                 
                 if(updateTime) updateTime.innerText = "SYNC: LIVE";
                 initWeekSelector(bangumiWeekday);
                 switchDay(bangumiWeekday);
 
             } catch (error) {
+                console.error(error);
                 if(dateDisplay) dateDisplay.innerHTML = 'OFFLINE';
                 if (cachedData) {
                      animeCalendarData = JSON.parse(cachedData);
@@ -2893,6 +2878,7 @@
             }
         }
 
+        /* --- 3. 星期切换逻辑 (Switch Day) --- */
         function initWeekSelector(currentWeekday) {
             const selector = document.getElementById('week-selector');
             if(!selector) return;
@@ -2923,33 +2909,27 @@
             const container = document.getElementById('anime-list');
             container.innerHTML = '';
 
-            // --- 模式 A: 每日放送 (1-7) ---
+            // 模式 A: 每日放送 (1-7)
             if (weekday !== 8) {
                 if(animeCalendarData && animeCalendarData.length > 0) {
                     const dayData = animeCalendarData.find(d => d.weekday.id === weekday);
                     const items = dayData ? dayData.items : [];
-                    // 渲染普通列表，传入 false (不分组)
+                    // 调用你刚才贴好的 renderItems
                     renderItems(container, items, false);
                 }
                 return;
             }
 
-            // --- 模式 B: 个人终端 (8) ---
-            // 1. 收集所有数据 (从 animeCalendarData 里找信息，或者只用 DB 里的 ID)
-            // 注：为了简单，目前只能渲染 calendar 里有的番剧。如果想显示所有的，需要额外的 Search API 支持。
-            // 这里我们遍历 calendar 把所有已收藏的挑出来。
+            // 模式 B: 个人终端 (8) - 分组显示
             const db = AnimeManager.getDB();
             let myItems = [];
             
+            // 遍历所有数据找已收藏的
             if(animeCalendarData) {
                 animeCalendarData.forEach(day => {
                     if(day.items) {
                         day.items.forEach(item => {
                             if (db[item.id]) {
-                                // 注入 DB 里的状态
-                                item.db_status = db[item.id].status;
-                                item.db_eps = db[item.id].eps;
-                                item.db_total = db[item.id].total;
                                 myItems.push(item);
                             }
                         });
@@ -2958,20 +2938,21 @@
             }
 
             if (myItems.length === 0) {
-                container.innerHTML = `<div class="p-4 text-center text-gray-500 text-[10px] font-mono">NO ACTIVE TARGETS.<br>RIGHT CLICK ON LIST TO ADD.</div>`;
+                container.innerHTML = `<div class="p-4 text-center text-gray-500 text-[10px] font-mono">NO ACTIVE TARGETS.<br>USE BUTTONS TO ADD.</div>`;
                 return;
             }
 
-            // 2. 分组
-            const groups = { watching: [], todo: [], watched: [], dropped: [] };
+            // 分组逻辑
+            const groups = { watching: [], todo: [], watched: [], remove: [] }; // remove 不显示
             myItems.forEach(item => {
-                if (groups[item.db_status]) groups[item.db_status].push(item);
+                const s = db[item.id].status;
+                if (groups[s]) groups[s].push(item);
             });
 
-            // 3. 渲染分组
+            // 分组渲染
             if (groups.watching.length > 0) {
                 container.innerHTML += `<div class="group-header syncing">/// SYNCING_TARGETS [${groups.watching.length}]</div>`;
-                renderItems(container, groups.watching, true); // true = 开启进度条
+                renderItems(container, groups.watching, true); 
             }
             if (groups.todo.length > 0) {
                 container.innerHTML += `<div class="group-header">/// PENDING_ANALYSIS [${groups.todo.length}]</div>`;
@@ -2983,7 +2964,7 @@
             }
         }
 
-        // 通用渲染函数
+        // 通用渲染函数 (Rev. Tailwind 原子类版)
         function renderItems(container, items, showProgressBar) {
             const db = AnimeManager.getDB();
 
@@ -2994,74 +2975,111 @@
                 // 图像处理
                 let image = './images/placeholder.jpg'; 
                 if (item.images) image = item.images.large || item.images.common || '';
-                // 尝试获取高清
                 image = image.replace(/\/r\/[0-9x]+\/pic/, '/pic'); 
 
-                // 状态判断
+                // 状态读取
                 const myData = db[item.id];
-                const isFav = !!myData;
                 const status = myData ? myData.status : null;
                 const watched = myData ? (myData.eps || 0) : 0;
-                
-                // 自动推断总集数 (Bangumi API 列表有时不给 total，默认 12)
                 const total = (item.eps_count || 12);
 
-                // 星星颜色
-                let starClass = 'text-gray-600 hover:text-white';
-                if (status === 'watching') starClass = 'text-green-400';
-                else if (status === 'todo') starClass = 'text-yellow-400';
-                else if (status === 'watched') starClass = 'text-red-500';
-
-                // 进度条 HTML
+                // --- 1. 进度条模块 ---
                 let progressHtml = '';
-                if (showProgressBar && status === 'watching') {
+                if (status === 'watching') {
                     let cells = '';
-                    const maxDisplay = 13; // 最多显示13格，多了就缩略
-                    const displayTotal = total > 26 ? 12 : total; // 长篇番剧简化显示
-                    
+                    const displayTotal = total > 26 ? 13 : total;
                     for(let i=1; i<=displayTotal; i++) {
-                        const filled = i <= watched ? 'filled' : '';
-                        cells += `<div class="p-cell ${filled}" onclick="AnimeManager.addProgress(event, ${item.id})"></div>`;
+                        const filled = i <= watched ? 'bg-secondary shadow-[0_0_5px_var(--secondary-color)]' : 'bg-white/10 hover:bg-secondary/50';
+                        cells += `<div class="flex-1 h-1.5 cursor-pointer border-r border-black/50 transition-colors ${filled}" onclick="window.AnimeManager.addProgress(event, ${item.id})"></div>`;
                     }
                     progressHtml = `
-                        <div class="tactical-progress-container" onclick="event.stopPropagation()">
-                            <div class="text-[8px] font-mono text-secondary w-6 text-right mr-1">${watched}/${total}</div>
-                            <div class="progress-cells">${cells}</div>
-                            <div class="progress-btn ml-1" onclick="AnimeManager.addProgress(event, ${item.id})">+</div>
+                        <div class="flex items-center gap-1 mb-2 select-none" onclick="event.stopPropagation()">
+                            <div class="text-[8px] font-mono text-secondary w-6 text-right">${watched}/${total}</div>
+                            <div class="flex flex-1 border border-white/20">${cells}</div>
+                            <div class="w-4 h-4 flex items-center justify-center border border-secondary text-secondary text-[10px] cursor-pointer hover:bg-secondary hover:text-black transition-colors" onclick="window.AnimeManager.addProgress(event, ${item.id})">+</div>
                         </div>
                     `;
                 }
 
+                // --- 2. 评分模块 ---
+                const ratingHtml = `
+                    <div class="flex items-center gap-2 opacity-60 mb-2">
+                        <span class="text-[8px] font-mono text-gray-500">SYNC</span>
+                        <div class="flex-1 h-0.5 bg-white/10">
+                            <div class="h-full bg-secondary" style="width: ${score * 10}%"></div>
+                        </div>
+                        <span class="text-[8px] font-mono text-secondary">${score}</span>
+                    </div>`;
+
+                // --- 3. 实体控制按钮 (Tailwind 强制水平版) ---
+                const icons = {
+                    play: `<svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`,
+                    clock: `<svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`,
+                    check: `<svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
+                    trash: `<svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>`
+                };
+
+                // 定义按钮状态颜色 (Tailwind Classes)
+                // 默认样式
+                const baseBtnClass = "flex-1 flex items-center justify-center gap-1 h-6 text-[9px] font-bold border cursor-pointer transition-all rounded min-w-0";
+                const defaultStyle = "bg-black/40 border-white/20 text-gray-400 hover:bg-secondary hover:text-black hover:border-secondary";
+                
+                // 激活样式映射
+                const activeStyles = {
+                    watching: "bg-[#39ff14] text-black border-[#39ff14] shadow-[0_0_5px_rgba(57,255,20,0.4)]",
+                    todo: "bg-[#ffae00] text-black border-[#ffae00]",
+                    watched: "bg-[#ff2a2a] text-white border-[#ff2a2a]",
+                    remove: "bg-gray-600 text-white border-gray-600"
+                };
+
+                const btns = [
+                    { key: 'watching', label: '在看', icon: icons.play },
+                    { key: 'todo', label: '想看', icon: icons.clock },
+                    { key: 'watched', label: '已阅', icon: icons.check },
+                    { key: 'remove', label: '弃坑', icon: icons.trash }
+                ];
+
+                const controlsHtml = `
+                    <div class="flex flex-row items-center w-full gap-1 mt-auto pt-2 border-t border-white/10" onclick="event.stopPropagation()">
+                        ${btns.map(b => {
+                            const isActive = status === b.key;
+                            // 如果是 remove 按钮且当前未激活，保持默认；如果当前是其他状态，也不高亮
+                            const style = isActive ? activeStyles[b.key] : defaultStyle;
+                            return `
+                            <div class="${baseBtnClass} ${style}" 
+                                 onclick="window.AnimeManager.setStatus(${item.id}, '${b.key}', ${total})">
+                                ${b.icon}<span class="hidden xl:inline">${b.label}</span><span class="xl:hidden">${b.label}</span>
+                            </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+
                 return `
-                <div class="anime-card-tech flex gap-3 p-2 group cursor-pointer anime-item-enter relative overflow-hidden mb-1" 
+                <div class="anime-card-tech flex gap-3 p-2 group cursor-pointer anime-item-enter relative overflow-hidden mb-1 min-h-[110px]" 
                      style="animation-delay: ${index * 0.05}s"
-                     oncontextmenu="showRingMenu(event, ${item.id})"
                      onclick='openAnimeModal("${title}", ${score}, "${image}", ${item.id})'>
                     
                     <div class="absolute left-0 top-0 bottom-0 w-1 transition-colors duration-300 ${status === 'watching' ? 'bg-green-500' : 'bg-transparent group-hover:bg-white/20'}"></div>
                     
-                    <div class="relative w-12 h-16 shrink-0 ml-1 bg-black/50">
-                        <img src="${image}" class="w-full h-full object-cover transition-transform duration-500 filter grayscale group-hover:grayscale-0" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'">
-                        ${status === 'watched' ? '<div class="absolute inset-0 flex items-center justify-center bg-black/60 text-[8px] text-red-500 font-bold border border-red-500" style="transform: rotate(-15deg)">COMPLETED</div>' : ''}
+                    <div class="relative w-16 shrink-0 ml-1 bg-black/50 flex flex-col justify-start">
+                        <div class="h-24 relative overflow-hidden border border-white/10">
+                            <img src="${image}" class="w-full h-full object-cover transition-transform duration-500 filter grayscale group-hover:grayscale-0" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'">
+                             ${status === 'watched' ? '<div class="absolute inset-0 flex items-center justify-center bg-black/60 text-[8px] text-red-500 font-bold border border-red-500" style="transform: rotate(-15deg); text-shadow: 0 0 5px red;">COMPLETED</div>' : ''}
+                        </div>
                     </div>
 
-                    <div class="flex-1 min-w-0 flex flex-col justify-center">
-                        <div class="flex justify-between items-start">
-                            <span class="text-white font-bold text-[10px] leading-tight truncate-2-lines font-sans group-hover:text-secondary transition-colors w-10/12">${title}</span>
-                            <button onclick="AnimeManager.toggleFav(event, ${item.id}, ${total})" class="z-20 p-1 ${starClass}">
-                                ★
-                            </button>
+                    <div class="flex-1 min-w-0 flex flex-col py-1 h-full">
+                        <div class="flex justify-between items-start mb-auto">
+                            <span class="text-white font-bold text-[10px] leading-tight truncate-2-lines font-sans group-hover:text-secondary transition-colors">${title}</span>
                         </div>
                         
-                        ${progressHtml}
+                        <div class="mt-2">
+                            ${progressHtml}
+                            ${ratingHtml}
+                        </div>
 
-                        ${!progressHtml ? `
-                        <div class="flex items-center gap-2 mt-2 opacity-50">
-                            <div class="flex-1 h-0.5 bg-white/20">
-                                <div class="h-full bg-secondary" style="width: ${score * 10}%"></div>
-                            </div>
-                            <span class="text-[8px] font-mono text-secondary">${score}</span>
-                        </div>` : ''}
+                        ${controlsHtml}
                     </div>
                 </div>`;
             }).join('');
