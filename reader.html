@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAGI ARCHIVE | TACTICAL READER</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <script>
+        window.tailwind = window.tailwind || {};
+        window.tailwind.config = {
+            darkMode: ['class', '[data-mode="light"]'],
+            theme: {
+                extend: {
+                    colors: { primary: 'var(--primary-color)', secondary: 'var(--secondary-color)', bg: 'var(--bg-color)' },
+                    fontFamily: { sans: ['Noto Sans SC', 'sans-serif'], serif: ['Noto Serif SC', 'serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    animation: { 'scan': 'scan 4s linear infinite', 'fadeIn': 'fadeIn 0.8s ease-out forwards', 'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite' },
+                    keyframes: { fadeIn: { '0%': { opacity: 0, transform: 'translateY(10px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } } }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* --- 核心变量 --- */
+        :root {
+            --primary-color: #b15dff; --secondary-color: #39ff14; --bg-color: #0f0518;
+            --text-main: #c0c0c0; --text-muted: #666;
+            --glass-bg: rgba(10, 10, 12, 0.75); --glass-border: rgba(255, 255, 255, 0.08);
+            --widget-bg: rgba(0, 0, 0, 0.4);
+            --code-bg: #0b0b0b; --hud-opacity: 0.5;
+        }
+        [data-mode="light"] {
+            --bg-color: #f2f2f5; --text-main: #1a1a1a; --text-muted: #888;
+            --glass-bg: rgba(255, 255, 255, 0.9); --glass-border: rgba(0, 0, 0, 0.05);
+            --widget-bg: rgba(255, 255, 255, 0.6);
+            --code-bg: #1e1e1e; --hud-opacity: 0.8;
+        }
+        [data-theme="unit-02"] { --primary-color: #ffae00; --secondary-color: #d90000; }
+        [data-mode="light"][data-theme="unit-02"] { --bg-color: #fff5f5; }
+        [data-theme="unit-00"] { --primary-color: #0056b3; --secondary-color: #0091ff; }
+        [data-mode="light"][data-theme="unit-00"] { --bg-color: #f0f8ff; }
+
+        body { 
+            background-color: var(--bg-color); color: var(--text-main); font-family: 'Noto Sans SC', sans-serif;
+            background-image: radial-gradient(circle at 50% 0%, rgba(var(--secondary-color), 0.05) 0%, transparent 60%), linear-gradient(var(--glass-border) 1px, transparent 1px), linear-gradient(90deg, var(--glass-border) 1px, transparent 1px);
+            background-size: 100% 100%, 40px 40px, 40px 40px; background-attachment: fixed; overflow-x: hidden;
+            transition: background-color 0.5s ease, color 0.3s ease;
+        }
+
+        /* --- 布局系统 (Grid Layout) --- */
+        .tactical-grid {
+            display: grid;
+            grid-template-columns: 1fr; /* 默认单栏 */
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+        }
+        /* PC端开启三栏布局 */
+        @media (min-width: 1280px) {
+            .tactical-grid {
+                grid-template-columns: 280px minmax(0, 1fr) 280px; /* 左 - 中 - 右 */
+                align-items: start;
+            }
+            .sidebar-left { position: sticky; top: 8rem; height: calc(100vh - 10rem); overflow-y: auto; padding-right: 10px; }
+            .sidebar-right { position: sticky; top: 8rem; height: calc(100vh - 10rem); } /* 预留右侧 */
+        }
+
+        /* --- Widget 通用样式 --- */
+        .widget-card {
+            background: var(--widget-bg);
+            border: 1px solid var(--glass-border);
+            border-left: 2px solid var(--glass-border);
+            backdrop-filter: blur(8px);
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            transition: all 0.3s;
+        }
+        .widget-card:hover { border-left-color: var(--secondary-color); border-color: rgba(var(--secondary-color), 0.3); box-shadow: 0 0 15px rgba(0,0,0,0.2); }
+        .widget-header {
+            font-family: 'JetBrains Mono'; font-size: 10px; color: var(--secondary-color);
+            margin-bottom: 1rem; letter-spacing: 0.1em; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px dashed var(--glass-border); padding-bottom: 0.5rem;
+        }
+        
+        /* Widget 1: Pilot Data */
+        .pilot-avatar-so {
+            width: 48px; height: 48px; background: #000; border: 1px solid var(--secondary-color);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'JetBrains Mono'; font-weight: bold; font-size: 8px; color: var(--secondary-color); text-align: center;
+            box-shadow: 0 0 5px rgba(var(--secondary-color), 0.3);
+        }
+        .sync-bar-container { height: 4px; background: rgba(255,255,255,0.1); margin-top: 8px; overflow: hidden; }
+        .sync-bar-fill { height: 100%; background: var(--secondary-color); width: 85%; animation: pulse-width 3s infinite ease-in-out; }
+        @keyframes pulse-width { 0%, 100% { width: 85%; opacity: 0.8; } 50% { width: 95%; opacity: 1; box-shadow: 0 0 10px var(--secondary-color); } }
+
+        /* Widget 2: Ops Controls */
+        .ops-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+        .ops-btn {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+            color: var(--text-muted); font-family: 'JetBrains Mono'; font-size: 10px;
+            padding: 0.5rem; text-align: center; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 4px;
+        }
+        .ops-btn:hover { background: var(--secondary-color); color: #000; border-color: var(--secondary-color); }
+        .ops-btn.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+
+        /* Widget 3: TOC */
+        .toc-item { 
+            display: block; padding: 4px 0 4px 10px; color: var(--text-muted); 
+            border-left: 1px solid transparent; font-size: 0.75rem; transition: all 0.2s; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+        }
+        .toc-item:hover, .toc-item.active { 
+            color: var(--secondary-color); border-left-color: var(--secondary-color); 
+            background: linear-gradient(90deg, rgba(var(--secondary-color), 0.05), transparent);
+            padding-left: 14px;
+        }
+
+        /* 主阅读器容器 */
+        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(16px); border: 1px solid var(--glass-border); box-shadow: 0 10px 40px rgba(0,0,0,0.1); position: relative; margin-bottom: 4rem; min-height: 80vh; transition: height 0.3s; }
+        
+        /* 装饰性 HUD 角标 */
+        .hud-corner { position: absolute; width: 10px; height: 10px; border: 2px solid var(--secondary-color); transition: all 0.3s; opacity: var(--hud-opacity); pointer-events: none; }
+        .hc-tl { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+        .hc-tr { top: -1px; right: -1px; border-left: 0; border-bottom: 0; }
+        .hc-bl { bottom: -1px; left: -1px; border-right: 0; border-top: 0; }
+        .hc-br { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+
+        /* 文章通用样式 */
+        .prose-eva h1 { font-family: 'Noto Serif SC', serif; font-size: 2.5rem; color: var(--text-main); margin: 2em 0 1em; line-height: 1.2; }
+        .prose-eva h2 { font-family: 'Noto Serif SC', serif; font-size: 1.8rem; color: var(--secondary-color); border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem; margin-top: 2.5em; }
+        .prose-eva h2::before { content: '##'; margin-right: 0.5rem; opacity: 0.3; font-family: 'JetBrains Mono'; }
+        .prose-eva p { margin-bottom: 1.5em; line-height: 1.8; font-size: 1.05rem; text-align: justify; color: var(--text-main); opacity: 0.9; }
+        .prose-eva img { max-width: 100%; height: auto; display: block; margin: 2rem auto; border: 1px solid var(--glass-border); border-radius: 2px; transition: all 0.3s; cursor: zoom-in; opacity: 0; animation: fadeIn 0.5s forwards; }
+        .prose-eva img:hover { border-color: var(--secondary-color); box-shadow: 0 0 15px rgba(var(--secondary-color), 0.2); }
+        .prose-eva pre { background: var(--code-bg) !important; padding: 1rem; border-radius: 4px; overflow-x: auto; margin: 2em 0; border: 1px solid var(--glass-border); }
+        .prose-eva code { font-family: 'JetBrains Mono', monospace !important; font-size: 0.85em; color: #abb2bf; }
+        .prose-eva blockquote { border-left: 3px solid var(--secondary-color); background: rgba(var(--secondary-color), 0.05); padding: 1rem 1.5rem; font-style: italic; color: var(--text-muted); margin: 2em 0; }
+        [data-mode="light"] .prose-eva blockquote { background: rgba(0,0,0,0.03); }
+
+        /* 灯箱 */
+        #lightbox { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.9); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        #lightbox.active { opacity: 1; pointer-events: auto; }
+        #lightbox img { max-width: 90vw; max-height: 90vh; border: 1px solid var(--secondary-color); box-shadow: 0 0 30px rgba(var(--secondary-color), 0.3); transform: scale(0.9); transition: transform 0.3s; }
+        #lightbox.active img { transform: scale(1); }
+
+        /* 评论区 (MAGI COMMS) */
+        .comm-entry { border-left: 2px solid var(--glass-border); padding-left: 1rem; margin-bottom: 1.5rem; transition: all 0.3s; animation: fadeIn 0.5s ease-out; }
+        .comm-entry:hover { border-left-color: var(--secondary-color); }
+        .comm-meta { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; font-family: 'JetBrains Mono'; font-size: 0.75rem; color: var(--text-muted); }
+        .comm-author { color: var(--secondary-color); font-weight: bold; }
+        .comm-body { font-size: 0.9rem; color: var(--text-main); line-height: 1.6; opacity: 0.9; }
+        .magi-input { background: rgba(0,0,0,0.1); border: 1px solid var(--glass-border); color: var(--text-main); font-family: 'JetBrains Mono'; font-size: 0.85rem; padding: 0.5rem; width: 100%; transition: all 0.3s; }
+        .magi-input:focus { outline: none; border-color: var(--secondary-color); box-shadow: 0 0 10px rgba(var(--secondary-color), 0.1); background: rgba(var(--secondary-color), 0.05); }
+        .avatar-so { width: 32px; height: 32px; background: #000; border: 1px solid var(--secondary-color); display: flex; align-items: center; justify-content: center; font-size: 6px; color: var(--secondary-color); text-align: center; line-height: 1; font-family: 'JetBrains Mono'; box-shadow: 0 0 5px rgba(var(--secondary-color), 0.2); }
+        .comm-chevron { transition: transform 0.3s; }
+
+        /* 滚动条 */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #555; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--secondary-color); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <script>
+        (function() {
+            const mode = localStorage.getItem('visualMode') || 'dark';
+            if(mode === 'light') {
+                document.documentElement.setAttribute('data-mode', 'light');
+                document.documentElement.classList.remove('dark');
+            }
+            const theme = localStorage.getItem('theme') || 'default';
+            if(theme !== 'default') document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+
+    <div class="fixed top-0 left-0 w-full h-1 z-50 bg-gray-800/20">
+        <div id="scroll-progress" class="h-full bg-secondary w-0 shadow-[0_0_10px_var(--secondary-color)] transition-all duration-75"></div>
+    </div>
+
+    <div id="lightbox" onclick="Lightbox.close()">
+        <img id="lightbox-img" src="" onclick="event.stopPropagation()">
+    </div>
+
+    <nav class="fixed top-0 w-full z-40 bg-bg/90 backdrop-blur-md border-b border-white/5 h-16 flex items-center justify-between px-6 md:px-12 transition-all duration-300">
+        <a href="index.html" class="flex items-center gap-2 text-gray-400 hover:text-secondary transition-colors group">
+            <i data-lucide="arrow-left" class="w-4 h-4 group-hover:-translate-x-1 transition-transform"></i>
+            <span class="font-mono text-xs tracking-widest font-bold">ABORT</span>
+        </a>
+        <div class="hidden md:flex items-center gap-2 font-mono text-[10px] text-gray-500">
+            <span>MAGI_ARCHIVE:</span>
+            <span id="stream-status" class="text-secondary animate-pulse">CONNECTING</span>
+        </div>
+        <div class="flex gap-4 xl:hidden">
+            <button onclick="changeFontSize(1)" class="text-gray-400 hover:text-secondary font-mono text-xs">A+</button>
+        </div>
+    </nav>
+
+    <div class="tactical-grid pt-24 pb-20 px-4">
+        
+        <aside class="sidebar-left hidden xl:block">
+            
+            <div class="widget-card animate-fadeIn" style="animation-delay: 0.1s;">
+                <div class="hud-corner hc-tl"></div><div class="hud-corner hc-tr"></div>
+                <div class="widget-header">
+                    <span>PILOT_DATA</span>
+                    <i data-lucide="user" class="w-3 h-3"></i>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="pilot-avatar-so">SOUND<br>ONLY</div>
+                    <div class="flex-1 font-mono text-xs space-y-1">
+                        <div class="text-gray-400">ID: <span class="text-secondary">Wh1te</span></div>
+                        <div class="text-gray-400">RANK: <span class="text-primary">CAPTAIN</span></div>
+                        <div class="text-gray-500 text-[10px] mt-1">STATUS: ONLINE</div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="flex justify-between font-mono text-[9px] text-gray-500 mb-1">
+                        <span>SYNC_RATIO</span>
+                        <span class="text-secondary animate-pulse">400%</span>
+                    </div>
+                    <div class="sync-bar-container">
+                        <div class="sync-bar-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="widget-card animate-fadeIn" style="animation-delay: 0.2s;">
+                <div class="hud-corner hc-bl"></div><div class="hud-corner hc-br"></div>
+                <div class="widget-header">
+                    <span>OPS_CONTROLS</span>
+                    <i data-lucide="settings-2" class="w-3 h-3"></i>
+                </div>
+                <div class="ops-grid">
+                    <div class="ops-btn" onclick="OpsControl.toggleTheme()" title="Toggle Light/Dark Mode">
+                        <i data-lucide="sun-moon" class="w-3 h-3"></i> <span>MODE</span>
+                    </div>
+                    <div class="ops-btn" onclick="window.scrollTo({top:0, behavior:'smooth'})" title="Return to Top">
+                        <i data-lucide="arrow-up-to-line" class="w-3 h-3"></i> <span>TOP</span>
+                    </div>
+                    <div class="ops-btn" onclick="changeFontSize(-1)">A-</div>
+                    <div class="ops-btn" onclick="changeFontSize(1)">A+</div>
+                    <div class="ops-btn col-span-2 text-red-400 border-red-900/30 hover:bg-red-900/20 hover:border-red-500" onclick="window.location.href='index.html'">
+                        <i data-lucide="log-out" class="w-3 h-3"></i> <span>EMERGENCY EJECT</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="widget-card animate-fadeIn" style="animation-delay: 0.3s;">
+                <div class="widget-header">
+                    <span>INDEX_STRUCTURE</span>
+                    <i data-lucide="list-tree" class="w-3 h-3"></i>
+                </div>
+                <div id="toc-container" class="space-y-1 font-mono text-xs max-h-[300px] overflow-y-auto pr-1">
+                    <div class="text-center opacity-30 py-4">SCANNING...</div>
+                </div>
+            </div>
+
+        </aside>
+
+        <main id="infinite-wrapper" class="w-full relative">
+            <div id="initial-loader" class="flex flex-col items-center justify-center min-h-[50vh]">
+                <div class="font-mono text-secondary text-lg animate-pulse tracking-widest mb-4">DECRYPTING...</div>
+                <div class="w-48 h-0.5 bg-gray-500/20 overflow-hidden"><div class="h-full bg-secondary w-1/3 animate-[scan_1s_infinite]"></div></div>
+            </div>
+        </main>
+
+        <aside class="sidebar-right hidden xl:block opacity-50 pointer-events-none">
+            <div class="widget-card h-full border-dashed border-gray-800 flex items-center justify-center">
+                 <div class="text-[10px] font-mono text-gray-700 -rotate-90 tracking-widest">RIGHT_WING_RESERVED</div>
+             </div>
+        </aside>
+
+    </div>
+
+    <div id="loading-more" class="hidden py-8 text-center">
+        <div class="inline-flex items-center gap-2 font-mono text-xs text-secondary animate-pulse">
+            <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+            FETCHING NEXT ARCHIVE...
+        </div>
+    </div>
+    <div id="end-of-line" class="hidden py-12 text-center opacity-50 font-mono text-[10px] tracking-[0.5em] text-gray-500">
+        /// END OF ALL RECORDS ///
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        /* --- 0. 战术控制台逻辑 --- */
+        const OpsControl = {
+            toggleTheme() {
+                const isLight = document.documentElement.getAttribute('data-mode') === 'light';
+                if (isLight) {
+                    document.documentElement.removeAttribute('data-mode');
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('visualMode', 'dark');
+                } else {
+                    document.documentElement.setAttribute('data-mode', 'light');
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('visualMode', 'light');
+                }
+            }
+        };
+
+        /* --- 1. 灯箱系统 --- */
+        const Lightbox = {
+            open(src) {
+                const box = document.getElementById('lightbox');
+                const img = document.getElementById('lightbox-img');
+                img.src = src;
+                box.classList.add('active');
+            },
+            close() { document.getElementById('lightbox').classList.remove('active'); }
+        };
+
+        /* --- 2. 评论系统 --- */
+        const CommentManager = {
+            // 请替换为你的 Worker 地址
+            apiBase: 'https://eva-proxy.whte97284.workers.dev/blog/comments',
+            
+            toggleComms(btn, postId) {
+                const container = document.getElementById(`comms-${postId}`);
+                const textSpan = btn.querySelector('span');
+                const chevron = btn.querySelector('.comm-chevron');
+
+                if (container.classList.contains('hidden')) {
+                    container.classList.remove('hidden');
+                    if(textSpan) textSpan.innerText = `CLOSE_COMMS_CHANNEL [ ID: ${postId} ]`;
+                    if(chevron) chevron.classList.add('rotate-180');
+                    this.loadComments(postId);
+                } else {
+                    container.classList.add('hidden');
+                    if(textSpan) textSpan.innerText = `OPEN_COMMS_CHANNEL [ ID: ${postId} ]`;
+                    if(chevron) chevron.classList.remove('rotate-180');
+                }
+            },
+
+            async loadComments(postId) {
+                const container = document.getElementById(`comms-${postId}`);
+                const url = `${this.apiBase}?post=${postId}&per_page=20`;
+                const proxies = ['https://corsproxy.io/?', 'https://api.allorigins.win/raw?url='];
+                let success = false;
+                
+                container.innerHTML = `<div class="text-center py-4 font-mono text-xs text-secondary animate-pulse">SEARCHING FREQUENCIES...</div>`;
+
+                // 尝试直接连接 Worker (最佳) 或 代理
+                // 这里假设 apiBase 已经是 Worker 地址，先尝试直连
+                try {
+                    const res = await fetch(url);
+                    if(res.ok) {
+                        const data = await res.json();
+                        this.renderForm(container, postId);
+                        this.renderList(container, data);
+                        return; 
+                    }
+                } catch(e) { console.log("Worker direct link failed, trying proxies..."); }
+
+                // 如果直连失败，尝试代理
+                for (const proxy of proxies) {
+                    try {
+                        const res = await fetch(proxy + encodeURIComponent(url));
+                        const text = await res.text();
+                        if (text.trim().startsWith('<')) throw new Error("Firewall Intercepted");
+                        const data = JSON.parse(text);
+                        this.renderForm(container, postId);
+                        this.renderList(container, data);
+                        success = true;
+                        break;
+                    } catch (e) {}
+                }
+                if (!success) {
+                    container.innerHTML = `<div class="text-red-500 font-mono text-xs text-center border border-red-500/30 p-2">CONNECTION FAILED</div>`;
+                }
+            },
+
+            renderForm(container, postId) {
+                container.innerHTML = `
+                    <div class="mb-8 p-4 border border-white/5 bg-black/10">
+                        <div class="font-mono text-[10px] text-secondary mb-2">/// TRANSMIT_DATA</div>
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <input type="text" id="c-name-${postId}" class="magi-input" placeholder="CODENAME (Name)">
+                            <input type="email" id="c-email-${postId}" class="magi-input" placeholder="SIGNAL_ID (Email)">
+                        </div>
+                        <textarea id="c-msg-${postId}" class="magi-input h-20 mb-2" placeholder="DATA_PACKET (Message)..."></textarea>
+                        <button onclick="CommentManager.postComment(${postId})" class="w-full bg-secondary/10 border border-secondary text-secondary font-bold font-mono text-xs py-2 hover:bg-secondary hover:text-black transition-all">
+                            SEND TRANSMISSION
+                        </button>
+                        <div id="c-status-${postId}" class="mt-2 text-[10px] font-mono text-gray-500 hidden"></div>
+                    </div>
+                    <div class="space-y-4"></div>
+                `;
+            },
+
+            renderList(container, comments) {
+                const listEl = container.lastElementChild;
+                if (!comments || comments.length === 0) {
+                    listEl.innerHTML = `<div class="text-center opacity-30 font-mono text-xs">NO SIGNALS DETECTED.</div>`;
+                    return;
+                }
+                listEl.innerHTML = comments.map(c => {
+                    const avatarUrl = c.author_avatar_urls ? c.author_avatar_urls['48'] : null;
+                    const avatarHTML = avatarUrl 
+                        ? `<img src="${avatarUrl}" class="w-8 h-8 rounded-full border border-white/10">`
+                        : `<div class="avatar-so">SOUND<br>ONLY</div>`;
+                    return `
+                    <div class="comm-entry">
+                        <div class="comm-meta">
+                            ${avatarHTML}
+                            <div>
+                                <span class="comm-author">${c.author_name}</span>
+                                <span class="opacity-50 mx-2">|</span>
+                                <span>${new Date(c.date).toISOString().replace('T', ' ').substring(0, 16)}</span>
+                            </div>
+                        </div>
+                        <div class="comm-body pl-10 prose-eva text-sm">${c.content.rendered}</div>
+                    </div>`;
+                }).join('');
+            },
+
+            async postComment(postId) {
+                const name = document.getElementById(`c-name-${postId}`).value;
+                const email = document.getElementById(`c-email-${postId}`).value;
+                const content = document.getElementById(`c-msg-${postId}`).value;
+                const statusEl = document.getElementById(`c-status-${postId}`);
+
+                if (!name || !email || !content) {
+                    statusEl.innerText = "ERROR: INCOMPLETE DATA PACKET.";
+                    statusEl.classList.remove('hidden', 'text-secondary');
+                    statusEl.classList.add('text-red-500');
+                    return;
+                }
+                statusEl.innerText = "UPLOADING...";
+                statusEl.classList.remove('hidden', 'text-red-500');
+                statusEl.classList.add('text-secondary', 'animate-pulse');
+
+                const formData = new FormData();
+                formData.append('author_name', name);
+                formData.append('author_email', email);
+                formData.append('content', content);
+                formData.append('post', postId);
+
+                try {
+                    const res = await fetch(this.apiBase, { method: 'POST', body: formData });
+                    if (!res.ok) { const err = await res.json(); throw new Error(err.message || `HTTP ${res.status}`); }
+                    statusEl.innerText = "TRANSMISSION COMPLETE. SYNCING...";
+                    document.getElementById(`c-msg-${postId}`).value = '';
+                    setTimeout(() => this.loadComments(postId), 1000);
+                } catch (e) {
+                    statusEl.innerHTML = `UPLOAD FAILED: ${e.message}`;
+                    statusEl.classList.remove('text-secondary');
+                    statusEl.classList.add('text-red-500');
+                }
+            }
+        };
+
+            /* --- 3. 流式阅读器 --- */
+            const StreamReader = {
+                // 请替换为你的 Worker 地址 (注意单数 post)
+                apiBase: 'https://eva-proxy.whte97284.workers.dev/blog/post',
+                postsApi: 'https://eva-proxy.whte97284.workers.dev/blog/posts', // 用于列表
+                
+                fullContentNodes: [],
+                renderPointer: 0,
+                CHUNK_SIZE: 15,
+                lastPostDate: null,
+                isFetching: false,
+                hasMore: true,
+                
+                init() {
+                    const params = new URLSearchParams(window.location.search);
+                    const id = params.get('id');
+                    if (!id) { this.fetchNextArticle(true); } 
+                    else { 
+                        document.getElementById('stream-status').innerText = `REQ_ID:${id}`;
+                        this.fetchArticleById(id); 
+                    }
+                    window.addEventListener('scroll', () => {
+                        const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+                        if (scrollTop + clientHeight >= scrollHeight - 300) { this.fetchNextArticle(); }
+                        this.handleScroll();
+                        this.checkStreamTrigger();
+                    });
+                },
+
+                async fetchArticleById(id) {
+                    // 使用 Worker 路由，参数为 ?id=xxx
+                    const url = `${this.apiBase}?id=${id}`;
+                    await this.performFetch(url, true);
+                },
+
+                async fetchNextArticle(isInitial = false) {
+                    if (this.isFetching || !this.hasMore) return;
+                    // 使用 Posts 列表 API
+                    let url = `${this.postsApi}?_embed&per_page=1&_fields=id,date,link,title,excerpt,content,_links,_embedded`;
+                    if (this.lastPostDate) url += `&before=${this.lastPostDate}`;
+                    document.getElementById('loading-more').classList.remove('hidden');
+                    await this.performFetch(url, isInitial, true);
+                },
+
+                async performFetch(url, isInitial = false, isList = false) {
+                    this.isFetching = true;
+                    let lastError = null;
+
+                    try {
+                        const res = await fetch(url);
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        const text = await res.text();
+                        if (text.trim().startsWith('<')) throw new Error("Worker Firewall Intercepted");
+                        
+                        let data = JSON.parse(text);
+                        if (isList) {
+                            if (data.length === 0) {
+                                this.hasMore = false;
+                                document.getElementById('loading-more').classList.add('hidden');
+                                document.getElementById('end-of-line').classList.remove('hidden');
+                                return;
+                            }
+                            data = data[0];
+                        }
+                        this.lastPostDate = data.date;
+                        this.render(data);
+                    } catch (e) { 
+                        lastError = e; 
+                        if (isInitial) this.showError(`CONNECTION FAILED: ${lastError.message}`);
+                    } finally {
+                        this.isFetching = false;
+                        if (isInitial) document.getElementById('initial-loader').classList.add('hidden');
+                        document.getElementById('loading-more').classList.add('hidden');
+                    }
+                },
+
+                render(data) {
+                    const wrapper = document.getElementById('infinite-wrapper');
+                    const articleEl = document.createElement('div');
+                    articleEl.className = 'glass-panel p-8 md:p-16 min-h-[60vh] animate-fadeIn mb-16';
+                
+                // 渲染文章卡片 (含 HUD 角标)
+                articleEl.innerHTML = `
+                    <div class="hud-corner hc-tl"></div><div class="hud-corner hc-tr"></div>
+                    <div class="hud-corner hc-bl"></div><div class="hud-corner hc-br"></div>
+                    <header class="mb-10 text-center">
+                        <div class="inline-flex items-center gap-3 mb-4 opacity-70">
+                            <span class="px-2 py-0.5 border border-primary text-primary text-[10px] font-mono font-bold uppercase">ARCHIVE</span>
+                            <span class="font-mono text-[10px] text-gray-500">${new Date(data.date).toISOString().split('T')[0]}</span>
+                        </div>
+                        <h1 class="text-3xl md:text-5xl font-black text-main font-serif leading-tight mb-6 transition-colors duration-300">${data.title.rendered}</h1>
+                    </header>
+                    <div class="prose-eva text-lg article-content" id="stream-container-${data.id}"></div>
+                    <div class="chunk-loader hidden" id="stream-trigger-${data.id}"><span>/// DECODING... ///</span></div>
+                    
+                    <div class="mt-12 border-t border-white/5 pt-8">
+                        <button onclick="CommentManager.toggleComms(this, ${data.id})" class="w-full border border-secondary/30 bg-secondary/5 text-secondary font-mono text-xs py-3 hover:bg-secondary hover:text-black transition-all flex items-center justify-center gap-2 group">
+                            <i data-lucide="message-square" class="w-4 h-4"></i>
+                            <span>OPEN_COMMS_CHANNEL [ ID: ${data.id} ]</span>
+                            <i data-lucide="chevron-down" class="w-4 h-4 comm-chevron transition-transform duration-300"></i>
+                        </button>
+                        <div id="comms-${data.id}" class="hidden mt-6 animate-fadeIn">
+                            <div class="text-center py-4 font-mono text-xs text-gray-500">INITIALIZING UPLINK...</div>
+                        </div>
+                    </div>
+                    <footer class="mt-16 pt-8 border-t border-gray-500/20 text-center opacity-50">
+                        <div class="font-mono text-[10px] tracking-[0.3em]">/// E.O.F ///</div>
+                    </footer>
+                `;
+                wrapper.appendChild(articleEl);
+                this.prepareStream(data.content.rendered, data.id);
+                lucide.createIcons();
+            },
+
+            prepareStream(html, id) {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                this.fullContentNodes = Array.from(doc.body.children);
+                this.renderPointer = 0;
+                this.currentStreamContainer = document.getElementById(`stream-container-${id}`);
+                this.currentStreamTrigger = document.getElementById(`stream-trigger-${id}`);
+                document.getElementById('initial-loader').classList.add('hidden');
+                document.getElementById('stream-status').innerText = "STREAMING";
+                
+                // 清空之前的 TOC (仅保留当前文章的，或者你可以做成追加式)
+                // 这里为了简单，我们每次只渲染第一篇文章的 TOC 到左侧栏，防止 TOC 过长
+                if(!this.tocGenerated) {
+                    this.updateTOC(doc);
+                    this.tocGenerated = true;
+                }
+                
+                this.renderNextChunk();
+            },
+
+            renderNextChunk() {
+                if (!this.currentStreamContainer) return;
+                if (this.renderPointer >= this.fullContentNodes.length) {
+                    this.currentStreamTrigger.classList.add('hidden');
+                    return;
+                }
+                const end = Math.min(this.renderPointer + this.CHUNK_SIZE, this.fullContentNodes.length);
+                const chunkNodes = this.fullContentNodes.slice(this.renderPointer, end);
+                const chunkDiv = document.createElement('div');
+                chunkDiv.className = 'content-chunk';
+                
+                chunkNodes.forEach(node => {
+                    const clone = document.importNode(node, true);
+                    if (clone.tagName === 'IMG') { clone.setAttribute('loading', 'lazy'); clone.onclick = () => Lightbox.open(clone.src); }
+                    const imgs = clone.querySelectorAll('img');
+                    imgs.forEach(img => { img.setAttribute('loading', 'lazy'); img.onclick = () => Lightbox.open(img.src); });
+                    if (clone.tagName === 'PRE') hljs.highlightElement(clone.querySelector('code') || clone);
+                    clone.querySelectorAll('pre code').forEach(c => hljs.highlightElement(c));
+                    chunkDiv.appendChild(clone);
+                });
+
+                this.currentStreamContainer.appendChild(chunkDiv);
+                this.renderPointer = end;
+                if (this.renderPointer < this.fullContentNodes.length) this.currentStreamTrigger.classList.remove('hidden');
+            },
+
+            checkStreamTrigger() {
+                if (!this.currentStreamTrigger || this.currentStreamTrigger.classList.contains('hidden')) return;
+                if (this.currentStreamTrigger.getBoundingClientRect().top <= window.innerHeight + 200) this.renderNextChunk();
+            },
+
+            updateTOC(doc) {
+                const tocContainer = document.getElementById('toc-container');
+                const headers = doc.querySelectorAll('h2, h3'); // 注意：这里是从原始 DOM 解析，不是从页面
+                
+                if (headers.length > 0) {
+                    tocContainer.innerHTML = '';
+                    headers.forEach((header, index) => {
+                        const id = `h-${index}`;
+                        // 我们需要给页面上真实的 Header 加 ID，但因为是流式加载，Header 可能还没渲染出来
+                        // 这是一个复杂点。简化方案：我们只生成目录，点击跳转可能需要 Header 出现后才生效
+                        // 这里做一个简单的纯展示 TOC
+                        const item = document.createElement('div');
+                        item.className = `toc-item ${header.tagName === 'H3' ? 'pl-4 opacity-70' : ''}`;
+                        item.innerText = header.innerText;
+                        item.onclick = () => {
+                            // 尝试查找页面上已渲染的 Header
+                            const realHeaders = document.querySelectorAll('h2, h3');
+                            if(realHeaders[index]) realHeaders[index].scrollIntoView({behavior:'smooth', block:'start'});
+                        };
+                        tocContainer.appendChild(item);
+                    });
+                } else {
+                    tocContainer.innerHTML = '<div class="text-center opacity-30 py-4">NO INDEX DATA</div>';
+                }
+            },
+
+            handleScroll() {
+                const scrollTop = window.scrollY;
+                const docHeight = document.body.scrollHeight - window.innerHeight;
+                const progress = (scrollTop / docHeight) * 100;
+                document.getElementById('scroll-progress').style.width = `${progress}%`;
+            },
+
+            showError(msg) {
+                document.getElementById('initial-loader').innerHTML = `<div class="text-red-500 font-mono text-xs text-center">${msg}<br><a href="index.html" class="underline mt-2 inline-block">RETURN</a></div>`;
+            }
+        };
+
+        let currentZoom = 1;
+        function changeFontSize(dir) {
+            currentZoom += dir * 0.1;
+            currentZoom = Math.min(Math.max(currentZoom, 0.8), 1.4);
+            const contents = document.querySelectorAll('.article-content');
+            contents.forEach(el => el.style.fontSize = `${currentZoom}rem`);
+        }
+
+        StreamReader.init();
+    </script>
+</body>
+</html>
