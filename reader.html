@@ -295,387 +295,419 @@
     </div>
 
     <script>
-        lucide.createIcons();
+    lucide.createIcons();
 
-        /* --- 0. 战术控制台逻辑 --- */
-        const OpsControl = {
-            toggleTheme() {
-                const isLight = document.documentElement.getAttribute('data-mode') === 'light';
-                if (isLight) {
-                    document.documentElement.removeAttribute('data-mode');
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('visualMode', 'dark');
-                } else {
-                    document.documentElement.setAttribute('data-mode', 'light');
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('visualMode', 'light');
-                }
+    /* --- 0. 战术控制台逻辑 --- */
+    const OpsControl = {
+        toggleTheme() {
+            const isLight = document.documentElement.getAttribute('data-mode') === 'light';
+            if (isLight) {
+                document.documentElement.removeAttribute('data-mode');
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('visualMode', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-mode', 'light');
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('visualMode', 'light');
             }
-        };
-
-        /* --- 1. 灯箱系统 --- */
-        const Lightbox = {
-            open(src) {
-                const box = document.getElementById('lightbox');
-                const img = document.getElementById('lightbox-img');
-                img.src = src;
-                box.classList.add('active');
-            },
-            close() { document.getElementById('lightbox').classList.remove('active'); }
-        };
-
-        /* --- 2. 评论系统 --- */
-        const CommentManager = {
-            // 请替换为你的 Worker 地址
-            apiBase: 'https://eva-proxy.whte97284.workers.dev/blog/comments',
-            
-            toggleComms(btn, postId) {
-                const container = document.getElementById(`comms-${postId}`);
-                const textSpan = btn.querySelector('span');
-                const chevron = btn.querySelector('.comm-chevron');
-
-                if (container.classList.contains('hidden')) {
-                    container.classList.remove('hidden');
-                    if(textSpan) textSpan.innerText = `CLOSE_COMMS_CHANNEL [ ID: ${postId} ]`;
-                    if(chevron) chevron.classList.add('rotate-180');
-                    this.loadComments(postId);
-                } else {
-                    container.classList.add('hidden');
-                    if(textSpan) textSpan.innerText = `OPEN_COMMS_CHANNEL [ ID: ${postId} ]`;
-                    if(chevron) chevron.classList.remove('rotate-180');
-                }
-            },
-
-            async loadComments(postId) {
-                const container = document.getElementById(`comms-${postId}`);
-                const url = `${this.apiBase}?post=${postId}&per_page=20`;
-                const proxies = ['https://corsproxy.io/?', 'https://api.allorigins.win/raw?url='];
-                let success = false;
-                
-                container.innerHTML = `<div class="text-center py-4 font-mono text-xs text-secondary animate-pulse">SEARCHING FREQUENCIES...</div>`;
-
-                // 尝试直接连接 Worker (最佳) 或 代理
-                // 这里假设 apiBase 已经是 Worker 地址，先尝试直连
-                try {
-                    const res = await fetch(url);
-                    if(res.ok) {
-                        const data = await res.json();
-                        this.renderForm(container, postId);
-                        this.renderList(container, data);
-                        return; 
-                    }
-                } catch(e) { console.log("Worker direct link failed, trying proxies..."); }
-
-                // 如果直连失败，尝试代理
-                for (const proxy of proxies) {
-                    try {
-                        const res = await fetch(proxy + encodeURIComponent(url));
-                        const text = await res.text();
-                        if (text.trim().startsWith('<')) throw new Error("Firewall Intercepted");
-                        const data = JSON.parse(text);
-                        this.renderForm(container, postId);
-                        this.renderList(container, data);
-                        success = true;
-                        break;
-                    } catch (e) {}
-                }
-                if (!success) {
-                    container.innerHTML = `<div class="text-red-500 font-mono text-xs text-center border border-red-500/30 p-2">CONNECTION FAILED</div>`;
-                }
-            },
-
-            renderForm(container, postId) {
-                container.innerHTML = `
-                    <div class="mb-8 p-4 border border-white/5 bg-black/10">
-                        <div class="font-mono text-[10px] text-secondary mb-2">/// TRANSMIT_DATA</div>
-                        <div class="grid grid-cols-2 gap-2 mb-2">
-                            <input type="text" id="c-name-${postId}" class="magi-input" placeholder="CODENAME (Name)">
-                            <input type="email" id="c-email-${postId}" class="magi-input" placeholder="SIGNAL_ID (Email)">
-                        </div>
-                        <textarea id="c-msg-${postId}" class="magi-input h-20 mb-2" placeholder="DATA_PACKET (Message)..."></textarea>
-                        <button onclick="CommentManager.postComment(${postId})" class="w-full bg-secondary/10 border border-secondary text-secondary font-bold font-mono text-xs py-2 hover:bg-secondary hover:text-black transition-all">
-                            SEND TRANSMISSION
-                        </button>
-                        <div id="c-status-${postId}" class="mt-2 text-[10px] font-mono text-gray-500 hidden"></div>
-                    </div>
-                    <div class="space-y-4"></div>
-                `;
-            },
-
-            renderList(container, comments) {
-                const listEl = container.lastElementChild;
-                if (!comments || comments.length === 0) {
-                    listEl.innerHTML = `<div class="text-center opacity-30 font-mono text-xs">NO SIGNALS DETECTED.</div>`;
-                    return;
-                }
-                listEl.innerHTML = comments.map(c => {
-                    const avatarUrl = c.author_avatar_urls ? c.author_avatar_urls['48'] : null;
-                    const avatarHTML = avatarUrl 
-                        ? `<img src="${avatarUrl}" class="w-8 h-8 rounded-full border border-white/10">`
-                        : `<div class="avatar-so">SOUND<br>ONLY</div>`;
-                    return `
-                    <div class="comm-entry">
-                        <div class="comm-meta">
-                            ${avatarHTML}
-                            <div>
-                                <span class="comm-author">${c.author_name}</span>
-                                <span class="opacity-50 mx-2">|</span>
-                                <span>${new Date(c.date).toISOString().replace('T', ' ').substring(0, 16)}</span>
-                            </div>
-                        </div>
-                        <div class="comm-body pl-10 prose-eva text-sm">${c.content.rendered}</div>
-                    </div>`;
-                }).join('');
-            },
-
-            async postComment(postId) {
-                const name = document.getElementById(`c-name-${postId}`).value;
-                const email = document.getElementById(`c-email-${postId}`).value;
-                const content = document.getElementById(`c-msg-${postId}`).value;
-                const statusEl = document.getElementById(`c-status-${postId}`);
-
-                if (!name || !email || !content) {
-                    statusEl.innerText = "ERROR: INCOMPLETE DATA PACKET.";
-                    statusEl.classList.remove('hidden', 'text-secondary');
-                    statusEl.classList.add('text-red-500');
-                    return;
-                }
-                statusEl.innerText = "UPLOADING...";
-                statusEl.classList.remove('hidden', 'text-red-500');
-                statusEl.classList.add('text-secondary', 'animate-pulse');
-
-                const formData = new FormData();
-                formData.append('author_name', name);
-                formData.append('author_email', email);
-                formData.append('content', content);
-                formData.append('post', postId);
-
-                try {
-                    const res = await fetch(this.apiBase, { method: 'POST', body: formData });
-                    if (!res.ok) { const err = await res.json(); throw new Error(err.message || `HTTP ${res.status}`); }
-                    statusEl.innerText = "TRANSMISSION COMPLETE. SYNCING...";
-                    document.getElementById(`c-msg-${postId}`).value = '';
-                    setTimeout(() => this.loadComments(postId), 1000);
-                } catch (e) {
-                    statusEl.innerHTML = `UPLOAD FAILED: ${e.message}`;
-                    statusEl.classList.remove('text-secondary');
-                    statusEl.classList.add('text-red-500');
-                }
-            }
-        };
-
-            /* --- 3. 流式阅读器 --- */
-            const StreamReader = {
-                // 请替换为你的 Worker 地址 (注意单数 post)
-                apiBase: 'https://eva-proxy.whte97284.workers.dev/blog/post',
-                postsApi: 'https://eva-proxy.whte97284.workers.dev/blog/posts', // 用于列表
-                
-                fullContentNodes: [],
-                renderPointer: 0,
-                CHUNK_SIZE: 15,
-                lastPostDate: null,
-                isFetching: false,
-                hasMore: true,
-                
-                init() {
-                    const params = new URLSearchParams(window.location.search);
-                    const id = params.get('id');
-                    if (!id) { this.fetchNextArticle(true); } 
-                    else { 
-                        document.getElementById('stream-status').innerText = `REQ_ID:${id}`;
-                        this.fetchArticleById(id); 
-                    }
-                    window.addEventListener('scroll', () => {
-                        const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
-                        if (scrollTop + clientHeight >= scrollHeight - 300) { this.fetchNextArticle(); }
-                        this.handleScroll();
-                        this.checkStreamTrigger();
-                    });
-                },
-
-                async fetchArticleById(id) {
-                    // 使用 Worker 路由，参数为 ?id=xxx
-                    const url = `${this.apiBase}?id=${id}`;
-                    await this.performFetch(url, true);
-                },
-
-                async fetchNextArticle(isInitial = false) {
-                    if (this.isFetching || !this.hasMore) return;
-                    // 使用 Posts 列表 API
-                    let url = `${this.postsApi}?_embed&per_page=1&_fields=id,date,link,title,excerpt,content,_links,_embedded`;
-                    if (this.lastPostDate) url += `&before=${this.lastPostDate}`;
-                    document.getElementById('loading-more').classList.remove('hidden');
-                    await this.performFetch(url, isInitial, true);
-                },
-
-                async performFetch(url, isInitial = false, isList = false) {
-                    this.isFetching = true;
-                    let lastError = null;
-
-                    try {
-                        const res = await fetch(url);
-                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                        const text = await res.text();
-                        if (text.trim().startsWith('<')) throw new Error("Worker Firewall Intercepted");
-                        
-                        let data = JSON.parse(text);
-                        if (isList) {
-                            if (data.length === 0) {
-                                this.hasMore = false;
-                                document.getElementById('loading-more').classList.add('hidden');
-                                document.getElementById('end-of-line').classList.remove('hidden');
-                                return;
-                            }
-                            data = data[0];
-                        }
-                        this.lastPostDate = data.date;
-                        this.render(data);
-                    } catch (e) { 
-                        lastError = e; 
-                        if (isInitial) this.showError(`CONNECTION FAILED: ${lastError.message}`);
-                    } finally {
-                        this.isFetching = false;
-                        if (isInitial) document.getElementById('initial-loader').classList.add('hidden');
-                        document.getElementById('loading-more').classList.add('hidden');
-                    }
-                },
-
-                render(data) {
-                    const wrapper = document.getElementById('infinite-wrapper');
-                    const articleEl = document.createElement('div');
-                    articleEl.className = 'glass-panel p-8 md:p-16 min-h-[60vh] animate-fadeIn mb-16';
-                
-                // 渲染文章卡片 (含 HUD 角标)
-                articleEl.innerHTML = `
-                    <div class="hud-corner hc-tl"></div><div class="hud-corner hc-tr"></div>
-                    <div class="hud-corner hc-bl"></div><div class="hud-corner hc-br"></div>
-                    <header class="mb-10 text-center">
-                        <div class="inline-flex items-center gap-3 mb-4 opacity-70">
-                            <span class="px-2 py-0.5 border border-primary text-primary text-[10px] font-mono font-bold uppercase">ARCHIVE</span>
-                            <span class="font-mono text-[10px] text-gray-500">${new Date(data.date).toISOString().split('T')[0]}</span>
-                        </div>
-                        <h1 class="text-3xl md:text-5xl font-black text-main font-serif leading-tight mb-6 transition-colors duration-300">${data.title.rendered}</h1>
-                    </header>
-                    <div class="prose-eva text-lg article-content" id="stream-container-${data.id}"></div>
-                    <div class="chunk-loader hidden" id="stream-trigger-${data.id}"><span>/// DECODING... ///</span></div>
-                    
-                    <div class="mt-12 border-t border-white/5 pt-8">
-                        <button onclick="CommentManager.toggleComms(this, ${data.id})" class="w-full border border-secondary/30 bg-secondary/5 text-secondary font-mono text-xs py-3 hover:bg-secondary hover:text-black transition-all flex items-center justify-center gap-2 group">
-                            <i data-lucide="message-square" class="w-4 h-4"></i>
-                            <span>OPEN_COMMS_CHANNEL [ ID: ${data.id} ]</span>
-                            <i data-lucide="chevron-down" class="w-4 h-4 comm-chevron transition-transform duration-300"></i>
-                        </button>
-                        <div id="comms-${data.id}" class="hidden mt-6 animate-fadeIn">
-                            <div class="text-center py-4 font-mono text-xs text-gray-500">INITIALIZING UPLINK...</div>
-                        </div>
-                    </div>
-                    <footer class="mt-16 pt-8 border-t border-gray-500/20 text-center opacity-50">
-                        <div class="font-mono text-[10px] tracking-[0.3em]">/// E.O.F ///</div>
-                    </footer>
-                `;
-                wrapper.appendChild(articleEl);
-                this.prepareStream(data.content.rendered, data.id);
-                lucide.createIcons();
-            },
-
-            prepareStream(html, id) {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                this.fullContentNodes = Array.from(doc.body.children);
-                this.renderPointer = 0;
-                this.currentStreamContainer = document.getElementById(`stream-container-${id}`);
-                this.currentStreamTrigger = document.getElementById(`stream-trigger-${id}`);
-                document.getElementById('initial-loader').classList.add('hidden');
-                document.getElementById('stream-status').innerText = "STREAMING";
-                
-                // 清空之前的 TOC (仅保留当前文章的，或者你可以做成追加式)
-                // 这里为了简单，我们每次只渲染第一篇文章的 TOC 到左侧栏，防止 TOC 过长
-                if(!this.tocGenerated) {
-                    this.updateTOC(doc);
-                    this.tocGenerated = true;
-                }
-                
-                this.renderNextChunk();
-            },
-
-            renderNextChunk() {
-                if (!this.currentStreamContainer) return;
-                if (this.renderPointer >= this.fullContentNodes.length) {
-                    this.currentStreamTrigger.classList.add('hidden');
-                    return;
-                }
-                const end = Math.min(this.renderPointer + this.CHUNK_SIZE, this.fullContentNodes.length);
-                const chunkNodes = this.fullContentNodes.slice(this.renderPointer, end);
-                const chunkDiv = document.createElement('div');
-                chunkDiv.className = 'content-chunk';
-                
-                chunkNodes.forEach(node => {
-                    const clone = document.importNode(node, true);
-                    if (clone.tagName === 'IMG') { clone.setAttribute('loading', 'lazy'); clone.onclick = () => Lightbox.open(clone.src); }
-                    const imgs = clone.querySelectorAll('img');
-                    imgs.forEach(img => { img.setAttribute('loading', 'lazy'); img.onclick = () => Lightbox.open(img.src); });
-                    if (clone.tagName === 'PRE') hljs.highlightElement(clone.querySelector('code') || clone);
-                    clone.querySelectorAll('pre code').forEach(c => hljs.highlightElement(c));
-                    chunkDiv.appendChild(clone);
-                });
-
-                this.currentStreamContainer.appendChild(chunkDiv);
-                this.renderPointer = end;
-                if (this.renderPointer < this.fullContentNodes.length) this.currentStreamTrigger.classList.remove('hidden');
-            },
-
-            checkStreamTrigger() {
-                if (!this.currentStreamTrigger || this.currentStreamTrigger.classList.contains('hidden')) return;
-                if (this.currentStreamTrigger.getBoundingClientRect().top <= window.innerHeight + 200) this.renderNextChunk();
-            },
-
-            updateTOC(doc) {
-                const tocContainer = document.getElementById('toc-container');
-                const headers = doc.querySelectorAll('h2, h3'); // 注意：这里是从原始 DOM 解析，不是从页面
-                
-                if (headers.length > 0) {
-                    tocContainer.innerHTML = '';
-                    headers.forEach((header, index) => {
-                        const id = `h-${index}`;
-                        // 我们需要给页面上真实的 Header 加 ID，但因为是流式加载，Header 可能还没渲染出来
-                        // 这是一个复杂点。简化方案：我们只生成目录，点击跳转可能需要 Header 出现后才生效
-                        // 这里做一个简单的纯展示 TOC
-                        const item = document.createElement('div');
-                        item.className = `toc-item ${header.tagName === 'H3' ? 'pl-4 opacity-70' : ''}`;
-                        item.innerText = header.innerText;
-                        item.onclick = () => {
-                            // 尝试查找页面上已渲染的 Header
-                            const realHeaders = document.querySelectorAll('h2, h3');
-                            if(realHeaders[index]) realHeaders[index].scrollIntoView({behavior:'smooth', block:'start'});
-                        };
-                        tocContainer.appendChild(item);
-                    });
-                } else {
-                    tocContainer.innerHTML = '<div class="text-center opacity-30 py-4">NO INDEX DATA</div>';
-                }
-            },
-
-            handleScroll() {
-                const scrollTop = window.scrollY;
-                const docHeight = document.body.scrollHeight - window.innerHeight;
-                const progress = (scrollTop / docHeight) * 100;
-                document.getElementById('scroll-progress').style.width = `${progress}%`;
-            },
-
-            showError(msg) {
-                document.getElementById('initial-loader').innerHTML = `<div class="text-red-500 font-mono text-xs text-center">${msg}<br><a href="index.html" class="underline mt-2 inline-block">RETURN</a></div>`;
-            }
-        };
-
-        let currentZoom = 1;
-        function changeFontSize(dir) {
-            currentZoom += dir * 0.1;
-            currentZoom = Math.min(Math.max(currentZoom, 0.8), 1.4);
-            const contents = document.querySelectorAll('.article-content');
-            contents.forEach(el => el.style.fontSize = `${currentZoom}rem`);
         }
+    };
 
-        StreamReader.init();
-    </script>
+    /* --- 1. 灯箱系统 --- */
+    const Lightbox = {
+        open(src) {
+            const box = document.getElementById('lightbox');
+            const img = document.getElementById('lightbox-img');
+            img.src = src;
+            box.classList.add('active');
+        },
+        close() { document.getElementById('lightbox').classList.remove('active'); }
+    };
+
+    /* --- 2. 战术图像处理器 (NEW: 修复混合内容报错) --- */
+    function tacticalImgProcessor(url) {
+        if (!url) return '';
+        // 如果是 HTTPS，直接放行
+        if (url.startsWith('https://')) return url;
+        
+        // 如果是 HTTP，通过 weserv 代理中转为 HTTPS，并转换为 WebP 优化流量
+        // 这里的 'ssl:1' 尝试让源站走 SSL，'output=webp' 压缩格式
+        if (url.startsWith('http://')) {
+            // 移除 http:// 前缀，防止双重协议头问题
+            const cleanUrl = url.replace(/^http:\/\//i, '');
+            return `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&output=webp&q=80&we`;
+        }
+        return url;
+    }
+
+    /* --- 3. 评论系统 (MAGI COMMS) --- */
+    const CommentManager = {
+        // 请确保这是正确的 Worker 地址
+        apiBase: 'https://eva-proxy.whte97284.workers.dev/blog/comments',
+        
+        toggleComms(btn, postId) {
+            const container = document.getElementById(`comms-${postId}`);
+            const textSpan = btn.querySelector('span');
+            const chevron = btn.querySelector('.comm-chevron');
+
+            if (container.classList.contains('hidden')) {
+                container.classList.remove('hidden');
+                if(textSpan) textSpan.innerText = `CLOSE_COMMS_CHANNEL [ ID: ${postId} ]`;
+                if(chevron) chevron.classList.add('rotate-180');
+                this.loadComments(postId);
+            } else {
+                container.classList.add('hidden');
+                if(textSpan) textSpan.innerText = `OPEN_COMMS_CHANNEL [ ID: ${postId} ]`;
+                if(chevron) chevron.classList.remove('rotate-180');
+            }
+        },
+
+        async loadComments(postId) {
+            const container = document.getElementById(`comms-${postId}`);
+            const url = `${this.apiBase}?post=${postId}&per_page=20`;
+            const proxies = ['https://corsproxy.io/?', 'https://api.allorigins.win/raw?url='];
+            let success = false;
+            
+            container.innerHTML = `<div class="text-center py-4 font-mono text-xs text-secondary animate-pulse">SEARCHING FREQUENCIES...</div>`;
+
+            try {
+                const res = await fetch(url);
+                if(res.ok) {
+                    const data = await res.json();
+                    this.renderForm(container, postId);
+                    this.renderList(container, data);
+                    return; 
+                }
+            } catch(e) { console.log("Worker direct link failed, trying proxies..."); }
+
+            for (const proxy of proxies) {
+                try {
+                    const res = await fetch(proxy + encodeURIComponent(url));
+                    const text = await res.text();
+                    if (text.trim().startsWith('<')) throw new Error("Firewall Intercepted");
+                    const data = JSON.parse(text);
+                    this.renderForm(container, postId);
+                    this.renderList(container, data);
+                    success = true;
+                    break;
+                } catch (e) {}
+            }
+            if (!success) {
+                container.innerHTML = `<div class="text-red-500 font-mono text-xs text-center border border-red-500/30 p-2">CONNECTION FAILED</div>`;
+            }
+        },
+
+        renderForm(container, postId) {
+            container.innerHTML = `
+                <div class="mb-8 p-4 border border-white/5 bg-black/10">
+                    <div class="font-mono text-[10px] text-secondary mb-2">/// TRANSMIT_DATA</div>
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        <input type="text" id="c-name-${postId}" class="magi-input" placeholder="CODENAME (Name)">
+                        <input type="email" id="c-email-${postId}" class="magi-input" placeholder="SIGNAL_ID (Email)">
+                    </div>
+                    <textarea id="c-msg-${postId}" class="magi-input h-20 mb-2" placeholder="DATA_PACKET (Message)..."></textarea>
+                    <button onclick="CommentManager.postComment(${postId})" class="w-full bg-secondary/10 border border-secondary text-secondary font-bold font-mono text-xs py-2 hover:bg-secondary hover:text-black transition-all">
+                        SEND TRANSMISSION
+                    </button>
+                    <div id="c-status-${postId}" class="mt-2 text-[10px] font-mono text-gray-500 hidden"></div>
+                </div>
+                <div class="space-y-4"></div>
+            `;
+        },
+
+        renderList(container, comments) {
+            const listEl = container.lastElementChild;
+            if (!comments || comments.length === 0) {
+                listEl.innerHTML = `<div class="text-center opacity-30 font-mono text-xs">NO SIGNALS DETECTED.</div>`;
+                return;
+            }
+            listEl.innerHTML = comments.map(c => {
+                let avatarUrl = c.author_avatar_urls ? c.author_avatar_urls['48'] : null;
+                // 同样处理头像的 HTTP 问题
+                if(avatarUrl) avatarUrl = tacticalImgProcessor(avatarUrl);
+
+                const avatarHTML = avatarUrl 
+                    ? `<img src="${avatarUrl}" class="w-8 h-8 rounded-full border border-white/10">`
+                    : `<div class="avatar-so">SOUND<br>ONLY</div>`;
+                return `
+                <div class="comm-entry">
+                    <div class="comm-meta">
+                        ${avatarHTML}
+                        <div>
+                            <span class="comm-author">${c.author_name}</span>
+                            <span class="opacity-50 mx-2">|</span>
+                            <span>${new Date(c.date).toISOString().replace('T', ' ').substring(0, 16)}</span>
+                        </div>
+                    </div>
+                    <div class="comm-body pl-10 prose-eva text-sm">${c.content.rendered}</div>
+                </div>`;
+            }).join('');
+        },
+
+        async postComment(postId) {
+            const name = document.getElementById(`c-name-${postId}`).value;
+            const email = document.getElementById(`c-email-${postId}`).value;
+            const content = document.getElementById(`c-msg-${postId}`).value;
+            const statusEl = document.getElementById(`c-status-${postId}`);
+
+            if (!name || !email || !content) {
+                statusEl.innerText = "ERROR: INCOMPLETE DATA PACKET.";
+                statusEl.classList.remove('hidden', 'text-secondary');
+                statusEl.classList.add('text-red-500');
+                return;
+            }
+            statusEl.innerText = "UPLOADING...";
+            statusEl.classList.remove('hidden', 'text-red-500');
+            statusEl.classList.add('text-secondary', 'animate-pulse');
+
+            const formData = new FormData();
+            formData.append('author_name', name);
+            formData.append('author_email', email);
+            formData.append('content', content);
+            formData.append('post', postId);
+
+            try {
+                const res = await fetch(this.apiBase, { method: 'POST', body: formData });
+                if (!res.ok) { const err = await res.json(); throw new Error(err.message || `HTTP ${res.status}`); }
+                statusEl.innerText = "TRANSMISSION COMPLETE. SYNCING...";
+                document.getElementById(`c-msg-${postId}`).value = '';
+                setTimeout(() => this.loadComments(postId), 1000);
+            } catch (e) {
+                statusEl.innerHTML = `UPLOAD FAILED: ${e.message}`;
+                statusEl.classList.remove('text-secondary');
+                statusEl.classList.add('text-red-500');
+            }
+        }
+    };
+
+    /* --- 4. 流式阅读器 (含图片修复) --- */
+    const StreamReader = {
+        apiBase: 'https://eva-proxy.whte97284.workers.dev/blog/post',
+        postsApi: 'https://eva-proxy.whte97284.workers.dev/blog/posts',
+        
+        fullContentNodes: [],
+        renderPointer: 0,
+        CHUNK_SIZE: 15,
+        lastPostDate: null,
+        isFetching: false,
+        hasMore: true,
+        
+        init() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            if (!id) { this.fetchNextArticle(true); } 
+            else { 
+                document.getElementById('stream-status').innerText = `REQ_ID:${id}`;
+                this.fetchArticleById(id); 
+            }
+            window.addEventListener('scroll', () => {
+                const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+                if (scrollTop + clientHeight >= scrollHeight - 300) { this.fetchNextArticle(); }
+                this.handleScroll();
+                this.checkStreamTrigger();
+            });
+        },
+
+        async fetchArticleById(id) {
+            const url = `${this.apiBase}?id=${id}`;
+            await this.performFetch(url, true);
+        },
+
+        async fetchNextArticle(isInitial = false) {
+            if (this.isFetching || !this.hasMore) return;
+            let url = `${this.postsApi}?_embed&per_page=1&_fields=id,date,link,title,excerpt,content,_links,_embedded`;
+            if (this.lastPostDate) url += `&before=${this.lastPostDate}`;
+            document.getElementById('loading-more').classList.remove('hidden');
+            await this.performFetch(url, isInitial, true);
+        },
+
+        async performFetch(url, isInitial = false, isList = false) {
+            this.isFetching = true;
+            let lastError = null;
+
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const text = await res.text();
+                // 简单的防火墙检测
+                if (text.trim().startsWith('<') && !text.includes('wp-json')) throw new Error("Worker Firewall Intercepted");
+                
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch(e) {
+                     // 如果解析失败，可能是报错页面，抛出
+                    throw new Error("Invalid JSON Data");
+                }
+
+                if (isList) {
+                    if (!Array.isArray(data) || data.length === 0) {
+                        this.hasMore = false;
+                        document.getElementById('loading-more').classList.add('hidden');
+                        document.getElementById('end-of-line').classList.remove('hidden');
+                        return;
+                    }
+                    data = data[0];
+                }
+                this.lastPostDate = data.date;
+                this.render(data);
+            } catch (e) { 
+                console.error(e);
+                lastError = e; 
+                if (isInitial) this.showError(`CONNECTION FAILED: ${lastError.message}`);
+            } finally {
+                this.isFetching = false;
+                if (isInitial) document.getElementById('initial-loader').classList.add('hidden');
+                document.getElementById('loading-more').classList.add('hidden');
+            }
+        },
+
+        render(data) {
+            const wrapper = document.getElementById('infinite-wrapper');
+            const articleEl = document.createElement('div');
+            articleEl.className = 'glass-panel p-8 md:p-16 min-h-[60vh] animate-fadeIn mb-16';
+        
+            articleEl.innerHTML = `
+                <div class="hud-corner hc-tl"></div><div class="hud-corner hc-tr"></div>
+                <div class="hud-corner hc-bl"></div><div class="hud-corner hc-br"></div>
+                <header class="mb-10 text-center">
+                    <div class="inline-flex items-center gap-3 mb-4 opacity-70">
+                        <span class="px-2 py-0.5 border border-primary text-primary text-[10px] font-mono font-bold uppercase">ARCHIVE</span>
+                        <span class="font-mono text-[10px] text-gray-500">${new Date(data.date).toISOString().split('T')[0]}</span>
+                    </div>
+                    <h1 class="text-3xl md:text-5xl font-black text-main font-serif leading-tight mb-6 transition-colors duration-300">${data.title.rendered}</h1>
+                </header>
+                <div class="prose-eva text-lg article-content" id="stream-container-${data.id}"></div>
+                <div class="chunk-loader hidden" id="stream-trigger-${data.id}"><span>/// DECODING... ///</span></div>
+                
+                <div class="mt-12 border-t border-white/5 pt-8">
+                    <button onclick="CommentManager.toggleComms(this, ${data.id})" class="w-full border border-secondary/30 bg-secondary/5 text-secondary font-mono text-xs py-3 hover:bg-secondary hover:text-black transition-all flex items-center justify-center gap-2 group">
+                        <i data-lucide="message-square" class="w-4 h-4"></i>
+                        <span>OPEN_COMMS_CHANNEL [ ID: ${data.id} ]</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4 comm-chevron transition-transform duration-300"></i>
+                    </button>
+                    <div id="comms-${data.id}" class="hidden mt-6 animate-fadeIn">
+                        <div class="text-center py-4 font-mono text-xs text-gray-500">INITIALIZING UPLINK...</div>
+                    </div>
+                </div>
+                <footer class="mt-16 pt-8 border-t border-gray-500/20 text-center opacity-50">
+                    <div class="font-mono text-[10px] tracking-[0.3em]">/// E.O.F ///</div>
+                </footer>
+            `;
+            wrapper.appendChild(articleEl);
+            this.prepareStream(data.content.rendered, data.id);
+            lucide.createIcons();
+        },
+
+        prepareStream(html, id) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            this.fullContentNodes = Array.from(doc.body.children);
+            this.renderPointer = 0;
+            this.currentStreamContainer = document.getElementById(`stream-container-${id}`);
+            this.currentStreamTrigger = document.getElementById(`stream-trigger-${id}`);
+            document.getElementById('initial-loader').classList.add('hidden');
+            document.getElementById('stream-status').innerText = "STREAMING";
+            
+            if(!this.tocGenerated) {
+                this.updateTOC(doc);
+                this.tocGenerated = true;
+            }
+            
+            this.renderNextChunk();
+        },
+
+        renderNextChunk() {
+            if (!this.currentStreamContainer) return;
+            if (this.renderPointer >= this.fullContentNodes.length) {
+                if(this.currentStreamTrigger) this.currentStreamTrigger.classList.add('hidden');
+                return;
+            }
+            const end = Math.min(this.renderPointer + this.CHUNK_SIZE, this.fullContentNodes.length);
+            const chunkNodes = this.fullContentNodes.slice(this.renderPointer, end);
+            const chunkDiv = document.createElement('div');
+            chunkDiv.className = 'content-chunk';
+            
+            chunkNodes.forEach(node => {
+                const clone = document.importNode(node, true);
+                
+                // --- 核心修复：处理图片 Mixed Content ---
+                if (clone.tagName === 'IMG') { 
+                    clone.setAttribute('loading', 'lazy'); 
+                    // 替换 src
+                    clone.src = tacticalImgProcessor(clone.src);
+                    clone.onclick = () => Lightbox.open(clone.src); 
+                }
+                const imgs = clone.querySelectorAll('img');
+                imgs.forEach(img => { 
+                    img.setAttribute('loading', 'lazy'); 
+                    // 替换 src
+                    img.src = tacticalImgProcessor(img.src);
+                    img.onclick = () => Lightbox.open(img.src); 
+                });
+                // ----------------------------------------
+
+                if (clone.tagName === 'PRE') hljs.highlightElement(clone.querySelector('code') || clone);
+                clone.querySelectorAll('pre code').forEach(c => hljs.highlightElement(c));
+                chunkDiv.appendChild(clone);
+            });
+
+            this.currentStreamContainer.appendChild(chunkDiv);
+            this.renderPointer = end;
+            if (this.renderPointer < this.fullContentNodes.length && this.currentStreamTrigger) {
+                this.currentStreamTrigger.classList.remove('hidden');
+            }
+        },
+
+        checkStreamTrigger() {
+            if (!this.currentStreamTrigger || this.currentStreamTrigger.classList.contains('hidden')) return;
+            if (this.currentStreamTrigger.getBoundingClientRect().top <= window.innerHeight + 200) this.renderNextChunk();
+        },
+
+        updateTOC(doc) {
+            const tocContainer = document.getElementById('toc-container');
+            const headers = doc.querySelectorAll('h2, h3'); 
+            
+            if (headers.length > 0) {
+                tocContainer.innerHTML = '';
+                headers.forEach((header, index) => {
+                    const item = document.createElement('div');
+                    item.className = `toc-item ${header.tagName === 'H3' ? 'pl-4 opacity-70' : ''}`;
+                    item.innerText = header.innerText;
+                    item.onclick = () => {
+                        const realHeaders = document.querySelectorAll('h2, h3');
+                        if(realHeaders[index]) realHeaders[index].scrollIntoView({behavior:'smooth', block:'start'});
+                    };
+                    tocContainer.appendChild(item);
+                });
+            } else {
+                tocContainer.innerHTML = '<div class="text-center opacity-30 py-4">NO INDEX DATA</div>';
+            }
+        },
+
+        handleScroll() {
+            const scrollTop = window.scrollY;
+            const docHeight = document.body.scrollHeight - window.innerHeight;
+            const progress = (scrollTop / docHeight) * 100;
+            const progressBar = document.getElementById('scroll-progress');
+            if(progressBar) progressBar.style.width = `${progress}%`;
+        },
+
+        showError(msg) {
+            const loader = document.getElementById('initial-loader');
+            if(loader) loader.innerHTML = `<div class="text-red-500 font-mono text-xs text-center">${msg}<br><a href="index.html" class="underline mt-2 inline-block">RETURN</a></div>`;
+        }
+    };
+
+    let currentZoom = 1;
+    function changeFontSize(dir) {
+        currentZoom += dir * 0.1;
+        currentZoom = Math.min(Math.max(currentZoom, 0.8), 1.4);
+        const contents = document.querySelectorAll('.article-content');
+        contents.forEach(el => el.style.fontSize = `${currentZoom}rem`);
+    }
+
+    StreamReader.init();
+</script>
 </body>
 </html>
