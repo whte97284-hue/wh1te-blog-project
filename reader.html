@@ -324,28 +324,56 @@
         close() { document.getElementById('lightbox').classList.remove('active'); }
     };
 
-    /* --- 2. 战术图像处理器 (升级版：字符串级清洗) --- */
+    /* --- 2. 战术图像处理器 (最终修正版：覆盖 src 和 srcset) --- */
     const TacticalImager = {
-        // 单个 URL 清洗
+        // 单个 URL 清洗 (转 HTTPS + 压缩)
         processUrl(url) {
             if (!url) return '';
-            if (url.startsWith('https://')) return url;
-            if (url.startsWith('http://')) {
-                const cleanUrl = url.replace(/^http:\/\//i, '');
+            // 已经是 HTTPS 的 weserv 链接或者是安全的 HTTPS 链接，跳过
+            if (url.includes('images.weserv.nl') || (url.startsWith('https://') && !url.includes('infinityfreeapp'))) return url;
+            
+            // 处理 HTTP 链接 (包括被错误标记为 HTTP 的 infinityfree 链接)
+            if (url.startsWith('http://') || url.includes('infinityfreeapp.com')) {
+                // 清理 url，移除协议头，防止重复
+                let cleanUrl = url.replace(/^https?:\/\//i, '');
                 return `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&output=webp&q=80&we`;
             }
             return url;
         },
 
-        // 全文 HTML 清洗 (核心修复)
-        // 使用正则在字符串层面直接替换 src="http://..." 防止浏览器解析时报错
+        // 专门处理 srcset 字符串 (例如: "http://a.jpg 300w, http://b.jpg 1024w")
+        processSrcset(srcsetString) {
+            if (!srcsetString) return '';
+            return srcsetString.split(',').map(part => {
+                const trimmed = part.trim();
+                // 分离 URL 和 宽度描述符 (例如 "http://url 300w")
+                const lastSpaceIndex = trimmed.lastIndexOf(' ');
+                if (lastSpaceIndex === -1) return this.processUrl(trimmed);
+                
+                const url = trimmed.substring(0, lastSpaceIndex);
+                const descriptor = trimmed.substring(lastSpaceIndex);
+                return `${this.processUrl(url)}${descriptor}`;
+            }).join(', ');
+        },
+
+        // 全文 HTML 清洗 (外科手术式替换)
         sanitizeHtmlString(htmlString) {
             if (!htmlString) return '';
-            // 匹配 src="http://..." 或 src='http://...'
-            return htmlString.replace(/src=["'](http:\/\/[^"']+)["']/gi, (match, capturedUrl) => {
-                const newUrl = this.processUrl(capturedUrl);
-                return `src="${newUrl}"`;
+            
+            let safeHtml = htmlString;
+
+            // 1. 替换 src="..."
+            // 使用非贪婪匹配捕获 URL
+            safeHtml = safeHtml.replace(/src=["'](http:\/\/[^"']+)["']/gi, (match, url) => {
+                return `src="${this.processUrl(url)}"`;
             });
+
+            // 2. 替换 srcset="..." (关键修复点！)
+            safeHtml = safeHtml.replace(/srcset=["']([^"']+)["']/gi, (match, content) => {
+                return `srcset="${this.processSrcset(content)}"`;
+            });
+
+            return safeHtml;
         }
     };
 
@@ -373,12 +401,13 @@
         async loadComments(postId) {
             const container = document.getElementById(`comms-${postId}`);
             const url = `${this.apiBase}?post=${postId}&per_page=20`;
+            // 优先尝试直连，失败再走代理
             const proxies = ['https://corsproxy.io/?', 'https://api.allorigins.win/raw?url='];
-            let success = false;
             
             container.innerHTML = `<div class="text-center py-4 font-mono text-xs text-secondary animate-pulse">SEARCHING FREQUENCIES...</div>`;
 
             try {
+                // 尝试直连 Worker
                 const res = await fetch(url);
                 if(res.ok) {
                     const data = await res.json();
@@ -386,8 +415,10 @@
                     this.renderList(container, data);
                     return; 
                 }
-            } catch(e) { console.log("Worker direct link failed, trying proxies..."); }
+            } catch(e) { console.log("Worker direct link failed, engaging proxies..."); }
 
+            // 代理回退
+            let success = false;
             for (const proxy of proxies) {
                 try {
                     const res = await fetch(proxy + encodeURIComponent(url));
@@ -431,7 +462,7 @@
             }
             listEl.innerHTML = comments.map(c => {
                 let avatarUrl = c.author_avatar_urls ? c.author_avatar_urls['48'] : null;
-                // 修复评论头像的混合内容
+                // 同样修复评论区头像
                 if(avatarUrl) avatarUrl = TacticalImager.processUrl(avatarUrl);
 
                 const avatarHTML = avatarUrl 
@@ -537,6 +568,7 @@
                 const res = await fetch(url);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const text = await res.text();
+                // 防火墙检测
                 if (text.trim().startsWith('<') && !text.includes('wp-json')) throw new Error("Worker Firewall Intercepted");
                 
                 let data;
@@ -600,12 +632,10 @@
             `;
             wrapper.appendChild(articleEl);
             
-            // --- 关键改动 ---
-            // 在解析 HTML 之前，先清洗字符串。
-            // 这确保了 DOMParser 解析时，src 已经是 HTTPS 的了，浏览器就不会报错。
+            // --- 核心改动：在传递给 prepareStream 之前，清洗所有 HTML 字符串 ---
             const safeContent = TacticalImager.sanitizeHtmlString(data.content.rendered);
             this.prepareStream(safeContent, data.id);
-            // ----------------
+            // -----------------------------------------------------------
             
             lucide.createIcons();
         },
@@ -642,13 +672,18 @@
             chunkNodes.forEach(node => {
                 const clone = document.importNode(node, true);
                 
+                // 保底措施：再次检查节点属性，防止漏网之鱼
                 if (clone.tagName === 'IMG') { 
                     clone.setAttribute('loading', 'lazy'); 
+                    if(clone.src) clone.src = TacticalImager.processUrl(clone.src);
+                    if(clone.srcset) clone.srcset = TacticalImager.processSrcset(clone.srcset);
                     clone.onclick = () => Lightbox.open(clone.src); 
                 }
                 const imgs = clone.querySelectorAll('img');
                 imgs.forEach(img => { 
                     img.setAttribute('loading', 'lazy'); 
+                    if(img.src) img.src = TacticalImager.processUrl(img.src);
+                    if(img.srcset) img.srcset = TacticalImager.processSrcset(img.srcset);
                     img.onclick = () => Lightbox.open(img.src); 
                 });
 
