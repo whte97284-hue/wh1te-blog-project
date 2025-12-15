@@ -40,6 +40,7 @@
             --glass-bg: rgba(10, 10, 12, 0.75); --glass-border: rgba(255, 255, 255, 0.08);
             --widget-bg: rgba(0, 0, 0, 0.4);
             --code-bg: #0b0b0b; --hud-opacity: 0.5;
+            --nav-height: 4rem;
         }
         [data-mode="light"] {
             --bg-color: #f2f2f5; --text-main: #1a1a1a; --text-muted: #888;
@@ -52,37 +53,73 @@
         [data-theme="unit-00"] { --primary-color: #0056b3; --secondary-color: #0091ff; }
         [data-mode="light"][data-theme="unit-00"] { --bg-color: #f0f8ff; }
 
+        /* --- 基础重置 --- */
         body { 
             background-color: var(--bg-color); color: var(--text-main); font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif;
             background-image: radial-gradient(circle at 50% 0%, rgba(var(--secondary-color), 0.05) 0%, transparent 60%), linear-gradient(var(--glass-border) 1px, transparent 1px), linear-gradient(90deg, var(--glass-border) 1px, transparent 1px);
             background-size: 100% 100%, 40px 40px, 40px 40px; background-attachment: fixed; overflow-x: hidden;
+            margin: 0; padding: 0;
             transition: background-color 0.5s ease, color 0.3s ease;
         }
 
-        /* --- 核心修复：防止图标被挤压 --- */
-        /* 强制所有 Lucide 图标不许缩小 */
+        /* --- 核心修复：手动实现导航栏布局 (脱离 Tailwind 依赖) --- */
+        .tactical-nav {
+            position: fixed; top: 0; left: 0; width: 100%; height: var(--nav-height);
+            background: rgba(var(--bg-color), 0.9); backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 1.5rem;
+            box-sizing: border-box; /* 防止padding撑大宽度 */
+        }
+        
+        .nav-group {
+            display: flex; align-items: center; gap: 1rem;
+        }
+
+        .nav-btn-link {
+            display: flex; align-items: center; gap: 0.5rem;
+            color: var(--text-muted); text-decoration: none;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: bold;
+            transition: color 0.2s;
+            cursor: pointer;
+        }
+        .nav-btn-link:hover { color: var(--secondary-color); }
+        .nav-btn-link svg { width: 16px; height: 16px; flex-shrink: 0; } /* 强制图标尺寸 */
+
+        /* --- 核心修复：防止图标被挤压 (全局生效) --- */
         svg.lucide {
             flex-shrink: 0 !important;
-            min-width: 1em; /* 保持最小宽度 */
+            min-width: 1em; 
+            min-height: 1em;
+            display: inline-block;
+            vertical-align: middle;
         }
 
         /* --- 布局系统 (Grid Layout) --- */
         .tactical-grid {
             display: grid;
-            grid-template-columns: 1fr; /* 默认单栏 */
+            grid-template-columns: 1fr; 
             gap: 2rem;
             max-width: 1400px;
             margin: 0 auto;
             position: relative;
+            padding-top: calc(var(--nav-height) + 2rem); /* 留出导航栏高度 */
+            padding-bottom: 5rem;
+            padding-left: 1rem; padding-right: 1rem;
         }
-        /* PC端开启三栏布局 */
+        /* PC端三栏布局 */
         @media (min-width: 1280px) {
             .tactical-grid {
-                grid-template-columns: 280px minmax(0, 1fr) 280px; /* 左 - 中 - 右 */
+                grid-template-columns: 280px minmax(0, 1fr) 280px; 
                 align-items: start;
             }
-            .sidebar-left { position: sticky; top: 8rem; height: calc(100vh - 10rem); overflow-y: auto; padding-right: 10px; }
-            .sidebar-right { position: sticky; top: 8rem; height: calc(100vh - 10rem); } /* 预留右侧 */
+            .sidebar-left { position: sticky; top: 6rem; height: calc(100vh - 8rem); overflow-y: auto; padding-right: 10px; }
+            .sidebar-right { position: sticky; top: 6rem; height: calc(100vh - 8rem); } 
+        }
+        /* 移动端隐藏侧边栏 */
+        @media (max-width: 1279px) {
+            .sidebar-left, .sidebar-right { display: none; }
         }
 
         /* --- Widget 通用样式 --- */
@@ -101,7 +138,7 @@
             font-family: 'JetBrains Mono'; font-size: 10px; color: var(--secondary-color);
             margin-bottom: 1rem; letter-spacing: 0.1em; display: flex; justify-content: space-between; align-items: center;
             border-bottom: 1px dashed var(--glass-border); padding-bottom: 0.5rem;
-            white-space: nowrap; /* 防止标题换行 */
+            white-space: nowrap; 
         }
         
         /* Widget 1: Pilot Data */
@@ -110,8 +147,9 @@
             display: flex; align-items: center; justify-content: center;
             font-family: 'JetBrains Mono'; font-weight: bold; font-size: 8px; color: var(--secondary-color); text-align: center;
             box-shadow: 0 0 5px rgba(var(--secondary-color), 0.3);
-            flex-shrink: 0; /* 头像也不许缩 */
+            flex-shrink: 0; 
         }
+        .pilot-info { display: flex; flex-direction: column; gap: 2px; }
         .sync-bar-container { height: 4px; background: rgba(255,255,255,0.1); margin-top: 8px; overflow: hidden; }
         .sync-bar-fill { height: 100%; background: var(--secondary-color); width: 85%; animation: pulse-width 3s infinite ease-in-out; }
         @keyframes pulse-width { 0%, 100% { width: 85%; opacity: 0.8; } 50% { width: 95%; opacity: 1; box-shadow: 0 0 10px var(--secondary-color); } }
@@ -122,8 +160,8 @@
             background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
             color: var(--text-muted); font-family: 'JetBrains Mono'; font-size: 10px;
             padding: 0.5rem; text-align: center; cursor: pointer; transition: all 0.2s;
-            display: flex; align-items: center; justify-content: center; gap: 6px; /* 增加间距 */
-            overflow: hidden; /* 防止溢出 */
+            display: flex; align-items: center; justify-content: center; gap: 6px; 
+            overflow: hidden; 
         }
         .ops-btn:hover { background: var(--secondary-color); color: #000; border-color: var(--secondary-color); }
         .ops-btn.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
@@ -133,6 +171,7 @@
             display: block; padding: 4px 0 4px 10px; color: var(--text-muted); 
             border-left: 1px solid transparent; font-size: 0.75rem; transition: all 0.2s; 
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+            cursor: pointer;
         }
         .toc-item:hover, .toc-item.active { 
             color: var(--secondary-color); border-left-color: var(--secondary-color); 
@@ -140,7 +179,7 @@
             padding-left: 14px;
         }
 
-        /* 主阅读器容器 - FIX: 移除所有动画，强制不透明 */
+        /* 主阅读器容器 */
         .glass-panel { 
             background: var(--glass-bg); 
             backdrop-filter: blur(16px); 
@@ -149,8 +188,8 @@
             position: relative; 
             margin-bottom: 4rem; 
             min-height: 80vh; 
-            opacity: 1 !important; /* 强制显示 */
-            animation: none !important; /* 禁用动画 */
+            opacity: 1 !important; 
+            animation: none !important; 
         }
         
         /* 装饰性 HUD 角标 */
@@ -161,12 +200,11 @@
         .hc-br { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
 
         /* 文章通用样式 */
-        .prose-eva h1 { font-family: 'Noto Serif SC', serif; font-size: 2.5rem; color: var(--text-main); margin: 2em 0 1em; line-height: 1.2; }
+        .prose-eva h1 { font-family: 'Noto Serif SC', serif; font-size: 2.5rem; color: var(--text-main); margin: 2em 0 1em; line-height: 1.2; text-align: center; }
         .prose-eva h2 { font-family: 'Noto Serif SC', serif; font-size: 1.8rem; color: var(--secondary-color); border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem; margin-top: 2.5em; }
         .prose-eva h2::before { content: '##'; margin-right: 0.5rem; opacity: 0.3; font-family: 'JetBrains Mono'; }
         .prose-eva p { margin-bottom: 1.5em; line-height: 1.8; font-size: 1.05rem; text-align: justify; color: var(--text-main); opacity: 0.9; }
         
-        /* --- 核心修复：图片强制显示，无动画 --- */
         .prose-eva img { 
             max-width: 100%; height: auto; display: block; margin: 2rem auto; 
             border: 1px solid var(--glass-border); border-radius: 2px; 
@@ -183,7 +221,7 @@
         [data-mode="light"] .prose-eva blockquote { background: rgba(0,0,0,0.03); }
 
         /* 灯箱 */
-        #lightbox { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.9); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        #lightbox { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.9); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
         #lightbox.active { opacity: 1; pointer-events: auto; }
         #lightbox img { max-width: 90vw; max-height: 90vh; border: 1px solid var(--secondary-color); box-shadow: 0 0 30px rgba(var(--secondary-color), 0.3); transform: scale(0.9); transition: transform 0.3s; }
         #lightbox.active img { transform: scale(1); }
@@ -194,11 +232,22 @@
         .comm-meta { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; font-family: 'JetBrains Mono'; font-size: 0.75rem; color: var(--text-muted); }
         .comm-author { color: var(--secondary-color); font-weight: bold; }
         .comm-body { font-size: 0.9rem; color: var(--text-main); line-height: 1.6; opacity: 0.9; }
-        .magi-input { background: rgba(0,0,0,0.1); border: 1px solid var(--glass-border); color: var(--text-main); font-family: 'JetBrains Mono'; font-size: 0.85rem; padding: 0.5rem; width: 100%; transition: all 0.3s; }
+        .magi-input { background: rgba(0,0,0,0.1); border: 1px solid var(--glass-border); color: var(--text-main); font-family: 'JetBrains Mono'; font-size: 0.85rem; padding: 0.5rem; width: 100%; transition: all 0.3s; box-sizing: border-box; }
         .magi-input:focus { outline: none; border-color: var(--secondary-color); box-shadow: 0 0 10px rgba(var(--secondary-color), 0.1); background: rgba(var(--secondary-color), 0.05); }
         .avatar-so { width: 32px; height: 32px; background: #000; border: 1px solid var(--secondary-color); display: flex; align-items: center; justify-content: center; font-size: 6px; color: var(--secondary-color); text-align: center; line-height: 1; font-family: 'JetBrains Mono'; box-shadow: 0 0 5px rgba(var(--secondary-color), 0.2); flex-shrink: 0; }
         .comm-chevron { transition: transform 0.3s; flex-shrink: 0; }
 
+        /* Utility */
+        .hidden { display: none !important; }
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .gap-2 { gap: 0.5rem; }
+        .w-full { width: 100%; }
+        .text-center { text-align: center; }
+        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        
         /* 滚动条 */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -220,7 +269,7 @@
         })();
     </script>
 
-    <div class="fixed top-0 left-0 w-full h-1 z-50 bg-gray-800/20">
+    <div class="fixed top-0 left-0 w-full h-1 z-[200] bg-gray-800/20">
         <div id="scroll-progress" class="h-full bg-secondary w-0 shadow-[0_0_10px_var(--secondary-color)] transition-all duration-75"></div>
     </div>
 
@@ -228,42 +277,42 @@
         <img id="lightbox-img" src="" onclick="event.stopPropagation()">
     </div>
 
-    <nav class="fixed top-0 w-full z-40 bg-bg/90 backdrop-blur-md border-b border-white/5 h-16 flex items-center justify-between px-6 md:px-12 transition-all duration-300">
-        <a href="index.html" class="flex items-center gap-2 text-gray-400 hover:text-secondary transition-colors group">
-            <i data-lucide="arrow-left" class="w-4 h-4 group-hover:-translate-x-1 transition-transform shrink-0"></i>
-            <span class="font-mono text-xs tracking-widest font-bold">ABORT</span>
+    <nav class="tactical-nav">
+        <a href="index.html" class="nav-btn-link group">
+            <i data-lucide="arrow-left"></i>
+            <span>ABORT</span>
         </a>
-        <div class="hidden md:flex items-center gap-2 font-mono text-[10px] text-gray-500">
-            <span>MAGI_ARCHIVE:</span>
-            <span id="stream-status" class="text-secondary animate-pulse">CONNECTING</span>
+        <div class="nav-group" style="font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-muted);">
+            <span class="hidden md:inline">MAGI_ARCHIVE:</span>
+            <span id="stream-status" style="color: var(--secondary-color);">CONNECTING</span>
         </div>
-        <div class="flex gap-4 xl:hidden">
-            <button onclick="changeFontSize(1)" class="text-gray-400 hover:text-secondary font-mono text-xs">A+</button>
+        <div class="nav-group">
+            <button onclick="changeFontSize(1)" class="nav-btn-link" style="font-size: 12px;">A+</button>
         </div>
     </nav>
 
-    <div class="tactical-grid pt-24 pb-20 px-4">
+    <div class="tactical-grid">
         
-        <aside class="sidebar-left hidden xl:block">
+        <aside class="sidebar-left">
             
             <div class="widget-card" style="opacity: 1;">
                 <div class="hud-corner hc-tl"></div><div class="hud-corner hc-tr"></div>
                 <div class="widget-header">
                     <span>PILOT_DATA</span>
-                    <i data-lucide="user" class="w-3 h-3 shrink-0"></i>
+                    <i data-lucide="user"></i>
                 </div>
-                <div class="flex items-center gap-4">
+                <div class="flex items-center" style="gap: 1rem;">
                     <div class="pilot-avatar-so">SOUND<br>ONLY</div>
-                    <div class="flex-1 font-mono text-xs space-y-1">
-                        <div class="text-gray-400">ID: <span class="text-secondary">Wh1te</span></div>
-                        <div class="text-gray-400">RANK: <span class="text-primary">CAPTAIN</span></div>
-                        <div class="text-gray-500 text-[10px] mt-1">STATUS: ONLINE</div>
+                    <div class="flex-1 font-mono text-xs pilot-info">
+                        <div style="color: #999;">ID: <span style="color: var(--secondary-color);">Wh1te</span></div>
+                        <div style="color: #999;">RANK: <span style="color: var(--primary-color);">CAPTAIN</span></div>
+                        <div style="color: #666; font-size: 10px;">STATUS: ONLINE</div>
                     </div>
                 </div>
-                <div class="mt-4">
-                    <div class="flex justify-between font-mono text-[9px] text-gray-500 mb-1">
+                <div class="mt-4" style="margin-top: 1rem;">
+                    <div class="flex" style="justify-content: space-between; font-family: 'JetBrains Mono'; font-size: 9px; color: #666; margin-bottom: 4px;">
                         <span>SYNC_RATIO</span>
-                        <span class="text-secondary animate-pulse">400%</span>
+                        <span style="color: var(--secondary-color);">400%</span>
                     </div>
                     <div class="sync-bar-container">
                         <div class="sync-bar-fill"></div>
@@ -275,19 +324,19 @@
                 <div class="hud-corner hc-bl"></div><div class="hud-corner hc-br"></div>
                 <div class="widget-header">
                     <span>OPS_CONTROLS</span>
-                    <i data-lucide="settings-2" class="w-3 h-3 shrink-0"></i>
+                    <i data-lucide="settings-2"></i>
                 </div>
                 <div class="ops-grid">
                     <div class="ops-btn" onclick="OpsControl.toggleTheme()" title="Toggle Light/Dark Mode">
-                        <i data-lucide="sun-moon" class="w-3 h-3 shrink-0"></i> <span>MODE</span>
+                        <i data-lucide="sun-moon"></i> <span>MODE</span>
                     </div>
                     <div class="ops-btn" onclick="window.scrollTo({top:0, behavior:'smooth'})" title="Return to Top">
-                        <i data-lucide="arrow-up-to-line" class="w-3 h-3 shrink-0"></i> <span>TOP</span>
+                        <i data-lucide="arrow-up-to-line"></i> <span>TOP</span>
                     </div>
                     <div class="ops-btn" onclick="changeFontSize(-1)">A-</div>
                     <div class="ops-btn" onclick="changeFontSize(1)">A+</div>
-                    <div class="ops-btn col-span-2 text-red-400 border-red-900/30 hover:bg-red-900/20 hover:border-red-500" onclick="window.location.href='index.html'">
-                        <i data-lucide="log-out" class="w-3 h-3 shrink-0"></i> <span>EMERGENCY EJECT</span>
+                    <div class="ops-btn" style="grid-column: span 2; border-color: rgba(255,0,0,0.3); color: #ff6b6b;" onclick="window.location.href='index.html'">
+                        <i data-lucide="log-out"></i> <span>EMERGENCY EJECT</span>
                     </div>
                 </div>
             </div>
@@ -295,37 +344,37 @@
             <div class="widget-card" style="opacity: 1;">
                 <div class="widget-header">
                     <span>INDEX_STRUCTURE</span>
-                    <i data-lucide="list-tree" class="w-3 h-3 shrink-0"></i>
+                    <i data-lucide="list-tree"></i>
                 </div>
-                <div id="toc-container" class="space-y-1 font-mono text-xs max-h-[300px] overflow-y-auto pr-1">
-                    <div class="text-center opacity-30 py-4">SCANNING...</div>
+                <div id="toc-container" style="max-height: 300px; overflow-y: auto; font-family: 'JetBrains Mono'; font-size: 12px; gap: 4px; display: flex; flex-direction: column;">
+                    <div class="text-center" style="opacity: 0.3; padding: 1rem;">SCANNING...</div>
                 </div>
             </div>
 
         </aside>
 
         <main id="infinite-wrapper" class="w-full relative">
-            <div id="initial-loader" class="flex flex-col items-center justify-center min-h-[50vh]">
-                <div class="font-mono text-secondary text-lg animate-pulse tracking-widest mb-4">DECRYPTING...</div>
-                <div class="w-48 h-0.5 bg-gray-500/20 overflow-hidden"><div class="h-full bg-secondary w-1/3 animate-[scan_1s_infinite]"></div></div>
+            <div id="initial-loader" class="flex" style="flex-direction: column; align-items: center; justify-content: center; min-height: 50vh;">
+                <div style="font-family: 'JetBrains Mono'; color: var(--secondary-color); font-size: 1.2rem; margin-bottom: 1rem; letter-spacing: 2px;" class="animate-pulse">DECRYPTING...</div>
+                <div style="width: 200px; height: 2px; background: rgba(255,255,255,0.1); overflow: hidden;"><div style="height: 100%; width: 30%; background: var(--secondary-color); animation: scan 2s linear infinite;"></div></div>
             </div>
         </main>
 
-        <aside class="sidebar-right hidden xl:block opacity-50 pointer-events-none">
-            <div class="widget-card h-full border-dashed border-gray-800 flex items-center justify-center">
-                 <div class="text-[10px] font-mono text-gray-700 -rotate-90 tracking-widest">RIGHT_WING_RESERVED</div>
+        <aside class="sidebar-right">
+            <div class="widget-card h-full" style="height: 100%; border-style: dashed; border-color: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
+                 <div style="font-family: 'JetBrains Mono'; font-size: 10px; color: #555; transform: rotate(-90deg); letter-spacing: 2px;">RIGHT_WING_RESERVED</div>
              </div>
         </aside>
 
     </div>
 
-    <div id="loading-more" class="hidden py-8 text-center">
-        <div class="inline-flex items-center gap-2 font-mono text-xs text-secondary animate-pulse">
-            <i data-lucide="loader-2" class="w-4 h-4 animate-spin shrink-0"></i>
+    <div id="loading-more" class="hidden" style="padding: 2rem; text-align: center;">
+        <div style="display: inline-flex; align-items: center; gap: 0.5rem; font-family: 'JetBrains Mono'; font-size: 12px; color: var(--secondary-color);">
+            <i data-lucide="loader-2" class="animate-spin"></i>
             FETCHING NEXT ARCHIVE...
         </div>
     </div>
-    <div id="end-of-line" class="hidden py-12 text-center opacity-50 font-mono text-[10px] tracking-[0.5em] text-gray-500">
+    <div id="end-of-line" class="hidden" style="padding: 3rem; text-align: center; opacity: 0.5; font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.5em; color: #555;">
         /// END OF ALL RECORDS ///
     </div>
 
@@ -359,7 +408,7 @@
             close() { document.getElementById('lightbox').classList.remove('active'); }
         };
 
-        /* --- 2. 战术图像处理器 (最终核平版) --- */
+        /* --- 2. 战术图像处理器 --- */
         const TacticalImager = {
             processUrl(url) {
                 if (!url || typeof url !== 'string' || url === 'undefined') return ''; 
@@ -373,7 +422,7 @@
             sanitizeHtmlString(htmlString) {
                 if (!htmlString) return '';
                 let safeHtml = htmlString;
-                safeHtml = safeHtml.replace(/srcset=["'][^"']*["']/gi, ''); // 移除 srcset
+                safeHtml = safeHtml.replace(/srcset=["'][^"']*["']/gi, ''); 
                 safeHtml = safeHtml.replace(/src=["'](http:\/\/[^"']+|https:\/\/[^"']*infinityfreeapp[^"']*)["']/gi, (match, url) => {
                     return `src="${this.processUrl(url)}"`;
                 });
@@ -381,7 +430,7 @@
             }
         };
 
-        /* --- 3. 评论系统 (MAGI COMMS) --- */
+        /* --- 3. 评论系统 --- */
         const CommentManager = {
             apiBase: 'https://eva-proxy.whte97284.workers.dev/blog/comments',
             toggleComms(btn, postId) {
@@ -403,7 +452,7 @@
                 const container = document.getElementById(`comms-${postId}`);
                 const url = `${this.apiBase}?post=${postId}&per_page=20`;
                 const proxies = ['https://corsproxy.io/?', 'https://api.allorigins.win/raw?url='];
-                container.innerHTML = `<div class="text-center py-4 font-mono text-xs text-secondary animate-pulse">SEARCHING FREQUENCIES...</div>`;
+                container.innerHTML = `<div class="text-center" style="padding: 1rem; font-family: 'JetBrains Mono'; font-size: 12px; color: var(--secondary-color);">SEARCHING FREQUENCIES...</div>`;
                 try {
                     const res = await fetch(url);
                     if(res.ok) {
@@ -426,32 +475,32 @@
                         break;
                     } catch (e) {}
                 }
-                if (!success) container.innerHTML = `<div class="text-red-500 font-mono text-xs text-center border border-red-500/30 p-2">CONNECTION FAILED</div>`;
+                if (!success) container.innerHTML = `<div style="color: #ff5555; font-family: 'JetBrains Mono'; font-size: 12px; text-align: center; border: 1px solid rgba(255,0,0,0.3); padding: 0.5rem;">CONNECTION FAILED</div>`;
             },
             renderForm(container, postId) {
                 container.innerHTML = `
-                    <div class="mb-8 p-4 border border-white/5 bg-black/10">
-                        <div class="font-mono text-[10px] text-secondary mb-2">/// TRANSMIT_DATA</div>
-                        <div class="grid grid-cols-2 gap-2 mb-2">
+                    <div style="margin-bottom: 2rem; padding: 1rem; border: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.1);">
+                        <div style="font-family: 'JetBrains Mono'; font-size: 10px; color: var(--secondary-color); margin-bottom: 0.5rem;">/// TRANSMIT_DATA</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
                             <input type="text" id="c-name-${postId}" class="magi-input" placeholder="CODENAME (Name)">
                             <input type="email" id="c-email-${postId}" class="magi-input" placeholder="SIGNAL_ID (Email)">
                         </div>
-                        <textarea id="c-msg-${postId}" class="magi-input h-20 mb-2" placeholder="DATA_PACKET (Message)..."></textarea>
-                        <button onclick="CommentManager.postComment(${postId})" class="w-full bg-secondary/10 border border-secondary text-secondary font-bold font-mono text-xs py-2 hover:bg-secondary hover:text-black transition-all">SEND TRANSMISSION</button>
-                        <div id="c-status-${postId}" class="mt-2 text-[10px] font-mono text-gray-500 hidden"></div>
+                        <textarea id="c-msg-${postId}" class="magi-input" style="height: 80px; margin-bottom: 0.5rem;" placeholder="DATA_PACKET (Message)..."></textarea>
+                        <button onclick="CommentManager.postComment(${postId})" style="width: 100%; background: rgba(var(--secondary-color), 0.1); border: 1px solid var(--secondary-color); color: var(--secondary-color); font-weight: bold; font-family: 'JetBrains Mono'; font-size: 12px; padding: 0.5rem; cursor: pointer;">SEND TRANSMISSION</button>
+                        <div id="c-status-${postId}" class="hidden" style="margin-top: 0.5rem; font-size: 10px; font-family: 'JetBrains Mono'; color: #666;"></div>
                     </div><div class="space-y-4"></div>`;
             },
             renderList(container, comments) {
                 const listEl = container.lastElementChild;
                 if (!comments || comments.length === 0) {
-                    listEl.innerHTML = `<div class="text-center opacity-30 font-mono text-xs">NO SIGNALS DETECTED.</div>`;
+                    listEl.innerHTML = `<div style="text-align: center; opacity: 0.3; font-family: 'JetBrains Mono'; font-size: 12px;">NO SIGNALS DETECTED.</div>`;
                     return;
                 }
                 listEl.innerHTML = comments.map(c => {
                     let avatarUrl = c.author_avatar_urls ? c.author_avatar_urls['48'] : null;
                     if(avatarUrl) avatarUrl = TacticalImager.processUrl(avatarUrl);
-                    const avatarHTML = avatarUrl ? `<img src="${avatarUrl}" class="w-8 h-8 rounded-full border border-white/10 shrink-0">` : `<div class="avatar-so shrink-0">SOUND<br>ONLY</div>`;
-                    return `<div class="comm-entry"><div class="comm-meta">${avatarHTML}<div><span class="comm-author">${c.author_name}</span><span class="opacity-50 mx-2">|</span><span>${new Date(c.date).toISOString().replace('T', ' ').substring(0, 16)}</span></div></div><div class="comm-body pl-10 prose-eva text-sm">${c.content.rendered}</div></div>`;
+                    const avatarHTML = avatarUrl ? `<img src="${avatarUrl}" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0;">` : `<div class="avatar-so">SOUND<br>ONLY</div>`;
+                    return `<div class="comm-entry"><div class="comm-meta">${avatarHTML}<div><span class="comm-author">${c.author_name}</span><span style="opacity: 0.5; margin: 0 0.5rem;">|</span><span>${new Date(c.date).toISOString().replace('T', ' ').substring(0, 16)}</span></div></div><div class="comm-body pl-10 prose-eva text-sm">${c.content.rendered}</div></div>`;
                 }).join('');
             },
             async postComment(postId) {
@@ -460,9 +509,9 @@
                 const content = document.getElementById(`c-msg-${postId}`).value;
                 const statusEl = document.getElementById(`c-status-${postId}`);
                 if (!name || !email || !content) {
-                    statusEl.innerText = "ERROR: INCOMPLETE DATA PACKET."; statusEl.classList.remove('hidden', 'text-secondary'); statusEl.classList.add('text-red-500'); return;
+                    statusEl.innerText = "ERROR: INCOMPLETE DATA PACKET."; statusEl.classList.remove('hidden'); statusEl.style.color = '#ff5555'; return;
                 }
-                statusEl.innerText = "UPLOADING..."; statusEl.classList.remove('hidden', 'text-red-500'); statusEl.classList.add('text-secondary', 'animate-pulse');
+                statusEl.innerText = "UPLOADING..."; statusEl.classList.remove('hidden'); statusEl.style.color = 'var(--secondary-color)';
                 const formData = new FormData();
                 formData.append('author_name', name); formData.append('author_email', email); formData.append('content', content); formData.append('post', postId);
                 try {
@@ -470,11 +519,11 @@
                     if (!res.ok) { const err = await res.json(); throw new Error(err.message || `HTTP ${res.status}`); }
                     statusEl.innerText = "TRANSMISSION COMPLETE. SYNCING..."; document.getElementById(`c-msg-${postId}`).value = '';
                     setTimeout(() => this.loadComments(postId), 1000);
-                } catch (e) { statusEl.innerHTML = `UPLOAD FAILED: ${e.message}`; statusEl.classList.remove('text-secondary'); statusEl.classList.add('text-red-500'); }
+                } catch (e) { statusEl.innerHTML = `UPLOAD FAILED: ${e.message}`; statusEl.classList.remove('hidden'); statusEl.style.color = '#ff5555'; }
             }
         };
 
-        /* --- 4. 流式阅读器 (修复版：移除动画，强制显示，严格数据检查) --- */
+        /* --- 4. 流式阅读器 --- */
         const StreamReader = {
             apiBase: 'https://eva-proxy.whte97284.workers.dev/blog/post',
             postsApi: 'https://eva-proxy.whte97284.workers.dev/blog/posts',
@@ -549,12 +598,10 @@
             },
 
             render(data) {
-                // --- 核心修复：防止 TypeError ---
                 if (!data || !data.title || !data.content) {
                     console.error("DATA CORRUPTED:", data);
-                    // 即使没有数据，也不要崩，显示错误信息
                     const wrapper = document.getElementById('infinite-wrapper');
-                    wrapper.innerHTML += `<div class="glass-panel p-8 text-center text-red-500 font-mono text-xs">/// ERROR: DATA_SEGMENT_CORRUPTED ///</div>`;
+                    wrapper.innerHTML += `<div class="glass-panel" style="padding: 2rem; text-align: center; color: #ff5555; font-family: 'JetBrains Mono'; font-size: 12px;">/// ERROR: DATA_SEGMENT_CORRUPTED ///</div>`;
                     return;
                 }
                 
@@ -564,35 +611,36 @@
 
                 const wrapper = document.getElementById('infinite-wrapper');
                 const articleEl = document.createElement('div');
-                // FIX: 移除了 animate-fadeIn，强制 style="opacity:1"
-                articleEl.className = 'glass-panel p-8 md:p-16 min-h-[60vh] mb-16';
-                articleEl.style.opacity = '1'; 
+                articleEl.className = 'glass-panel';
+                articleEl.style.padding = '2rem 4rem'; // 模拟 md:p-16
+                articleEl.style.marginBottom = '4rem';
+                articleEl.style.minHeight = '60vh';
             
                 articleEl.innerHTML = `
                     <div class="hud-corner hc-tl"></div><div class="hud-corner hc-tr"></div>
                     <div class="hud-corner hc-bl"></div><div class="hud-corner hc-br"></div>
-                    <header class="mb-10 text-center">
-                        <div class="inline-flex items-center gap-3 mb-4 opacity-70">
-                            <span class="px-2 py-0.5 border border-primary text-primary text-[10px] font-mono font-bold uppercase">ARCHIVE</span>
-                            <span class="font-mono text-[10px] text-gray-500">${date}</span>
+                    <header class="mb-10 text-center" style="margin-bottom: 2.5rem; text-align: center;">
+                        <div style="display: inline-flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; opacity: 0.7;">
+                            <span style="padding: 2px 4px; border: 1px solid var(--primary-color); color: var(--primary-color); font-family: 'JetBrains Mono'; font-size: 10px; font-weight: bold;">ARCHIVE</span>
+                            <span style="font-family: 'JetBrains Mono'; font-size: 10px; color: #888;">${date}</span>
                         </div>
-                        <h1 class="text-3xl md:text-5xl font-black text-main font-serif leading-tight mb-6 transition-colors duration-300">${title}</h1>
+                        <h1 class="text-3xl md:text-5xl" style="font-family: 'Noto Serif SC', serif; font-weight: 900; font-size: 2.5rem; line-height: 1.2; margin-bottom: 1.5rem; color: var(--text-main);">${title}</h1>
                     </header>
-                    <div class="prose-eva text-lg article-content" id="stream-container-${data.id}"></div>
+                    <div class="prose-eva article-content" id="stream-container-${data.id}" style="font-size: ${currentZoom}rem;"></div>
                     <div class="chunk-loader hidden" id="stream-trigger-${data.id}"><span>/// DECODING... ///</span></div>
                     
-                    <div class="mt-12 border-t border-white/5 pt-8">
-                        <button onclick="CommentManager.toggleComms(this, ${data.id})" class="w-full border border-secondary/30 bg-secondary/5 text-secondary font-mono text-xs py-3 hover:bg-secondary hover:text-black transition-all flex items-center justify-center gap-2 group">
-                            <i data-lucide="message-square" class="w-4 h-4 shrink-0"></i>
+                    <div style="margin-top: 3rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 2rem;">
+                        <button onclick="CommentManager.toggleComms(this, ${data.id})" style="width: 100%; border: 1px solid rgba(var(--secondary-color), 0.3); background: rgba(var(--secondary-color), 0.05); color: var(--secondary-color); font-family: 'JetBrains Mono'; font-size: 12px; padding: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                            <i data-lucide="message-square" style="width: 16px; height: 16px;"></i>
                             <span>OPEN_COMMS_CHANNEL [ ID: ${data.id} ]</span>
-                            <i data-lucide="chevron-down" class="w-4 h-4 comm-chevron transition-transform duration-300 shrink-0"></i>
+                            <i data-lucide="chevron-down" class="comm-chevron" style="width: 16px; height: 16px;"></i>
                         </button>
-                        <div id="comms-${data.id}" class="hidden mt-6 animate-fadeIn">
-                            <div class="text-center py-4 font-mono text-xs text-gray-500">INITIALIZING UPLINK...</div>
+                        <div id="comms-${data.id}" class="hidden" style="margin-top: 1.5rem;">
+                            <div style="text-align: center; padding: 1rem; font-family: 'JetBrains Mono'; font-size: 12px; color: #888;">INITIALIZING UPLINK...</div>
                         </div>
                     </div>
-                    <footer class="mt-16 pt-8 border-t border-gray-500/20 text-center opacity-50">
-                        <div class="font-mono text-[10px] tracking-[0.3em]">/// E.O.F ///</div>
+                    <footer style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.05); text-align: center; opacity: 0.5;">
+                        <div style="font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.3em;">/// E.O.F ///</div>
                     </footer>
                 `;
                 wrapper.appendChild(articleEl);
@@ -634,6 +682,7 @@
                 
                 chunkNodes.forEach(node => {
                     const clone = document.importNode(node, true);
+                    
                     if (clone.tagName === 'IMG') { 
                         clone.removeAttribute('srcset'); 
                         clone.setAttribute('loading', 'eager'); 
