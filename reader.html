@@ -8,7 +8,9 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@300;500;700;900&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
@@ -19,9 +21,12 @@
             theme: {
                 extend: {
                     colors: { primary: 'var(--primary-color)', secondary: 'var(--secondary-color)', bg: 'var(--bg-color)' },
-                    fontFamily: { sans: ['Space Grotesk', 'Noto Sans JP', 'Noto Sans SC', 'sans-serif'], serif: ['Noto Serif SC', 'serif'], mono: ['JetBrains Mono', 'monospace'] },
-                    // 移除可能导致隐形的动画配置
-                    animation: { 'scan': 'scan 4s linear infinite', 'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
+                    fontFamily: { 
+                        sans: ['Space Grotesk', 'Noto Sans JP', 'Noto Sans SC', 'sans-serif'], 
+                        serif: ['Noto Serif SC', 'serif'], 
+                        mono: ['JetBrains Mono', 'monospace'] 
+                    },
+                    animation: { 'scan': 'scan 4s linear infinite' } 
                 }
             }
         }
@@ -52,6 +57,13 @@
             background-image: radial-gradient(circle at 50% 0%, rgba(var(--secondary-color), 0.05) 0%, transparent 60%), linear-gradient(var(--glass-border) 1px, transparent 1px), linear-gradient(90deg, var(--glass-border) 1px, transparent 1px);
             background-size: 100% 100%, 40px 40px, 40px 40px; background-attachment: fixed; overflow-x: hidden;
             transition: background-color 0.5s ease, color 0.3s ease;
+        }
+
+        /* --- 核心修复：防止图标被挤压 --- */
+        /* 强制所有 Lucide 图标不许缩小 */
+        svg.lucide {
+            flex-shrink: 0 !important;
+            min-width: 1em; /* 保持最小宽度 */
         }
 
         /* --- 布局系统 (Grid Layout) --- */
@@ -89,6 +101,7 @@
             font-family: 'JetBrains Mono'; font-size: 10px; color: var(--secondary-color);
             margin-bottom: 1rem; letter-spacing: 0.1em; display: flex; justify-content: space-between; align-items: center;
             border-bottom: 1px dashed var(--glass-border); padding-bottom: 0.5rem;
+            white-space: nowrap; /* 防止标题换行 */
         }
         
         /* Widget 1: Pilot Data */
@@ -97,6 +110,7 @@
             display: flex; align-items: center; justify-content: center;
             font-family: 'JetBrains Mono'; font-weight: bold; font-size: 8px; color: var(--secondary-color); text-align: center;
             box-shadow: 0 0 5px rgba(var(--secondary-color), 0.3);
+            flex-shrink: 0; /* 头像也不许缩 */
         }
         .sync-bar-container { height: 4px; background: rgba(255,255,255,0.1); margin-top: 8px; overflow: hidden; }
         .sync-bar-fill { height: 100%; background: var(--secondary-color); width: 85%; animation: pulse-width 3s infinite ease-in-out; }
@@ -108,7 +122,8 @@
             background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
             color: var(--text-muted); font-family: 'JetBrains Mono'; font-size: 10px;
             padding: 0.5rem; text-align: center; cursor: pointer; transition: all 0.2s;
-            display: flex; align-items: center; justify-content: center; gap: 4px;
+            display: flex; align-items: center; justify-content: center; gap: 6px; /* 增加间距 */
+            overflow: hidden; /* 防止溢出 */
         }
         .ops-btn:hover { background: var(--secondary-color); color: #000; border-color: var(--secondary-color); }
         .ops-btn.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
@@ -181,8 +196,8 @@
         .comm-body { font-size: 0.9rem; color: var(--text-main); line-height: 1.6; opacity: 0.9; }
         .magi-input { background: rgba(0,0,0,0.1); border: 1px solid var(--glass-border); color: var(--text-main); font-family: 'JetBrains Mono'; font-size: 0.85rem; padding: 0.5rem; width: 100%; transition: all 0.3s; }
         .magi-input:focus { outline: none; border-color: var(--secondary-color); box-shadow: 0 0 10px rgba(var(--secondary-color), 0.1); background: rgba(var(--secondary-color), 0.05); }
-        .avatar-so { width: 32px; height: 32px; background: #000; border: 1px solid var(--secondary-color); display: flex; align-items: center; justify-content: center; font-size: 6px; color: var(--secondary-color); text-align: center; line-height: 1; font-family: 'JetBrains Mono'; box-shadow: 0 0 5px rgba(var(--secondary-color), 0.2); }
-        .comm-chevron { transition: transform 0.3s; }
+        .avatar-so { width: 32px; height: 32px; background: #000; border: 1px solid var(--secondary-color); display: flex; align-items: center; justify-content: center; font-size: 6px; color: var(--secondary-color); text-align: center; line-height: 1; font-family: 'JetBrains Mono'; box-shadow: 0 0 5px rgba(var(--secondary-color), 0.2); flex-shrink: 0; }
+        .comm-chevron { transition: transform 0.3s; flex-shrink: 0; }
 
         /* 滚动条 */
         ::-webkit-scrollbar { width: 4px; }
@@ -215,7 +230,7 @@
 
     <nav class="fixed top-0 w-full z-40 bg-bg/90 backdrop-blur-md border-b border-white/5 h-16 flex items-center justify-between px-6 md:px-12 transition-all duration-300">
         <a href="index.html" class="flex items-center gap-2 text-gray-400 hover:text-secondary transition-colors group">
-            <i data-lucide="arrow-left" class="w-4 h-4 group-hover:-translate-x-1 transition-transform"></i>
+            <i data-lucide="arrow-left" class="w-4 h-4 group-hover:-translate-x-1 transition-transform shrink-0"></i>
             <span class="font-mono text-xs tracking-widest font-bold">ABORT</span>
         </a>
         <div class="hidden md:flex items-center gap-2 font-mono text-[10px] text-gray-500">
@@ -235,7 +250,7 @@
                 <div class="hud-corner hc-tl"></div><div class="hud-corner hc-tr"></div>
                 <div class="widget-header">
                     <span>PILOT_DATA</span>
-                    <i data-lucide="user" class="w-3 h-3"></i>
+                    <i data-lucide="user" class="w-3 h-3 shrink-0"></i>
                 </div>
                 <div class="flex items-center gap-4">
                     <div class="pilot-avatar-so">SOUND<br>ONLY</div>
@@ -260,19 +275,19 @@
                 <div class="hud-corner hc-bl"></div><div class="hud-corner hc-br"></div>
                 <div class="widget-header">
                     <span>OPS_CONTROLS</span>
-                    <i data-lucide="settings-2" class="w-3 h-3"></i>
+                    <i data-lucide="settings-2" class="w-3 h-3 shrink-0"></i>
                 </div>
                 <div class="ops-grid">
                     <div class="ops-btn" onclick="OpsControl.toggleTheme()" title="Toggle Light/Dark Mode">
-                        <i data-lucide="sun-moon" class="w-3 h-3"></i> <span>MODE</span>
+                        <i data-lucide="sun-moon" class="w-3 h-3 shrink-0"></i> <span>MODE</span>
                     </div>
                     <div class="ops-btn" onclick="window.scrollTo({top:0, behavior:'smooth'})" title="Return to Top">
-                        <i data-lucide="arrow-up-to-line" class="w-3 h-3"></i> <span>TOP</span>
+                        <i data-lucide="arrow-up-to-line" class="w-3 h-3 shrink-0"></i> <span>TOP</span>
                     </div>
                     <div class="ops-btn" onclick="changeFontSize(-1)">A-</div>
                     <div class="ops-btn" onclick="changeFontSize(1)">A+</div>
                     <div class="ops-btn col-span-2 text-red-400 border-red-900/30 hover:bg-red-900/20 hover:border-red-500" onclick="window.location.href='index.html'">
-                        <i data-lucide="log-out" class="w-3 h-3"></i> <span>EMERGENCY EJECT</span>
+                        <i data-lucide="log-out" class="w-3 h-3 shrink-0"></i> <span>EMERGENCY EJECT</span>
                     </div>
                 </div>
             </div>
@@ -280,7 +295,7 @@
             <div class="widget-card" style="opacity: 1;">
                 <div class="widget-header">
                     <span>INDEX_STRUCTURE</span>
-                    <i data-lucide="list-tree" class="w-3 h-3"></i>
+                    <i data-lucide="list-tree" class="w-3 h-3 shrink-0"></i>
                 </div>
                 <div id="toc-container" class="space-y-1 font-mono text-xs max-h-[300px] overflow-y-auto pr-1">
                     <div class="text-center opacity-30 py-4">SCANNING...</div>
@@ -306,7 +321,7 @@
 
     <div id="loading-more" class="hidden py-8 text-center">
         <div class="inline-flex items-center gap-2 font-mono text-xs text-secondary animate-pulse">
-            <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+            <i data-lucide="loader-2" class="w-4 h-4 animate-spin shrink-0"></i>
             FETCHING NEXT ARCHIVE...
         </div>
     </div>
@@ -435,7 +450,7 @@
                 listEl.innerHTML = comments.map(c => {
                     let avatarUrl = c.author_avatar_urls ? c.author_avatar_urls['48'] : null;
                     if(avatarUrl) avatarUrl = TacticalImager.processUrl(avatarUrl);
-                    const avatarHTML = avatarUrl ? `<img src="${avatarUrl}" class="w-8 h-8 rounded-full border border-white/10">` : `<div class="avatar-so">SOUND<br>ONLY</div>`;
+                    const avatarHTML = avatarUrl ? `<img src="${avatarUrl}" class="w-8 h-8 rounded-full border border-white/10 shrink-0">` : `<div class="avatar-so shrink-0">SOUND<br>ONLY</div>`;
                     return `<div class="comm-entry"><div class="comm-meta">${avatarHTML}<div><span class="comm-author">${c.author_name}</span><span class="opacity-50 mx-2">|</span><span>${new Date(c.date).toISOString().replace('T', ' ').substring(0, 16)}</span></div></div><div class="comm-body pl-10 prose-eva text-sm">${c.content.rendered}</div></div>`;
                 }).join('');
             },
@@ -568,9 +583,9 @@
                     
                     <div class="mt-12 border-t border-white/5 pt-8">
                         <button onclick="CommentManager.toggleComms(this, ${data.id})" class="w-full border border-secondary/30 bg-secondary/5 text-secondary font-mono text-xs py-3 hover:bg-secondary hover:text-black transition-all flex items-center justify-center gap-2 group">
-                            <i data-lucide="message-square" class="w-4 h-4"></i>
+                            <i data-lucide="message-square" class="w-4 h-4 shrink-0"></i>
                             <span>OPEN_COMMS_CHANNEL [ ID: ${data.id} ]</span>
-                            <i data-lucide="chevron-down" class="w-4 h-4 comm-chevron transition-transform duration-300"></i>
+                            <i data-lucide="chevron-down" class="w-4 h-4 comm-chevron transition-transform duration-300 shrink-0"></i>
                         </button>
                         <div id="comms-${data.id}" class="hidden mt-6 animate-fadeIn">
                             <div class="text-center py-4 font-mono text-xs text-gray-500">INITIALIZING UPLINK...</div>
@@ -619,10 +634,8 @@
                 
                 chunkNodes.forEach(node => {
                     const clone = document.importNode(node, true);
-                    
                     if (clone.tagName === 'IMG') { 
                         clone.removeAttribute('srcset'); 
-                        // FIX: 设置 eager 立即加载
                         clone.setAttribute('loading', 'eager'); 
                         if(clone.src) clone.src = TacticalImager.processUrl(clone.src);
                         clone.onclick = () => Lightbox.open(clone.src); 
