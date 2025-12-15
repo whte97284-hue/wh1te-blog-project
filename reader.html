@@ -20,8 +20,8 @@
                 extend: {
                     colors: { primary: 'var(--primary-color)', secondary: 'var(--secondary-color)', bg: 'var(--bg-color)' },
                     fontFamily: { sans: ['Space Grotesk', 'Noto Sans JP', 'Noto Sans SC', 'sans-serif'], serif: ['Noto Serif SC', 'serif'], mono: ['JetBrains Mono', 'monospace'] },
-                    animation: { 'scan': 'scan 4s linear infinite', 'fadeIn': 'fadeIn 0.8s ease-out forwards', 'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite' },
-                    keyframes: { fadeIn: { '0%': { opacity: 0, transform: 'translateY(10px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } } }
+                    // 移除可能导致隐形的动画配置
+                    animation: { 'scan': 'scan 4s linear infinite', 'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
                 }
             }
         }
@@ -125,8 +125,18 @@
             padding-left: 14px;
         }
 
-        /* 主阅读器容器 */
-        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(16px); border: 1px solid var(--glass-border); box-shadow: 0 10px 40px rgba(0,0,0,0.1); position: relative; margin-bottom: 4rem; min-height: 80vh; transition: height 0.3s; }
+        /* 主阅读器容器 - FIX: 移除所有动画，强制不透明 */
+        .glass-panel { 
+            background: var(--glass-bg); 
+            backdrop-filter: blur(16px); 
+            border: 1px solid var(--glass-border); 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1); 
+            position: relative; 
+            margin-bottom: 4rem; 
+            min-height: 80vh; 
+            opacity: 1 !important; /* 强制显示 */
+            animation: none !important; /* 禁用动画 */
+        }
         
         /* 装饰性 HUD 角标 */
         .hud-corner { position: absolute; width: 10px; height: 10px; border: 2px solid var(--secondary-color); transition: all 0.3s; opacity: var(--hud-opacity); pointer-events: none; }
@@ -141,14 +151,14 @@
         .prose-eva h2::before { content: '##'; margin-right: 0.5rem; opacity: 0.3; font-family: 'JetBrains Mono'; }
         .prose-eva p { margin-bottom: 1.5em; line-height: 1.8; font-size: 1.05rem; text-align: justify; color: var(--text-main); opacity: 0.9; }
         
-        /* --- 核心修复：图片强制显示 --- */
-        /* 之前是 opacity: 0 等待动画，现在改为默认 opacity: 1，移除 fadeIn 动画，防止图片“隐身” */
+        /* --- 核心修复：图片强制显示，无动画 --- */
         .prose-eva img { 
             max-width: 100%; height: auto; display: block; margin: 2rem auto; 
             border: 1px solid var(--glass-border); border-radius: 2px; 
             transition: all 0.3s; cursor: zoom-in; 
-            opacity: 1 !important; /* 强制显示 */
-            animation: none !important; /* 移除可能的动画冲突 */
+            opacity: 1 !important; 
+            animation: none !important;
+            visibility: visible !important;
         }
         .prose-eva img:hover { border-color: var(--secondary-color); box-shadow: 0 0 15px rgba(var(--secondary-color), 0.2); }
         
@@ -164,7 +174,7 @@
         #lightbox.active img { transform: scale(1); }
 
         /* 评论区 (MAGI COMMS) */
-        .comm-entry { border-left: 2px solid var(--glass-border); padding-left: 1rem; margin-bottom: 1.5rem; transition: all 0.3s; animation: fadeIn 0.5s ease-out; }
+        .comm-entry { border-left: 2px solid var(--glass-border); padding-left: 1rem; margin-bottom: 1.5rem; transition: all 0.3s; }
         .comm-entry:hover { border-left-color: var(--secondary-color); }
         .comm-meta { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; font-family: 'JetBrains Mono'; font-size: 0.75rem; color: var(--text-muted); }
         .comm-author { color: var(--secondary-color); font-weight: bold; }
@@ -221,7 +231,7 @@
         
         <aside class="sidebar-left hidden xl:block">
             
-            <div class="widget-card animate-fadeIn" style="animation-delay: 0.1s;">
+            <div class="widget-card" style="opacity: 1;">
                 <div class="hud-corner hc-tl"></div><div class="hud-corner hc-tr"></div>
                 <div class="widget-header">
                     <span>PILOT_DATA</span>
@@ -246,7 +256,7 @@
                 </div>
             </div>
 
-            <div class="widget-card animate-fadeIn" style="animation-delay: 0.2s;">
+            <div class="widget-card" style="opacity: 1;">
                 <div class="hud-corner hc-bl"></div><div class="hud-corner hc-br"></div>
                 <div class="widget-header">
                     <span>OPS_CONTROLS</span>
@@ -267,7 +277,7 @@
                 </div>
             </div>
 
-            <div class="widget-card animate-fadeIn" style="animation-delay: 0.3s;">
+            <div class="widget-card" style="opacity: 1;">
                 <div class="widget-header">
                     <span>INDEX_STRUCTURE</span>
                     <i data-lucide="list-tree" class="w-3 h-3"></i>
@@ -449,7 +459,7 @@
             }
         };
 
-        /* --- 4. 流式阅读器 (修复版) --- */
+        /* --- 4. 流式阅读器 (修复版：移除动画，强制显示，严格数据检查) --- */
         const StreamReader = {
             apiBase: 'https://eva-proxy.whte97284.workers.dev/blog/post',
             postsApi: 'https://eva-proxy.whte97284.workers.dev/blog/posts',
@@ -524,11 +534,12 @@
             },
 
             render(data) {
-                // --- 核心修复：数据完整性校验 (防止 TypeError) ---
+                // --- 核心修复：防止 TypeError ---
                 if (!data || !data.title || !data.content) {
                     console.error("DATA CORRUPTED:", data);
+                    // 即使没有数据，也不要崩，显示错误信息
                     const wrapper = document.getElementById('infinite-wrapper');
-                    wrapper.innerHTML += `<div class="text-center text-red-500 font-mono text-xs py-8">DATA_CORRUPTED: SKIPPING SEGMENT...</div>`;
+                    wrapper.innerHTML += `<div class="glass-panel p-8 text-center text-red-500 font-mono text-xs">/// ERROR: DATA_SEGMENT_CORRUPTED ///</div>`;
                     return;
                 }
                 
@@ -538,7 +549,9 @@
 
                 const wrapper = document.getElementById('infinite-wrapper');
                 const articleEl = document.createElement('div');
-                articleEl.className = 'glass-panel p-8 md:p-16 min-h-[60vh] animate-fadeIn mb-16';
+                // FIX: 移除了 animate-fadeIn，强制 style="opacity:1"
+                articleEl.className = 'glass-panel p-8 md:p-16 min-h-[60vh] mb-16';
+                articleEl.style.opacity = '1'; 
             
                 articleEl.innerHTML = `
                     <div class="hud-corner hc-tl"></div><div class="hud-corner hc-tr"></div>
@@ -606,16 +619,18 @@
                 
                 chunkNodes.forEach(node => {
                     const clone = document.importNode(node, true);
+                    
                     if (clone.tagName === 'IMG') { 
                         clone.removeAttribute('srcset'); 
-                        clone.removeAttribute('loading'); 
+                        // FIX: 设置 eager 立即加载
+                        clone.setAttribute('loading', 'eager'); 
                         if(clone.src) clone.src = TacticalImager.processUrl(clone.src);
                         clone.onclick = () => Lightbox.open(clone.src); 
                     }
                     const imgs = clone.querySelectorAll('img');
                     imgs.forEach(img => { 
                         img.removeAttribute('srcset');
-                        img.removeAttribute('loading'); 
+                        img.setAttribute('loading', 'eager'); 
                         if(img.src) img.src = TacticalImager.processUrl(img.src);
                         img.onclick = () => Lightbox.open(img.src); 
                     });
