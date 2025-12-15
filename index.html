@@ -1447,27 +1447,6 @@
                     </div>
                 </div>
                 <div id="article-list-container" class="space-y-8">
-                    <article class="eva-card p-8 group cursor-pointer transform transition-transform hover:-translate-y-1" data-tags="Novel ACG WhiteAlbum2" onclick="window.location.href='article-3.html'">
-                        <div class="eva-glare"></div>
-                        <div class="eva-header mb-6"><div class="flex items-center"><div class="eva-header-deco"></div><span>ARCHIVE_001</span></div><span class="text-primary border border-primary/30 px-2 bg-primary/10">NOVEL</span></div>
-                        <h3 class="text-3xl font-bold leading-tight group-hover:text-secondary transition-colors duration-300">雪融化、然后直到再次飘落时</h3>
-                        <p class="text-gray-400 text-sm leading-relaxed mt-4 pl-4 border-l border-white/10 group-hover:border-secondary transition-colors">冬马和纱，很讨厌天空。春天，当她翘掉自己今后每天都要去的峰城大学附属学园的入学仪式...</p>
-                    </article>
-                    <article class="eva-card p-8 group cursor-pointer transform transition-transform hover:-translate-y-1" data-tags="Python Automation" onclick="window.location.href='article-2.html'">
-                        <div class="eva-glare"></div>
-                        <div class="eva-header mb-6"><div class="flex items-center"><div class="eva-header-deco"></div><span>ARCHIVE_002</span></div><span class="text-primary border border-primary/30 px-2 bg-primary/10">PYTHON</span></div>
-                        <h3 class="text-3xl font-bold leading-tight group-hover:text-secondary transition-colors duration-300">Python 主页自动生成脚本测试</h3>
-                        <p class="text-gray-400 text-sm leading-relaxed mt-4 pl-4 border-l border-white/10 group-hover:border-secondary transition-colors">辅助静态页面更新的自动化生成脚本第一次测试，探索如何高效管理我的数字花园。</p>
-                    </article>
-                    <article class="eva-card p-8 group cursor-pointer transform transition-transform hover:-translate-y-1" data-tags="Code Reflection" onclick="window.location.href='article-1.html'">
-                        <div class="eva-glare"></div>
-                        <div class="eva-header mb-6"><div class="flex items-center"><div class="eva-header-deco"></div><span>ARCHIVE_003</span></div><span class="text-primary border border-primary/30 px-2 bg-primary/10">CODE</span></div>
-                        <h3 class="text-3xl font-bold leading-tight group-hover:text-secondary transition-colors duration-300">从 Appium 到网站：我与代码的旅程初探</h3>
-                        <p class="text-gray-400 text-sm leading-relaxed mt-4 pl-4 border-l border-white/10 group-hover:border-secondary transition-colors">起初我以为编程就是找个工具抢票，最终却被安全机制所阻止。这次经历让我明白：真正的编程价值在于构建思维框架。</p>
-                    </article>
-                </div>
-            </div>
-        </div>
     </main>
 
     <div id="anime-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-300" onclick="if(event.target === this) closeAnimeModal()">
@@ -2750,89 +2729,118 @@
         let currentSelectedDay = null;
         const weekMap = { 1: "MON", 2: "TUE", 3: "WED", 4: "THU", 5: "FRI", 6: "SAT", 7: "SUN", 8: "COMMAND_CENTER" };
 
-        /* --- 1. 核心管理器 (AnimeManager) --- */
+        /* --- AnimeManager v3.0 (API 真实数据版) --- */
         const AnimeManager = {
-            // 初始化
-            init() {
-                // 尝试迁移旧数据
+            dbKey: 'nerv_anime_db_v1',
+
+            init() { 
+                // ...保持原有的初始化/迁移逻辑不变...
                 const oldFavs = localStorage.getItem('nerv_priority_targets');
                 let db = this.getDB();
                 if (oldFavs && Object.keys(db).length === 0) {
                     try {
                         const oldList = JSON.parse(oldFavs);
                         if (Array.isArray(oldList)) {
-                            console.log("[MAGI] MIGRATING OLD DATA...");
-                            oldList.forEach(id => {
-                                db[id] = { status: 'watching', eps: 0, total: 12, ts: Date.now() };
-                            });
+                            oldList.forEach(id => db[id] = { status: 'watching', eps: 0, total: 12, ts: Date.now() });
                             this.saveDB(db);
                             localStorage.removeItem('nerv_priority_targets');
                         }
                     } catch(e) {}
                 }
             },
-
-            getDB() {
-                try { return JSON.parse(localStorage.getItem(DB_KEY)) || {}; } 
-                catch(e) { return {}; }
-            },
-
+            
+            getDB() { try { return JSON.parse(localStorage.getItem(this.dbKey)) || {}; } catch(e) { return {}; } },
+            
             saveDB(data) {
-                localStorage.setItem(DB_KEY, JSON.stringify(data));
-                // 实时刷新界面
+                localStorage.setItem(this.dbKey, JSON.stringify(data));
                 if (typeof switchDay === 'function') {
                     if (currentSelectedDay === 8) switchDay(8);
                     else if (currentSelectedDay) switchDay(currentSelectedDay);
                 }
             },
-
-            // 设置状态 (点击实体按钮触发)
+            
+            get(id) { return this.getDB()[id]; },
+            
             setStatus(id, status, totalEps = 12) {
                 let db = this.getDB();
-                if (status === 'remove') {
-                    delete db[id]; // 移除
-                } else {
-                    if (!db[id]) {
-                        db[id] = { status: status, eps: 0, total: totalEps || 12, ts: Date.now() };
-                    } else {
+                if (status === 'remove') delete db[id];
+                else {
+                    if (!db[id]) db[id] = { status: status, eps: 0, total: totalEps || 12, ts: Date.now() };
+                    else {
                         db[id].status = status;
                         db[id].ts = Date.now();
                         if(totalEps) db[id].total = totalEps;
                     }
                 }
                 this.saveDB(db);
-                
-                // 播放音效
-                const sfx = document.getElementById('sfx-click');
-                if(sfx) { sfx.currentTime=0; sfx.play().catch(()=>{}); }
+                // 如果标记为在看，立即触发一次API检查
+                if (status === 'watching') this.checkOnlineEps(id); 
             },
 
-            // 增加进度 (+号触发)
             addProgress(e, id) {
-                e.stopPropagation();
+                if(e) e.stopPropagation();
                 let db = this.getDB();
                 if (db[id]) {
                     db[id].eps = (db[id].eps || 0) + 1;
-                    
-                    // 完结撒花
-                    if (db[id].eps >= db[id].total && db[id].total > 0) {
-                        db[id].status = 'watched';
-                        if(typeof showAiSpeech === 'function') showAiSpeech(`目标 [${id}] 补完确认。`);
-                    }
-                    
+                    if (db[id].eps >= db[id].total && db[id].total > 0) db[id].status = 'watched'; 
                     this.saveDB(db);
+                }
+            },
+
+            decreaseProgress(e, id) {
+                if(e) e.stopPropagation();
+                let db = this.getDB();
+                if (db[id]) {
+                    if (db[id].eps > 0) {
+                        db[id].eps--;
+                        if (db[id].status === 'watched') db[id].status = 'watching';
+                    }
+                    this.saveDB(db);
+                }
+            },
+
+            // [NEW] 核心功能：调用 API 获取真实放送集数
+            async checkOnlineEps(id) {
+                let db = this.getDB();
+                const item = db[id];
+                if (!item) return;
+
+                // 缓存机制：如果 12 小时内检查过，就不查了，防止卡顿
+                const now = Date.now();
+                if (item.last_check && (now - item.last_check < 1000 * 60 * 60 * 12)) return;
+
+                // console.log(`[MAGI] Checking real episodes for subject ${id}...`);
+                try {
+                    // 使用 Bangumi v0 API 获取章节
+                    // 同样使用代理防止 CORS
+                    const url = `https://api.bgm.tv/v0/episodes?subject_id=${id}&type=0`; // type=0 是本篇
+                    const res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url));
+                    const data = await res.json();
                     
-                    // 播放音效
-                    const sfx = document.getElementById('sfx-click');
-                    if(sfx) { sfx.currentTime=0; sfx.play().catch(()=>{}); }
+                    if (data && data.data && Array.isArray(data.data)) {
+                        // 筛选出 airdate <= 今天的章节
+                        const todayStr = new Date().toISOString().split('T')[0];
+                        let airedCount = 0;
+                        data.data.forEach(ep => {
+                            if (ep.airdate && ep.airdate <= todayStr) airedCount++;
+                        });
+
+                        // 更新数据库
+                        db = this.getDB(); // 重新读取防止冲突
+                        if (db[id]) {
+                            db[id].on_air = airedCount; // 存入真实集数
+                            db[id].last_check = now;
+                            this.saveDB(db);
+                        }
+                    }
+                } catch(e) {
+                    console.error("[MAGI] Episode Check Failed", e);
                 }
             }
         };
 
-        // ⚠️ 极其重要：挂载到全局，否则 HTML 里的 onclick 找不到它
         window.AnimeManager = AnimeManager;
         AnimeManager.init();
-
         /* --- 2. 数据加载逻辑 (Load Data) --- */
         async function loadAnimeData() {
             const dateDisplay = document.getElementById('anime-date');
@@ -2964,39 +2972,92 @@
             }
         }
 
-        // 通用渲染函数 (Rev. Tailwind 原子类版)
+        // 通用渲染函数 (Rev. API真实数据 + UI防挤压版)
         function renderItems(container, items, showProgressBar) {
             const db = AnimeManager.getDB();
+            const now = new Date();
 
             const html = items.map((item, index) => {
                 const title = (item.name_cn || item.name || "UNKNOWN").replace(/"/g, '&quot;');
                 const score = item.rating?.score || 0;
                 
-                // 图像处理
                 let image = './images/placeholder.jpg'; 
                 if (item.images) image = item.images.large || item.images.common || '';
                 image = image.replace(/\/r\/[0-9x]+\/pic/, '/pic'); 
 
-                // 状态读取
                 const myData = db[item.id];
                 const status = myData ? myData.status : null;
                 const watched = myData ? (myData.eps || 0) : 0;
                 const total = (item.eps_count || 12);
+
+                // --- 幽灵进度逻辑 ---
+                let currentAiring = 0;
+                let ghostText = "";
+
+                if (status === 'watching') {
+                    // 1. 优先使用 API 获取的真实数据
+                    if (myData.on_air !== undefined) {
+                        currentAiring = myData.on_air;
+                    } 
+                    // 2. 如果没有 API 数据，回退到算法估算 (Fallback)
+                    else if (item.air_date && item.air_date !== '0000-00-00') {
+                        const startDate = new Date(item.air_date);
+                        if (startDate <= now) {
+                            const diffWeeks = Math.ceil(Math.abs(now - startDate) / (86400000 * 7));
+                            currentAiring = Math.min(diffWeeks, total);
+                        }
+                        // 顺便触发一次异步更新，下次进来就准了
+                        setTimeout(() => window.AnimeManager.checkOnlineEps(item.id), index * 200);
+                    } else {
+                        // 既没API也没日期，就触发更新
+                        setTimeout(() => window.AnimeManager.checkOnlineEps(item.id), index * 200);
+                    }
+
+                    // 生成提示文字
+                    if (currentAiring > watched) {
+                        ghostText = `ON:${currentAiring}`;
+                    }
+                }
 
                 // --- 1. 进度条模块 ---
                 let progressHtml = '';
                 if (status === 'watching') {
                     let cells = '';
                     const displayTotal = total > 26 ? 13 : total;
+                    
                     for(let i=1; i<=displayTotal; i++) {
-                        const filled = i <= watched ? 'bg-secondary shadow-[0_0_5px_var(--secondary-color)]' : 'bg-white/10 hover:bg-secondary/50';
-                        cells += `<div class="flex-1 h-1.5 cursor-pointer border-r border-black/50 transition-colors ${filled}" onclick="window.AnimeManager.addProgress(event, ${item.id})"></div>`;
+                        let cellClass = "";
+                        // 进度条颜色逻辑
+                        if (i <= watched) {
+                            cellClass = "bg-secondary shadow-[0_0_5px_var(--secondary-color)] opacity-100";
+                        } else if (i <= currentAiring) {
+                            // 虚影：空心框
+                            cellClass = "border border-secondary/60 shadow-[0_0_2px_var(--secondary-color)] animate-pulse opacity-80"; 
+                        } else {
+                            cellClass = "bg-white/5 border border-white/5 opacity-30";
+                        }
+                        cells += `<div class="flex-1 h-1.5 cursor-pointer mx-[1px] rounded-[1px] transition-all ${cellClass}" title="EP.${i}"></div>`;
                     }
+
                     progressHtml = `
-                        <div class="flex items-center gap-1 mb-2 select-none" onclick="event.stopPropagation()">
-                            <div class="text-[8px] font-mono text-secondary w-6 text-right">${watched}/${total}</div>
-                            <div class="flex flex-1 border border-white/20">${cells}</div>
-                            <div class="w-4 h-4 flex items-center justify-center border border-secondary text-secondary text-[10px] cursor-pointer hover:bg-secondary hover:text-black transition-colors" onclick="window.AnimeManager.addProgress(event, ${item.id})">+</div>
+                        <div class="flex items-center gap-2 mb-2 select-none w-full h-6" onclick="event.stopPropagation()">
+                            
+                            <div class="relative w-8 h-full flex items-center justify-end shrink-0 mr-1">
+                                <div class="text-[9px] font-mono text-secondary font-bold leading-none z-10">${watched}/${total}</div>
+                                ${ghostText ? `<div class="absolute top-4 right-0 text-[7px] font-mono text-secondary/60 leading-none whitespace-nowrap animate-pulse">${ghostText}</div>` : ''}
+                            </div>
+                            
+                            <div class="w-5 h-5 flex items-center justify-center border border-white/20 text-gray-400 hover:border-red-500 hover:text-red-500 cursor-pointer active:scale-90 transition-all rounded bg-black/40 shrink-0" 
+                                 onclick="window.AnimeManager.decreaseProgress(event, ${item.id})">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M20 12H4"></path></svg>
+                            </div>
+
+                            <div class="flex flex-1 items-center h-full min-w-0">${cells}</div>
+
+                            <div class="w-5 h-5 flex items-center justify-center border border-white/20 text-secondary hover:bg-secondary hover:text-black cursor-pointer active:scale-90 transition-all rounded bg-black/40 shrink-0" 
+                                 onclick="window.AnimeManager.addProgress(event, ${item.id})">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
+                            </div>
                         </div>
                     `;
                 }
@@ -3011,7 +3072,7 @@
                         <span class="text-[8px] font-mono text-secondary">${score}</span>
                     </div>`;
 
-                // --- 3. 实体控制按钮 (Tailwind 强制水平版) ---
+                // --- 3. 实体控制按钮 (Tailwind版) ---
                 const icons = {
                     play: `<svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`,
                     clock: `<svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`,
@@ -3019,12 +3080,9 @@
                     trash: `<svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>`
                 };
 
-                // 定义按钮状态颜色 (Tailwind Classes)
-                // 默认样式
                 const baseBtnClass = "flex-1 flex items-center justify-center gap-1 h-6 text-[9px] font-bold border cursor-pointer transition-all rounded min-w-0";
                 const defaultStyle = "bg-black/40 border-white/20 text-gray-400 hover:bg-secondary hover:text-black hover:border-secondary";
                 
-                // 激活样式映射
                 const activeStyles = {
                     watching: "bg-[#39ff14] text-black border-[#39ff14] shadow-[0_0_5px_rgba(57,255,20,0.4)]",
                     todo: "bg-[#ffae00] text-black border-[#ffae00]",
@@ -3043,7 +3101,6 @@
                     <div class="flex flex-row items-center w-full gap-1 mt-auto pt-2 border-t border-white/10" onclick="event.stopPropagation()">
                         ${btns.map(b => {
                             const isActive = status === b.key;
-                            // 如果是 remove 按钮且当前未激活，保持默认；如果当前是其他状态，也不高亮
                             const style = isActive ? activeStyles[b.key] : defaultStyle;
                             return `
                             <div class="${baseBtnClass} ${style}" 
@@ -3307,6 +3364,141 @@
                 modal.classList.remove('flex'); 
             }, 300);
         }
+
+        /* ==========================================================================
+           MAGI BLOG SYSTEM V4.0 (WORKER UPLINK)
+           修复：使用自建 Worker 穿透 InfinityFree 防火墙
+           ========================================================================== */
+        
+        const BlogManager = {
+            // ⚠️ 请将此处替换为你刚刚部署的 Cloudflare Worker 地址
+            // 注意：要加上 /blog/posts 路径
+            workerEndpoint: 'https://eva-proxy.whte97284.workers.dev/blog/posts',
+            
+            init() {
+                this.loadPosts();
+            },
+
+            async loadPosts() {
+                const container = document.getElementById('article-list-container');
+                if(!container) return;
+
+                // 加载动画
+                container.innerHTML = `
+                    <div class="eva-card p-8 flex flex-col items-center justify-center opacity-70 min-h-[200px]">
+                        <div class="w-12 h-12 border-2 border-secondary border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <span class="font-mono text-secondary text-xs tracking-widest animate-pulse">ESTABLISHING SECURE UPLINK...</span>
+                    </div>
+                `;
+
+                try {
+                    // 直接请求 Worker，不再使用公共代理
+                    console.log(`[MAGI] Connecting to Worker node...`);
+                    const res = await fetch(this.workerEndpoint);
+                    
+                    if (!res.ok) throw new Error(`Worker returned HTTP ${res.status}`);
+                    
+                    const text = await res.text();
+                    
+                    // 二次检查：万一 Worker 也被拦截了
+                    if (text.trim().startsWith('<')) {
+                        throw new Error("Worker Firewall Intercepted (Please check Worker User-Agent)");
+                    }
+
+                    const posts = JSON.parse(text);
+                    this.render(posts);
+
+                } catch (error) {
+                    console.error(error);
+                    container.innerHTML = `
+                        <div class="eva-card p-8 border-red-500/50 min-h-[150px] flex flex-col justify-center">
+                            <h3 class="text-red-500 font-mono text-lg font-bold flex items-center gap-2">
+                                <i data-lucide="alert-triangle" class="w-5 h-5"></i> CONNECTION LOST
+                            </h3>
+                            <p class="text-gray-500 text-xs mt-2 font-mono">
+                                无法连接到 WordPress 档案库。<br>
+                                <span class="text-red-900/50">${error.message}</span>
+                            </p>
+                            <button onclick="BlogManager.init()" class="mt-4 border border-red-500/30 text-red-500 text-xs px-4 py-2 hover:bg-red-500 hover:text-white transition-colors w-fit font-mono">
+                                RETRY
+                            </button>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                }
+            },
+
+            render(posts) {
+                const container = document.getElementById('article-list-container');
+                container.innerHTML = ''; 
+
+                if (!posts || posts.length === 0) {
+                    container.innerHTML = `<div class="text-center text-gray-500 font-mono text-xs p-8">NO ARCHIVES FOUND.</div>`;
+                    return;
+                }
+
+                const html = posts.map((post, index) => {
+                    const title = post.title.rendered;
+                    let rawExcerpt = post.excerpt ? post.excerpt.rendered.replace(/<[^>]+>/g, '').replace('[&hellip;]', '').trim() : "NO SUMMARY";
+                    const excerpt = rawExcerpt.length > 60 ? rawExcerpt.substring(0, 60) + '...' : rawExcerpt;
+                    const date = new Date(post.date).toISOString().split('T')[0];
+                    const id = post.id;
+
+                    // 分类提取
+                    let categoryHTML = '';
+                    if (post._embedded && post._embedded['wp:term']) {
+                        const cats = post._embedded['wp:term'][0];
+                        if (cats && cats.length > 0) {
+                            categoryHTML = `<span class="text-primary border border-primary/30 px-2 bg-primary/10 text-[10px] font-bold ml-auto">[ ${cats[0].name} ]</span>`;
+                        }
+                    }
+
+                    // 标签提取
+                    let tagsHTML = "";
+                    if (post._embedded && post._embedded['wp:term'] && post._embedded['wp:term'][1]) {
+                        const tags = post._embedded['wp:term'][1];
+                        tagsHTML = tags.map(t => `<span class="text-secondary/70">#${t.name}</span>`).join(' ');
+                    }
+
+                    // 封面提取
+                    let coverHTML = ''; 
+                    if (post._embedded && post._embedded['wp:featuredmedia'] && post._embedded['wp:featuredmedia'][0]) {
+                        const imgUrl = post._embedded['wp:featuredmedia'][0].source_url;
+                        coverHTML = `
+                           <div class="w-full h-32 md:h-40 mb-4 relative overflow-hidden border-b border-white/10 group-hover:border-secondary/50 transition-colors">
+                             <img src="${imgUrl}" loading="lazy" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-500 filter grayscale group-hover:grayscale-0 scale-105 group-hover:scale-100 transform transition-transform">
+                             <div class="absolute top-0 right-0 bg-black/60 px-2 py-1 text-[8px] font-mono text-white/70 backdrop-blur-sm">IMG_SRC</div>
+                           </div>`;
+                    }
+
+                    return `
+                    <article class="eva-card p-0 group cursor-pointer transform transition-transform hover:-translate-y-1 overflow-hidden flex flex-col bg-black/20" 
+                             style="animation-delay: ${index * 0.1}s; animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0;"
+                             onclick="window.open('reader.html?id=${id}', '_blank')">
+                        <div class="eva-glare"></div>
+                        ${coverHTML}
+                        <div class="p-5 flex flex-col flex-1">
+                            <div class="eva-header mb-3 flex items-center w-full">
+                                <div class="flex items-center"><div class="eva-header-deco"></div><span class="text-xs">ARCHIVE_${id}</span></div>
+                                ${categoryHTML}
+                            </div>
+                            <h3 class="text-xl font-bold leading-tight group-hover:text-secondary transition-colors duration-300 font-serif mb-2">${title}</h3>
+                            <p class="text-gray-400 text-xs leading-relaxed border-l-2 border-white/10 pl-3 group-hover:border-secondary transition-colors mb-4">${excerpt}</p>
+                            <div class="mt-auto pt-3 flex items-center justify-between text-[10px] font-mono text-gray-500 border-t border-white/5">
+                                <span>${date}</span>
+                                <div class="flex gap-2 overflow-hidden truncate max-w-[60%] justify-end">${tagsHTML}</div>
+                            </div>
+                        </div>
+                    </article>
+                    `;
+                }).join('');
+                
+                container.innerHTML = html;
+                lucide.createIcons();
+            }
+        };
+
+        BlogManager.init();
     </script>
 </body>
 </html>
