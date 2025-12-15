@@ -324,25 +324,33 @@
         close() { document.getElementById('lightbox').classList.remove('active'); }
     };
 
-    /* --- 2. 战术图像处理器 (NEW: 修复混合内容报错) --- */
-    function tacticalImgProcessor(url) {
-        if (!url) return '';
-        // 如果是 HTTPS，直接放行
-        if (url.startsWith('https://')) return url;
-        
-        // 如果是 HTTP，通过 weserv 代理中转为 HTTPS，并转换为 WebP 优化流量
-        // 这里的 'ssl:1' 尝试让源站走 SSL，'output=webp' 压缩格式
-        if (url.startsWith('http://')) {
-            // 移除 http:// 前缀，防止双重协议头问题
-            const cleanUrl = url.replace(/^http:\/\//i, '');
-            return `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&output=webp&q=80&we`;
+    /* --- 2. 战术图像处理器 (升级版：字符串级清洗) --- */
+    const TacticalImager = {
+        // 单个 URL 清洗
+        processUrl(url) {
+            if (!url) return '';
+            if (url.startsWith('https://')) return url;
+            if (url.startsWith('http://')) {
+                const cleanUrl = url.replace(/^http:\/\//i, '');
+                return `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&output=webp&q=80&we`;
+            }
+            return url;
+        },
+
+        // 全文 HTML 清洗 (核心修复)
+        // 使用正则在字符串层面直接替换 src="http://..." 防止浏览器解析时报错
+        sanitizeHtmlString(htmlString) {
+            if (!htmlString) return '';
+            // 匹配 src="http://..." 或 src='http://...'
+            return htmlString.replace(/src=["'](http:\/\/[^"']+)["']/gi, (match, capturedUrl) => {
+                const newUrl = this.processUrl(capturedUrl);
+                return `src="${newUrl}"`;
+            });
         }
-        return url;
-    }
+    };
 
     /* --- 3. 评论系统 (MAGI COMMS) --- */
     const CommentManager = {
-        // 请确保这是正确的 Worker 地址
         apiBase: 'https://eva-proxy.whte97284.workers.dev/blog/comments',
         
         toggleComms(btn, postId) {
@@ -423,8 +431,8 @@
             }
             listEl.innerHTML = comments.map(c => {
                 let avatarUrl = c.author_avatar_urls ? c.author_avatar_urls['48'] : null;
-                // 同样处理头像的 HTTP 问题
-                if(avatarUrl) avatarUrl = tacticalImgProcessor(avatarUrl);
+                // 修复评论头像的混合内容
+                if(avatarUrl) avatarUrl = TacticalImager.processUrl(avatarUrl);
 
                 const avatarHTML = avatarUrl 
                     ? `<img src="${avatarUrl}" class="w-8 h-8 rounded-full border border-white/10">`
@@ -480,7 +488,7 @@
         }
     };
 
-    /* --- 4. 流式阅读器 (含图片修复) --- */
+    /* --- 4. 流式阅读器 (修复版) --- */
     const StreamReader = {
         apiBase: 'https://eva-proxy.whte97284.workers.dev/blog/post',
         postsApi: 'https://eva-proxy.whte97284.workers.dev/blog/posts',
@@ -529,16 +537,12 @@
                 const res = await fetch(url);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const text = await res.text();
-                // 简单的防火墙检测
                 if (text.trim().startsWith('<') && !text.includes('wp-json')) throw new Error("Worker Firewall Intercepted");
                 
                 let data;
                 try {
                     data = JSON.parse(text);
-                } catch(e) {
-                     // 如果解析失败，可能是报错页面，抛出
-                    throw new Error("Invalid JSON Data");
-                }
+                } catch(e) { throw new Error("Invalid JSON Data"); }
 
                 if (isList) {
                     if (!Array.isArray(data) || data.length === 0) {
@@ -595,7 +599,14 @@
                 </footer>
             `;
             wrapper.appendChild(articleEl);
-            this.prepareStream(data.content.rendered, data.id);
+            
+            // --- 关键改动 ---
+            // 在解析 HTML 之前，先清洗字符串。
+            // 这确保了 DOMParser 解析时，src 已经是 HTTPS 的了，浏览器就不会报错。
+            const safeContent = TacticalImager.sanitizeHtmlString(data.content.rendered);
+            this.prepareStream(safeContent, data.id);
+            // ----------------
+            
             lucide.createIcons();
         },
 
@@ -631,21 +642,15 @@
             chunkNodes.forEach(node => {
                 const clone = document.importNode(node, true);
                 
-                // --- 核心修复：处理图片 Mixed Content ---
                 if (clone.tagName === 'IMG') { 
                     clone.setAttribute('loading', 'lazy'); 
-                    // 替换 src
-                    clone.src = tacticalImgProcessor(clone.src);
                     clone.onclick = () => Lightbox.open(clone.src); 
                 }
                 const imgs = clone.querySelectorAll('img');
                 imgs.forEach(img => { 
                     img.setAttribute('loading', 'lazy'); 
-                    // 替换 src
-                    img.src = tacticalImgProcessor(img.src);
                     img.onclick = () => Lightbox.open(img.src); 
                 });
-                // ----------------------------------------
 
                 if (clone.tagName === 'PRE') hljs.highlightElement(clone.querySelector('code') || clone);
                 clone.querySelectorAll('pre code').forEach(c => hljs.highlightElement(c));
