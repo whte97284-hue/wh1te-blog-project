@@ -114,6 +114,114 @@
             --border-color: rgba(255, 255, 255, 0.1);
         }
 
+        /* 自定义音量滑块样式 */
+input[type=range] {
+    -webkit-appearance: none; /* 移除默认样式 */
+    background: transparent;
+}
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 12px;
+    width: 6px;
+    background: var(--primary-color);
+    border: 1px solid black;
+    cursor: pointer;
+    margin-top: -4px; /* 对齐轨道 */
+    box-shadow: 0 0 5px var(--primary-color);
+}
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    cursor: pointer;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+}
+/* 列表激活样式优化 */
+.track-item.active {
+    background: var(--primary-color);
+    color: black; /* 激活时反色，更显眼 */
+    font-weight: bold;
+}
+
+        /* --- 音频系统专用样式 --- */
+.track-item {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #666;
+    padding: 4px 6px;
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: all 0.2s;
+}
+.track-item:hover {
+    color: white;
+    background: rgba(255,255,255,0.05);
+}
+.track-item.active {
+    color: var(--primary-color); /* 继承主题色 */
+    border-left-color: var(--primary-color);
+    background: rgba(0, 0, 0, 0.3);
+}
+/* 隐藏滚动条 */
+.custom-scrollbar::-webkit-scrollbar { width: 0; }
+.custom-scrollbar { scrollbar-width: none; }
+
+/* --- EVA 风格字体模拟 --- */
+.eva-font {
+    /* 优先使用极粗的黑体 */
+    font-family: "Impact", "Arial Black", "PingFang SC", "Microsoft YaHei UI", sans-serif;
+    font-weight: 900; /* 最粗 */
+    letter-spacing: -0.05em; /* 字间距收紧 */
+    text-transform: uppercase;
+}
+
+/* 战术切角边框 (用于替换子弹头) */
+.tactical-cut {
+    clip-path: polygon(
+        0 0, 
+        100% 0, 
+        100% 70%, 
+        90% 100%, 
+        0 100%
+    );
+    border-right: 4px solid var(--primary-color); /* 右侧重型边框 */
+}
+
+/* --- 音频终端专用样式 (修复亮色模式 & 交互) --- */
+
+/* 1. 亮色模式适配：让面板变白，字变黑 */
+[data-mode="light"] #control-deck {
+    background: rgba(255, 255, 255, 0.85) !important; /* 磨砂白 */
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
+}
+[data-mode="light"] #control-deck h3 { color: #000 !important; }
+[data-mode="light"] #control-deck .text-white { color: #333 !important; } /* 强制反转白字 */
+[data-mode="light"] #control-deck button {
+    border-color: rgba(0,0,0,0.2);
+    color: #555;
+}
+[data-mode="light"] #control-deck button:hover {
+    background: var(--secondary-color);
+    color: #000;
+}
+/* 列表背景适配 */
+[data-mode="light"] #playlist-ui {
+    background: rgba(0,0,0,0.03) !important;
+    border-color: rgba(0,0,0,0.05);
+}
+
+/* 2. 默认圆形按钮适配 */
+#terminal-trigger {
+    width: 42px; /* 默认宽度 */
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+/* 亮色模式下圆球的背景 */
+[data-mode="light"] #terminal-trigger {
+    background: rgba(255,255,255,0.9);
+    border-color: rgba(0,0,0,0.1);
+}
+
         /* --- EVA 白红美学模式 (Light Mode) --- */
         [data-mode="light"] {
             /* 基础配色：纯白 + 实验室灰 */
@@ -874,7 +982,7 @@
                 ),
                 linear-gradient(to bottom, rgba(0, 255, 255, 0.0) 50%, rgba(0, 255, 255, 0.05) 50%);
             background-size: 100% 4px, 100% 6px; /* 两种不同频率的扫描 */
-            box-shadow: inset 0 0 30px rgba(0,0,0,0.8); /* 边缘暗角 */
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.3); /* 边缘暗角 */
             mix-blend-mode: overlay;
         }
 
@@ -1165,23 +1273,75 @@
          <source src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" type="audio/mp3">
     </audio>
 
-    <div class="fixed bottom-16 left-8 z-50">
-        <div id="sonic-deck" class="flex items-center gap-3 bg-black/60 border border-secondary p-2 pr-4 group hover:shadow-[0_0_30px_var(--secondary-color)] transition-all duration-300 backdrop-blur-md eva-card">
-            <canvas id="audio-visualizer" class="absolute bottom-0 left-0 w-full h-full opacity-30 pointer-events-none"></canvas>
-            <div id="music-trigger" class="w-12 h-12 flex items-center justify-center cursor-pointer bg-secondary/10 hover:bg-secondary/20 transition-colors border border-secondary/30 relative z-20" onclick="toggleMusic()">
-                <div id="deck-wave" class="absolute border border-secondary w-full h-full animate-ping hidden"></div>
-                <i id="icon-disc" data-lucide="disc" class="w-6 h-6 text-secondary animate-spin-slow"></i>
-                <i id="icon-pause" data-lucide="pause" class="w-6 h-6 text-secondary hidden"></i>
-            </div>
-            <div class="flex flex-col w-0 group-hover:w-48 overflow-hidden transition-all duration-300 opacity-0 group-hover:opacity-100 pl-2 relative z-20">
-                <div class="text-[10px] font-mono text-primary whitespace-nowrap font-bold">SOUND_ONLY | TRACK_01</div>
-                <div class="flex items-center gap-2 mt-1">
-                     <span class="text-[8px] text-secondary">VOL</span>
-                     <input type="range" class="w-full h-full bg-white/20 appearance-none cursor-pointer" min="0" max="1" step="0.1" oninput="setVolume(this.value)" aria-label="Music Volume" title="Music Volume">
+        <div id="magi-audio-terminal" class="fixed bottom-16 left-5 z-[1000] group font-mono select-none">
+    
+    <div id="control-deck" class="
+        absolute bottom-full left-0 w-72 pb-8 -mb-4 -ml-4
+        opacity-0 translate-y-4 pointer-events-none scale-95 origin-bottom-left
+        group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 group-hover:pointer-events-auto
+        transition-all duration-300 ease-out delay-75
+        z-40
+    ">
+        <div class="
+            bg-black/90 backdrop-blur-xl border border-white/20
+            overflow-hidden rounded-tr-xl rounded-tl-sm
+            shadow-[0_0_50px_rgba(0,0,0,0.8)]
+        " style="clip-path: polygon(0 0, 100% 0, 100% 100%, 15px 100%, 0 calc(100% - 15px));">
+            
+            <div class="absolute inset-0 opacity-20 pointer-events-none" 
+                 style="background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); background-size: 20px 20px;"></div>
+            
+            <div class="flex justify-between items-center p-3 border-b border-white/10 relative z-10 bg-white/5">
+                <div class="flex items-center gap-2">
+                    <div class="w-1.5 h-1.5 bg-[var(--secondary-color)] animate-pulse"></div>
+                    <span class="text-[10px] font-bold text-white tracking-widest eva-font">AUDIO_ARCHIVE</span>
                 </div>
+                <span class="text-[10px] text-[var(--secondary-color)] font-mono" id="vol-display">VOL:50%</span>
+            </div>
+
+            <div class="p-4 relative z-10">
+                 <h3 id="track-title" class="text-white text-lg leading-none mb-1 truncate pr-4 eva-font">SYSTEM_IDLE</h3>
+                 <p id="track-artist" class="text-[var(--primary-color)] text-[10px] opacity-80 font-mono truncate">AWAITING_INPUT...</p>
+            </div>
+
+            <div id="playlist-ui" class="max-h-40 overflow-y-auto custom-scrollbar p-2 space-y-1 relative z-10 bg-black/20 border-y border-white/5">
+                </div>
+
+            <div class="p-3 relative z-10">
+                 <div class="flex items-center gap-3 mb-3">
+                     <i data-lucide="volume-2" class="w-3 h-3 text-gray-400"></i>
+                     <div class="relative flex-1 h-1 bg-gray-500/30 cursor-pointer group/vol rounded-full overflow-hidden">
+                          <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.5" 
+                                 class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                                 oninput="MusicCore.setVolume(this.value)">
+                          <div class="absolute inset-y-0 left-0 bg-[var(--secondary-color)] w-1/2 transition-all" id="vol-bar-fill" style="width: 50%;"></div>
+                     </div>
+                 </div>
+                 <div class="flex justify-between gap-2">
+                     <button onclick="MusicCore.prev()" class="flex-1 border border-white/20 hover:bg-[var(--secondary-color)] hover:text-black hover:border-[var(--secondary-color)] transition-all text-[10px] py-1 eva-font rounded-sm">[ PREV ]</button>
+                     <button onclick="MusicCore.next()" class="flex-1 border border-white/20 hover:bg-[var(--secondary-color)] hover:text-black hover:border-[var(--secondary-color)] transition-all text-[10px] py-1 eva-font rounded-sm">[ NEXT ]</button>
+                 </div>
             </div>
         </div>
     </div>
+
+    <div id="terminal-trigger" class="
+        relative flex items-center justify-center
+        w-9 h-9
+        bg-[#080808]/90 backdrop-blur-md
+        border border-white/15
+        rounded-full
+        cursor-pointer
+        hover:border-[var(--secondary-color)] hover:shadow-[0_0_15px_rgba(var(--secondary-color),0.4)] hover:scale-110
+        transition-all duration-300
+        z-50
+    " onclick="MusicCore.toggle()">
+
+        <i id="audio-disc" data-lucide="disc" class="w-4 h-4 text-gray-400 group-hover:text-white animate-[spin_4s_linear_infinite]" style="animation-play-state: paused;"></i>
+        
+        <div id="status-led" class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#080808] shadow-[0_0_5px_red] transition-colors"></div>
+    </div>
+</div>
 
     <nav class="fixed top-0 w-full z-40 px-6 md:px-12 py-6 flex justify-between items-center bg-gradient-to-b from-bg via-bg/80 to-transparent select-none backdrop-blur-[2px]">
         <div class="flex items-center gap-6">
@@ -1222,10 +1382,15 @@
             </div>
         </div>
         <div class="hidden md:flex gap-8 font-mono text-xs tracking-widest font-bold">
-            <a href="#" class="text-secondary border-b-2 border-secondary pb-1 shadow-[0_10px_20px_-10px_var(--secondary-color)]">01_HOME</a>
-            <a href="about.html" class="text-gray-500 hover:text-primary transition-colors relative group">02_ARCHIVES<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span></a>
-            <a href="about.html" class="text-gray-500 hover:text-primary transition-colors relative group">03_ABOUT<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span></a>
-        </div>
+    <a href="#" onclick="toggleView('home'); return false;" class="text-secondary border-b-2 border-secondary pb-1 shadow-[0_10px_20px_-10px_var(--secondary-color)]">01_HOME</a>
+    <a href="about.html" class="text-gray-500 hover:text-primary transition-colors relative group">02_ARCHIVES<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span></a>
+    <a href="about.html" class="text-gray-500 hover:text-primary transition-colors relative group">03_ABOUT<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span></a>
+    
+    <a href="#" onclick="toggleView('bangumi'); return false;" class="text-gray-500 hover:text-[#ff69b4] transition-colors relative group">
+        站长追番
+        <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#ff69b4] transition-all group-hover:w-full"></span>
+    </a>
+    </div>
     </nav>
 
     <header class="relative pt-48 pb-12 max-w-screen-xl mx-auto px-6 md:px-12 flex flex-col justify-center items-start text-left z-20 min-h-[65vh]">
@@ -1272,6 +1437,29 @@
             </div>
         </div>
     </header>
+    <div id="bilibili-view" class="hidden min-h-screen pt-32 px-6 md:px-12 max-w-screen-2xl mx-auto relative z-20 pb-20">
+    <div class="flex items-end justify-between border-b border-white/10 pb-6 mb-10">
+        <div>
+            <h1 class="text-4xl md:text-5xl font-black text-white font-serif tracking-tighter">追番计划</h1>
+            
+            <div class="flex gap-6 mt-4 font-mono text-xs select-none">
+                <button onclick="BiliManager.switchStatus(0, this)" class="bili-tab active text-[#ff69b4] border-b border-[#ff69b4] pb-1 transition-all">全部</button>
+                <button onclick="BiliManager.switchStatus(2, this)" class="bili-tab text-gray-500 hover:text-white pb-1 transition-all">在看</button>
+                <button onclick="BiliManager.switchStatus(1, this)" class="bili-tab text-gray-500 hover:text-white pb-1 transition-all">想看</button>
+                <button onclick="BiliManager.switchStatus(3, this)" class="bili-tab text-gray-500 hover:text-white pb-1 transition-all">看过</button>
+            </div>
+            </div>
+        </div>
+    
+    <div id="bili-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+        </div>
+
+    <div id="bili-load-more" class="hidden text-center mt-12">
+        <button onclick="BiliManager.loadMore()" class="px-8 py-3 border border-[#ff69b4]/30 bg-[#ff69b4]/5 text-[#ff69b4] font-mono text-xs hover:bg-[#ff69b4] hover:text-black transition-all">
+            /// LOAD_NEXT_PAGE_DATA ///
+        </button>
+    </div>
+    </div>
 
     <div class="hero-character-container">
         <img id="hero-character" src="./images/shinji.png" alt="Cyberpunk Hero" class="hero-character-image">
@@ -2661,64 +2849,172 @@
                 });
             }
         }
-        /* Initialize after DOM load */
-        window.addEventListener('DOMContentLoaded', initSyncRateWave);
+        /* ==========================================================================
+   MAGI AUDIO CORE V4.0 (Volume Memory)
+   ========================================================================== */
+const MusicCore = {
+    audio: new Audio(),
+    ctx: null,
+    analyser: null,
+    source: null,
+    isPlaying: false,
+    currentIndex: 0,
+
+    playlist: [
+        {
+            title: "My Jealousy",
+            artist: "DJMAX",
+            url: "https://fastly.jsdelivr.net/gh/whte97284-hue/wh1te-blog-project@main/audio/DJMAX%20-%20My%20Jealousy%20(Originalver).flac"
+        },
+        {
+            title: "One Last Kiss",
+            artist: "Hikaru Utada",
+            // 宇多田光 - EVA终 主题曲 (OGG)
+            url: "https://fastly.jsdelivr.net/gh/whte97284-hue/wh1te-blog-project@main/audio/%E5%AE%87%E5%A4%9A%E7%94%B0%E3%83%92%E3%82%AB%E3%83%AB%20-%20One%20Last%20Kiss_kgg-dec.ogg"
+        },
+        {
+            title: "Beneath the Mask",
+            artist: "Lyn",
+            // Persona 5 - 潜入神曲 (FLAC) - Raw 源 (修复 403)
+            url: "https://raw.githubusercontent.com/whte97284-hue/wh1te-blog-project/main/audio/Lyn%E3%80%81%E3%82%A2%E3%83%88%E3%83%A9%E3%82%B9%E3%82%B5%E3%82%A6%E3%83%B3%E3%83%89%E3%83%81%E3%83%BC%E3%83%A0%20-%20Beneath%20the%20Mask_kgg-dec.flac"
+        },
+    ],
+
+    init() {
+        this.audio.crossOrigin = "anonymous";
         
-        let audioContext, analyser;
-        const audioEl = document.getElementById('background-music');
-        function toggleMusic() {
-            if(!audioContext) {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                audioContext = new AudioContext();
-                analyser = audioContext.createAnalyser();
-                const source = audioContext.createMediaElementSource(audioEl);
-                source.connect(analyser); analyser.connect(audioContext.destination);
-                analyser.fftSize = 64;
-                drawVisualizer();
-            }
-            const wave = document.getElementById('deck-wave');
-            const iconDisc = document.getElementById('icon-disc');
-            const iconPause = document.getElementById('icon-pause');
-            if(audioEl.paused) { 
-                /* 核心修复：捕获 play() 的错误，防止 AbortError */
-                const playPromise = audioEl.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(error => {
-                        console.log("Autoplay prevented or interrupted", error);
-                    });
-                }
-                wave.classList.remove('hidden'); iconDisc.classList.add('hidden'); iconPause.classList.remove('hidden'); 
-            } 
-            else { 
-                audioEl.pause(); 
-                wave.classList.add('hidden'); iconDisc.classList.remove('hidden'); iconPause.classList.add('hidden'); 
-            }
-        }
-        function setVolume(val) { audioEl.volume = val; }
-        function drawVisualizer() {
-            const canvas = document.getElementById('audio-visualizer');
-            const ctx = canvas.getContext('2d');
-            /* Throttle visualizer slightly or rely on rAF, which is fine */
-            requestAnimationFrame(drawVisualizer);
-            
-            /* If audio is paused, skip drawing to save power */
-            if (audioEl.paused) return;
+        const savedVol = localStorage.getItem('magi_volume');
+        const initialVol = savedVol !== null ? parseFloat(savedVol) : 0.5;
+        
+        // 应用音量
+        this.audio.volume = initialVol;
+        
+        // 更新 UI (滑块位置 + 填充条宽度)
+        const slider = document.getElementById('volume-slider');
+        const fillBar = document.getElementById('vol-bar-fill');
+        if(slider) slider.value = initialVol;
+        if(fillBar) fillBar.style.width = `${initialVol * 100}%`;
+        
+        this.updateVolText(initialVol);
 
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            analyser.getByteFrequencyData(dataArray);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const barWidth = (canvas.width / bufferLength) * 2;
-            let x = 0;
-            const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim();
-            ctx.fillStyle = primaryColor;
-            for(let i = 0; i < bufferLength; i++) {
-                const barHeight = dataArray[i] / 2;
-                ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
-                x += barWidth + 1;
-            }
-        }
+        this.renderPlaylist();
+        this.loadTrack(0, false);
+        // ... (后面的代码不变)
 
+        this.audio.addEventListener('ended', () => this.next());
+        this.audio.addEventListener('error', () => {
+            document.getElementById('track-title').innerText = "ERR: LOAD FAILED";
+            this.next();
+        });
+
+        document.body.addEventListener('click', () => {
+            if (!this.ctx) this.initAudioContext();
+        }, { once: true });
+    },
+
+    // 设置音量
+    setVolume(val) {
+        this.audio.volume = val;
+        localStorage.setItem('magi_volume', val);
+        this.updateVolText(val);
+        
+        // 新增：更新音量条的视觉宽度
+        const fillBar = document.getElementById('vol-bar-fill');
+        if(fillBar) fillBar.style.width = `${val * 100}%`;
+    },
+
+    updateVolText(val) {
+        const percent = Math.round(val * 100);
+        document.getElementById('vol-display').innerText = `音量: ${percent}%`;
+    },
+
+    initAudioContext() {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioContext();
+        this.analyser = this.ctx.createAnalyser();
+        this.analyser.fftSize = 256;
+        this.source = this.ctx.createMediaElementSource(this.audio);
+        this.source.connect(this.analyser);
+        this.analyser.connect(this.ctx.destination);
+        if (typeof drawVisualizer === 'function') drawVisualizer();
+    },
+
+    loadTrack(index, autoPlay = true) {
+        if (index < 0) index = this.playlist.length - 1;
+        if (index >= this.playlist.length) index = 0;
+        this.currentIndex = index;
+        const track = this.playlist[index];
+        this.audio.src = track.url;
+        
+        document.getElementById('track-title').innerText = track.title;
+        document.getElementById('track-artist').innerText = track.artist;
+        this.updatePlaylistUI();
+
+        if (autoPlay) this.play();
+    },
+
+    toggle() {
+        if (this.isPlaying) this.pause();
+        else this.play();
+    },
+
+    play() {
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+        this.audio.play().then(() => {
+            this.isPlaying = true;
+            this.updateStatus(true);
+        }).catch(e => console.log("User interaction needed"));
+    },
+
+    pause() {
+        this.audio.pause();
+        this.isPlaying = false;
+        this.updateStatus(false);
+    },
+
+    next() { this.loadTrack(this.currentIndex + 1); },
+    prev() { this.loadTrack(this.currentIndex - 1); },
+
+    renderPlaylist() {
+        const list = document.getElementById('playlist-ui');
+        list.innerHTML = this.playlist.map((t, i) => `
+            <div class="track-item p-1.5 text-[10px] font-mono text-gray-400 hover:text-white cursor-pointer transition-colors border-b border-white/5 flex justify-between" 
+                 onclick="MusicCore.loadTrack(${i})">
+                <span class="truncate max-w-[80%]">${(i+1).toString().padStart(2,'0')} ${t.title}</span>
+                ${i === this.currentIndex ? '<i data-lucide="bar-chart-2" class="w-3 h-3"></i>' : ''}
+            </div>
+        `).join('');
+        lucide.createIcons();
+    },
+
+    updatePlaylistUI() {
+        this.renderPlaylist(); // 重新渲染以更新图标状态
+    },
+
+    updateStatus(isPlaying) {
+        const disc = document.getElementById('audio-disc');
+        const led = document.getElementById('status-led');
+        const text = document.getElementById('core-status-text'); // 获取文字元素
+
+        if (isPlaying) {
+            disc.style.animationPlayState = 'running';
+            led.classList.remove('bg-red-500', 'shadow-red-500');
+            led.classList.add('bg-[var(--primary-color)]', 'shadow-[var(--primary-color)]');
+            // 播放时显示：
+            text.innerText = "运行中";
+            text.classList.add('animate-pulse');
+        } else {
+            disc.style.animationPlayState = 'paused';
+            led.classList.add('bg-red-500', 'shadow-red-500');
+            led.classList.remove('bg-[var(--primary-color)]', 'shadow-[var(--primary-color)]');
+            // 暂停时显示：
+            text.innerText = "待机模式";
+            text.classList.remove('animate-pulse');
+        }
+    }
+};
+
+MusicCore.init();
         /* ==========================================================================
            MAGI ANIME MANAGER V2.0 (TACTICAL COMMANDER)
            功能：状态管理、进度追踪、数据迁移、分组渲染
@@ -3499,6 +3795,197 @@
         };
 
         BlogManager.init();
+
+        /* ==========================================================================
+   BILIBILI MANAGER (SYSTEM UPGRADE)
+   ========================================================================== */
+
+// 1. 视图切换控制器
+function toggleView(viewName) {
+    const homeHeader = document.querySelector('header');
+    const homeMain = document.querySelector('main');
+    const heroChar = document.querySelector('.hero-character-container'); // 立绘
+    const biliView = document.getElementById('bilibili-view');
+    
+    // 播放音效 (如果有)
+    const clickSfx = document.getElementById('sfx-click');
+    if(clickSfx) clickSfx.play().catch(e=>{});
+
+    if (viewName === 'bangumi') {
+        // 隐藏主页元素
+        if(homeHeader) homeHeader.classList.add('hidden');
+        if(homeMain) homeMain.classList.add('hidden');
+        if(heroChar) heroChar.style.opacity = '0.1'; // 让立绘变淡而不是完全消失，更有层次感
+        
+        // 显示 B 站容器
+        biliView.classList.remove('hidden');
+        
+        // 触发数据加载
+        BiliManager.init();
+        
+        // 更新 URL (可选)
+        history.pushState(null, '', '#bangumi');
+    } else {
+        // 恢复主页
+        if(homeHeader) homeHeader.classList.remove('hidden');
+        if(homeMain) homeMain.classList.remove('hidden');
+        if(heroChar) heroChar.style.opacity = '1';
+        
+        biliView.classList.add('hidden');
+        history.pushState(null, '', 'index.html');
+    }
+}
+
+/* --- B站数据管理器 (V3.0 Pro) --- */
+const BiliManager = {
+    workerEndpoint: 'https://eva-proxy.whte97284.workers.dev/bili/bangumi',
+    uid: '551898501',
+    
+    // 状态管理
+    state: {
+        page: 1,
+        pageSize: 24, // 推荐 24
+        status: 0,    // 0:全部, 1:想看, 2:在看, 3:看过
+        isLoading: false,
+        hasMore: true
+    },
+
+    // 初始化 (仅首次加载调用)
+    init() {
+        if (this.state.page === 1 && document.getElementById('bili-grid').children.length === 0) {
+            this.fetchData(true);
+        }
+    },
+
+    // 切换分类
+    switchStatus(newStatus, btnElement) {
+        if (this.state.isLoading || this.state.status === newStatus) return;
+
+        // 1. 更新 UI 样式
+        document.querySelectorAll('.bili-tab').forEach(b => {
+            b.classList.remove('text-[#ff69b4]', 'border-b', 'border-[#ff69b4]');
+            b.classList.add('text-gray-500');
+        });
+        if(btnElement) {
+            btnElement.classList.remove('text-gray-500');
+            btnElement.classList.add('text-[#ff69b4]', 'border-b', 'border-[#ff69b4]');
+        }
+
+        // 2. 重置状态
+        this.state.status = newStatus;
+        this.state.page = 1;
+        this.state.hasMore = true;
+
+        // 3. 清空列表并重新获取
+        const grid = document.getElementById('bili-grid');
+        grid.innerHTML = `<div class="col-span-full h-32 flex items-center justify-center"><div class="animate-spin w-6 h-6 border-2 border-[#ff69b4] border-t-transparent rounded-full"></div></div>`;
+        document.getElementById('bili-load-more').classList.add('hidden');
+        
+        this.fetchData(true);
+    },
+
+    // 加载下一页
+    loadMore() {
+        if (this.state.isLoading || !this.state.hasMore) return;
+        this.state.page++;
+        this.fetchData(false);
+    },
+
+    // 核心获取函数
+    async fetchData(isReset) {
+        this.state.isLoading = true;
+        const loadBtn = document.getElementById('bili-load-more');
+        if(loadBtn) loadBtn.innerHTML = '<span class="animate-pulse">DOWNLOADING...</span>';
+
+        try {
+            // 组装 URL (带分页和状态)
+            const url = `${this.workerEndpoint}?uid=${this.uid}&pn=${this.state.page}&ps=${this.state.pageSize}&status=${this.state.status}`;
+            
+            const res = await fetch(url);
+            const json = await res.json();
+            
+            // 清除 Loading 动画 (如果是重置状态)
+            if (isReset) document.getElementById('bili-grid').innerHTML = '';
+
+            if (json.code === 0 && json.data.list && json.data.list.length > 0) {
+                this.render(json.data.list);
+                
+                // 判断是否还有下一页
+                if (json.data.list.length < this.state.pageSize) {
+                    this.state.hasMore = false;
+                    loadBtn.classList.add('hidden');
+                } else {
+                    this.state.hasMore = true;
+                    loadBtn.classList.remove('hidden');
+                    loadBtn.innerHTML = `<button onclick="BiliManager.loadMore()" class="px-8 py-3 border border-[#ff69b4]/30 bg-[#ff69b4]/5 text-[#ff69b4] font-mono text-xs hover:bg-[#ff69b4] hover:text-black transition-all">/// LOAD_NEXT_PAGE [${this.state.page + 1}] ///</button>`;
+                }
+            } else {
+                this.state.hasMore = false;
+                loadBtn.classList.add('hidden');
+                if (isReset) {
+                    document.getElementById('bili-grid').innerHTML = `<div class="col-span-full text-center text-gray-500 font-mono text-xs py-10">NO_DATA_FOUND_IN_ARCHIVE</div>`;
+                }
+            }
+
+        } catch (e) {
+            console.error(e);
+            if (isReset) {
+                document.getElementById('bili-grid').innerHTML = `<div class="col-span-full text-center text-red-500 font-mono text-xs">CONNECTION_LOST: ${e.message}</div>`;
+            }
+        } finally {
+            this.state.isLoading = false;
+        }
+    },
+
+    // 渲染 (追加模式)
+    render(list) {
+        const grid = document.getElementById('bili-grid');
+        // 状态映射表
+        const statusMap = { 1: '想看', 2: '在看', 3: '看过' }; 
+
+        const html = list.map((item, idx) => {
+            const cover = item.cover.replace('http:', 'https:');
+            const safeCover = `https://images.weserv.nl/?url=${encodeURIComponent(cover)}&w=300&h=400&output=webp`;
+            // 计算动画延迟 (基于索引，让新加载的也有动画)
+            const delay = (idx % this.state.pageSize) * 0.05; 
+            
+            return `
+            <div class="eva-card group relative bg-[#151515] flex flex-col h-full hover:-translate-y-2 transition-transform duration-300" 
+                 style="animation: popIn 0.5s ease forwards; animation-delay: ${delay}s; opacity: 0;">
+                <div class="aspect-[3/4] relative overflow-hidden">
+                    <img src="${safeCover}" loading="lazy" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                    <div class="absolute top-0 left-0 bg-[#ff69b4] text-black text-[10px] font-bold px-2 py-0.5 font-mono">
+                        ${item.badge || statusMap[this.state.status] || 'BANGUMI'}
+                    </div>
+                </div>
+                <div class="p-3 flex flex-col flex-1 border-t border-[#ff69b4]/30 relative">
+                    <div class="eva-glare"></div>
+                    <h3 class="text-white text-xs font-bold leading-tight mb-2 line-clamp-2 group-hover:text-[#ff69b4] transition-colors">
+                        ${item.title}
+                    </h3>
+                    <div class="mt-auto flex justify-between items-center text-[10px] font-mono text-gray-500">
+                        <span>${item.new_ep ? item.new_ep.index_show : '完结'}</span>
+                        <span class="text-[#ff69b4]">${item.progress || '未看'}</span>
+                    </div>
+                </div>
+                <a href="https://www.bilibili.com/bangumi/play/ss${item.season_id}" target="_blank" class="absolute inset-0 z-10"></a>
+            </div>
+            `;
+        }).join('');
+        
+        // 追加 HTML
+        grid.insertAdjacentHTML('beforeend', html);
+    }
+};
+
+// 监听浏览器后退按钮，处理 SPA 状态
+window.addEventListener('popstate', () => {
+    if(!location.hash) toggleView('home');
+    else if(location.hash === '#bangumi') toggleView('bangumi');
+});
+
+// 初始化检查
+if(location.hash === '#bangumi') toggleView('bangumi');
     </script>
 </body>
 </html>
