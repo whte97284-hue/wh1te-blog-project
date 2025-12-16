@@ -1273,73 +1273,59 @@ input[type=range]::-webkit-slider-runnable-track {
          <source src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" type="audio/mp3">
     </audio>
 
-        <div id="magi-audio-terminal" class="fixed bottom-16 left-5 z-[1000] group font-mono select-none">
+       <div id="magi-audio-terminal" class="fixed bottom-16 left-8 z-[1000] group font-mono select-none">
     
-    <div id="control-deck" class="
-        absolute bottom-full left-0 w-72 pb-8 -mb-4 -ml-4
-        opacity-0 translate-y-4 pointer-events-none scale-95 origin-bottom-left
-        group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100 group-hover:pointer-events-auto
+    <div id="playlist-popover" class="
+        absolute bottom-full left-0 w-64 mb-2 p-1
+        opacity-0 translate-y-4 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto
         transition-all duration-300 ease-out delay-75
-        z-40
+        bg-black/80 backdrop-blur-md border border-white/20 border-l-2 border-l-[var(--secondary-color)]
+        shadow-[0_0_30px_rgba(0,0,0,0.5)]
     ">
-        <div class="
-            bg-black/90 backdrop-blur-xl border border-white/20
-            overflow-hidden rounded-tr-xl rounded-tl-sm
-            shadow-[0_0_50px_rgba(0,0,0,0.8)]
-        " style="clip-path: polygon(0 0, 100% 0, 100% 100%, 15px 100%, 0 calc(100% - 15px));">
-            
-            <div class="absolute inset-0 opacity-20 pointer-events-none" 
-                 style="background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); background-size: 20px 20px;"></div>
-            
-            <div class="flex justify-between items-center p-3 border-b border-white/10 relative z-10 bg-white/5">
-                <div class="flex items-center gap-2">
-                    <div class="w-1.5 h-1.5 bg-[var(--secondary-color)] animate-pulse"></div>
-                    <span class="text-[10px] font-bold text-white tracking-widest eva-font">AUDIO_ARCHIVE</span>
-                </div>
-                <span class="text-[10px] text-[var(--secondary-color)] font-mono" id="vol-display">VOL:50%</span>
+        <div class="text-[10px] font-mono text-gray-500 px-2 py-1 border-b border-white/10 flex justify-between">
+            <span>/// PLAYLIST_DATA</span>
+            <span id="vol-text">VOL:50%</span>
+        </div>
+        <div id="playlist-ui" class="max-h-40 overflow-y-auto custom-scrollbar p-1 space-y-1">
             </div>
+    </div>
 
-            <div class="p-4 relative z-10">
-                 <h3 id="track-title" class="text-white text-lg leading-none mb-1 truncate pr-4 eva-font">SYSTEM_IDLE</h3>
-                 <p id="track-artist" class="text-[var(--primary-color)] text-[10px] opacity-80 font-mono truncate">AWAITING_INPUT...</p>
+    <div id="sonic-deck" class="
+        flex items-center gap-3 
+        bg-black/60 border border-[var(--secondary-color)] 
+        p-2 pr-4 
+        backdrop-blur-md transition-all duration-300 
+        hover:shadow-[0_0_30px_var(--secondary-color)]
+    ">
+        <canvas id="audio-visualizer" class="absolute bottom-0 left-0 w-full h-full opacity-30 pointer-events-none"></canvas>
+        
+        <div id="music-trigger" class="
+            w-12 h-12 flex items-center justify-center cursor-pointer 
+            bg-[var(--secondary-color)]/10 hover:bg-[var(--secondary-color)]/20 transition-colors 
+            border border-[var(--secondary-color)]/30 relative z-20
+        " onclick="MusicCore.toggle()">
+            <div id="deck-wave" class="absolute border border-[var(--secondary-color)] w-full h-full animate-ping hidden"></div>
+            <i id="icon-disc" data-lucide="disc" class="w-6 h-6 text-[var(--secondary-color)] animate-[spin_4s_linear_infinite]" style="animation-play-state: paused;"></i>
+            <i id="icon-pause" data-lucide="pause" class="w-6 h-6 text-[var(--secondary-color)] hidden"></i>
+        </div>
+
+        <div class="flex flex-col w-0 group-hover:w-56 overflow-hidden transition-all duration-300 opacity-0 group-hover:opacity-100 pl-2 relative z-20">
+            
+            <div class="text-[10px] font-mono text-[var(--primary-color)] whitespace-nowrap font-bold truncate">
+                <span id="track-title">SOUND_ONLY</span> | <span id="track-artist" class="opacity-70">SYSTEM_IDLE</span>
             </div>
-
-            <div id="playlist-ui" class="max-h-40 overflow-y-auto custom-scrollbar p-2 space-y-1 relative z-10 bg-black/20 border-y border-white/5">
-                </div>
-
-            <div class="p-3 relative z-10">
-                 <div class="flex items-center gap-3 mb-3">
-                     <i data-lucide="volume-2" class="w-3 h-3 text-gray-400"></i>
-                     <div class="relative flex-1 h-1 bg-gray-500/30 cursor-pointer group/vol rounded-full overflow-hidden">
-                          <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.5" 
-                                 class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
-                                 oninput="MusicCore.setVolume(this.value)">
-                          <div class="absolute inset-y-0 left-0 bg-[var(--secondary-color)] w-1/2 transition-all" id="vol-bar-fill" style="width: 50%;"></div>
-                     </div>
-                 </div>
-                 <div class="flex justify-between gap-2">
-                     <button onclick="MusicCore.prev()" class="flex-1 border border-white/20 hover:bg-[var(--secondary-color)] hover:text-black hover:border-[var(--secondary-color)] transition-all text-[10px] py-1 eva-font rounded-sm">[ PREV ]</button>
-                     <button onclick="MusicCore.next()" class="flex-1 border border-white/20 hover:bg-[var(--secondary-color)] hover:text-black hover:border-[var(--secondary-color)] transition-all text-[10px] py-1 eva-font rounded-sm">[ NEXT ]</button>
+            
+            <div class="flex items-center gap-2 mt-1">
+                 <span class="text-[8px] text-[var(--secondary-color)]">VOL</span>
+                 
+                 <input type="range" id="volume-slider" class="w-16 h-1 bg-white/20 appearance-none cursor-pointer rounded-full" min="0" max="1" step="0.01" oninput="MusicCore.setVolume(this.value)">
+                 
+                 <div class="flex gap-1 ml-auto">
+                     <button onclick="MusicCore.prev()" class="p-1 hover:text-white text-gray-400"><i data-lucide="skip-back" class="w-3 h-3"></i></button>
+                     <button onclick="MusicCore.next()" class="p-1 hover:text-white text-gray-400"><i data-lucide="skip-forward" class="w-3 h-3"></i></button>
                  </div>
             </div>
         </div>
-    </div>
-
-    <div id="terminal-trigger" class="
-        relative flex items-center justify-center
-        w-9 h-9
-        bg-[#080808]/90 backdrop-blur-md
-        border border-white/15
-        rounded-full
-        cursor-pointer
-        hover:border-[var(--secondary-color)] hover:shadow-[0_0_15px_rgba(var(--secondary-color),0.4)] hover:scale-110
-        transition-all duration-300
-        z-50
-    " onclick="MusicCore.toggle()">
-
-        <i id="audio-disc" data-lucide="disc" class="w-4 h-4 text-gray-400 group-hover:text-white animate-[spin_4s_linear_infinite]" style="animation-play-state: paused;"></i>
-        
-        <div id="status-led" class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#080808] shadow-[0_0_5px_red] transition-colors"></div>
     </div>
 </div>
 
@@ -2850,7 +2836,7 @@ input[type=range]::-webkit-slider-runnable-track {
             }
         }
         /* ==========================================================================
-   MAGI AUDIO CORE V4.0 (Volume Memory)
+   MAGI AUDIO CORE V8.0 (SONIC DECK ADAPTER)
    ========================================================================== */
 const MusicCore = {
     audio: new Audio(),
@@ -2860,6 +2846,7 @@ const MusicCore = {
     isPlaying: false,
     currentIndex: 0,
 
+    // 🎵 播放列表 (GitHub Raw 源)
     playlist: [
         {
             title: "My Jealousy",
@@ -2881,62 +2868,57 @@ const MusicCore = {
     ],
 
     init() {
-        this.audio.crossOrigin = "anonymous";
+        this.audio.crossOrigin = "anonymous"; // 允许跨域频谱分析
         
+        // 恢复音量
         const savedVol = localStorage.getItem('magi_volume');
         const initialVol = savedVol !== null ? parseFloat(savedVol) : 0.5;
-        
-        // 应用音量
         this.audio.volume = initialVol;
         
-        // 更新 UI (滑块位置 + 填充条宽度)
+        // 更新滑块UI
         const slider = document.getElementById('volume-slider');
-        const fillBar = document.getElementById('vol-bar-fill');
         if(slider) slider.value = initialVol;
-        if(fillBar) fillBar.style.width = `${initialVol * 100}%`;
-        
         this.updateVolText(initialVol);
 
         this.renderPlaylist();
         this.loadTrack(0, false);
-        // ... (后面的代码不变)
 
+        // 事件监听
         this.audio.addEventListener('ended', () => this.next());
-        this.audio.addEventListener('error', () => {
-            document.getElementById('track-title').innerText = "ERR: LOAD FAILED";
+        this.audio.addEventListener('error', (e) => {
+            console.error("Audio Error", e);
+            document.getElementById('track-title').innerText = "ERR: LOAD FAIL";
             this.next();
         });
 
+        // 首次点击初始化 AudioContext (浏览器策略)
         document.body.addEventListener('click', () => {
             if (!this.ctx) this.initAudioContext();
         }, { once: true });
     },
 
-    // 设置音量
     setVolume(val) {
         this.audio.volume = val;
         localStorage.setItem('magi_volume', val);
         this.updateVolText(val);
-        
-        // 新增：更新音量条的视觉宽度
-        const fillBar = document.getElementById('vol-bar-fill');
-        if(fillBar) fillBar.style.width = `${val * 100}%`;
     },
 
     updateVolText(val) {
-        const percent = Math.round(val * 100);
-        document.getElementById('vol-display').innerText = `音量: ${percent}%`;
+        const text = document.getElementById('vol-text');
+        if(text) text.innerText = `VOL:${Math.round(val * 100)}%`;
     },
 
     initAudioContext() {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         this.ctx = new AudioContext();
         this.analyser = this.ctx.createAnalyser();
-        this.analyser.fftSize = 256;
+        this.analyser.fftSize = 64; // 低分辨率适合复古风格
         this.source = this.ctx.createMediaElementSource(this.audio);
         this.source.connect(this.analyser);
         this.analyser.connect(this.ctx.destination);
-        if (typeof drawVisualizer === 'function') drawVisualizer();
+        
+        // 启动频谱绘制循环
+        this.drawVisualizer();
     },
 
     loadTrack(index, autoPlay = true) {
@@ -2946,6 +2928,7 @@ const MusicCore = {
         const track = this.playlist[index];
         this.audio.src = track.url;
         
+        // 更新文字信息
         document.getElementById('track-title').innerText = track.title;
         document.getElementById('track-artist').innerText = track.artist;
         this.updatePlaylistUI();
@@ -2963,7 +2946,7 @@ const MusicCore = {
         this.audio.play().then(() => {
             this.isPlaying = true;
             this.updateStatus(true);
-        }).catch(e => console.log("User interaction needed"));
+        }).catch(e => console.log("Interaction needed"));
     },
 
     pause() {
@@ -2975,42 +2958,77 @@ const MusicCore = {
     next() { this.loadTrack(this.currentIndex + 1); },
     prev() { this.loadTrack(this.currentIndex - 1); },
 
+    // 渲染上方悬浮列表
     renderPlaylist() {
         const list = document.getElementById('playlist-ui');
         list.innerHTML = this.playlist.map((t, i) => `
-            <div class="track-item p-1.5 text-[10px] font-mono text-gray-400 hover:text-white cursor-pointer transition-colors border-b border-white/5 flex justify-between" 
+            <div class="p-1.5 text-[10px] font-mono text-gray-400 hover:text-white hover:bg-white/10 cursor-pointer transition-colors border-b border-white/5 flex justify-between items-center ${i === this.currentIndex ? 'text-[var(--secondary-color)] font-bold' : ''}" 
                  onclick="MusicCore.loadTrack(${i})">
                 <span class="truncate max-w-[80%]">${(i+1).toString().padStart(2,'0')} ${t.title}</span>
-                ${i === this.currentIndex ? '<i data-lucide="bar-chart-2" class="w-3 h-3"></i>' : ''}
+                ${i === this.currentIndex ? '<i data-lucide="bar-chart-2" class="w-3 h-3 text-[var(--secondary-color)]"></i>' : ''}
             </div>
         `).join('');
         lucide.createIcons();
     },
 
     updatePlaylistUI() {
-        this.renderPlaylist(); // 重新渲染以更新图标状态
+        this.renderPlaylist();
     },
 
+    // 更新按钮状态 (适配你的 Sonic Deck UI)
     updateStatus(isPlaying) {
-        const disc = document.getElementById('audio-disc');
-        const led = document.getElementById('status-led');
-        const text = document.getElementById('core-status-text'); // 获取文字元素
-
+        const disc = document.getElementById('icon-disc');
+        const pause = document.getElementById('icon-pause');
+        const wave = document.getElementById('deck-wave'); // 波纹动画
+        
         if (isPlaying) {
-            disc.style.animationPlayState = 'running';
-            led.classList.remove('bg-red-500', 'shadow-red-500');
-            led.classList.add('bg-[var(--primary-color)]', 'shadow-[var(--primary-color)]');
-            // 播放时显示：
-            text.innerText = "运行中";
-            text.classList.add('animate-pulse');
+            disc.classList.add('hidden'); // 播放时隐藏光盘图标? 或者让它转动? 
+            // 你的原代码逻辑是: 播放时显示 pause, 隐藏 disc
+            // 但我觉得保留 disc 转动更好看，这里还原你的原逻辑：
+            // "Play" state: Show Pause icon, Hide Disc icon (OR keep disc spinning)
+            
+            // 方案 A: 还原你提供的代码逻辑 (点击后显示暂停图标)
+            disc.classList.add('hidden');
+            pause.classList.remove('hidden');
+            wave.classList.remove('hidden');
         } else {
+            // 暂停状态
+            disc.classList.remove('hidden');
             disc.style.animationPlayState = 'paused';
-            led.classList.add('bg-red-500', 'shadow-red-500');
-            led.classList.remove('bg-[var(--primary-color)]', 'shadow-[var(--primary-color)]');
-            // 暂停时显示：
-            text.innerText = "待机模式";
-            text.classList.remove('animate-pulse');
+            pause.classList.add('hidden');
+            wave.classList.add('hidden');
         }
+    },
+
+    // 绘制背景频谱
+    drawVisualizer() {
+        if (!this.isPlaying) {
+            requestAnimationFrame(() => this.drawVisualizer());
+            return;
+        }
+        const canvas = document.getElementById('audio-visualizer');
+        const ctx = canvas.getContext('2d');
+        const bufferLength = this.analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        
+        this.analyser.getByteFrequencyData(dataArray);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const barWidth = (canvas.width / bufferLength) * 2.5;
+        let x = 0;
+        
+        // 获取当前主题色
+        const style = getComputedStyle(document.documentElement);
+        const color = style.getPropertyValue('--secondary-color').trim();
+        ctx.fillStyle = color;
+
+        for(let i = 0; i < bufferLength; i++) {
+            const barHeight = (dataArray[i] / 255) * canvas.height;
+            ctx.globalAlpha = 0.3; // 半透明
+            ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+            x += barWidth + 1;
+        }
+        requestAnimationFrame(() => this.drawVisualizer());
     }
 };
 
