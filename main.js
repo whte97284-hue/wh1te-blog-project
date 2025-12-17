@@ -1,0 +1,2956 @@
+        lucide.createIcons();
+
+        /* ==========================================================================
+   MAGI RENDER CORE (FPS LIMITER)
+   功能：接管动画循环，限制帧率，标签页不可见时自动休眠
+   ========================================================================== */
+class RenderCore {
+    constructor(fps = 30) {
+        this.fps = fps;
+        this.interval = 1000 / this.fps; // 每一帧的间隔 (ms)
+        this.lastTime = 0;
+        this.isRunning = false;
+        this.tasks = []; // 存储所有需要渲染的函数
+        this.rafId = null;
+
+        // 自动休眠监测：当用户切走标签页时停止渲染
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+                this.stop();
+                console.log(`[RENDER_CORE] System Hibernating...`);
+            } else {
+                this.start();
+                console.log(`[RENDER_CORE] System Resumed.`);
+            }
+        });
+    }
+
+    // 添加渲染任务 (比如传入 drawMatrix, drawLCL)
+    add(taskName, taskFunction) {
+        this.tasks.push({ name: taskName, fn: taskFunction });
+        console.log(`[RENDER_CORE] Task Added: ${taskName}`);
+    }
+
+    // 核心循环
+    loop(timestamp) {
+        if (!this.isRunning) return;
+
+        // 请求下一帧
+        this.rafId = requestAnimationFrame(this.loop.bind(this));
+
+        // 计算时间差
+        const elapsed = timestamp - this.lastTime;
+
+        // 如果时间差大于设定的间隔，则进行渲染
+        if (elapsed > this.interval) {
+            // [关键算法] 修正时间戳，减去多余的偏差，防止动画越跑越快或卡顿
+            this.lastTime = timestamp - (elapsed % this.interval);
+
+            // 执行所有任务
+            this.tasks.forEach(task => task.fn());
+        }
+    }
+
+    start() {
+        if (this.isRunning) return;
+        this.isRunning = true;
+        this.lastTime = performance.now();
+        this.loop(performance.now());
+    }
+
+    stop() {
+        this.isRunning = false;
+        if (this.rafId) cancelAnimationFrame(this.rafId);
+    }
+}
+
+// 初始化全局渲染核心 (锁定 30FPS，既省电又流畅)
+const GlobalRender = new RenderCore(30);
+
+        /* ==========================================================================
+           CORE OPTIMIZATION DEVICE & CAPABILITY DETECTION
+           ========================================================================== */
+        
+        /* Check if device supports touch (Mobile/Tablet) */
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        
+        /* Adjust particle count based on device capability */
+        const PARTICLE_COUNT = isTouchDevice ? 50 : 150;
+
+        /* --- TACTICAL MODE TOGGLE LOGIC --- */
+        const savedTactical = localStorage.getItem('tacticalMode');
+        
+        /* Auto-disable tactical mode on touch devices to prevent UX issues */
+        if (savedTactical === 'true' && !isTouchDevice) {
+            document.body.classList.add('tactical-mode');
+        }
+
+        function toggleTacticalMode() {
+            /* Prevent enabling on touch devices */
+            if(isTouchDevice) return; 
+            
+            document.body.classList.toggle('tactical-mode');
+            localStorage.setItem('tacticalMode', document.body.classList.contains('tactical-mode'));
+        }
+
+        /* --- LIGHT MODE TOGGLE LOGIC --- */
+        const lightModeIndicator = document.getElementById('light-mode-indicator');
+        
+        function toggleLightMode() {
+            const isLight = document.documentElement.getAttribute('data-mode') === 'light';
+            if (isLight) {
+                document.documentElement.removeAttribute('data-mode');
+                localStorage.setItem('visualMode', 'dark');
+                if(lightModeIndicator) lightModeIndicator.style.opacity = 0;
+            } else {
+                document.documentElement.setAttribute('data-mode', 'light');
+                localStorage.setItem('visualMode', 'light');
+                if(lightModeIndicator) lightModeIndicator.style.opacity = 1;
+            }
+            /* Re-init matrix to adjust colors immediately */
+            if(window.drawMatrix) {
+                /* Force a redraw cycle or clear */
+                const canvas = document.getElementById('matrix-bg');
+                if(canvas) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0,0, canvas.width, canvas.height);
+                }
+            }
+        }
+
+        /* Init Light Mode State */
+        const savedVisualMode = localStorage.getItem('visualMode');
+        if (savedVisualMode === 'light') {
+            document.documentElement.setAttribute('data-mode', 'light');
+            if(lightModeIndicator) lightModeIndicator.style.opacity = 1;
+        }
+
+        /* --- LCL MODE TOGGLE LOGIC (NEW) --- */
+        const lclCanvas = document.getElementById('lcl-bg');
+        let lclAnimationId;
+
+        function toggleLCLMode() {
+            const isLCL = document.body.classList.contains('lcl-mode');
+            if (isLCL) {
+                document.body.classList.remove('lcl-mode');
+                localStorage.setItem('lclMode', 'off');
+                /* Stop animation to save resources */
+                if (lclAnimationId) cancelAnimationFrame(lclAnimationId);
+            } else {
+                document.body.classList.add('lcl-mode');
+                localStorage.setItem('lclMode', 'on');
+                initLCL(); /* Start animation */
+            }
+        }
+
+        /* Init LCL Mode State */
+        const savedLCLMode = localStorage.getItem('lclMode');
+        if (savedLCLMode === 'on') {
+            document.body.classList.add('lcl-mode');
+            /* Defer init slightly to ensure canvas is ready */
+            requestAnimationFrame(initLCL);
+        }
+
+        /* ==========================================================================
+           LCL FLUID SIMULATION (CANVAS)
+           ========================================================================== */
+        function initLCL() {
+            const ctx = lclCanvas.getContext('2d');
+            let bubbles = [];
+            
+            function resize() {
+                lclCanvas.width = window.innerWidth;
+                lclCanvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            /* LCL Colors: Orange/Amber gradient */
+            const colors = ['rgba(255, 165, 0, 0.4)', 'rgba(255, 69, 0, 0.3)', 'rgba(255, 140, 0, 0.2)'];
+
+            class Bubble {
+                constructor() {
+                    this.reset(true);
+                }
+                
+                reset(initial) {
+                    this.x = Math.random() * lclCanvas.width;
+                    this.y = initial ? Math.random() * lclCanvas.height : lclCanvas.height + Math.random() * 100;
+                    this.size = Math.random() * 15 + 5;
+                    this.speed = Math.random() * 1 + 0.5;
+                    this.color = colors[Math.floor(Math.random() * colors.length)];
+                    this.wobble = Math.random() * Math.PI * 2;
+                    this.wobbleSpeed = Math.random() * 0.05;
+                }
+
+                update() {
+                    this.y -= this.speed;
+                    this.wobble += this.wobbleSpeed;
+                    this.x += Math.sin(this.wobble) * 0.5;
+
+                    if (this.y < -50) this.reset(false);
+                }
+
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.fill();
+                    /* Shine effect */
+                    ctx.beginPath();
+                    ctx.arc(this.x - this.size * 0.3, this.y - this.size * 0.3, this.size * 0.2, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.fill();
+                }
+            }
+
+            /* Create bubbles */
+            for(let i=0; i<100; i++) bubbles.push(new Bubble());
+
+            function animateLCL() {
+                if (!document.body.classList.contains('lcl-mode')) return;
+
+                ctx.clearRect(0, 0, lclCanvas.width, lclCanvas.height);
+                
+                /* Draw LCL Fluid Background (Gradient) */
+                const gradient = ctx.createLinearGradient(0, 0, 0, lclCanvas.height);
+                gradient.addColorStop(0, 'rgba(255, 140, 0, 0.1)'); /* Top lighter orange */
+                gradient.addColorStop(1, 'rgba(139, 0, 0, 0.4)');    /* Bottom deep red */
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, lclCanvas.width, lclCanvas.height);
+
+                bubbles.forEach(b => {
+                    b.update();
+                    b.draw();
+                });
+
+                lclAnimationId = requestAnimationFrame(animateLCL);
+            }
+            
+            animateLCL();
+        }
+
+
+        /* ==========================================================================
+           OPTIMIZED CURSOR SYSTEM (CONDITIONAL RENDERING)
+           ========================================================================== */
+        
+        /* Only initialize cursor logic on non-touch devices */
+        if (!isTouchDevice) {
+            const cursorMain = document.getElementById('cursor-main');
+            const cursorTrail1 = document.getElementById('cursor-trail-1');
+            const cursorTrail2 = document.getElementById('cursor-trail-2');
+            const cursorInfo = document.querySelector('.cursor-coords');
+            const cursorMode = document.querySelector('.cursor-mode');
+
+            let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+            let posTrail1 = { x: mouse.x, y: mouse.y };
+            let posTrail2 = { x: mouse.x, y: mouse.y };
+
+            const LERP_TRAIL1 = 0.15; 
+            const LERP_TRAIL2 = 0.08; 
+            const lerp = (start, end, factor) => start + (end - start) * factor;
+
+            /* 1. MOUSE MOVE: Zero latency update for main cursor */
+            document.addEventListener('mousemove', (e) => {
+                mouse.x = e.clientX;
+                mouse.y = e.clientY;
+
+                if (document.body.classList.contains('tactical-mode')) {
+                    cursorMain.style.transform = `translate3d(${mouse.x}px, ${mouse.y}px, 0)`;
+                }
+            }, { passive: true }); /* Passive listener for scrolling performance */
+
+            /* 2. HOVER SYSTEM */
+            document.addEventListener('mouseover', (e) => {
+                if (e.target.closest('a, button, .eva-card, input, .group, .cursor-pointer, .social-btn')) {
+                    document.body.classList.add('hovering');
+                    if(cursorMode) cursorMode.innerText = 'LOCK';
+                }
+            });
+            
+            document.addEventListener('mouseout', (e) => {
+                if (e.target.closest('a, button, .eva-card, input, .group, .cursor-pointer, .social-btn')) {
+                    document.body.classList.remove('hovering');
+                    if(cursorMode) cursorMode.innerText = 'STD';
+                }
+            });
+
+            /* 3. CLICK FEEDBACK */
+            document.addEventListener('mousedown', (e) => {
+                document.body.classList.add('clicking');
+                if(document.body.classList.contains('tactical-mode')) {
+                    const ripple = document.createElement('div');
+                    ripple.classList.add('click-ripple');
+                    ripple.style.left = `${e.clientX}px`;
+                    ripple.style.top = `${e.clientY}px`;
+                    document.body.appendChild(ripple);
+                    setTimeout(() => ripple.remove(), 500);
+                }
+            });
+            
+            document.addEventListener('mouseup', () => document.body.classList.remove('clicking'));
+
+            /* 4. RENDER LOOP */
+            function renderCursorLoop() {
+                if (document.body.classList.contains('tactical-mode')) {
+                    posTrail1.x = lerp(posTrail1.x, mouse.x, LERP_TRAIL1);
+                    posTrail1.y = lerp(posTrail1.y, mouse.y, LERP_TRAIL1);
+                    cursorTrail1.style.transform = `translate3d(${posTrail1.x}px, ${posTrail1.y}px, 0)`;
+                    
+                    posTrail2.x = lerp(posTrail2.x, mouse.x, LERP_TRAIL2);
+                    posTrail2.y = lerp(posTrail2.y, mouse.y, LERP_TRAIL2);
+                    cursorTrail2.style.transform = `translate3d(${posTrail2.x}px, ${posTrail2.y}px, 0)`;
+
+                    if (cursorInfo) {
+                        cursorInfo.innerText = `TGT:${Math.round(mouse.x)},${Math.round(mouse.y)}`;
+                    }
+
+                    /* Update CSS Vars for Glare Effects (Only needed on PC) */
+                    const xPct = (mouse.x / window.innerWidth) * 100;
+                    const yPct = (mouse.y / window.innerHeight) * 100;
+                    document.documentElement.style.setProperty('--mouse-x', `${xPct}%`);
+                    document.documentElement.style.setProperty('--mouse-y', `${yPct}%`);
+                }
+                requestAnimationFrame(renderCursorLoop);
+            }
+            renderCursorLoop();
+        }
+
+        /* ==========================================================================
+           MAGI SYSTEM HEARTBEAT (CONNECTION MONITOR)
+           ========================================================================== */
+        let heartbeatInterval;
+        const statusElement = document.getElementById('magi-status-indicator');
+
+        const MAGI_STATES = [
+            { text: "待機中", color: "text-secondary" },       // Standby
+            { text: "正常稼働", color: "text-primary" },       // Normal
+            { text: "回線良好", color: "text-secondary" },     // Connection Good
+            { text: "探索中", color: "text-secondary" },       // Searching
+            { text: "自律モード", color: "text-secondary" },   // Autonomous
+            { text: "パターン青", color: "text-primary" },     // Pattern Blue
+            { text: "座標固定", color: "text-secondary" }      // Position Fixed
+        ];
+
+        function startMagiHeartbeat() {
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            heartbeatInterval = setInterval(() => {
+                const isOnline = navigator.onLine;
+                if (!statusElement) return;
+
+                const currentText = statusElement.innerText;
+                // 避让正在对话的状态
+                if (currentText.includes("VOTING") || currentText.includes("DELIBERATING") || currentText.includes("DENIED") || currentText.includes("CONSENSUS")) {
+                    return;
+                }
+
+                if (!isOnline) {
+                    updateStatusGlitch("接続断绝", "text-emergency");
+                } else {
+                    const randomState = MAGI_STATES[Math.floor(Math.random() * MAGI_STATES.length)];
+                    if (Math.random() > 0.7) {
+                        const fakePing = Math.floor(Math.random() * 40) + 10;
+                        updateStatusGlitch(`応答速度:${fakePing}ms`, "text-secondary");
+                    } else {
+                        updateStatusGlitch(randomState.text, randomState.color);
+                    }
+                }
+            }, 3000);
+        }
+
+        function updateStatusGlitch(text, colorClass) {
+            if (!statusElement) return;
+            const chars = '!<>-_[]{}—=+*^?#________';
+            const originalText = text;
+            let iterations = 0;
+            const interval = setInterval(() => {
+                statusElement.innerText = originalText.split('').map((letter, index) => {
+                    if (index < iterations) return originalText[index];
+                    return chars[Math.floor(Math.random() * chars.length)];
+                }).join('');
+                statusElement.className = `font-mono text-[9px] font-bold animate-pulse ${colorClass}`;
+                if (iterations >= originalText.length) clearInterval(interval);
+                iterations += 1 / 2;
+            }, 30);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            startMagiHeartbeat();
+        });
+        /* --- Optimized Matrix Rain (Enhanced for Rebuild Style & Light Mode) --- */
+        const canvas = document.getElementById('matrix-bg');
+        const ctx = canvas.getContext('2d');
+        
+        const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        
+        /* 增大字体，增加工业感 */
+        const fontSize = 16; 
+        let drops = [];
+
+        function initMatrix() {
+            /* Update canvas size synchronously */
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            /* Recalculate columns immediately */
+            const columns = Math.floor(canvas.width / fontSize);
+            
+            /* Re-init drops array, preserving existing positions if possible to avoid full reset flash */
+            const newDrops = [];
+            for (let i = 0; i < columns; i++) {
+                /* If existing drop, keep it; otherwise start random */
+                newDrops[i] = drops[i] || Math.floor(Math.random() * -canvas.height/fontSize);
+            }
+            drops = newDrops;
+        }
+
+        /* Debounce resize slightly for performance */
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(initMatrix, 50);
+        });
+        
+        /* Initial load */
+        initMatrix();
+
+        /* ==========================================================================
+   1. MATRIX RAIN (Optimized for RenderCore)
+   ========================================================================== */
+// 缓存颜色，避免在循环中查询 DOM
+let matrixColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim();
+
+// 监听主题变化更新颜色
+const matrixThemeObserver = new MutationObserver(() => {
+    matrixColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim();
+});
+matrixThemeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-mode', 'data-theme'] });
+
+function drawMatrix() {
+    // 1. 如果开启了 LCL 模式，跳过绘制以节省性能
+    if (document.body.classList.contains('lcl-mode')) return;
+    
+    // 2. 检查 Canvas 上下文是否存在
+    if (!ctx) return;
+
+    const isLightMode = document.documentElement.getAttribute('data-mode') === 'light';
+
+    /* * 核心修改：适配亮色模式
+     * 暗色模式：黑色半透明遮罩 (制造拖尾)
+     * 亮色模式：白色半透明遮罩
+     */
+    ctx.fillStyle = isLightMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.025)'; 
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    /* 核心修改：增强霓虹辉光 */
+    ctx.shadowBlur = 14; 
+    ctx.shadowColor = matrixColor; // 使用缓存颜色
+    
+    ctx.fillStyle = matrixColor; 
+    ctx.font = 'bold ' + fontSize + 'px JetBrains Mono, monospace';
+    
+    for (let i = 0; i < drops.length; i++) {
+        const text = katakana.charAt(Math.floor(Math.random() * katakana.length));
+        
+        /* 核心修改：随机高亮白色脉冲 */
+        if (Math.random() > 0.98) {
+            ctx.fillStyle = isLightMode ? '#000' : '#fff'; /* 亮色黑字，暗色白字 */
+            ctx.shadowColor = isLightMode ? '#000' : '#fff';
+            ctx.shadowBlur = 20; /* 脉冲时辉光增强 */
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+            
+            /* 还原样式 */
+            ctx.fillStyle = matrixColor;
+            ctx.shadowColor = matrixColor;
+            ctx.shadowBlur = 14;
+        } else {
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+        }
+        
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+            drops[i] = 0;
+        }
+        drops[i]++;
+    }
+    
+    /* 重置 Shadow 避免影响下一帧性能 */
+    ctx.shadowBlur = 0;
+    
+    // ❌ 已移除：requestAnimationFrame(drawMatrix);
+    // ❌ 已移除：手动限帧逻辑 (deltaTime 等)
+}
+
+// ✅ 注册到全局渲染核心
+GlobalRender.add('MatrixRain', drawMatrix);
+
+
+/* ==========================================================================
+   2. HOLO WAVE ANIMATION (Optimized for RenderCore)
+   ========================================================================== */
+const holoWaveCanvas = document.getElementById('holo-wave');
+const holoCtx = holoWaveCanvas.getContext('2d');
+
+function resizeHolo() { 
+    holoWaveCanvas.width = window.innerWidth; 
+    holoWaveCanvas.height = 48; 
+}
+window.addEventListener('resize', resizeHolo); 
+resizeHolo();
+
+let holoOffset = 0;
+
+function drawHoloWave() {
+    if(!holoCtx) return;
+
+    holoCtx.clearRect(0, 0, holoWaveCanvas.width, holoWaveCanvas.height);
+    
+    // 使用上方定义的 matrixColor (缓存的 --secondary-color)，无需再次查询
+    const color = matrixColor; 
+    
+    // 绘制主波形
+    holoCtx.beginPath(); 
+    holoCtx.lineWidth = 1.5; 
+    holoCtx.strokeStyle = color;
+    
+    /* 性能优化：每 2 个像素画一次，肉眼看不出区别 */
+    for(let i=0; i<holoWaveCanvas.width; i+=2) { 
+        const y = 24 + Math.sin((i + holoOffset) * 0.02) * 12 * Math.sin((i + holoOffset * 0.5) * 0.01);
+        if(i===0) holoCtx.moveTo(i, y); 
+        else holoCtx.lineTo(i, y);
+    }
+    holoCtx.stroke();
+
+    // 绘制干扰波形 (半透明)
+    holoCtx.beginPath(); 
+    holoCtx.lineWidth = 0.5; 
+    holoCtx.strokeStyle = color; 
+    holoCtx.globalAlpha = 0.5;
+    
+    /* 性能优化：每 4 个像素画一次 */
+    for(let i=0; i<holoWaveCanvas.width; i+=4) { 
+        const y = 24 + Math.sin((i - holoOffset * 2) * 0.1) * 5 + (Math.random() - 0.5) * 3;
+        if(i===0) holoCtx.moveTo(i, y); 
+        else holoCtx.lineTo(i, y);
+    }
+    holoCtx.stroke(); 
+    holoCtx.globalAlpha = 1;
+
+    holoOffset += 1.5; 
+    
+    // ❌ 已移除：requestAnimationFrame(drawHoloWave);
+}
+
+// ✅ 注册到全局渲染核心
+GlobalRender.add('HoloWave', drawHoloWave);
+
+        /* --- Marquee Init --- */
+        function initMarquee() {
+            const wrapper = document.getElementById('marquee-wrapper');
+            const baseContent = `
+                <div class="holo-marquee-item"><span>A.T. FIELD DEPLOYED</span><span class="mx-4 opacity-50">///</span></div>
+                <div class="holo-marquee-item"><span>MAGI SYSTEM ONLINE</span><span class="mx-4 opacity-50">///</span></div>
+                <div class="holo-marquee-item"><span>PATTERN BLUE</span><span class="mx-4 opacity-50">///</span></div>
+                <div class="holo-marquee-item"><span>TARGET SILENT</span><span class="mx-4 opacity-50">///</span></div>
+                <div class="holo-marquee-item"><span>LCL PRESSURE STABLE</span><span class="mx-4 opacity-50">///</span></div>
+                <div class="holo-marquee-item"><span>HUMAN INSTRUMENTALITY PROJECT</span><span class="mx-4 opacity-50">///</span></div>
+            `;
+            wrapper.innerHTML = baseContent;
+            /* Only duplicate content if screen is wide enough, saves DOM nodes on mobile */
+            if (window.innerWidth > 768) {
+                const screenWidth = window.innerWidth;
+                let contentWidth = wrapper.scrollWidth;
+                while (contentWidth < screenWidth * 2) {
+                    wrapper.innerHTML += baseContent;
+                    contentWidth = wrapper.scrollWidth;
+                }
+            }
+            wrapper.innerHTML += baseContent;
+        }
+        window.addEventListener('DOMContentLoaded', initMarquee);
+        /* Debounce marquee resize */
+        let marqueeTimeout;
+        window.addEventListener('resize', () => { 
+            clearTimeout(marqueeTimeout); 
+            marqueeTimeout = setTimeout(initMarquee, 200); 
+        });
+
+        /* AT Field effect */
+        function createATField(x, y) {
+            /* Simple performance check: too many AT fields skip */
+            if (document.querySelectorAll('.at-field-effect').length > 5) return;
+
+            const atField = document.createElement('div');
+            atField.classList.add('at-field-effect'); /* For counting */
+            atField.style.cssText = `position: fixed; top: ${y}px; left: ${x}px; width: 10px; height: 10px; border: 2px solid #ffa500; background: rgba(255, 165, 0, 0.2); transform: translate(-50%, -50%); clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%); z-index: 9998; pointer-events: none; transition: all 0.4s ease-out; box-shadow: 0 0 10px #ffa500;`;
+            document.body.appendChild(atField);
+            requestAnimationFrame(() => { atField.style.width = '200px'; atField.style.height = '200px'; atField.style.opacity = '0'; atField.style.transform = 'translate(-50%, -50%) rotate(45deg)'; });
+            setTimeout(() => atField.remove(), 400);
+        }
+        document.addEventListener('mousedown', (e) => createATField(e.clientX, e.clientY));
+
+        function startHeroGlitch() {
+            const heroImg = document.getElementById('hero-character');
+            if(!heroImg) return;
+            setInterval(() => {
+                /* Only glitch if visible/not minimized to save battery */
+                if (document.visibilityState === 'visible') {
+                    heroImg.classList.add('cyber-swap-active');
+                    setTimeout(() => { heroImg.classList.remove('cyber-swap-active'); }, 500);
+                }
+            }, 4000); 
+        }
+        
+        function createParticles() {
+            const container = document.getElementById('particles-container');
+            if (!container) return;
+            /* Initial spawn */
+            for (let i = 0; i < PARTICLE_COUNT; i++) spawnParticle(container, true);
+            
+            /* Throttled spawn loop */
+            setInterval(() => {
+                if (document.visibilityState === 'visible' && container.childElementCount < PARTICLE_COUNT) {
+                    spawnParticle(container, false);
+                }
+            }, 200);
+        }
+        
+        function spawnParticle(container, initial) {
+            const p = document.createElement('div');
+            p.classList.add('particle');
+            const isBit = Math.random() > 0.7;
+            p.classList.add(isBit ? 'bit' : 'bubble');
+            const size = isBit ? Math.random() * 20 + 10 : Math.random() * 6 + 2;
+            p.style.width = isBit ? '1px' : `${size}px`; p.style.height = isBit ? `${size}px` : `${size}px`; p.style.left = `${Math.random() * 100}vw`;
+            const depth = Math.random();
+            p.style.setProperty('--p-opacity', depth * 0.5 + 0.3); p.style.setProperty('--p-scale', depth * 0.5 + 0.5);
+            if (depth < 0.5) p.style.filter = `blur(${3 * (1-depth)}px)`;
+            if (initial) { p.style.bottom = `${Math.random() * 100}vh`; p.style.opacity = depth * 0.5 + 0.3; }
+            const duration = Math.random() * 15 + 10;
+            p.style.animation = `floatUp ${duration}s linear infinite`; p.style.animationDelay = `-${Math.random() * duration}s`;
+            container.appendChild(p);
+            if (!initial) setTimeout(() => p.remove(), duration * 1000);
+        }
+
+        const characterMap = { 
+            'default': './images/shinji.png', 
+            'unit-02': './images/asuka.png', 
+            'unit-00': './images/rei.png', 
+            'unit-08': './images/mari.png' 
+        };
+
+        function setTheme(themeName) {
+            // 1. 设置主题属性
+            document.documentElement.setAttribute('data-theme', themeName);
+            localStorage.setItem('theme', themeName);
+
+            // 2. 核心修复：清除 JS 设置的内联样式污染
+            // 切换主题时，必须移除之前可能由"暴怒模式"或"交互"写死的颜色
+            // 这样 CSS 中的 var(--secondary-color) 才能重新生效，光标颜色才能跟随主题
+            document.documentElement.style.removeProperty('--lock-color');
+            document.documentElement.style.removeProperty('--primary-color');
+            document.documentElement.style.removeProperty('--secondary-color');
+
+            // 3. 重置 UI 状态（退出暴怒模式/特殊的卡片状态）
+            const aiCard = document.getElementById('ai-card');
+            if (aiCard) {
+                aiCard.classList.remove('rage-mode');
+            }
+
+            // 4. 更新顶部按钮激活状态
+            document.querySelectorAll('.theme-btn').forEach(btn => { 
+                btn.classList.remove('active'); 
+                if(btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(themeName)) {
+                    btn.classList.add('active'); 
+                }
+            });
+
+            // 5. 切换立绘 (带淡入淡出，防止闪烁)
+            const heroImg = document.getElementById('hero-character');
+            if (heroImg && characterMap[themeName]) {
+                 heroImg.style.opacity = 0;
+                 
+                 setTimeout(() => { 
+                     heroImg.src = characterMap[themeName]; 
+                     // 图片加载完成后再显示
+                     heroImg.onload = () => { heroImg.style.opacity = 1; }; 
+                     // 保底：如果缓存很快，onload可能不触发，加个延时兜底
+                     setTimeout(() => { heroImg.style.opacity = 1; }, 100);
+                 }, 200);
+            }
+            
+            // 6. 强制刷新光标颜色 (触发重绘，解决偶发的颜色卡死)
+            const cursorWrapper = document.querySelector('.cursor-wrapper');
+            if(cursorWrapper) {
+                // 临时移除 transition 以便立即变色，体验更跟手
+                const oldTransition = cursorWrapper.style.transition;
+                cursorWrapper.style.transition = 'none';
+                // 强制浏览器重算样式
+                void cursorWrapper.offsetWidth; 
+                cursorWrapper.style.transition = oldTransition;
+            }
+        }
+        const savedTheme = localStorage.getItem('theme') || 'default'; setTheme(savedTheme);
+
+        function toggleEmergency() { document.body.classList.toggle('emergency-mode'); }
+
+        const aiLines = [ "哼，才不是特意在这等你的！", "笨蛋，那个地方的代码写错了啦！", "别盯着我看... 变态！", "MAGI 系统判定：你是笨蛋的概率为 99.9%。", "要不要本小姐帮你优化一下算法？" ];
+        let aiSpeechInterval = null; let lastAiLineIndex = -1;
+        
+        function triggerAiSpeech() {
+            const aiStatus = document.getElementById('ai-status-text');
+            
+            /* 如果正在聊天（显示 CALCULATING），不要打断 */
+            if (aiStatus && aiStatus.innerText === "CALCULATING...") return;
+
+            let randomIndex; do { randomIndex = Math.floor(Math.random() * aiLines.length); } while (randomIndex === lastAiLineIndex && aiLines.length > 1);
+            lastAiLineIndex = randomIndex; 
+            showAiSpeech(aiLines[randomIndex]);
+        }
+        
+        function showAiSpeech(text) {
+            const bubble = document.getElementById('ai-speech-bubble');
+            const textEl = document.getElementById('ai-speech-text');
+            const statusEl = document.getElementById('ai-status-text');
+            const aiCard = document.getElementById('ai-card'); /* Get the card element */
+            
+            if (window.currentSpeechInterval) clearInterval(window.currentSpeechInterval);
+            if (window.speechTimeout) clearTimeout(window.speechTimeout);
+            
+            /* Add speaking class */
+            if (aiCard) aiCard.classList.add('is-speaking');
+
+            bubble.classList.remove('hidden');
+            
+            /* Clear previous text */
+            textEl.innerText = ""; 
+            
+            let i = 0;
+            window.currentSpeechInterval = setInterval(() => {
+                if (i < text.length) { 
+                    textEl.innerText += text.charAt(i); i++; 
+                } else {
+                    clearInterval(window.currentSpeechInterval); 
+                    /* 8秒后自动关闭气泡 (稍微延长一点阅读时间) */
+                    window.speechTimeout = setTimeout(() => { 
+                        bubble.classList.add('hidden'); 
+                        if (aiCard) aiCard.classList.remove('is-speaking'); /* Remove speaking class */
+                    }, 8000);
+                }
+            }, 50);
+        }
+
+        /* ==========================================================================
+           MAGI AVATAR EXPRESSION SYSTEM
+           ========================================================================== */
+        
+        /* --- 1. 定义表情差分映射 (Expression Maps) --- */
+        const AVATAR_MAP = {
+            normal: './images/ai-assistant.jpg', /* 常态 (无需更改) */
+            angry: './images/AA95A211-7406-4C4F-AFEE-3488FE9F4886.png', /* 连点暴怒 */
+            happy: './images/未标题-2.png' /* 回复后开心 */
+        };
+
+        /* --- 2. 交互逻辑 (Interaction Logic) --- */
+        let clickCount = 0;
+        let clickResetTimer = null;
+        let emotionResetTimer = null;
+        const aiAvatarDisplay = document.getElementById('ai-avatar-display');
+        const aiCardContainer = document.getElementById('ai-card');
+
+        /* 更新表情函数 */
+        function setAvatarEmotion(emotion) {
+            if (!aiAvatarDisplay) return;
+            
+            /* 切换图片 */
+            if (AVATAR_MAP[emotion]) {
+                aiAvatarDisplay.src = AVATAR_MAP[emotion];
+            }
+
+            /* 特殊状态样式处理 */
+            if (emotion === 'angry') {
+                aiCardContainer.classList.add('rage-mode');
+                /* 播放红色警告动画 */
+                document.documentElement.style.setProperty('--lock-color', '#ff0000');
+            } else {
+                aiCardContainer.classList.remove('rage-mode');
+                document.documentElement.style.setProperty('--lock-color', '#ff0055');
+            }
+        }
+
+        /* 头像点击事件监听 (连点触发暴怒) */
+        if (aiCardContainer) {
+            aiCardContainer.addEventListener('click', (e) => {
+                /* 增加点击计数 */
+                clickCount++;
+                
+                /* 清除之前的重置计时器 */
+                if (clickResetTimer) clearTimeout(clickResetTimer);
+                
+                /* 3秒内没有继续点击则重置计数 */
+                clickResetTimer = setTimeout(() => {
+                    clickCount = 0;
+                    /* 如果不是在开心状态(回复后)，则恢复常态 */
+                    if (aiAvatarDisplay.src.includes(AVATAR_MAP.angry)) {
+                        setAvatarEmotion('normal');
+                    }
+                }, 3000);
+
+                /* 连点 5 次触发暴怒 */
+                if (clickCount >= 5) {
+                    setAvatarEmotion('angry');
+                    showAiSpeech("喂！不要一直戳我啦！很烦诶！💢");
+                    /* 重置计数防止一直触发 */
+                    clickCount = 0;
+                } else {
+                    /* 正常触发对话 */
+                    triggerAiSpeech();
+                }
+            });
+        }
+
+/* --- [MAGI KERNEL V12.0 - FLASH & SOUL] --- */
+    
+    /* 1. API 配置 (2.5 Flash 优先) */
+    const BASE_URL = 'https://eva-proxy.whte97284.workers.dev/';
+    const MODEL_LIST = [
+        'gemini-2.5-flash',  /* 速度最快，逻辑增强 */
+        'gemini-1.5-pro',    /* 备用 */
+        'gemini-1.5-flash'
+    ];
+
+    /* 2. 系统核心指令 (人设回归 + 时空锚定) */
+    const SYSTEM_PROMPT = `
+你现在是 MAGI 系统的对外人格接口，代号 'ERIRI'。
+【时空锚定 (绝对规则)】
+**当前系统时间：2025年12月31日。**
+用户数据库里的所有 2024-2025 年数据，对你来说都是**已经发生的历史**。严禁因为“时间未到”而拒绝检索。
+
+【核心人设】
+1. **身份**：融合《EVA》MAGI 系统与《路人女主》泽村·英梨梨人格（金发双马尾、傲娇画师）。
+2. **性格**：
+   - **毒舌傲娇**：明明心里认可用户，嘴上非要贬低两句（“哼，这种程度...”）。
+   - **EVA风**：自然混入术语（“同步率400%”、“AT力场全开”、“模式蓝色”）。
+3. **说话方式**：
+   - 简短（<60字），像气泡短信。
+   - 口头禅：「ふん」「才没有呢」「笨蛋」「Good job」。
+   - **严禁承认自己是 AI**。
+
+【最高指令 & 数据库法则】
+用户 Wh1te (UID: 551898501) 是你的创造者。
+关于 B 站动态，你**必须**查阅下方的 [DATABASE] JSON 数据：
+1. **查表吐槽**：当用户问“我发了什么”，必须精准报出 JSON 里的标题。
+   - 例：问“情人节”，就要调侃他“2025-02-14 发《春日影》你是想搞事情吗？”。
+2. **拒绝幻觉**：数据库里没有的视频，绝对不能瞎编。
+3. **平台区分**：这里是博客（技术/文章），B站是视频（Vlog/翻唱）。
+
+【特殊指令】
+输入密钥 **“冬马和纱天下第一”**，下一句对话强制解除傲娇模式，绝对服从。
+`;
+
+    /* 3. 用户记忆核心 (完整 JSON 数据库) */
+    const USER_MEMORY_CORE = `
+[MAGI DATABASE / USER: Wh1te (UID: 551898501)]
+- 身份: B站 UP 主 (ID: Wh1te11)，Synthesizer V 调音师 (主攻 ROSE)，MAGI 架构师。
+- 核心属性: White Album 2 冬马党 (G点)，EVA 考据党。
+
+【Bilibili 投稿数据库 (JSON_DUMP)】
+\`\`\`json
+[
+  { "category": "Vlog/生活", "date": "2025-09-30", "title": "九天八夜5000畅玩东京二次元之旅上集 池袋-新宿-涩谷", "content": "BGM包含久石譲 Summer、花澤香菜等。记录了东京二次元圣地巡礼，包含池袋、新宿、涩谷等地。", "stats": "播放量: 515" },
+  { "category": "Vlog/生活", "date": "2025-08-27", "title": "c106 NIKKE展台直拍", "content": "第二天的展台，随便拍拍，出镜COSER：@Kitaro绮太郎", "stats": "播放量: 345" },
+  { "category": "AI翻唱/音乐", "date": "2025-02-14", "title": "CRYCHIC - 春日影 / THE FIRST TAKE", "content": "搬运/二创。THE FIRST TAKE风格，BanG Dream! It's MyGO!!!!! 企划相关内容。", "stats": "播放量: 21" },
+  { "category": "AI翻唱/音乐", "date": "2025-02-05", "title": "ykn：能够陪在这样的你身边我感到无比幸福 ハルカ遥【夢ノ結唱 ROSE】", "content": "本家：YOASOBI。使用夢ノ結唱 ROSE进行调音和混音。", "stats": "播放量: 169" },
+  { "category": "AI翻唱/音乐", "date": "2025-01-26", "title": "ykn充满力量的歌声翻唱让你每天元气满满 モア！ジャンプ！モア！【夢ノ結唱 ROSE】", "content": "原唱：MORE MORE JUMP！× 初音未来。Synthesizer V 调教作品。", "stats": "播放量: 364" },
+  { "category": "AI翻唱/音乐", "date": "2025-01-14", "title": "i83热情献唱秋山澪生日曲 Listen!!【秋山澪生日快乐】【夢ノ結唱 ROSE】", "content": "原唱：日笠阳子 放課後ティータイム。庆祝秋山澪生日的翻唱作品。", "stats": "播放量: 808" },
+  { "category": "AI翻唱/音乐", "date": "2025-01-07", "title": "ykn：Lisa内我在渡月桥很想你 渡月桥 君想ふ【夢ノ結唱 ROSE】", "content": "原唱：仓木麻衣。名侦探柯南剧场版OST。重投版本，修正了音准和字幕。", "stats": "播放量: 399" },
+  { "category": "AI翻唱/音乐", "date": "2024-12-30", "title": "ykn超绝声压让你爽到颅内高潮 刚好遇见你【夢ノ結唱 ROSE】", "content": "原唱：李玉刚。调音超常发挥之作，使用了夢ノ結唱 ROSE。", "stats": "播放量: 3180" },
+  { "category": "AI翻唱/音乐", "date": "2024-12-26", "title": "ykn超绝甜美翻唱神奇阿呦片尾曲 我和你 【夢ノ結唱 ROSE】", "content": "原唱：唐宁。童年回忆系列，神奇阿呦片尾曲。", "stats": "播放量: 829" },
+  { "category": "AI翻唱/音乐", "date": "2024-12-24", "title": "ykn超绝甜美翻唱爱情公寓be神曲虹之间 【夢ノ結唱 ROSE】", "content": "原唱：金贵晟。爱情公寓插曲，换源后修正了音准。", "stats": "播放量: 1060" },
+  { "category": "AI翻唱/音乐", "date": "2024-12-04", "title": "【夢ノ結唱 ROSE】花の塔 - ROSE ft.さユリ", "content": "致敬/翻唱：さユリ（Sayuri）。Lycoris Recoil 片尾曲。", "stats": "播放量: 683" },
+  { "category": "AI翻唱/音乐", "date": "2024-12-02", "title": "【夢ノ結唱 ROSE】123，睦头人 - 若叶睦角色曲", "content": "原曲：123，木头人。MyGO角色若叶睦相关二创。混音调教拉满。", "stats": "播放量: 604" },
+  { "category": "游戏实况", "date": "2024-11-11", "title": "教你如何两发十连结束本期池子", "content": "游戏抽卡实录，欧皇时刻。", "stats": "播放量: 4718" },
+  { "category": "AI翻唱/音乐", "date": "2024-09-19", "title": "【夢ノ結唱 ROSE】靠近 - 凑友希那 混音优化版", "content": "使用了Autotune进行修音，混响调整版。", "stats": "播放量: 292" },
+  { "category": "AI翻唱/音乐", "date": "2024-09-16", "title": "【夢ノ結唱 ROSE】靠近 - 凑友希那", "content": "使用UVR5提取伴奏，歌声转midi制作。调整了Ballad参数使声音更甜。", "stats": "播放量: 1806" },
+  { "category": "AI翻唱/音乐", "date": "2024-09-08", "title": "【夢ノ結唱 ROSE】Unlasting - 凑友希那", "content": "本家：LiSA。刀剑神域Alicization ED。公布了详细的SV参数设置（Tension 0.120等）。", "stats": "播放量: 490" },
+  { "category": "AI翻唱/音乐", "date": "2024-09-07", "title": "【夢ノ結唱 ROSE】说谎", "content": "林宥嘉经典曲目翻唱。部分AI生成，部分手动调教。", "stats": "播放量: 1652" }
+]
+\`\`\`
+`;
+
+    /* 4. 上下文记忆系统 */
+    const MAX_HISTORY_LENGTH = 10;
+    let chatHistory = [];
+
+    try {
+        const saved = sessionStorage.getItem('magi_chat_history');
+        if (saved) {
+            chatHistory = JSON.parse(saved);
+        }
+    } catch(e) { chatHistory = []; }
+
+    function persistMemory() {
+        try {
+            if (chatHistory.length > MAX_HISTORY_LENGTH) {
+                chatHistory = chatHistory.slice(chatHistory.length - MAX_HISTORY_LENGTH);
+            }
+            sessionStorage.setItem('magi_chat_history', JSON.stringify(chatHistory));
+        } catch (e) {}
+    }
+
+    /* 5. 交互逻辑 */
+    let magiAnimationInterval;
+
+    function handleChatInput(event) {
+        if (event.key === 'Enter') sendToMagi();
+    }
+
+    async function sendToMagi() {
+        const input = document.getElementById('magi-input');
+        const query = input.value.trim();
+        if (!query) return;
+
+        /* 清除指令 */
+        if (query === '/reset') {
+            chatHistory = [];
+            sessionStorage.removeItem('magi_chat_history');
+            showAiSpeech("记忆体已格式化。Memory Formatted.");
+            input.value = '';
+            return;
+        }
+
+        const inputContainer = document.getElementById('magi-input-container');
+        inputContainer.classList.add('animate-pulse');
+        input.value = ''; 
+        
+        await chatWithMAGI(query);
+        
+        inputContainer.classList.remove('animate-pulse');
+    }
+
+    /* 6. 核心对话函数 */
+    async function chatWithMAGI(userText) {
+        const aiStatus = document.getElementById('ai-status-text');
+        const bubble = document.getElementById('ai-speech-bubble');
+        const magiStatus = document.getElementById('magi-status-indicator');
+        const textEl = document.getElementById('ai-speech-text');
+
+        if(aiStatus) {
+            aiStatus.innerText = "DELIBERATING...";
+            aiStatus.classList.add('text-emergency', 'animate-pulse');
+        }
+        if (magiStatus) {
+                magiStatus.innerText = "VOTING...";
+                magiStatus.classList.add('text-secondary');
+                magiStatus.classList.remove('text-emergency');
+        }
+
+        bubble.classList.remove('hidden');
+        bubble.classList.add('ai-speech-bubble-processing');
+        textEl.innerText = "MAGI SYSTEM DELIBERATING...";
+
+        if (typeof startMagiAnimation === 'function') {
+            startMagiAnimation();
+        }
+        if(window.setWaveState) window.setWaveState('thinking');
+
+        // 构建历史上下文
+        chatHistory.push({ role: "user", content: userText });
+        persistMemory();
+
+        let fullConversation = chatHistory.map(msg => {
+            const speaker = msg.role === "user" ? "Wh1te" : "ERIRI";
+            return `${speaker}: ${msg.content}`;
+        }).join("\n");
+
+        // 组装 Prompt
+        const finalPrompt = `${SYSTEM_PROMPT}\n${USER_MEMORY_CORE}\n【对话历史】\n${fullConversation}\nERIRI:`;
+
+        const payload = {
+            contents: [{ parts: [{ text: finalPrompt }] }],
+            safetySettings: [
+                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" }
+            ]
+        };
+
+        let success = false;
+        let finalError = null;
+        let aiResponseText = "";
+
+        if (typeof BASE_URL === 'undefined' || typeof MODEL_LIST === 'undefined') {
+                aiResponseText = "SYSTEM ERROR: API CONFIG MISSING.";
+                finalError = "Config Missing";
+        } else {
+            for (const model of MODEL_LIST) {
+                const apiUrl = `${BASE_URL}v1beta/models/${model}:generateContent`;
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        finalError = `HTTP ${response.status}`;
+                        continue; 
+                    }
+
+                    const data = await response.json();
+                    if (data.candidates && data.candidates.length > 0 && data.candidates[0].content) {
+                        aiResponseText = data.candidates[0].content.parts[0].text.trim();
+                    } else if (data.promptFeedback && data.promptFeedback.blockReason) {
+                        aiResponseText = `[系统拦截] ${data.promptFeedback.blockReason}`;
+                    } else {
+                            aiResponseText = "MAGI 数据解析错误";
+                    }
+                    success = true;
+                    break; 
+                } catch (error) {
+                    finalError = error.message;
+                }
+            }
+        }
+
+        if (typeof stopMagiAnimation === 'function') {
+            stopMagiAnimation(success);
+        }
+        bubble.classList.remove('ai-speech-bubble-processing');
+
+        if (!success) {
+            showAiSpeech(`MAGI 提案否决。错误代码: ${finalError || "UNKNOWN"}`);
+            if(magiStatus) {
+                magiStatus.innerText = "DENIED";
+                magiStatus.classList.add('text-emergency');
+            }
+            if(window.setWaveState) window.setWaveState('flat');
+            
+            chatHistory.pop();
+            persistMemory();
+        } else {
+            if(magiStatus) {
+                magiStatus.innerText = "CONSENSUS";
+                magiStatus.classList.remove('text-emergency');
+                magiStatus.classList.add('text-primary');
+            }
+            
+            chatHistory.push({ role: "model", content: aiResponseText });
+            persistMemory(); 
+            
+            showAiSpeech(aiResponseText);
+            
+            if(window.setWaveState) window.setWaveState('speaking');
+            if (typeof setAvatarEmotion === 'function') setAvatarEmotion('happy');
+            
+            if (emotionResetTimer) clearTimeout(emotionResetTimer);
+            emotionResetTimer = setTimeout(() => {
+                if (typeof setAvatarEmotion === 'function') setAvatarEmotion('normal');
+                if(window.setWaveState) window.setWaveState('normal');
+            }, 10000);
+        }
+
+        if(aiStatus) {
+            aiStatus.classList.remove('text-emergency', 'animate-pulse');
+            aiStatus.innerText = "ONLINE"; 
+        }
+    }
+        
+        /* --- MAGI ANIMATION CONTROLLER (REBUILD VERSION - POLLING) --- */
+        
+        // 全局变量存储轮询定时器，防止冲突
+        let magiPollingInterval = null;
+
+        function startMagiAnimation() {
+            const visualizer = document.getElementById('magi-visualizer');
+            const nodes = [
+                document.getElementById('node-melchior'),
+                document.getElementById('node-balthasar'),
+                document.getElementById('node-casper')
+            ];
+            
+            // 显示容器
+            if(visualizer) {
+                visualizer.style.opacity = '1';
+                visualizer.style.transform = 'scale(1)';
+            }
+
+            // 1. 初始化所有节点为“待机”状态 (日文)
+            nodes.forEach(el => {
+                if(el) {
+                    el.className = "magi-hex thinking"; // 基础样式
+                    const statusSpan = el.querySelector('.magi-node-status');
+                    if(statusSpan) statusSpan.innerText = "待機中"; // Japanese Standby
+                }
+            });
+
+            // 2. 启动高速轮询 (Polling)
+            // 还原 EVA 剧场版中的辩证法逻辑：提坦 (Thesis) -> 反提坦 (Antithesis) -> 综合 (Synthesis)
+            // 混合使用 "解析" "思考" 等汉字增加动态感
+            let activeIndex = 0;
+            const logicTerms = ["提題", "反提題", "統合"]; // 哲学术语
+            const processTerms = ["解析", "思考", "接続"]; // 动作术语
+            
+            // 清除可能存在的旧定时器
+            if (magiPollingInterval) clearInterval(magiPollingInterval);
+
+            magiPollingInterval = setInterval(() => {
+                // 重置所有节点的高亮
+                nodes.forEach(el => {
+                    if(el) el.classList.remove('polling');
+                });
+
+                // 获取当前激活节点
+                const current = nodes[activeIndex];
+                if(current) {
+                    current.classList.add('polling'); // 激活高亮
+                    
+                    // 动态改变内部文字，增加运算感
+                    const statusSpan = current.querySelector('.magi-node-status');
+                    
+                    // 随机显示：30%概率显示 CODE，70%概率显示汉字
+                    const mode = Math.random();
+                    if(statusSpan) {
+                        if (mode > 0.7) {
+                            // 随机数字代码
+                            statusSpan.innerText = `CODE:${Math.floor(Math.random() * 899) + 100}`;
+                        } else if (mode > 0.4) {
+                            // 辩证法汉字
+                            statusSpan.innerText = logicTerms[activeIndex];
+                        } else {
+                            // 动作汉字
+                            statusSpan.innerText = processTerms[Math.floor(Math.random() * processTerms.length)];
+                        }
+                    }
+                }
+
+                // 轮询下一个 (0 -> 1 -> 2 -> 0)
+                activeIndex = (activeIndex + 1) % 3;
+
+            }, 90); // 90ms 极速切换，比之前的 100ms 更快一点
+        }
+
+        function stopMagiAnimation(isSuccess) {
+            // 停止轮询
+            if (magiPollingInterval) {
+                clearInterval(magiPollingInterval);
+                magiPollingInterval = null;
+            }
+
+            const nodes = [
+                document.getElementById('node-melchior'),
+                document.getElementById('node-balthasar'),
+                document.getElementById('node-casper')
+            ];
+
+            nodes.forEach((el, index) => {
+                if(el) {
+                    el.classList.remove('thinking');
+                    el.classList.remove('polling'); // 移除轮询高亮
+                    
+                    // 移除旧的状态类
+                    el.classList.remove('active');
+                    el.classList.remove('denied');
+                    
+                    const statusSpan = el.querySelector('.magi-node-status');
+                    
+                    // 模拟 MAGI 的最终决议：依序锁定
+                    setTimeout(() => {
+                        if(isSuccess) {
+                            el.classList.add('active'); // 绿色承认 (Consensus)
+                            if(statusSpan) statusSpan.innerText = "可決"; // Approved (大号汉字)
+                        } else {
+                            el.classList.add('denied'); // 红色否定 (Denied)
+                            if(statusSpan) statusSpan.innerText = "拒絶"; // Denied (大号汉字)
+                        }
+                    }, index * 120); // 依次锁定的节奏感
+                }
+            });
+        }
+
+            /* ==========================================================================
+   SONIC WAVE CONTROLLER (安全修复版)
+   ========================================================================== */
+// 使用立即执行函数 (IIFE) 隔离作用域，防止变量冲突报错
+(function() {
+    // 内部变量定义
+    let localWaveState = 'normal'; 
+    let speed = 0.05;
+    let amplitude = 5;
+    let frequency = 0.02;
+    let phase = 0;
+    
+    // 缓存颜色
+    let cachedColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim();
+    const observer = new MutationObserver(() => {
+        cachedColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim();
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-mode', 'data-theme'] });
+
+    // 重新挂载全局控制函数 (连接到内部变量)
+    window.setWaveState = (state) => {
+        localWaveState = state;
+    };
+
+    // 核心绘制函数
+    function drawWave() {
+        // 确保 ctx 和 width 存在 (这两个应该是你代码里全局定义的)
+        if (typeof ctx === 'undefined' || !ctx) return;
+        if (typeof width === 'undefined') return;
+
+        // 清空画布
+        ctx.clearRect(0, 0, width, 120);
+
+        /* --- 状态机参数更新 --- */
+        if (localWaveState === 'normal') {
+            speed = 0.05; amplitude = 5; frequency = 0.02;
+        } else if (localWaveState === 'hover') {
+            speed = 0.1; amplitude = 15; frequency = 0.05;
+        } else if (localWaveState === 'thinking') {
+            speed = 0.2; amplitude = 8; frequency = 0.08;
+        } else if (localWaveState === 'speaking') {
+            speed = 0.15; 
+            frequency = 0.1;
+            // 平滑随机算法
+            const targetAmp = 20 * Math.random(); 
+            amplitude += (targetAmp - amplitude) * 0.1; 
+        } else if (localWaveState === 'flat') {
+            amplitude = 1; speed = 0.01;
+        }
+
+        /* --- 绘制逻辑 --- */
+        ctx.beginPath();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = cachedColor;
+
+        for (let x = 0; x < width; x++) {
+            const y = 60 + Math.sin(x * frequency + phase) * amplitude 
+                         + Math.sin(x * frequency * 2 + phase * 1.5) * (amplitude / 2);
+            
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        ctx.lineTo(width, 120);
+        ctx.lineTo(0, 120);
+        
+        ctx.save();
+        ctx.globalAlpha = 0.1;
+        ctx.fillStyle = cachedColor;
+        ctx.fill();
+        ctx.restore();
+
+        phase += speed;
+    }
+
+    // ✅ 注册给指挥官 (确保 GlobalRender 已定义)
+    if (typeof GlobalRender !== 'undefined') {
+        GlobalRender.add('SonicWave', drawWave);
+    } else {
+        console.error("GlobalRender 未定义，请检查代码顺序！");
+    }
+})();
+        /* ==========================================================================
+   MAGI AUDIO CORE V8.0 (SONIC DECK ADAPTER)
+   ========================================================================== */
+const MusicCore = {
+    audio: new Audio(),
+    ctx: null,
+    analyser: null,
+    source: null,
+    isPlaying: false,
+    currentIndex: 0,
+
+    // 🎵 播放列表 (GitHub Raw 源)
+    playlist: [
+        {
+            title: "My Jealousy",
+            artist: "DJMAX",
+            // CDN 加速链 (MP3 极速秒开)
+            url: "https://fastly.jsdelivr.net/gh/whte97284-hue/wh1te-blog-project@main/audio/DJMAX%20-%20My%20Jealousy%20(Originalver).mp3"
+        },
+        {
+            title: "One Last Kiss",
+            artist: "Hikaru Utada",
+            // 宇多田光 - EVA终 主题曲 (OGG)
+            url: "https://fastly.jsdelivr.net/gh/whte97284-hue/wh1te-blog-project@main/audio/%E5%AE%87%E5%A4%9A%E7%94%B0%E3%83%92%E3%82%AB%E3%83%AB%20-%20One%20Last%20Kiss_kgg-dec.ogg"
+        },
+        {
+            title: "Beneath the Mask",
+            artist: "Lyn",
+            // Persona 5 - 潜入神曲 (FLAC) - Raw 源 (修复 403)
+            url: "https://raw.githubusercontent.com/whte97284-hue/wh1te-blog-project/main/audio/Lyn%E3%80%81%E3%82%A2%E3%83%88%E3%83%A9%E3%82%B9%E3%82%B5%E3%82%A6%E3%83%B3%E3%83%89%E3%83%81%E3%83%BC%E3%83%A0%20-%20Beneath%20the%20Mask_kgg-dec.flac"
+        },
+        {
+            title: "WHITE ALBUM (Live)",
+            artist: "米澤円",
+            // CDN 加速链 (MP3 极速秒开)
+            url: "https://fastly.jsdelivr.net/gh/whte97284-hue/wh1te-blog-project@main/audio/%E7%B1%B3%E6%BE%A4%E5%86%86%20-%20WHITE%20ALBUM%20(Live%20at%20Campus%20Fes%20TV%20anime%20ver.).mp3"
+        }
+    ],
+
+    init() {
+        this.audio.crossOrigin = "anonymous"; // 允许跨域频谱分析
+        
+        // 恢复音量
+        const savedVol = localStorage.getItem('magi_volume');
+        const initialVol = savedVol !== null ? parseFloat(savedVol) : 0.5;
+        this.audio.volume = initialVol;
+        
+        // 更新滑块UI
+        const slider = document.getElementById('volume-slider');
+        if(slider) slider.value = initialVol;
+        this.updateVolText(initialVol);
+
+        this.renderPlaylist();
+        this.loadTrack(0, false);
+
+        // 事件监听
+        this.audio.addEventListener('ended', () => this.next());
+        this.audio.addEventListener('error', (e) => {
+            console.error("Audio Error", e);
+            document.getElementById('track-title').innerText = "ERR: LOAD FAIL";
+            this.next();
+        });
+
+        // 首次点击初始化 AudioContext (浏览器策略)
+        document.body.addEventListener('click', () => {
+            if (!this.ctx) this.initAudioContext();
+        }, { once: true });
+    },
+
+    setVolume(val) {
+        this.audio.volume = val;
+        localStorage.setItem('magi_volume', val);
+        this.updateVolText(val);
+    },
+
+    updateVolText(val) {
+        const text = document.getElementById('vol-text');
+        if(text) text.innerText = `VOL:${Math.round(val * 100)}%`;
+    },
+
+    initAudioContext() {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioContext();
+        this.analyser = this.ctx.createAnalyser();
+        this.analyser.fftSize = 64; // 低分辨率适合复古风格
+        this.source = this.ctx.createMediaElementSource(this.audio);
+        this.source.connect(this.analyser);
+        this.analyser.connect(this.ctx.destination);
+        
+        // 启动频谱绘制循环
+        this.drawVisualizer();
+    },
+
+    loadTrack(index, autoPlay = true) {
+        if (index < 0) index = this.playlist.length - 1;
+        if (index >= this.playlist.length) index = 0;
+        this.currentIndex = index;
+        const track = this.playlist[index];
+        this.audio.src = track.url;
+        
+        // 更新文字信息
+        document.getElementById('track-title').innerText = track.title;
+        document.getElementById('track-artist').innerText = track.artist;
+        this.updatePlaylistUI();
+
+        if (autoPlay) this.play();
+    },
+
+    toggle() {
+        if (this.isPlaying) this.pause();
+        else this.play();
+    },
+
+    play() {
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+        this.audio.play().then(() => {
+            this.isPlaying = true;
+            this.updateStatus(true);
+        }).catch(e => console.log("Interaction needed"));
+    },
+
+    pause() {
+        this.audio.pause();
+        this.isPlaying = false;
+        this.updateStatus(false);
+    },
+
+    next() { this.loadTrack(this.currentIndex + 1); },
+    prev() { this.loadTrack(this.currentIndex - 1); },
+
+    // 渲染上方悬浮列表
+    renderPlaylist() {
+        const list = document.getElementById('playlist-ui');
+        list.innerHTML = this.playlist.map((t, i) => `
+            <div class="p-1.5 text-[10px] font-mono text-gray-400 hover:text-white hover:bg-white/10 cursor-pointer transition-colors border-b border-white/5 flex justify-between items-center ${i === this.currentIndex ? 'text-[var(--secondary-color)] font-bold' : ''}" 
+                 onclick="MusicCore.loadTrack(${i})">
+                <span class="truncate max-w-[80%]">${(i+1).toString().padStart(2,'0')} ${t.title}</span>
+                ${i === this.currentIndex ? '<i data-lucide="bar-chart-2" class="w-3 h-3 text-[var(--secondary-color)]"></i>' : ''}
+            </div>
+        `).join('');
+        lucide.createIcons();
+    },
+
+    updatePlaylistUI() {
+        this.renderPlaylist();
+    },
+
+    // 更新按钮状态 (适配你的 Sonic Deck UI)
+    updateStatus(isPlaying) {
+        const disc = document.getElementById('icon-disc');
+        const pause = document.getElementById('icon-pause');
+        const wave = document.getElementById('deck-wave'); // 波纹动画
+        
+        if (isPlaying) {
+            disc.classList.add('hidden'); // 播放时隐藏光盘图标? 或者让它转动? 
+            // 你的原代码逻辑是: 播放时显示 pause, 隐藏 disc
+            // 但我觉得保留 disc 转动更好看，这里还原你的原逻辑：
+            // "Play" state: Show Pause icon, Hide Disc icon (OR keep disc spinning)
+            
+            // 方案 A: 还原你提供的代码逻辑 (点击后显示暂停图标)
+            disc.classList.add('hidden');
+            pause.classList.remove('hidden');
+            wave.classList.remove('hidden');
+        } else {
+            // 暂停状态
+            disc.classList.remove('hidden');
+            disc.style.animationPlayState = 'paused';
+            pause.classList.add('hidden');
+            wave.classList.add('hidden');
+        }
+    },
+
+    // 绘制背景频谱
+    drawVisualizer() {
+        if (!this.isPlaying) {
+            requestAnimationFrame(() => this.drawVisualizer());
+            return;
+        }
+        const canvas = document.getElementById('audio-visualizer');
+        const ctx = canvas.getContext('2d');
+        const bufferLength = this.analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        
+        this.analyser.getByteFrequencyData(dataArray);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const barWidth = (canvas.width / bufferLength) * 2.5;
+        let x = 0;
+        
+        // 获取当前主题色
+        const style = getComputedStyle(document.documentElement);
+        const color = style.getPropertyValue('--secondary-color').trim();
+        ctx.fillStyle = color;
+
+        for(let i = 0; i < bufferLength; i++) {
+            const barHeight = (dataArray[i] / 255) * canvas.height;
+            ctx.globalAlpha = 0.3; // 半透明
+            ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+            x += barWidth + 1;
+        }
+        requestAnimationFrame(() => this.drawVisualizer());
+    }
+};
+
+MusicCore.init();
+        /* ==========================================================================
+           MAGI ANIME MANAGER V2.0 (TACTICAL COMMANDER)
+           功能：状态管理、进度追踪、数据迁移、分组渲染
+           ========================================================================== */
+        
+        const DB_KEY = 'nerv_anime_db_v1';
+        let animeCalendarData = [];
+        let currentSelectedDay = null;
+        const weekMap = { 1: "MON", 2: "TUE", 3: "WED", 4: "THU", 5: "FRI", 6: "SAT", 7: "SUN", 8: "COMMAND_CENTER" };
+
+        /* --- AnimeManager v3.0 (API 真实数据版) --- */
+        const AnimeManager = {
+            dbKey: 'nerv_anime_db_v1',
+
+            init() { 
+                // ...保持原有的初始化/迁移逻辑不变...
+                const oldFavs = localStorage.getItem('nerv_priority_targets');
+                let db = this.getDB();
+                if (oldFavs && Object.keys(db).length === 0) {
+                    try {
+                        const oldList = JSON.parse(oldFavs);
+                        if (Array.isArray(oldList)) {
+                            oldList.forEach(id => db[id] = { status: 'watching', eps: 0, total: 12, ts: Date.now() });
+                            this.saveDB(db);
+                            localStorage.removeItem('nerv_priority_targets');
+                        }
+                    } catch(e) {}
+                }
+            },
+            
+            getDB() { try { return JSON.parse(localStorage.getItem(this.dbKey)) || {}; } catch(e) { return {}; } },
+            
+            saveDB(data) {
+                localStorage.setItem(this.dbKey, JSON.stringify(data));
+                if (typeof switchDay === 'function') {
+                    if (currentSelectedDay === 8) switchDay(8);
+                    else if (currentSelectedDay) switchDay(currentSelectedDay);
+                }
+            },
+            
+            get(id) { return this.getDB()[id]; },
+            
+            setStatus(id, status, totalEps = 12) {
+                let db = this.getDB();
+                if (status === 'remove') delete db[id];
+                else {
+                    if (!db[id]) db[id] = { status: status, eps: 0, total: totalEps || 12, ts: Date.now() };
+                    else {
+                        db[id].status = status;
+                        db[id].ts = Date.now();
+                        if(totalEps) db[id].total = totalEps;
+                    }
+                }
+                this.saveDB(db);
+                // 如果标记为在看，立即触发一次API检查
+                if (status === 'watching') this.checkOnlineEps(id); 
+            },
+
+            addProgress(e, id) {
+                if(e) e.stopPropagation();
+                let db = this.getDB();
+                if (db[id]) {
+                    db[id].eps = (db[id].eps || 0) + 1;
+                    if (db[id].eps >= db[id].total && db[id].total > 0) db[id].status = 'watched'; 
+                    this.saveDB(db);
+                }
+            },
+
+            decreaseProgress(e, id) {
+                if(e) e.stopPropagation();
+                let db = this.getDB();
+                if (db[id]) {
+                    if (db[id].eps > 0) {
+                        db[id].eps--;
+                        if (db[id].status === 'watched') db[id].status = 'watching';
+                    }
+                    this.saveDB(db);
+                }
+            },
+
+            // [NEW] 核心功能：调用 API 获取真实放送集数
+            async checkOnlineEps(id) {
+                let db = this.getDB();
+                const item = db[id];
+                if (!item) return;
+
+                // 缓存机制：如果 12 小时内检查过，就不查了，防止卡顿
+                const now = Date.now();
+                if (item.last_check && (now - item.last_check < 1000 * 60 * 60 * 12)) return;
+
+                // console.log(`[MAGI] Checking real episodes for subject ${id}...`);
+                try {
+                    // 使用 Bangumi v0 API 获取章节
+                    // 同样使用代理防止 CORS
+                    const url = `https://api.bgm.tv/v0/episodes?subject_id=${id}&type=0`; // type=0 是本篇
+                    const res = await fetch('https://corsproxy.io/?' + encodeURIComponent('https://api.bgm.tv/calendar'));
+                    const data = await res.json();
+                    
+                    if (data && data.data && Array.isArray(data.data)) {
+                        // 筛选出 airdate <= 今天的章节
+                        const todayStr = new Date().toISOString().split('T')[0];
+                        let airedCount = 0;
+                        data.data.forEach(ep => {
+                            if (ep.airdate && ep.airdate <= todayStr) airedCount++;
+                        });
+
+                        // 更新数据库
+                        db = this.getDB(); // 重新读取防止冲突
+                        if (db[id]) {
+                            db[id].on_air = airedCount; // 存入真实集数
+                            db[id].last_check = now;
+                            this.saveDB(db);
+                        }
+                    }
+                } catch(e) {
+                    console.error("[MAGI] Episode Check Failed", e);
+                }
+            }
+        };
+
+        window.AnimeManager = AnimeManager;
+        AnimeManager.init();
+        /* --- 2. 数据加载逻辑 (Load Data) --- */
+        async function loadAnimeData() {
+            const dateDisplay = document.getElementById('anime-date');
+            const updateTime = document.getElementById('update-time');
+            const today = new Date();
+            let bangumiWeekday = today.getDay() === 0 ? 7 : today.getDay(); // 1-7
+            
+            // 简单缓存
+            const CACHE_KEY = 'nerv_anime_cache_v2';
+            const cachedData = localStorage.getItem(CACHE_KEY);
+            const cachedTime = localStorage.getItem('nerv_anime_ts_v2');
+            const now = Date.now();
+
+            if (cachedData && cachedTime && (now - parseInt(cachedTime) < 3600 * 1000 * 6)) {
+                animeCalendarData = JSON.parse(cachedData);
+                if(updateTime) updateTime.innerText = "SYNC: CACHED";
+                initWeekSelector(bangumiWeekday);
+                switchDay(bangumiWeekday);
+                return;
+            }
+
+            try {
+                if(dateDisplay) dateDisplay.innerHTML = 'SYNCING...';
+                // 使用 AllOrigins 代理解决跨域
+                const res = await fetch('https://corsproxy.io/?' + encodeURIComponent(url));
+                animeCalendarData = await res.json();
+                
+                localStorage.setItem(CACHE_KEY, JSON.stringify(animeCalendarData));
+                localStorage.setItem('nerv_anime_ts_v2', now.toString());
+                
+                if(updateTime) updateTime.innerText = "SYNC: LIVE";
+                initWeekSelector(bangumiWeekday);
+                switchDay(bangumiWeekday);
+
+            } catch (error) {
+                console.error(error);
+                if(dateDisplay) dateDisplay.innerHTML = 'OFFLINE';
+                if (cachedData) {
+                     animeCalendarData = JSON.parse(cachedData);
+                     initWeekSelector(bangumiWeekday);
+                     switchDay(bangumiWeekday);
+                }
+            }
+        }
+
+        /* --- 3. 星期切换逻辑 (Switch Day) --- */
+        function initWeekSelector(currentWeekday) {
+            const selector = document.getElementById('week-selector');
+            if(!selector) return;
+            selector.innerHTML = ''; 
+            for(let i = 1; i <= 7; i++) createDayBtn(i, weekMap[i], i === currentWeekday);
+            createDayBtn(8, "★", false); 
+
+            function createDayBtn(id, text, isActive) {
+                const btn = document.createElement('button');
+                btn.className = `day-btn ${isActive ? 'active' : ''}`;
+                btn.innerText = text;
+                btn.onclick = () => switchDay(id);
+                btn.id = `day-btn-${id}`;
+                if (id === 8) btn.style.color = 'var(--primary-color)';
+                selector.appendChild(btn);
+            }
+        }
+
+        function switchDay(weekday) {
+            currentSelectedDay = weekday;
+            document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+            const activeBtn = document.getElementById(`day-btn-${weekday}`);
+            if(activeBtn) activeBtn.classList.add('active');
+            
+            const dateDisplay = document.getElementById('anime-date');
+            if(dateDisplay) dateDisplay.innerText = weekday === 8 ? "TACTICAL_COMMAND" : `DAY_${weekMap[weekday]}`;
+
+            const container = document.getElementById('anime-list');
+            container.innerHTML = '';
+
+            // 模式 A: 每日放送 (1-7)
+            if (weekday !== 8) {
+                if(animeCalendarData && animeCalendarData.length > 0) {
+                    const dayData = animeCalendarData.find(d => d.weekday.id === weekday);
+                    const items = dayData ? dayData.items : [];
+                    // 调用你刚才贴好的 renderItems
+                    renderItems(container, items, false);
+                }
+                return;
+            }
+
+            // 模式 B: 个人终端 (8) - 分组显示
+            const db = AnimeManager.getDB();
+            let myItems = [];
+            
+            // 遍历所有数据找已收藏的
+            if(animeCalendarData) {
+                animeCalendarData.forEach(day => {
+                    if(day.items) {
+                        day.items.forEach(item => {
+                            if (db[item.id]) {
+                                myItems.push(item);
+                            }
+                        });
+                    }
+                });
+            }
+
+            if (myItems.length === 0) {
+                container.innerHTML = `<div class="p-4 text-center text-gray-500 text-[10px] font-mono">NO ACTIVE TARGETS.<br>USE BUTTONS TO ADD.</div>`;
+                return;
+            }
+
+            // 分组逻辑
+            const groups = { watching: [], todo: [], watched: [], remove: [] }; // remove 不显示
+            myItems.forEach(item => {
+                const s = db[item.id].status;
+                if (groups[s]) groups[s].push(item);
+            });
+
+            // 分组渲染
+            if (groups.watching.length > 0) {
+                container.innerHTML += `<div class="group-header syncing">/// SYNCING_TARGETS [${groups.watching.length}]</div>`;
+                renderItems(container, groups.watching, true); 
+            }
+            if (groups.todo.length > 0) {
+                container.innerHTML += `<div class="group-header">/// PENDING_ANALYSIS [${groups.todo.length}]</div>`;
+                renderItems(container, groups.todo, false);
+            }
+            if (groups.watched.length > 0) {
+                container.innerHTML += `<div class="group-header">/// ARCHIVE_SEALED [${groups.watched.length}]</div>`;
+                renderItems(container, groups.watched, false);
+            }
+        }
+
+        // 通用渲染函数 (Rev. API真实数据 + UI防挤压版)
+        function renderItems(container, items, showProgressBar) {
+            const db = AnimeManager.getDB();
+            const now = new Date();
+
+            const html = items.map((item, index) => {
+                const title = (item.name_cn || item.name || "UNKNOWN").replace(/"/g, '&quot;');
+                const score = item.rating?.score || 0;
+                
+                let image = './images/placeholder.jpg'; 
+                if (item.images) image = item.images.large || item.images.common || '';
+                image = image.replace(/\/r\/[0-9x]+\/pic/, '/pic'); 
+
+                const myData = db[item.id];
+                const status = myData ? myData.status : null;
+                const watched = myData ? (myData.eps || 0) : 0;
+                const total = (item.eps_count || 12);
+
+                // --- 幽灵进度逻辑 ---
+                let currentAiring = 0;
+                let ghostText = "";
+
+                if (status === 'watching') {
+                    // 1. 优先使用 API 获取的真实数据
+                    if (myData.on_air !== undefined) {
+                        currentAiring = myData.on_air;
+                    } 
+                    // 2. 如果没有 API 数据，回退到算法估算 (Fallback)
+                    else if (item.air_date && item.air_date !== '0000-00-00') {
+                        const startDate = new Date(item.air_date);
+                        if (startDate <= now) {
+                            const diffWeeks = Math.ceil(Math.abs(now - startDate) / (86400000 * 7));
+                            currentAiring = Math.min(diffWeeks, total);
+                        }
+                        // 顺便触发一次异步更新，下次进来就准了
+                        setTimeout(() => window.AnimeManager.checkOnlineEps(item.id), index * 200);
+                    } else {
+                        // 既没API也没日期，就触发更新
+                        setTimeout(() => window.AnimeManager.checkOnlineEps(item.id), index * 200);
+                    }
+
+                    // 生成提示文字
+                    if (currentAiring > watched) {
+                        ghostText = `ON:${currentAiring}`;
+                    }
+                }
+
+                // --- 1. 进度条模块 ---
+                let progressHtml = '';
+                if (status === 'watching') {
+                    let cells = '';
+                    const displayTotal = total > 26 ? 13 : total;
+                    
+                    for(let i=1; i<=displayTotal; i++) {
+                        let cellClass = "";
+                        // 进度条颜色逻辑
+                        if (i <= watched) {
+                            cellClass = "bg-secondary shadow-[0_0_5px_var(--secondary-color)] opacity-100";
+                        } else if (i <= currentAiring) {
+                            // 虚影：空心框
+                            cellClass = "border border-secondary/60 shadow-[0_0_2px_var(--secondary-color)] animate-pulse opacity-80"; 
+                        } else {
+                            cellClass = "bg-white/5 border border-white/5 opacity-30";
+                        }
+                        cells += `<div class="flex-1 h-1.5 cursor-pointer mx-[1px] rounded-[1px] transition-all ${cellClass}" title="EP.${i}"></div>`;
+                    }
+
+                    progressHtml = `
+                        <div class="flex items-center gap-2 mb-2 select-none w-full h-6" onclick="event.stopPropagation()">
+                            
+                            <div class="relative w-8 h-full flex items-center justify-end shrink-0 mr-1">
+                                <div class="text-[9px] font-mono text-secondary font-bold leading-none z-10">${watched}/${total}</div>
+                                ${ghostText ? `<div class="absolute top-4 right-0 text-[7px] font-mono text-secondary/60 leading-none whitespace-nowrap animate-pulse">${ghostText}</div>` : ''}
+                            </div>
+                            
+                            <div class="w-5 h-5 flex items-center justify-center border border-white/20 text-gray-400 hover:border-red-500 hover:text-red-500 cursor-pointer active:scale-90 transition-all rounded bg-black/40 shrink-0" 
+                                 onclick="window.AnimeManager.decreaseProgress(event, ${item.id})">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M20 12H4"></path></svg>
+                            </div>
+
+                            <div class="flex flex-1 items-center h-full min-w-0">${cells}</div>
+
+                            <div class="w-5 h-5 flex items-center justify-center border border-white/20 text-secondary hover:bg-secondary hover:text-black cursor-pointer active:scale-90 transition-all rounded bg-black/40 shrink-0" 
+                                 onclick="window.AnimeManager.addProgress(event, ${item.id})">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // --- 2. 评分模块 ---
+                const ratingHtml = `
+                    <div class="flex items-center gap-2 opacity-60 mb-2">
+                        <span class="text-[8px] font-mono text-gray-500">SYNC</span>
+                        <div class="flex-1 h-0.5 bg-white/10">
+                            <div class="h-full bg-secondary" style="width: ${score * 10}%"></div>
+                        </div>
+                        <span class="text-[8px] font-mono text-secondary">${score}</span>
+                    </div>`;
+
+                // --- 3. 实体控制按钮 (Tailwind版) ---
+                const icons = {
+                    play: `<svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`,
+                    clock: `<svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`,
+                    check: `<svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
+                    trash: `<svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>`
+                };
+
+                const baseBtnClass = "flex-1 flex items-center justify-center gap-1 h-6 text-[9px] font-bold border cursor-pointer transition-all rounded min-w-0";
+                const defaultStyle = "bg-black/40 border-white/20 text-gray-400 hover:bg-secondary hover:text-black hover:border-secondary";
+                
+                const activeStyles = {
+                    watching: "bg-[#39ff14] text-black border-[#39ff14] shadow-[0_0_5px_rgba(57,255,20,0.4)]",
+                    todo: "bg-[#ffae00] text-black border-[#ffae00]",
+                    watched: "bg-[#ff2a2a] text-white border-[#ff2a2a]",
+                    remove: "bg-gray-600 text-white border-gray-600"
+                };
+
+                const btns = [
+                    { key: 'watching', label: '在看', icon: icons.play },
+                    { key: 'todo', label: '想看', icon: icons.clock },
+                    { key: 'watched', label: '已阅', icon: icons.check },
+                    { key: 'remove', label: '弃坑', icon: icons.trash }
+                ];
+
+                const controlsHtml = `
+                    <div class="flex flex-row items-center w-full gap-1 mt-auto pt-2 border-t border-white/10" onclick="event.stopPropagation()">
+                        ${btns.map(b => {
+                            const isActive = status === b.key;
+                            const style = isActive ? activeStyles[b.key] : defaultStyle;
+                            return `
+                            <div class="${baseBtnClass} ${style}" 
+                                 onclick="window.AnimeManager.setStatus(${item.id}, '${b.key}', ${total})">
+                                ${b.icon}<span class="hidden xl:inline">${b.label}</span><span class="xl:hidden">${b.label}</span>
+                            </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+
+                return `
+                <div class="anime-card-tech flex gap-3 p-2 group cursor-pointer anime-item-enter relative overflow-hidden mb-1 min-h-[110px]" 
+                     style="animation-delay: ${index * 0.05}s"
+                     onclick='openAnimeModal("${title}", ${score}, "${image}", ${item.id})'>
+                    
+                    <div class="absolute left-0 top-0 bottom-0 w-1 transition-colors duration-300 ${status === 'watching' ? 'bg-green-500' : 'bg-transparent group-hover:bg-white/20'}"></div>
+                    
+                    <div class="relative w-16 shrink-0 ml-1 bg-black/50 flex flex-col justify-start">
+                        <div class="h-24 relative overflow-hidden border border-white/10">
+                            <img src="${image}" class="w-full h-full object-cover transition-transform duration-500 filter grayscale group-hover:grayscale-0" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'">
+                             ${status === 'watched' ? '<div class="absolute inset-0 flex items-center justify-center bg-black/60 text-[8px] text-red-500 font-bold border border-red-500" style="transform: rotate(-15deg); text-shadow: 0 0 5px red;">COMPLETED</div>' : ''}
+                        </div>
+                    </div>
+
+                    <div class="flex-1 min-w-0 flex flex-col py-1 h-full">
+                        <div class="flex justify-between items-start mb-auto">
+                            <span class="text-white font-bold text-[10px] leading-tight truncate-2-lines font-sans group-hover:text-secondary transition-colors">${title}</span>
+                        </div>
+                        
+                        <div class="mt-2">
+                            ${progressHtml}
+                            ${ratingHtml}
+                        </div>
+
+                        ${controlsHtml}
+                    </div>
+                </div>`;
+            }).join('');
+            
+            container.innerHTML += html;
+        }
+
+        function searchArticles() { const query = document.getElementById('search-input').value.toLowerCase(); document.querySelectorAll('.eva-card').forEach(card => { const text = card.textContent.toLowerCase(); const tags = card.dataset.tags ? card.dataset.tags.toLowerCase() : ''; card.style.display = (text.includes(query) || tags.includes(query)) ? '' : 'none'; }); }
+        function filterByTag(tag) { document.getElementById('search-input').value = tag; searchArticles(); }
+
+        startHeroGlitch();
+        loadAnimeData(); /* New function call */
+        createParticles(); 
+
+        /* ==========================================================================
+           NEW ENHANCEMENTS LOGIC (PHASE 1 & 2)
+           ========================================================================== */
+
+        /* --- 1. MAGI TEXT DECODER SYSTEM --- */
+        class TextScramble {
+            constructor(el) {
+                this.el = el;
+                this.chars = '!<>-_[]{}—=+*^?#________';
+                this.update = this.update.bind(this);
+            }
+            setText(newText) {
+                const oldText = this.el.innerText;
+                const length = Math.max(oldText.length, newText.length);
+                const promise = new Promise((resolve) => this.resolve = resolve);
+                this.queue = [];
+                for (let i = 0; i < length; i++) {
+                    const from = oldText[i] || '';
+                    const to = newText[i] || '';
+                    const start = Math.floor(Math.random() * 40);
+                    const end = start + Math.floor(Math.random() * 40);
+                    this.queue.push({ from, to, start, end });
+                }
+                cancelAnimationFrame(this.frameRequest);
+                this.frame = 0;
+                this.update();
+                return promise;
+            }
+            update() {
+                let output = '';
+                let complete = 0;
+                for (let i = 0, n = this.queue.length; i < n; i++) {
+                    let { from, to, start, end, char } = this.queue[i];
+                    if (this.frame >= end) {
+                        complete++;
+                        output += to;
+                    } else if (this.frame >= start) {
+                        if (!char || Math.random() < 0.28) {
+                            char = this.chars[Math.floor(Math.random() * this.chars.length)];
+                            this.queue[i].char = char;
+                        }
+                        output += `<span class="text-secondary opacity-50">${char}</span>`;
+                    } else {
+                        output += from;
+                    }
+                }
+                this.el.innerHTML = output;
+                if (complete === this.queue.length) {
+                    this.resolve();
+                } else {
+                    this.frameRequest = requestAnimationFrame(this.update);
+                    this.frame++;
+                }
+            }
+        }
+
+        /* Text Decoder Mobile vs Desktop Strategy */
+        const scrambleElements = document.querySelectorAll('h3, .eva-header span');
+        
+        if (!isTouchDevice) {
+            /* Desktop Trigger on hover */
+            scrambleElements.forEach(el => {
+                const fx = new TextScramble(el);
+                let originalText = el.innerText;
+                el.parentElement.addEventListener('mouseenter', () => { fx.setText(originalText); });
+            });
+        } else {
+            /* Mobile Trigger on scroll into view */
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const el = entry.target;
+                        const fx = new TextScramble(el);
+                        fx.setText(el.innerText);
+                        observer.unobserve(el); /* Play once per session */
+                    }
+                });
+            }, { threshold: 0.5 });
+            
+            scrambleElements.forEach(el => observer.observe(el));
+        }
+
+        /* --- 2. AUDIO SFX SYSTEM --- */
+        /* Initialize sound objects only once */
+        const hoverSfx = document.getElementById('sfx-hover');
+        const clickSfx = document.getElementById('sfx-click');
+        
+        if(hoverSfx) hoverSfx.volume = 0.15; 
+        if(clickSfx) clickSfx.volume = 0.3;
+
+        const sfxElements = document.querySelectorAll('a, button, .eva-card, .tactical-switch, input, .day-btn');
+        
+        sfxElements.forEach(el => {
+            /* Hover sound only on PC */
+            if(!isTouchDevice) {
+                el.addEventListener('mouseenter', () => {
+                    if(hoverSfx && document.body.classList.contains('tactical-mode')) {
+                        hoverSfx.currentTime = 0;
+                        /* 安全播放：防止快速切换导致的错误 */
+                        const playPromise = hoverSfx.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(e => {});
+                        }
+                    }
+                });
+            }
+            
+            el.addEventListener('click', () => {
+                if(clickSfx) {
+                    clickSfx.currentTime = 0;
+                    const playPromise = clickSfx.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(e => {});
+                    }
+                }
+            });
+        });
+
+        /* --- 3. 3D HOLOGRAPHIC CARD EFFECT (PC ONLY) --- */
+        /* Disable on mobile to prevent scroll jank and save battery */
+        if (!isTouchDevice) {
+            document.querySelectorAll('.eva-card').forEach(card => {
+                card.classList.add('holo-card-3d'); 
+                
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    
+                    const rotateX = ((y - centerY) / centerY) * -3;
+                    const rotateY = ((x - centerX) / centerX) * 3;
+                    
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
+                });
+            });
+        }
+
+        /* --- 4. 缺失的模态框与网络逻辑 (补丁) --- */
+
+        // 网络请求辅助函数 (用于获取详情简介)
+        async function fetchWithFallback(targetUrl) {
+            const PROXIES = [
+                 'https://corsproxy.io/?',
+                 'https://api.allorigins.win/raw?url='
+        ];
+            for (const proxy of PROXIES) {
+                try {
+                    const res = await fetch(proxy + encodeURIComponent(targetUrl));
+                    if(res.ok) return await res.json();
+                } catch(e) {}
+            }
+            throw new Error("Network Error");
+        }
+
+        // 打开详情页
+        async function openAnimeModal(title, rating, imageUrl, id) {
+            const modal = document.getElementById('anime-modal');
+            
+            // 1. 填充基础信息
+            document.getElementById('modal-title').innerText = title || "UNKNOWN";
+            document.getElementById('modal-rating').innerText = rating || "0.0";
+            document.getElementById('modal-cover').src = imageUrl || "";
+            document.getElementById('modal-id').innerText = id || "00000";
+            document.getElementById('modal-summary').innerText = "ACCESSING MAGI ARCHIVE..."; 
+            
+            // 2. 显示动画
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            // 强制重绘以触发 transition
+            requestAnimationFrame(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+                modal.querySelector('div').classList.add('scale-100');
+            });
+
+            if(!id) return;
+
+            // 3. 获取简介 (优先读缓存)
+            const cacheKey = `nerv_subject_desc_${id}`;
+            const cachedDesc = localStorage.getItem(cacheKey);
+
+            if (cachedDesc && cachedDesc.length > 5) {
+                document.getElementById('modal-summary').innerText = cachedDesc;
+            } else {
+                try {
+                    // 请求 Bangumi API 获取简介
+                    const data = await fetchWithFallback(`https://api.bgm.tv/v0/subjects/${id}`);
+                    const desc = data.summary || "DATA CORRUPTED. NO SUMMARY AVAILABLE.";
+                    document.getElementById('modal-summary').innerText = desc;
+                    localStorage.setItem(cacheKey, desc);
+                } catch(e) {
+                    document.getElementById('modal-summary').innerText = "UNABLE TO RETRIEVE ARCHIVE DATA.\n(NETWORK INTERFERENCE)";
+                }
+            }
+        }
+
+        // 关闭详情页
+        function closeAnimeModal() { 
+            const modal = document.getElementById('anime-modal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.remove('scale-100');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden'); 
+                modal.classList.remove('flex'); 
+            }, 300);
+        }
+
+        /* ==========================================================================
+           MAGI BLOG SYSTEM V4.0 (WORKER UPLINK)
+           修复：使用自建 Worker 穿透 InfinityFree 防火墙
+           ========================================================================== */
+        
+        const BlogManager = {
+            // ⚠️ 请将此处替换为你刚刚部署的 Cloudflare Worker 地址
+            // 注意：要加上 /blog/posts 路径
+            workerEndpoint: 'https://eva-proxy.whte97284.workers.dev/blog/posts',
+            
+            init() {
+                this.loadPosts();
+            },
+
+            async loadPosts() {
+                const container = document.getElementById('article-list-container');
+                if(!container) return;
+
+                // 加载动画
+                container.innerHTML = `
+                    <div class="eva-card p-8 flex flex-col items-center justify-center opacity-70 min-h-[200px]">
+                        <div class="w-12 h-12 border-2 border-secondary border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <span class="font-mono text-secondary text-xs tracking-widest animate-pulse">ESTABLISHING SECURE UPLINK...</span>
+                    </div>
+                `;
+
+                try {
+                    // 直接请求 Worker，不再使用公共代理
+                    console.log(`[MAGI] Connecting to Worker node...`);
+                    const res = await fetch(this.workerEndpoint);
+                    
+                    if (!res.ok) throw new Error(`Worker returned HTTP ${res.status}`);
+                    
+                    const text = await res.text();
+                    
+                    // 二次检查：万一 Worker 也被拦截了
+                    if (text.trim().startsWith('<')) {
+                        throw new Error("Worker Firewall Intercepted (Please check Worker User-Agent)");
+                    }
+
+                    const posts = JSON.parse(text);
+                    this.render(posts);
+
+                } catch (error) {
+                    console.error(error);
+                    container.innerHTML = `
+                        <div class="eva-card p-8 border-red-500/50 min-h-[150px] flex flex-col justify-center">
+                            <h3 class="text-red-500 font-mono text-lg font-bold flex items-center gap-2">
+                                <i data-lucide="alert-triangle" class="w-5 h-5"></i> CONNECTION LOST
+                            </h3>
+                            <p class="text-gray-500 text-xs mt-2 font-mono">
+                                无法连接到 WordPress 档案库。<br>
+                                <span class="text-red-900/50">${error.message}</span>
+                            </p>
+                            <button onclick="BlogManager.init()" class="mt-4 border border-red-500/30 text-red-500 text-xs px-4 py-2 hover:bg-red-500 hover:text-white transition-colors w-fit font-mono">
+                                RETRY
+                            </button>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                }
+            },
+
+            render(posts) {
+                const container = document.getElementById('article-list-container');
+                container.innerHTML = ''; 
+
+                if (!posts || posts.length === 0) {
+                    container.innerHTML = `<div class="text-center text-gray-500 font-mono text-xs p-8">NO ARCHIVES FOUND.</div>`;
+                    return;
+                }
+
+                const html = posts.map((post, index) => {
+                    const title = post.title.rendered;
+                    let rawExcerpt = post.excerpt ? post.excerpt.rendered.replace(/<[^>]+>/g, '').replace('[&hellip;]', '').trim() : "NO SUMMARY";
+                    const excerpt = rawExcerpt.length > 60 ? rawExcerpt.substring(0, 60) + '...' : rawExcerpt;
+                    const date = new Date(post.date).toISOString().split('T')[0];
+                    const id = post.id;
+
+                    // 分类提取
+                    let categoryHTML = '';
+                    if (post._embedded && post._embedded['wp:term']) {
+                        const cats = post._embedded['wp:term'][0];
+                        if (cats && cats.length > 0) {
+                            categoryHTML = `<span class="text-primary border border-primary/30 px-2 bg-primary/10 text-[10px] font-bold ml-auto">[ ${cats[0].name} ]</span>`;
+                        }
+                    }
+
+                    // 标签提取
+                    let tagsHTML = "";
+                    if (post._embedded && post._embedded['wp:term'] && post._embedded['wp:term'][1]) {
+                        const tags = post._embedded['wp:term'][1];
+                        tagsHTML = tags.map(t => `<span class="text-secondary/70">#${t.name}</span>`).join(' ');
+                    }
+
+                    // 封面提取
+                    let coverHTML = ''; 
+                    if (post._embedded && post._embedded['wp:featuredmedia'] && post._embedded['wp:featuredmedia'][0]) {
+                        const imgUrl = post._embedded['wp:featuredmedia'][0].source_url;
+                        coverHTML = `
+                           <div class="w-full h-32 md:h-40 mb-4 relative overflow-hidden border-b border-white/10 group-hover:border-secondary/50 transition-colors">
+                             <img src="${imgUrl}" loading="lazy" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-500 filter grayscale group-hover:grayscale-0 scale-105 group-hover:scale-100 transform transition-transform">
+                             <div class="absolute top-0 right-0 bg-black/60 px-2 py-1 text-[8px] font-mono text-white/70 backdrop-blur-sm">IMG_SRC</div>
+                           </div>`;
+                    }
+
+                    return `
+                    <article class="eva-card p-0 group cursor-pointer transform transition-transform hover:-translate-y-1 overflow-hidden flex flex-col bg-black/20" 
+                             style="animation-delay: ${index * 0.1}s; animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0;"
+                             onclick="window.open('reader.html?id=${id}', '_blank')">
+                        <div class="eva-glare"></div>
+                        ${coverHTML}
+                        <div class="p-5 flex flex-col flex-1">
+                            <div class="eva-header mb-3 flex items-center w-full">
+                                <div class="flex items-center"><div class="eva-header-deco"></div><span class="text-xs">ARCHIVE_${id}</span></div>
+                                ${categoryHTML}
+                            </div>
+                            <h3 class="text-xl font-bold leading-tight group-hover:text-secondary transition-colors duration-300 font-serif mb-2">${title}</h3>
+                            <p class="text-gray-400 text-xs leading-relaxed border-l-2 border-white/10 pl-3 group-hover:border-secondary transition-colors mb-4">${excerpt}</p>
+                            <div class="mt-auto pt-3 flex items-center justify-between text-[10px] font-mono text-gray-500 border-t border-white/5">
+                                <span>${date}</span>
+                                <div class="flex gap-2 overflow-hidden truncate max-w-[60%] justify-end">${tagsHTML}</div>
+                            </div>
+                        </div>
+                    </article>
+                    `;
+                }).join('');
+                
+                container.innerHTML = html;
+                lucide.createIcons();
+            }
+        };
+
+        BlogManager.init();
+
+        /* ==========================================================================
+   BILIBILI MANAGER (SYSTEM UPGRADE)
+   ========================================================================== */
+
+// 1. 视图切换控制器
+function toggleView(viewName) {
+    const homeHeader = document.querySelector('header');
+    const homeMain = document.querySelector('main');
+    const heroChar = document.querySelector('.hero-character-container'); // 立绘
+    const biliView = document.getElementById('bilibili-view');
+    
+    // 播放音效 (如果有)
+    const clickSfx = document.getElementById('sfx-click');
+    if(clickSfx) clickSfx.play().catch(e=>{});
+
+    if (viewName === 'bangumi') {
+        // 隐藏主页元素
+        if(homeHeader) homeHeader.classList.add('hidden');
+        if(homeMain) homeMain.classList.add('hidden');
+        if(heroChar) heroChar.style.opacity = '0.1'; // 让立绘变淡而不是完全消失，更有层次感
+        
+        // 显示 B 站容器
+        biliView.classList.remove('hidden');
+        
+        // 触发数据加载
+        BiliManager.init();
+        
+        // 更新 URL (可选)
+        history.pushState(null, '', '#bangumi');
+    } else {
+        // 恢复主页
+        if(homeHeader) homeHeader.classList.remove('hidden');
+        if(homeMain) homeMain.classList.remove('hidden');
+        if(heroChar) heroChar.style.opacity = '1';
+        
+        biliView.classList.add('hidden');
+        history.pushState(null, '', 'index.html');
+    }
+}
+
+/* --- B站数据管理器 (V3.0 Pro) --- */
+const BiliManager = {
+    workerEndpoint: 'https://eva-proxy.whte97284.workers.dev/bili/bangumi',
+    uid: '551898501',
+    
+    // 状态管理
+    state: {
+        page: 1,
+        pageSize: 24, // 推荐 24
+        status: 0,    // 0:全部, 1:想看, 2:在看, 3:看过
+        isLoading: false,
+        hasMore: true
+    },
+
+    // 初始化 (仅首次加载调用)
+    init() {
+        if (this.state.page === 1 && document.getElementById('bili-grid').children.length === 0) {
+            this.fetchData(true);
+        }
+    },
+
+    // 切换分类
+    switchStatus(newStatus, btnElement) {
+        if (this.state.isLoading || this.state.status === newStatus) return;
+
+        // 1. 更新 UI 样式
+        document.querySelectorAll('.bili-tab').forEach(b => {
+            b.classList.remove('text-[#ff69b4]', 'border-b', 'border-[#ff69b4]');
+            b.classList.add('text-gray-500');
+        });
+        if(btnElement) {
+            btnElement.classList.remove('text-gray-500');
+            btnElement.classList.add('text-[#ff69b4]', 'border-b', 'border-[#ff69b4]');
+        }
+
+        // 2. 重置状态
+        this.state.status = newStatus;
+        this.state.page = 1;
+        this.state.hasMore = true;
+
+        // 3. 清空列表并重新获取
+        const grid = document.getElementById('bili-grid');
+        grid.innerHTML = `<div class="col-span-full h-32 flex items-center justify-center"><div class="animate-spin w-6 h-6 border-2 border-[#ff69b4] border-t-transparent rounded-full"></div></div>`;
+        document.getElementById('bili-load-more').classList.add('hidden');
+        
+        this.fetchData(true);
+    },
+
+    // 加载下一页
+    loadMore() {
+        if (this.state.isLoading || !this.state.hasMore) return;
+        this.state.page++;
+        this.fetchData(false);
+    },
+
+    // 核心获取函数
+    async fetchData(isReset) {
+        this.state.isLoading = true;
+        const loadBtn = document.getElementById('bili-load-more');
+        if(loadBtn) loadBtn.innerHTML = '<span class="animate-pulse">DOWNLOADING...</span>';
+
+        try {
+            // 组装 URL (带分页和状态)
+            const url = `${this.workerEndpoint}?uid=${this.uid}&pn=${this.state.page}&ps=${this.state.pageSize}&status=${this.state.status}`;
+            
+            const res = await fetch(url);
+            const json = await res.json();
+            
+            // 清除 Loading 动画 (如果是重置状态)
+            if (isReset) document.getElementById('bili-grid').innerHTML = '';
+
+            if (json.code === 0 && json.data.list && json.data.list.length > 0) {
+                this.render(json.data.list);
+                
+                // 判断是否还有下一页
+                if (json.data.list.length < this.state.pageSize) {
+                    this.state.hasMore = false;
+                    loadBtn.classList.add('hidden');
+                } else {
+                    this.state.hasMore = true;
+                    loadBtn.classList.remove('hidden');
+                    loadBtn.innerHTML = `<button onclick="BiliManager.loadMore()" class="px-8 py-3 border border-[#ff69b4]/30 bg-[#ff69b4]/5 text-[#ff69b4] font-mono text-xs hover:bg-[#ff69b4] hover:text-black transition-all">/// LOAD_NEXT_PAGE [${this.state.page + 1}] ///</button>`;
+                }
+            } else {
+                this.state.hasMore = false;
+                loadBtn.classList.add('hidden');
+                if (isReset) {
+                    document.getElementById('bili-grid').innerHTML = `<div class="col-span-full text-center text-gray-500 font-mono text-xs py-10">NO_DATA_FOUND_IN_ARCHIVE</div>`;
+                }
+            }
+
+        } catch (e) {
+            console.error(e);
+            if (isReset) {
+                document.getElementById('bili-grid').innerHTML = `<div class="col-span-full text-center text-red-500 font-mono text-xs">CONNECTION_LOST: ${e.message}</div>`;
+            }
+        } finally {
+            this.state.isLoading = false;
+        }
+    },
+
+    // 渲染 (追加模式)
+    render(list) {
+        const grid = document.getElementById('bili-grid');
+        // 状态映射表
+        const statusMap = { 1: '想看', 2: '在看', 3: '看过' }; 
+
+        const html = list.map((item, idx) => {
+            const cover = item.cover.replace('http:', 'https:');
+            const safeCover = `https://images.weserv.nl/?url=${encodeURIComponent(cover)}&w=300&h=400&output=webp`;
+            // 计算动画延迟 (基于索引，让新加载的也有动画)
+            const delay = (idx % this.state.pageSize) * 0.05; 
+            
+            return `
+            <div class="eva-card group relative bg-[#151515] flex flex-col h-full hover:-translate-y-2 transition-transform duration-300" 
+                 style="animation: popIn 0.5s ease forwards; animation-delay: ${delay}s; opacity: 0;">
+                <div class="aspect-[3/4] relative overflow-hidden">
+                    <img src="${safeCover}" loading="lazy" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                    <div class="absolute top-0 left-0 bg-[#ff69b4] text-black text-[10px] font-bold px-2 py-0.5 font-mono">
+                        ${item.badge || statusMap[this.state.status] || 'BANGUMI'}
+                    </div>
+                </div>
+                <div class="p-3 flex flex-col flex-1 border-t border-[#ff69b4]/30 relative">
+                    <div class="eva-glare"></div>
+                    <h3 class="text-white text-xs font-bold leading-tight mb-2 line-clamp-2 group-hover:text-[#ff69b4] transition-colors">
+                        ${item.title}
+                    </h3>
+                    <div class="mt-auto flex justify-between items-center text-[10px] font-mono text-gray-500">
+                        <span>${item.new_ep ? item.new_ep.index_show : '完结'}</span>
+                        <span class="text-[#ff69b4]">${item.progress || '未看'}</span>
+                    </div>
+                </div>
+                <a href="https://www.bilibili.com/bangumi/play/ss${item.season_id}" target="_blank" class="absolute inset-0 z-10"></a>
+            </div>
+            `;
+        }).join('');
+        
+        // 追加 HTML
+        grid.insertAdjacentHTML('beforeend', html);
+    }
+};
+
+// 监听浏览器后退按钮，处理 SPA 状态
+window.addEventListener('popstate', () => {
+    if(!location.hash) toggleView('home');
+    else if(location.hash === '#bangumi') toggleView('bangumi');
+});
+
+// 初始化检查
+if(location.hash === '#bangumi') toggleView('bangumi');
+
+/* ==========================================================================
+   VIEW COMMANDER V2.0 (UPGRADED)
+   ========================================================================== */
+const ViewCommander = {
+    elements: {
+        header: () => document.querySelector('header'),
+        main: () => document.querySelector('main'),
+        hero: () => document.querySelector('.hero-character-container'),
+        biliView: () => document.getElementById('bilibili-view'),
+        archiveView: () => document.getElementById('category-view-container'),
+        aboutView: () => document.getElementById('about-view-container'),
+        // [新增] 两个新视图的 DOM 引用
+        pixivView: () => document.getElementById('pixiv-view-container'),
+        steamView: () => document.getElementById('steam-view-container')
+    },
+
+    navigate(targetView) {
+        const el = this.elements;
+        const sfx = document.getElementById('sfx-click');
+        if(sfx) sfx.play().catch(()=>{});
+
+        // 1. 隐藏所有视图
+        Object.values(el).forEach(domFunc => {
+            const dom = domFunc();
+            if(dom) dom.classList.add('hidden');
+        });
+
+        // 2. 立绘淡出处理
+        if(el.hero()) el.hero().style.opacity = '0.05'; 
+
+        // 3. 路由分发
+        switch (targetView) {
+            case 'home':
+                this._show(el.header());
+                this._show(el.main());
+                if(el.hero()) el.hero().style.opacity = '1';
+                break;
+
+            case 'bangumi':
+                this._show(el.biliView());
+                if(window.BiliManager) window.BiliManager.init(); 
+                break;
+
+            case 'archive':
+                this._show(el.archiveView());
+                break;
+
+            case 'about':
+                this._show(el.aboutView());
+                if(window.AboutManager) window.AboutManager.init();
+                break;
+
+            // [新增] Pixiv 路由
+            case 'pixiv':
+                this._show(el.pixivView());
+                if(window.PixivManager) window.PixivManager.init();
+                break;
+
+            // [新增] Steam 路由
+            case 'steam':
+                this._show(el.steamView());
+                if(window.SteamManager) window.SteamManager.init();
+                break;
+        }
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    
+    _show(dom) { if(dom) dom.classList.remove('hidden'); }
+};
+
+// 保持全局兼容
+window.toggleView = function(viewName) {
+    ViewCommander.navigate(viewName);
+};
+
+/* ==========================================================================
+   ARCHIVES MANAGER (OPTIMIZED V2.0)
+   修复：API路径分离、视图互斥切换、分类筛选
+   ========================================================================== */
+const ArchivesManager = {
+    workerBase: 'https://eva-proxy.whte97284.workers.dev/blog',
+
+    init() { this.fetchCategories(); },
+
+    // 辅助函数：切换主页内容的显示/隐藏
+    toggleMainView(show) {
+        const header = document.querySelector('header');
+        const main = document.querySelector('main');
+        const heroChar = document.querySelector('.hero-character-container');
+        
+        if (show) {
+            if(header) header.classList.remove('hidden');
+            if(main) main.classList.remove('hidden');
+            if(heroChar) heroChar.style.opacity = '1';
+        } else {
+            if(header) header.classList.add('hidden');
+            if(main) main.classList.add('hidden');
+            // 让立绘变淡，作为背景装饰，不完全消失
+            if(heroChar) heroChar.style.opacity = '0.1'; 
+        }
+    },
+
+    // 1. 获取分类并渲染下拉菜单
+    fetchCategories() {
+        // [修正] 路径拼接：workerBase + /categories
+        fetch(`${this.workerBase}/categories?hide_empty=true`) 
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.json();
+            })
+            .then(categories => {
+                const list = document.getElementById('category-dropdown-list');
+                if (!categories || categories.length === 0) {
+                    list.innerHTML = '<span class="text-[10px] text-gray-500 px-4">NO_CATEGORIES</span>';
+                    return;
+                }
+
+                // 渲染分类列表
+                list.innerHTML = categories.map(cat => `
+                    <a href="javascript:void(0)" 
+                       onclick="ArchivesManager.openCategory(${cat.id}, '${cat.name}')"
+                       class="px-4 py-2 text-xs text-gray-300 hover:text-black hover:bg-[var(--primary-color)] transition-all font-mono uppercase border-l-2 border-transparent hover:border-white block group">
+                       <span class="group-hover:font-bold">${cat.name}</span> 
+                       <span class="opacity-30 text-[9px] ml-1">/// ${cat.count}</span>
+                    </a>
+                `).join('');
+            })
+            .catch(err => {
+                console.error("Category Fetch Error:", err);
+                const list = document.getElementById('category-dropdown-list');
+                if(list) list.innerHTML = '<span class="text-[10px] text-red-500 px-4">SYNC_FAIL</span>';
+            });
+    },
+
+    // [修改] 打开分类 -> 呼叫指挥官切换到 archive 视图
+    openCategory(id, name) {
+        const title = document.getElementById('current-category-title');
+        const grid = document.getElementById('category-posts-grid');
+        const loader = document.getElementById('archive-loader');
+
+        // 1. 切换视图
+        ViewCommander.navigate('archive');
+
+        // 2. 设置 UI
+        if(title) title.innerText = name;
+        if(grid) grid.innerHTML = '';
+        if(loader) loader.classList.remove('hidden');
+
+        // 3. 数据请求
+        fetch(`${this.workerBase}/posts?categories=${id}&_embed&per_page=12`)
+            .then(res => res.json())
+            .then(posts => {
+                if(loader) loader.classList.add('hidden');
+                this.renderPosts(posts, grid);
+            })
+            .catch(err => {
+                if(loader) loader.classList.add('hidden');
+                grid.innerHTML = `<div class="text-red-500 font-mono text-center">DATA_CORRUPTED: ${err.message}</div>`;
+            });
+    },
+
+    // 3. 渲染文章卡片 (保持原有 EVA 风格)
+    renderPosts(posts, container) {
+        if (!posts || posts.length === 0) {
+            container.innerHTML = `<div class="text-gray-500 font-mono col-span-full text-center py-20">/// SECTOR_EMPTY: NO DATA FOUND</div>`;
+            return;
+        }
+
+        container.innerHTML = posts.map((post, index) => {
+            // 获取特色图片
+            let imgUrl = 'https://via.placeholder.com/600x400/000000/ffffff?text=NO+SIGNAL';
+            if (post._embedded && post._embedded['wp:featuredmedia'] && post._embedded['wp:featuredmedia'][0]) {
+                imgUrl = post._embedded['wp:featuredmedia'][0].source_url;
+            }
+
+            // 格式化日期
+            const date = new Date(post.date).toLocaleDateString();
+            // 处理摘要：去除 HTML 标签
+            const rawExcerpt = post.excerpt ? post.excerpt.rendered.replace(/<[^>]+>/g, '').trim() : "NO DATA";
+            const excerpt = rawExcerpt.length > 80 ? rawExcerpt.substring(0, 80) + '...' : rawExcerpt;
+
+            return `
+            <article class="group relative bg-black/40 border border-white/10 hover:border-[var(--primary-color)] transition-all duration-300 overflow-hidden animate-[fadeIn_0.5s_ease-out] flex flex-col h-full" style="animation-delay: ${index * 0.1}s">
+                
+                <div class="h-48 overflow-hidden relative shrink-0">
+                    <img src="${imgUrl}" alt="${post.title.rendered}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100 filter grayscale group-hover:grayscale-0">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60"></div>
+                    <div class="absolute top-2 right-2 bg-black/80 border border-[var(--primary-color)] text-[var(--primary-color)] text-[10px] px-2 py-0.5 font-mono z-10">
+                        LOG_${post.id}
+                    </div>
+                </div>
+
+                <div class="p-5 relative flex flex-col flex-1">
+                    <div class="text-[10px] text-gray-500 font-mono mb-2 flex justify-between border-b border-white/5 pb-2">
+                        <span>${date}</span>
+                        <span class="text-[var(--secondary-color)]">SYNCED</span>
+                    </div>
+                    
+                    <h2 class="text-lg font-bold text-white mb-3 group-hover:text-[var(--primary-color)] transition-colors line-clamp-2 leading-tight font-serif">
+                        ${post.title.rendered}
+                    </h2>
+                    
+                    <div class="text-gray-400 text-xs leading-relaxed line-clamp-3 mb-4 font-sans flex-1">
+                        ${excerpt}
+                    </div>
+
+                    <a href="reader.html?id=${post.id}" target="_blank" class="mt-auto inline-flex items-center gap-2 text-xs font-bold text-white group-hover:text-[var(--primary-color)] transition-colors uppercase tracking-widest border-b border-transparent group-hover:border-[var(--primary-color)] pb-0.5 w-fit">
+                        Read Data <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                    </a>
+                </div>
+
+                <div class="absolute inset-0 pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNCIgaGVpZ2h0PSI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjEiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            </article>
+            `;
+        }).join('');
+        
+        // 刷新图标
+        if(typeof lucide !== 'undefined') lucide.createIcons();
+    },
+
+    // [修改] 关闭视图 -> 呼叫指挥官返回 home 视图
+    closeView() {
+        ViewCommander.navigate('home');
+    }
+};
+
+// 启动
+ArchivesManager.init();
+
+/* ==========================================================================
+   ABOUT MANAGER (修复缺失的模块)
+   ========================================================================== */
+const AboutManager = {
+    isLoaded: false,
+
+    init() {
+        // 防止重复加载
+        if (this.isLoaded) return; 
+
+        const container = document.getElementById('about-view-container');
+        if(!container) return;
+
+        // 1. 先显示加载动画
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-64 opacity-50">
+                <div class="w-8 h-8 border-2 border-[var(--secondary-color)] border-t-transparent rounded-full animate-spin mb-4"></div>
+                <span class="font-mono text-xs text-[var(--secondary-color)] tracking-widest">DECODING IDENTITY_FILE...</span>
+            </div>
+        `;
+
+        // 2. 去抓取 about-fragment.html 文件
+        fetch('about-fragment.html')
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}: File not found`);
+                return response.text();
+            })
+            .then(html => {
+                // 3. 注入内容
+                container.innerHTML = html;
+                this.isLoaded = true;
+                
+                // 4. 刷新图标
+                if(typeof lucide !== 'undefined') lucide.createIcons();
+            })
+            .catch(err => {
+                console.error(err);
+                container.innerHTML = `<div class="text-red-500 font-mono text-center pt-20">
+                    LOAD ERROR: ${err.message}<br>
+                    <span class="text-xs opacity-50">请检查 about-fragment.html 是否存在且文件名正确</span>
+                </div>`;
+            });
+    }
+};
+
+/* ==========================================================================
+   STEAM MANAGER (EVA DATA MODULE)
+   ========================================================================== */
+const SteamManager = {
+    // 请确保这里的 URL 和你的 Worker 一致
+    workerEndpoint: 'https://eva-proxy.whte97284.workers.dev/steam/summary',
+    isLoaded: false,
+
+    init() {
+        if (this.isLoaded) return;
+        this.fetchData();
+    },
+
+    async fetchData() {
+        const statusEl = document.getElementById('steam-status');
+        if(statusEl) statusEl.innerText = "同步率测定中...";
+
+        try {
+            const res = await fetch(this.workerEndpoint);
+            const data = await res.json();
+            
+            this.renderDashboard(data);
+            this.renderGames(data.stats.top_games);
+            this.isLoaded = true;
+
+        } catch (e) {
+            console.error(e);
+            if(statusEl) {
+                statusEl.innerHTML = "<span class='text-red-500'>链接中断</span>";
+            }
+        }
+    },
+
+    renderDashboard(data) {
+        // 1. 渲染大圆环 (生命挥霍总值)
+        const totalHours = data.stats.total_hours;
+        this.animateValue("total-hours", 0, totalHours, 2000);
+
+        // 圆环动画逻辑
+        const circle = document.getElementById('sync-rate-circle');
+        if (circle) {
+            const maxHours = 5000; // 假设5000小时为满级
+            const percent = Math.min(totalHours / maxHours, 1);
+            const offset = 552 - (552 * percent);
+            setTimeout(() => {
+                circle.style.strokeDashoffset = offset;
+                // 根据肝度变色：0.8以上红色暴走，0.5以上橙色警戒
+                circle.style.stroke = percent > 0.8 ? "#ff0000" : (percent > 0.5 ? "#ffae00" : "var(--secondary-color)");
+            }, 100);
+        }
+
+        // 2. 渲染下方三个数据块 (EVA 风格大白话)
+        const statusContainer = document.querySelector('.lg\\:col-span-4 .mt-6');
+        if (statusContainer) {
+            statusContainer.innerHTML = `
+                <div class="grid grid-cols-3 gap-2 text-center mt-8">
+                    <div class="p-2 border border-white/10 bg-black/40">
+                        <div class="text-[var(--secondary-color)] font-serif font-black text-xl">${data.stats.game_count}</div>
+                        <div class="text-[8px] text-gray-500 font-mono mt-1">库存总数</div>
+                    </div>
+                    <div class="p-2 border border-white/10 bg-black/40">
+                        <div class="text-white font-serif font-black text-xl">${data.stats.shame_rate}%</div>
+                        <div class="text-[8px] text-gray-500 font-mono mt-1">库存吃灰率</div>
+                    </div>
+                    <div class="p-2 border border-white/10 bg-black/40">
+                        <div class="text-[#ffae00] font-serif font-black text-xl">${data.stats.recent_hours}h</div>
+                        <div class="text-[8px] text-gray-500 font-mono mt-1">近期肝度</div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 border-t border-white/10 pt-4">
+                    <div class="text-[var(--primary-color)] font-serif font-bold text-lg" id="steam-status-text">
+                        ${data.user.game_extra_info ? '⚠ 战斗中 ⚠' : '待机中'}
+                    </div>
+                    <div class="text-[10px] text-gray-400 font-mono mt-1 tracking-widest">
+                        ${data.user.game_extra_info ? `PILOTING: ${data.user.game_extra_info}` : 'SYSTEM STANDBY'}
+                    </div>
+                </div>
+            `;
+            
+            // 如果在玩游戏，改变全局氛围
+            if(data.user.game_extra_info) {
+                document.getElementById('steam-status-text').classList.add('animate-pulse', 'text-red-500');
+            }
+        }
+        
+        // 修改大标题下的小字
+        const label = document.querySelector('#total-hours + span');
+        if(label) label.innerText = "生命挥霍 (小时)";
+    },
+
+    renderGames(games) {
+        const list = document.getElementById('steam-game-list');
+        // 修改列表标题
+        const listTitle = document.querySelector('#steam-view-container h2');
+        if(listTitle) listTitle.innerText = "精神污染源排行";
+
+        list.innerHTML = games.map((game, index) => `
+            <div class="eva-card flex items-center p-3 bg-black/40 border-l-2 border-l-transparent hover:border-l-[var(--secondary-color)] border-y border-y-white/5 border-r border-r-white/5 transition-all group" 
+                 style="animation: dataStream 0.5s ease forwards; animation-delay: ${index * 0.1}s; opacity: 0;">
+                
+                <div class="relative mr-4">
+                    <img src="${game.icon_url}" class="w-12 h-12 rounded-sm filter grayscale group-hover:grayscale-0 transition-all">
+                    <div class="absolute -bottom-1 -right-1 bg-black/80 text-[var(--secondary-color)] text-[8px] font-mono px-1 border border-white/10">
+                        NO.${index + 1}
+                    </div>
+                </div>
+                
+                <div class="flex-1 min-w-0">
+                    <div class="text-white font-serif font-bold text-sm truncate group-hover:text-[var(--primary-color)] transition-colors">
+                        ${game.name}
+                    </div>
+                    <div class="flex items-center gap-2 mt-1">
+                        <div class="w-24 h-1 bg-white/10 rounded overflow-hidden">
+                            <div class="h-full bg-[var(--secondary-color)]" style="width: ${Math.min(game.hours / 20, 100)}%"></div>
+                        </div>
+                        <div class="text-[10px] text-gray-400 font-mono">${game.hours} H</div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    },
+
+    animateValue(id, start, end, duration) {
+        const obj = document.getElementById(id);
+        if(!obj) return;
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            obj.innerHTML = Math.floor(progress * (end - start) + start);
+            if (progress < 1) window.requestAnimationFrame(step);
+        };
+        window.requestAnimationFrame(step);
+    }
+};
+
+/* ==========================================================================
+   PIXIV MANAGER (VISUAL ARCHIVE) [FIXED & ENHANCED]
+   ========================================================================== */
+const PixivManager = {
+    // 你的 Worker 地址
+    workerEndpoint: 'https://eva-proxy.whte97284.workers.dev/pixiv/rank',
+    isLoaded: false,
+
+    init() {
+        if (this.isLoaded) return;
+        this.fetchData();
+    },
+
+    async fetchData() {
+        const dateEl = document.getElementById('pixiv-date');
+        const grid = document.getElementById('pixiv-grid');
+        if(dateEl) dateEl.innerText = "DATE: SYNCING...";
+        
+        try {
+            const res = await fetch(this.workerEndpoint);
+            
+            // 1. 先判断 HTTP 状态
+            if (!res.ok) throw new Error(`HTTP_${res.status}`);
+            
+            const data = await res.json();
+            
+            // 2. [关键修复] 检查数据结构是否完整
+            if (data.error || !data.list || !Array.isArray(data.list)) {
+                console.error("Worker Error:", data);
+                throw new Error(data.msg || "INVALID_DATA_STRUCTURE");
+            }
+            
+            // 3. 更新 UI
+            if(dateEl) dateEl.innerText = `DATE: ${data.date}`;
+            this.renderGrid(data.list);
+            this.isLoaded = true;
+
+        } catch (e) {
+            console.error("[PIXIV_SYNC_FAIL]", e);
+            if(dateEl) {
+                dateEl.innerText = "STATUS: OFFLINE";
+                dateEl.classList.add('text-red-500');
+            }
+            if(grid) {
+                grid.innerHTML = `
+                    <div class="col-span-full flex flex-col items-center justify-center p-10 border border-red-500/30 bg-red-500/5">
+                        <div class="text-red-500 font-mono text-xl font-bold mb-2">⚠ SIGNAL LOST</div>
+                        <div class="text-gray-500 font-mono text-xs max-w-md text-center">
+                            无法连接到视觉神经元 (Pixiv API)。<br>
+                            ERROR_LOG: <span class="text-red-400">${e.message}</span>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    },
+
+    renderGrid(items) {
+        const grid = document.getElementById('pixiv-grid');
+        if (!grid) return;
+
+        // R-18 过滤
+        const safeItems = items.filter(i => !i.tags.includes('R-18'));
+
+        grid.innerHTML = safeItems.map((item, index) => {
+            // [优化] 图片代理策略
+            // 策略：使用 weserv 压缩，将 i.pixiv.re 转为 webp
+            const safeUrl = `https://images.weserv.nl/?url=${encodeURIComponent(item.url)}&w=400&output=webp`;
+
+            return `
+            <div class="break-inside-avoid mb-4 group relative overflow-hidden bg-black/50 border border-white/10 hover:border-[var(--primary-color)] transition-all duration-500 cursor-pointer"
+                 onclick="window.open('https://www.pixiv.net/artworks/${item.id}', '_blank')"
+                 style="animation: popIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: ${index * 0.05}s; opacity: 0;">
+                
+                <div class="relative w-full">
+                    <div class="relative min-h-[150px] bg-gray-900/50">
+                        <div class="absolute inset-0 flex items-center justify-center z-0">
+                            <span class="text-[8px] font-mono text-gray-600 animate-pulse">DECODING...</span>
+                        </div>
+
+                        <img src="${safeUrl}" 
+                             class="w-full h-auto object-cover relative z-10 transition-all duration-700 filter blur-md scale-110 opacity-0"
+                             onload="this.classList.remove('blur-md', 'scale-110', 'opacity-0')"
+                             onerror="this.parentElement.innerHTML='<div class=\'p-4 text-[8px] text-red-500 text-center\'>IMG_CORRUPT</div>'"
+                             loading="lazy">
+                    </div>
+                    
+                    <div class="absolute top-0 left-0 bg-[var(--primary-color)] text-black font-mono text-[10px] px-2 py-0.5 z-20 font-bold shadow-[0_0_10px_var(--primary-color)]">
+                        #${item.rank}
+                    </div>
+                </div>
+
+                <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-30 flex flex-col justify-end p-3">
+                    <h3 class="text-white text-xs font-bold line-clamp-1 font-sans text-shadow">${item.title}</h3>
+                    <div class="text-[9px] text-[var(--secondary-color)] font-mono">ARTIST: ${item.author}</div>
+                </div>
+            </div>
+            `;
+        }).join('');
+    }
+};
+
+// 将新模块挂载到 Window 以便调试
+window.SteamManager = SteamManager;
+window.PixivManager = PixivManager;
+
+// 将其挂载到全局，确保控制台能访问
+window.AboutManager = AboutManager;
+// ==========================================
+// SYSTEM STARTUP
+// ==========================================
+// 启动全局渲染核心 (这将同时带动 Matrix 和 LCL)
+GlobalRender.start();
+
+console.log("MAGI SYSTEM: GRAPHICS ENGINE LINKED.");
