@@ -1110,6 +1110,43 @@ input[type=range]::-webkit-slider-runnable-track {
         .ctrl-btn.active-watched { background: #ff2a2a; color: white; border-color: #ff2a2a; }
         .ctrl-btn.active-dropped { background: #555; color: #aaa; border-color: #555; }
 
+        /* --- ABOUT MODULE STYLES (身份验证模块) --- */
+.cyber-card { 
+    background: rgba(20, 10, 30, 0.6); 
+    backdrop-filter: blur(12px); 
+    border: 1px solid var(--border-color); 
+    border-left: 2px solid var(--secondary-color);
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%); 
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+}
+.cyber-card:hover { 
+    background: rgba(255, 255, 255, 0.03); 
+    box-shadow: 0 0 20px rgba(var(--secondary-color), 0.2); 
+    border-color: var(--primary-color); 
+    transform: translateY(-2px); 
+}
+
+/* 技能条动画 */
+.load-bar-fill { 
+    background: var(--secondary-color); 
+    box-shadow: 0 0 10px var(--secondary-color); 
+    width: 0%;
+    animation: loadBar 1.5s ease-out forwards;
+}
+@keyframes loadBar { to { width: var(--target-width); } }
+
+/* 头像故障微效 */
+.avatar-glitch { position: relative; overflow: hidden; }
+.avatar-glitch::before { 
+    content: ''; position: absolute; inset: 0; 
+    background: var(--secondary-color); 
+    mix-blend-mode: hard-light; opacity: 0; pointer-events: none; 
+}
+.avatar-glitch:hover::before { 
+    opacity: 0.2; 
+    animation: glitch 0.3s cubic-bezier(.25, .46, .45, .94) both infinite; 
+}
+
         /* 3. 分组标题 */
         .group-header {
             font-family: 'JetBrains Mono'; font-size: 10px; font-weight: bold;
