@@ -2658,49 +2658,18 @@ const ArchivesManager = {
 ArchivesManager.init();
 
 /* ==========================================================================
-   ABOUT MANAGER (修复缺失的模块)
+   ABOUT MANAGER (STATIC MODE)
    ========================================================================== */
 const AboutManager = {
-    isLoaded: false,
-
     init() {
-        // 防止重复加载
-        if (this.isLoaded) return; 
-
-        const container = document.getElementById('about-view-container');
-        if(!container) return;
-
-        // 1. 先显示加载动画
-        container.innerHTML = `
-            <div class="flex flex-col items-center justify-center h-64 opacity-50">
-                <div class="w-8 h-8 border-2 border-[var(--secondary-color)] border-t-transparent rounded-full animate-spin mb-4"></div>
-                <span class="font-mono text-xs text-[var(--secondary-color)] tracking-widest">DECODING IDENTITY_FILE...</span>
-            </div>
-        `;
-
-        // 2. 去抓取 about-fragment.html 文件
-        fetch('about-fragment.html')
-            .then(response => {
-                if (!response.ok) throw new Error(`HTTP ${response.status}: File not found`);
-                return response.text();
-            })
-            .then(html => {
-                // 3. 注入内容
-                container.innerHTML = html;
-                this.isLoaded = true;
-                
-                // 4. 刷新图标
-                if(typeof lucide !== 'undefined') lucide.createIcons();
-            })
-            .catch(err => {
-                console.error(err);
-                container.innerHTML = `<div class="text-red-500 font-mono text-center pt-20">
-                    LOAD ERROR: ${err.message}<br>
-                    <span class="text-xs opacity-50">请检查 about-fragment.html 是否存在且文件名正确</span>
-                </div>`;
-            });
+        console.log("IDENTITY_FILE: LOADED");
+        // 仅仅确保图标被渲染，不再进行网络请求
+        if(typeof lucide !== 'undefined') lucide.createIcons();
     }
 };
+
+// 确保挂载到全局
+window.AboutManager = AboutManager;
 
 /* ==========================================================================
    STEAM MANAGER (EVA DATA MODULE)
