@@ -252,94 +252,124 @@
     </div>
 </div>
 
-    <nav class="fixed top-0 w-full z-40 px-6 md:px-12 py-6 flex justify-between items-center bg-gradient-to-b from-bg via-bg/80 to-transparent select-none backdrop-blur-[2px]">
-        <div class="flex items-center gap-6">
-            <div class="flex flex-col">
-                <a href="index.html" class="group w-fit">
-                    <span class="text-2xl font-black tracking-tighter leading-none text-white group-hover:text-primary transition-colors italic font-serif" style="font-family: 'Noto Serif SC', serif;">WH1TE.LOG</span>
-                </a>
-                
-                <div class="flex items-center gap-4 mt-2">
-                    <div class="tactical-switch" onclick="toggleTacticalMode()">
-                        <div class="switch-box">
-                            <div class="switch-box-inner"></div>
-                        </div>
-                        <span>TACTICAL</span>
-                    </div>
-
-                    <div class="tactical-switch" onclick="toggleLightMode()">
-                        <div class="switch-box">
-                            <div class="switch-box-inner" id="light-mode-indicator"></div>
-                        </div>
-                        <span>VISUAL</span>
-                    </div>
-
-                    <div class="tactical-switch tactical-switch-lcl" onclick="toggleLCLMode()">
-                        <div class="switch-box" style="border-color: inherit;">
-                            <div class="switch-box-inner switch-box-inner-lcl"></div>
-                        </div>
-                        <span style="color: inherit;">LCL FLUID</span>
-                    </div>
-                </div>
-            </div>
+    <nav class="fixed top-0 w-full z-40 px-6 md:px-12 flex items-center justify-between select-none transition-all duration-500
+            /* 基础样式 */
+            py-8 backdrop-blur-[2px]
             
-            <div class="flex gap-2 ml-8 items-center px-4 py-1 border-l border-white/10">
-                <div class="theme-btn active" style="background: #7d2ae8; border-color: #39ff14;" onclick="setTheme('default')" title="Unit-01 (Shinji)"></div>
-                <div class="theme-btn" style="background: #d90000; border-color: #ffae00;" onclick="setTheme('unit-02')" title="Unit-02 (Asuka)"></div>
-                <div class="theme-btn" style="background: #0091ff; border-color: #ffffff;" onclick="setTheme('unit-00')" title="Unit-00 (Rei)"></div>
-                <div class="theme-btn" style="background: #ff5cab; border-color: #50c878;" onclick="setTheme('unit-08')" title="Unit-08 (Mari)"></div>
-            </div>
-        </div>
-        <div class="hidden md:flex items-center gap-8 select-none h-full">
-    
-    <a href="#" onclick="toggleView('home'); return false;" class="group relative flex items-center h-full py-2">
-        <span class="font-mono text-xs text-gray-500/60 group-hover:text-[var(--primary-color)] transition-colors mr-2">01</span>
-        <span class="font-serif text-sm font-black tracking-widest text-gray-400 group-hover:text-[var(--primary-color)] transition-colors" style="font-family: 'Noto Serif SC', serif;">主控枢纽</span>
-        <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
-    </a>
+            /* --- 暗色模式 (默认) --- */
+            /* 使用渐变，边缘清晰 */
+            bg-gradient-to-b from-xxx/95 to-black/0 
+            border-white/5
 
-    <div class="relative group h-full flex items-center">
-        <a href="javascript:void(0)" class="relative flex items-center h-full py-2 cursor-pointer">
-            <span class="font-mono text-xs text-gray-500/60 group-hover:text-[var(--primary-color)] transition-colors mr-2">02</span>
-            <span class="font-serif text-sm font-black tracking-widest text-gray-400 group-hover:text-[var(--primary-color)] transition-colors" style="font-family: 'Noto Serif SC', serif;">档案检索</span>
-            <i data-lucide="chevron-down" class="w-3 h-3 ml-1 text-gray-500/40 group-hover:text-[var(--primary-color)] transition-transform duration-300 group-hover:rotate-180"></i>
-            <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
+            /* --- 亮色模式 (Visual Mode) --- */
+            /* 1. !bg-none: 强制关掉渐变图片，防止叠加 */
+            /* 2. bg-white/90: 高浓度白色，遮盖底部黑色 */
+            /* 3. border-white/40: 用半透明白边框代替灰边框，增加晶莹感 */
+            data-[mode=light]:!bg-none 
+            data-[mode=light]:bg-white/90 
+            data-[mode=light]:border-white/40
+            data-[mode=light]:shadow-[0_4px_30px_rgba(255,255,255,0.2)]">
+    
+    <div class="flex items-center gap-8 z-50">
+        <a href="index.html" class="group w-fit">
+            <span class="text-2xl font-black tracking-tighter leading-none italic font-serif transition-colors
+                         text-white group-hover:text-[var(--primary-color)]
+                         /* 亮色模式下 Logo 使用深色或主题色，对比度更高 */
+                         data-[mode=light]:text-black/80 data-[mode=light]:group-hover:text-[var(--primary-color)]" 
+                  style="font-family: 'Noto Serif SC', serif;">WH1TE.LOG</span>
         </a>
         
-        <div class="absolute top-full left-1/2 -translate-x-1/2 pt-3 w-44 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 z-50">
-            <div class="bg-[#0a0a0a]/95 backdrop-blur-md border border-white/10 border-t-[var(--primary-color)] shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
-                <div id="category-dropdown-list" class="flex flex-col py-2">
-                    <span class="text-[10px] text-gray-500 px-4 py-2 font-mono opacity-70">/// AWAITING_SYNC...</span>
+        <div class="flex flex-col gap-1 border-l pl-5 transition-colors
+                    border-white/20 data-[mode=light]:border-black/10">
+            
+            <div class="flex items-center gap-3 scale-75 origin-left">
+                <div class="tactical-switch" onclick="toggleTacticalMode()">
+                    <div class="switch-box" style="border-color: currentColor;">
+                        <div class="switch-box-inner" style="background-color: currentColor;"></div>
+                    </div>
+                    <span class="text-gray-400 data-[mode=light]:text-gray-600">鼠标</span>
                 </div>
+
+                <div class="tactical-switch" onclick="toggleLightMode()">
+                    <div class="switch-box" style="border-color: currentColor;">
+                        <div class="switch-box-inner" id="light-mode-indicator" style="background-color: currentColor;"></div>
+                    </div>
+                    <span class="text-gray-400 data-[mode=light]:text-gray-600">light</span>
+                </div>
+
+                <div class="tactical-switch tactical-switch-lcl" onclick="toggleLCLMode()">
+                    <div class="switch-box" style="border-color: currentColor;">
+                        <div class="switch-box-inner switch-box-inner-lcl" style="background-color: currentColor;"></div>
+                    </div>
+                    <span class="text-gray-400 data-[mode=light]:text-gray-600">LCL</span>
+                </div>
+            </div>
+
+            <div class="flex gap-2 items-center px-1 scale-90 origin-left">
+                <div class="theme-btn active" style="background: #7d2ae8; border-color: #39ff14;" onclick="setTheme('default')" title="Unit-01"></div>
+                <div class="theme-btn" style="background: #d90000; border-color: #ffae00;" onclick="setTheme('unit-02')" title="Unit-02"></div>
+                <div class="theme-btn" style="background: #0091ff; border-color: #ffffff;" onclick="setTheme('unit-00')" title="Unit-00"></div>
+                <div class="theme-btn" style="background: #ff5cab; border-color: #50c878;" onclick="setTheme('unit-08')" title="Unit-08"></div>
             </div>
         </div>
     </div>
+    
+    <div class="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-10 h-full z-40">
+        
+        <a href="#" onclick="toggleView('home'); return false;" class="group relative flex items-center h-full py-2">
+            <span class="font-mono text-xs mr-2 transition-colors text-gray-500/60 group-hover:text-[var(--primary-color)] data-[mode=light]:text-[var(--primary-color)]/80">01</span>
+            <span class="font-serif text-sm font-black tracking-widest transition-colors text-gray-400 group-hover:text-[var(--primary-color)] data-[mode=light]:text-black/70 data-[mode=light]:group-hover:text-[var(--primary-color)]" style="font-family: 'Noto Serif SC', serif;">主控枢纽</span>
+            <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
+        </a>
 
-    <a href="#" onclick="toggleView('about'); return false;" class="group relative flex items-center h-full py-2">
-        <span class="font-mono text-xs text-gray-500/60 group-hover:text-[var(--primary-color)] transition-colors mr-2">03</span>
-        <span class="font-serif text-sm font-black tracking-widest text-gray-400 group-hover:text-[var(--primary-color)] transition-colors" style="font-family: 'Noto Serif SC', serif;">身份验证</span>
-        <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
-    </a>
+        <div class="relative group h-full flex items-center">
+            <a href="javascript:void(0)" class="relative flex items-center h-full py-2 cursor-pointer">
+                <span class="font-mono text-xs mr-2 transition-colors text-gray-500/60 group-hover:text-[var(--primary-color)] data-[mode=light]:text-[var(--primary-color)]/80">02</span>
+                <span class="font-serif text-sm font-black tracking-widest transition-colors text-gray-400 group-hover:text-[var(--primary-color)] data-[mode=light]:text-black/70 data-[mode=light]:group-hover:text-[var(--primary-color)]" style="font-family: 'Noto Serif SC', serif;">档案检索</span>
+                <i data-lucide="chevron-down" class="w-3 h-3 ml-1 transition-transform duration-300 group-hover:rotate-180 text-gray-500/40 group-hover:text-[var(--primary-color)] data-[mode=light]:text-black/50"></i>
+                <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
+            </a>
+            
+            <div class="absolute top-full left-1/2 -translate-x-1/2 pt-6 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 z-50">
+                <div class="backdrop-blur-xl border shadow-[0_4px_30px_rgba(0,0,0,0.5)] rounded-lg overflow-hidden
+                            bg-[#0a0a0a]/95 border-white/10 border-t-[var(--primary-color)]
+                            data-[mode=light]:bg-white/95 data-[mode=light]:border-white/50 data-[mode=light]:shadow-xl">
+                    <div id="category-dropdown-list" class="flex flex-col py-2">
+                        <span class="text-[10px] px-4 py-2 font-mono opacity-70 text-gray-500 data-[mode=light]:text-[var(--primary-color)]">/// AWAITING_SYNC...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    <a href="#" onclick="toggleView('bangumi'); return false;" class="group relative flex items-center h-full py-2">
-        <span class="font-mono text-xs text-gray-500/60 group-hover:text-[var(--primary-color)] transition-colors mr-2">04</span>
-        <span class="font-serif text-sm font-black tracking-widest text-gray-400 group-hover:text-[var(--primary-color)] transition-colors" style="font-family: 'Noto Serif SC', serif;">观测计划</span>
-        <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
-    </a>
-    <a href="#" onclick="toggleView('pixiv'); return false;" class="group relative flex items-center h-full py-2">
-        <span class="font-mono text-xs text-gray-500/60 group-hover:text-[var(--primary-color)] transition-colors mr-2">05</span>
-        <span class="font-serif text-sm font-black tracking-widest text-gray-400 group-hover:text-[var(--primary-color)] transition-colors" style="font-family: 'Noto Serif SC', serif;">视觉档案</span>
-        <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
-    </a>
+        <a href="#" onclick="toggleView('about'); return false;" class="group relative flex items-center h-full py-2">
+            <span class="font-mono text-xs mr-2 transition-colors text-gray-500/60 group-hover:text-[var(--primary-color)] data-[mode=light]:text-[var(--primary-color)]/80">03</span>
+            <span class="font-serif text-sm font-black tracking-widest transition-colors text-gray-400 group-hover:text-[var(--primary-color)] data-[mode=light]:text-black/70 data-[mode=light]:group-hover:text-[var(--primary-color)]" style="font-family: 'Noto Serif SC', serif;">身份验证</span>
+            <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
+        </a>
 
-    <a href="#" onclick="toggleView('steam'); return false;" class="group relative flex items-center h-full py-2">
-        <span class="font-mono text-xs text-gray-500/60 group-hover:text-[var(--primary-color)] transition-colors mr-2">06</span>
-        <span class="font-serif text-sm font-black tracking-widest text-gray-400 group-hover:text-[var(--primary-color)] transition-colors" style="font-family: 'Noto Serif SC', serif;">模拟记录</span>
-        <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
-    </a>
+        <a href="#" onclick="toggleView('bangumi'); return false;" class="group relative flex items-center h-full py-2">
+            <span class="font-mono text-xs mr-2 transition-colors text-gray-500/60 group-hover:text-[var(--primary-color)] data-[mode=light]:text-[var(--primary-color)]/80">04</span>
+            <span class="font-serif text-sm font-black tracking-widest transition-colors text-gray-400 group-hover:text-[var(--primary-color)] data-[mode=light]:text-black/70 data-[mode=light]:group-hover:text-[var(--primary-color)]" style="font-family: 'Noto Serif SC', serif;">观测计划</span>
+            <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
+        </a>
+        
+        <a href="#" onclick="toggleView('pixiv'); return false;" class="group relative flex items-center h-full py-2">
+            <span class="font-mono text-xs mr-2 transition-colors text-gray-500/60 group-hover:text-[var(--primary-color)] data-[mode=light]:text-[var(--primary-color)]/80">05</span>
+            <span class="font-serif text-sm font-black tracking-widest transition-colors text-gray-400 group-hover:text-[var(--primary-color)] data-[mode=light]:text-black/70 data-[mode=light]:group-hover:text-[var(--primary-color)]" style="font-family: 'Noto Serif SC', serif;">视觉档案</span>
+            <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
+        </a>
 
-</div>
-    </nav>
+        <a href="#" onclick="toggleView('steam'); return false;" class="group relative flex items-center h-full py-2">
+            <span class="font-mono text-xs mr-2 transition-colors text-gray-500/60 group-hover:text-[var(--primary-color)] data-[mode=light]:text-[var(--primary-color)]/80">06</span>
+            <span class="font-serif text-sm font-black tracking-widest transition-colors text-gray-400 group-hover:text-[var(--primary-color)] data-[mode=light]:text-black/70 data-[mode=light]:group-hover:text-[var(--primary-color)]" style="font-family: 'Noto Serif SC', serif;">模拟记录</span>
+            <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
+        </a>
+    </div>
+
+    <button class="md:hidden z-50 ml-auto transition-colors text-white data-[mode=light]:text-black" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+        <i data-lucide="menu"></i>
+    </button>
+</nav>
 
     <header class="relative pt-48 pb-12 max-w-screen-xl mx-auto px-6 md:px-12 flex flex-col justify-center items-start text-left z-20 min-h-[65vh]">
         <div class="absolute top-24 right-[20%] opacity-80 pointer-events-none z-0 hidden lg:flex flex-col gap-3 scale-90 origin-top-right">
@@ -719,4 +749,3 @@
 <script src="main.js"></script>
 </body>
 </html>
-
