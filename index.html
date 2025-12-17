@@ -1452,8 +1452,25 @@ input[type=range]::-webkit-slider-runnable-track {
 
             <div class="mt-16 relative w-full max-w-xl group transform transition-transform hover:scale-[1.02]">
                 <div class="absolute -top-4 left-0 bg-bg px-2 text-[10px] font-mono text-secondary border border-secondary/50">SEARCH_DATABASE</div>
-                <input type="text" id="search-input" placeholder="ENTER KEYWORD..." oninput="searchArticles()" class="w-full pl-6 pr-12 py-5 bg-white/60 backdrop-blur-xl border-b-2 border-white/20 text-white font-mono text-xl placeholder-white/10 focus:border-secondary focus:bg-white/60 focus:outline-none transition-all uppercase tracking-widest focus:shadow-[0_10px_30px_-10px_var(--secondary-color)]">
-                <div class="absolute right-0 bottom-0 w-0 h-0 border-l-[12px] border-l-transparent border-b-[12px] border-b-secondary"></div>
+                <input type="text" 
+       id="search-input" 
+       placeholder="ENTER KEYWORD..." 
+       oninput="searchArticles()" 
+       class="w-full pl-6 pr-12 py-5 
+              font-mono text-xl uppercase tracking-widest backdrop-blur-xl border-b-2 transition-all focus:outline-none
+              focus:border-[var(--secondary-color)] focus:shadow-[0_10px_30px_-10px_var(--secondary-color)]
+              
+              /* --- 暗色模式 (默认) --- */
+              bg-black/30 border-white/20 text-white placeholder-white/30 focus:bg-black/50
+              
+              /* --- 亮色模式 (Visual Mode) --- */
+              data-[mode=light]:bg-white/80 
+              data-[mode=light]:border-black/10 
+              data-[mode=light]:text-gray-900 
+              data-[mode=light]:placeholder-gray-400 
+              data-[mode=light]:focus:bg-white">
+
+<div class="absolute right-0 bottom-0 w-0 h-0 border-l-[12px] border-l-transparent border-b-[12px] border-b-[var(--secondary-color)] pointer-events-none"></div>
                 <div class="absolute top-12 right-4 -translate-y-12 text-secondary opacity-50 group-focus-within:opacity-100 animate-pulse">></div>
             </div>
         </div>
@@ -1737,6 +1754,73 @@ input[type=range]::-webkit-slider-runnable-track {
 
     <script>
         lucide.createIcons();
+
+        /* ==========================================================================
+   MAGI RENDER CORE (FPS LIMITER)
+   功能：接管动画循环，限制帧率，标签页不可见时自动休眠
+   ========================================================================== */
+class RenderCore {
+    constructor(fps = 30) {
+        this.fps = fps;
+        this.interval = 1000 / this.fps; // 每一帧的间隔 (ms)
+        this.lastTime = 0;
+        this.isRunning = false;
+        this.tasks = []; // 存储所有需要渲染的函数
+        this.rafId = null;
+
+        // 自动休眠监测：当用户切走标签页时停止渲染
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+                this.stop();
+                console.log(`[RENDER_CORE] System Hibernating...`);
+            } else {
+                this.start();
+                console.log(`[RENDER_CORE] System Resumed.`);
+            }
+        });
+    }
+
+    // 添加渲染任务 (比如传入 drawMatrix, drawLCL)
+    add(taskName, taskFunction) {
+        this.tasks.push({ name: taskName, fn: taskFunction });
+        console.log(`[RENDER_CORE] Task Added: ${taskName}`);
+    }
+
+    // 核心循环
+    loop(timestamp) {
+        if (!this.isRunning) return;
+
+        // 请求下一帧
+        this.rafId = requestAnimationFrame(this.loop.bind(this));
+
+        // 计算时间差
+        const elapsed = timestamp - this.lastTime;
+
+        // 如果时间差大于设定的间隔，则进行渲染
+        if (elapsed > this.interval) {
+            // [关键算法] 修正时间戳，减去多余的偏差，防止动画越跑越快或卡顿
+            this.lastTime = timestamp - (elapsed % this.interval);
+
+            // 执行所有任务
+            this.tasks.forEach(task => task.fn());
+        }
+    }
+
+    start() {
+        if (this.isRunning) return;
+        this.isRunning = true;
+        this.lastTime = performance.now();
+        this.loop(performance.now());
+    }
+
+    stop() {
+        this.isRunning = false;
+        if (this.rafId) cancelAnimationFrame(this.rafId);
+    }
+}
+
+// 初始化全局渲染核心 (锁定 30FPS，既省电又流畅)
+const GlobalRender = new RenderCore(30);
 
         /* ==========================================================================
            CORE OPTIMIZATION DEVICE & CAPABILITY DETECTION
@@ -2086,101 +2170,134 @@ input[type=range]::-webkit-slider-runnable-track {
         /* Initial load */
         initMatrix();
 
-        /* Throttled FPS for matrix rain to save battery */
-        let lastTime = 0;
-        const fps = 30; 
-        const interval = 1000 / fps;
+        /* ==========================================================================
+   1. MATRIX RAIN (Optimized for RenderCore)
+   ========================================================================== */
+// 缓存颜色，避免在循环中查询 DOM
+let matrixColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim();
 
-        function drawMatrix(currentTime) {
-            requestAnimationFrame(drawMatrix);
-            
-            const deltaTime = currentTime - lastTime;
-            if (deltaTime < interval) return;
+// 监听主题变化更新颜色
+const matrixThemeObserver = new MutationObserver(() => {
+    matrixColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim();
+});
+matrixThemeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-mode', 'data-theme'] });
 
-            lastTime = currentTime - (deltaTime % interval);
+function drawMatrix() {
+    // 1. 如果开启了 LCL 模式，跳过绘制以节省性能
+    if (document.body.classList.contains('lcl-mode')) return;
+    
+    // 2. 检查 Canvas 上下文是否存在
+    if (!ctx) return;
 
-            /* If LCL mode is on, we skip drawing matrix rain to save performance and avoid visual clutter */
-            /* CSS opacity handles the fade out, but stopping the loop logic saves CPU */
-            if (document.body.classList.contains('lcl-mode')) return;
+    const isLightMode = document.documentElement.getAttribute('data-mode') === 'light';
 
-            const isLightMode = document.documentElement.getAttribute('data-mode') === 'light';
-
-            /* 核心修改：适配亮色模式
-             * 暗色模式：使用黑色遮罩
-             * 亮色模式：使用白色遮罩，让拖尾变白
-             */
-            ctx.fillStyle = isLightMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.025)'; 
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            const style = getComputedStyle(document.documentElement);
-            const color = style.getPropertyValue('--secondary-color').trim(); 
-            
-            /* 核心修改：增强霓虹辉光 (原为 8) */
-            ctx.shadowBlur = 14; 
-            ctx.shadowColor = color;
-            
-            ctx.fillStyle = color; 
-            ctx.font = 'bold ' + fontSize + 'px JetBrains Mono, monospace';
-            
-            for (let i = 0; i < drops.length; i++) {
-                const text = katakana.charAt(Math.floor(Math.random() * katakana.length));
-                
-                /* 核心修改：随机高亮白色脉冲 */
-                if (Math.random() > 0.98) {
-                    ctx.fillStyle = isLightMode ? '#000' : '#fff'; /* 亮色模式下高亮为黑色，暗色为白色 */
-                    ctx.shadowColor = isLightMode ? '#000' : '#fff';
-                    ctx.shadowBlur = 20; /* 高亮时辉光增强 */
-                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-                    /* 还原样式 */
-                    ctx.fillStyle = color;
-                    ctx.shadowColor = color;
-                    ctx.shadowBlur = 14;
-                } else {
-                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-                }
-                
-                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-                    drops[i] = 0;
-                }
-                drops[i]++;
-            }
-            
-            /* 重置 Shadow 避免影响下一帧的 fillRect 性能 */
-            ctx.shadowBlur = 0;
-        }
-        requestAnimationFrame(drawMatrix);
-
-        /* --- Holo Wave Animation --- */
-        const holoWaveCanvas = document.getElementById('holo-wave');
-        const holoCtx = holoWaveCanvas.getContext('2d');
-        function resizeHolo() { holoWaveCanvas.width = window.innerWidth; holoWaveCanvas.height = 48; }
-        window.addEventListener('resize', resizeHolo); resizeHolo();
-        let holoOffset = 0;
+    /* * 核心修改：适配亮色模式
+     * 暗色模式：黑色半透明遮罩 (制造拖尾)
+     * 亮色模式：白色半透明遮罩
+     */
+    ctx.fillStyle = isLightMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.025)'; 
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    /* 核心修改：增强霓虹辉光 */
+    ctx.shadowBlur = 14; 
+    ctx.shadowColor = matrixColor; // 使用缓存颜色
+    
+    ctx.fillStyle = matrixColor; 
+    ctx.font = 'bold ' + fontSize + 'px JetBrains Mono, monospace';
+    
+    for (let i = 0; i < drops.length; i++) {
+        const text = katakana.charAt(Math.floor(Math.random() * katakana.length));
         
-        function drawHoloWave() {
-            /* Basic rAF is fine here, it's small area */
-            holoCtx.clearRect(0, 0, holoWaveCanvas.width, holoWaveCanvas.height);
-            const style = getComputedStyle(document.documentElement);
-            const color = style.getPropertyValue('--secondary-color').trim();
+        /* 核心修改：随机高亮白色脉冲 */
+        if (Math.random() > 0.98) {
+            ctx.fillStyle = isLightMode ? '#000' : '#fff'; /* 亮色黑字，暗色白字 */
+            ctx.shadowColor = isLightMode ? '#000' : '#fff';
+            ctx.shadowBlur = 20; /* 脉冲时辉光增强 */
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
             
-            holoCtx.beginPath(); holoCtx.lineWidth = 1.5; holoCtx.strokeStyle = color;
-            for(let i=0; i<holoWaveCanvas.width; i+=2) { /* Skip every other pixel for performance */
-                const y = 24 + Math.sin((i + holoOffset) * 0.02) * 12 * Math.sin((i + holoOffset * 0.5) * 0.01);
-                if(i===0) holoCtx.moveTo(i, y); else holoCtx.lineTo(i, y);
-            }
-            holoCtx.stroke();
-
-            holoCtx.beginPath(); holoCtx.lineWidth = 0.5; holoCtx.strokeStyle = color; holoCtx.globalAlpha = 0.5;
-            for(let i=0; i<holoWaveCanvas.width; i+=4) { /* Skip more pixels */
-                const y = 24 + Math.sin((i - holoOffset * 2) * 0.1) * 5 + (Math.random() - 0.5) * 3;
-                if(i===0) holoCtx.moveTo(i, y); else holoCtx.lineTo(i, y);
-            }
-            holoCtx.stroke(); holoCtx.globalAlpha = 1;
-
-            holoOffset += 1.5; 
-            requestAnimationFrame(drawHoloWave);
+            /* 还原样式 */
+            ctx.fillStyle = matrixColor;
+            ctx.shadowColor = matrixColor;
+            ctx.shadowBlur = 14;
+        } else {
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
         }
-        drawHoloWave();
+        
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+            drops[i] = 0;
+        }
+        drops[i]++;
+    }
+    
+    /* 重置 Shadow 避免影响下一帧性能 */
+    ctx.shadowBlur = 0;
+    
+    // ❌ 已移除：requestAnimationFrame(drawMatrix);
+    // ❌ 已移除：手动限帧逻辑 (deltaTime 等)
+}
+
+// ✅ 注册到全局渲染核心
+GlobalRender.add('MatrixRain', drawMatrix);
+
+
+/* ==========================================================================
+   2. HOLO WAVE ANIMATION (Optimized for RenderCore)
+   ========================================================================== */
+const holoWaveCanvas = document.getElementById('holo-wave');
+const holoCtx = holoWaveCanvas.getContext('2d');
+
+function resizeHolo() { 
+    holoWaveCanvas.width = window.innerWidth; 
+    holoWaveCanvas.height = 48; 
+}
+window.addEventListener('resize', resizeHolo); 
+resizeHolo();
+
+let holoOffset = 0;
+
+function drawHoloWave() {
+    if(!holoCtx) return;
+
+    holoCtx.clearRect(0, 0, holoWaveCanvas.width, holoWaveCanvas.height);
+    
+    // 使用上方定义的 matrixColor (缓存的 --secondary-color)，无需再次查询
+    const color = matrixColor; 
+    
+    // 绘制主波形
+    holoCtx.beginPath(); 
+    holoCtx.lineWidth = 1.5; 
+    holoCtx.strokeStyle = color;
+    
+    /* 性能优化：每 2 个像素画一次，肉眼看不出区别 */
+    for(let i=0; i<holoWaveCanvas.width; i+=2) { 
+        const y = 24 + Math.sin((i + holoOffset) * 0.02) * 12 * Math.sin((i + holoOffset * 0.5) * 0.01);
+        if(i===0) holoCtx.moveTo(i, y); 
+        else holoCtx.lineTo(i, y);
+    }
+    holoCtx.stroke();
+
+    // 绘制干扰波形 (半透明)
+    holoCtx.beginPath(); 
+    holoCtx.lineWidth = 0.5; 
+    holoCtx.strokeStyle = color; 
+    holoCtx.globalAlpha = 0.5;
+    
+    /* 性能优化：每 4 个像素画一次 */
+    for(let i=0; i<holoWaveCanvas.width; i+=4) { 
+        const y = 24 + Math.sin((i - holoOffset * 2) * 0.1) * 5 + (Math.random() - 0.5) * 3;
+        if(i===0) holoCtx.moveTo(i, y); 
+        else holoCtx.lineTo(i, y);
+    }
+    holoCtx.stroke(); 
+    holoCtx.globalAlpha = 1;
+
+    holoOffset += 1.5; 
+    
+    // ❌ 已移除：requestAnimationFrame(drawHoloWave);
+}
+
+// ✅ 注册到全局渲染核心
+GlobalRender.add('HoloWave', drawHoloWave);
 
         /* --- Marquee Init --- */
         function initMarquee() {
@@ -2805,96 +2922,89 @@ input[type=range]::-webkit-slider-runnable-track {
             });
         }
 
-        /* --- SYNC RATE WAVEFORM VISUALIZER --- */
-        function initSyncRateWave() {
-            const canvas = document.getElementById('sync-wave-canvas');
-            if(!canvas) return;
-            const ctx = canvas.getContext('2d');
-            
-            let width, height;
-            let phase = 0;
-            let speed = 0.05;
-            let amplitude = 10;
-            let frequency = 0.02;
-            let waveState = 'normal'; /* normal, thinking, speaking, flat */
+            /* ==========================================================================
+   SONIC WAVE CONTROLLER (安全修复版)
+   ========================================================================== */
+// 使用立即执行函数 (IIFE) 隔离作用域，防止变量冲突报错
+(function() {
+    // 内部变量定义
+    let localWaveState = 'normal'; 
+    let speed = 0.05;
+    let amplitude = 5;
+    let frequency = 0.02;
+    let phase = 0;
+    
+    // 缓存颜色
+    let cachedColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim();
+    const observer = new MutationObserver(() => {
+        cachedColor = getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim();
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-mode', 'data-theme'] });
 
-            function resize() {
-                /* Match parent container size */
-                const parent = canvas.parentElement;
-                if(parent) {
-                    width = parent.clientWidth;
-                    height = parent.clientHeight; /* Use full height for positioning */
-                    canvas.width = width;
-                    canvas.height = 120; /* Fixed height for canvas draw area */
-                }
-            }
-            window.addEventListener('resize', resize);
-            resize();
+    // 重新挂载全局控制函数 (连接到内部变量)
+    window.setWaveState = (state) => {
+        localWaveState = state;
+    };
 
-            /* Expose state setter globally */
-            window.setWaveState = (state) => {
-                waveState = state;
-            };
+    // 核心绘制函数
+    function drawWave() {
+        // 确保 ctx 和 width 存在 (这两个应该是你代码里全局定义的)
+        if (typeof ctx === 'undefined' || !ctx) return;
+        if (typeof width === 'undefined') return;
 
-            function draw() {
-                if(!ctx) return;
-                ctx.clearRect(0, 0, width, 120);
+        // 清空画布
+        ctx.clearRect(0, 0, width, 120);
 
-                /* Update params based on state */
-                if (waveState === 'normal') {
-                    speed = 0.05; amplitude = 5; frequency = 0.02;
-                } else if (waveState === 'hover') {
-                    speed = 0.1; amplitude = 15; frequency = 0.05;
-                } else if (waveState === 'thinking') {
-                    speed = 0.2; amplitude = 8; frequency = 0.08;
-                } else if (waveState === 'speaking') {
-                    speed = 0.15; 
-                    amplitude = 20 * Math.random(); /* Chaotic */
-                    frequency = 0.1;
-                } else if (waveState === 'flat') {
-                    amplitude = 1; speed = 0.01;
-                }
-
-                /* Get current color from CSS variable */
-                const style = getComputedStyle(document.documentElement);
-                const color = style.getPropertyValue('--secondary-color').trim();
-
-                ctx.beginPath();
-                ctx.lineWidth = 1.5;
-                ctx.strokeStyle = color;
-                
-                /* Draw Sine Wave */
-                for (let x = 0; x < width; x++) {
-                    /* Combine two sine waves for more biological look */
-                    const y = 60 + Math.sin(x * frequency + phase) * amplitude 
-                                 + Math.sin(x * frequency * 2 + phase * 1.5) * (amplitude / 2);
-                    if (x === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
-                }
-                ctx.stroke();
-
-                /* Draw fill under wave */
-                ctx.lineTo(width, 120);
-                ctx.lineTo(0, 120);
-                ctx.fillStyle = color.replace(')', ', 0.1)').replace('rgb', 'rgba'); /* Make it transparent */
-                ctx.fill();
-
-                phase += speed;
-                requestAnimationFrame(draw);
-            }
-            draw();
-
-            /* Hook into hover events of the card */
-            const card = document.getElementById('ai-card');
-            if(card) {
-                card.addEventListener('mouseenter', () => {
-                    if(waveState === 'normal') waveState = 'hover';
-                });
-                card.addEventListener('mouseleave', () => {
-                    if(waveState === 'hover') waveState = 'normal';
-                });
-            }
+        /* --- 状态机参数更新 --- */
+        if (localWaveState === 'normal') {
+            speed = 0.05; amplitude = 5; frequency = 0.02;
+        } else if (localWaveState === 'hover') {
+            speed = 0.1; amplitude = 15; frequency = 0.05;
+        } else if (localWaveState === 'thinking') {
+            speed = 0.2; amplitude = 8; frequency = 0.08;
+        } else if (localWaveState === 'speaking') {
+            speed = 0.15; 
+            frequency = 0.1;
+            // 平滑随机算法
+            const targetAmp = 20 * Math.random(); 
+            amplitude += (targetAmp - amplitude) * 0.1; 
+        } else if (localWaveState === 'flat') {
+            amplitude = 1; speed = 0.01;
         }
+
+        /* --- 绘制逻辑 --- */
+        ctx.beginPath();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = cachedColor;
+
+        for (let x = 0; x < width; x++) {
+            const y = 60 + Math.sin(x * frequency + phase) * amplitude 
+                         + Math.sin(x * frequency * 2 + phase * 1.5) * (amplitude / 2);
+            
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        ctx.lineTo(width, 120);
+        ctx.lineTo(0, 120);
+        
+        ctx.save();
+        ctx.globalAlpha = 0.1;
+        ctx.fillStyle = cachedColor;
+        ctx.fill();
+        ctx.restore();
+
+        phase += speed;
+    }
+
+    // ✅ 注册给指挥官 (确保 GlobalRender 已定义)
+    if (typeof GlobalRender !== 'undefined') {
+        GlobalRender.add('SonicWave', drawWave);
+    } else {
+        console.error("GlobalRender 未定义，请检查代码顺序！");
+    }
+})();
         /* ==========================================================================
    MAGI AUDIO CORE V8.0 (SONIC DECK ADAPTER)
    ========================================================================== */
@@ -4346,6 +4456,13 @@ const AboutManager = {
 
 // 将其挂载到全局，确保控制台能访问
 window.AboutManager = AboutManager;
+// ==========================================
+// SYSTEM STARTUP
+// ==========================================
+// 启动全局渲染核心 (这将同时带动 Matrix 和 LCL)
+GlobalRender.start();
+
+console.log("MAGI SYSTEM: GRAPHICS ENGINE LINKED.");
     </script>
 </body>
 </html>
