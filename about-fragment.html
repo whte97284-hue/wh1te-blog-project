@@ -1,0 +1,123 @@
+<style>
+    /* 局部样式：仅作用于 About 模块 */
+    .cyber-card { 
+        background: rgba(20, 10, 30, 0.6); 
+        backdrop-filter: blur(12px); 
+        border: 1px solid var(--border-color); 
+        border-left: 2px solid var(--secondary-color);
+        clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%); 
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+    }
+    .cyber-card:hover { 
+        background: rgba(255, 255, 255, 0.03); 
+        box-shadow: 0 0 20px rgba(var(--secondary-color), 0.2); 
+        border-color: var(--primary-color); 
+        transform: translateY(-2px); 
+    }
+
+    /* 技能条动画 */
+    .load-bar-fill { 
+        background: var(--secondary-color); 
+        box-shadow: 0 0 10px var(--secondary-color); 
+        width: 0%;
+        animation: loadBar 1.5s ease-out forwards;
+    }
+    @keyframes loadBar { to { width: var(--target-width); } }
+    
+    /* 头像故障微效 */
+    .avatar-glitch { position: relative; overflow: hidden; }
+    .avatar-glitch::before { 
+        content: ''; position: absolute; inset: 0; 
+        background: var(--secondary-color); 
+        mix-blend-mode: hard-light; opacity: 0; pointer-events: none; 
+    }
+    .avatar-glitch:hover::before { 
+        opacity: 0.2; 
+        animation: glitch 0.3s cubic-bezier(.25, .46, .45, .94) both infinite; 
+    }
+</style>
+
+<div class="space-y-16 animate-[popIn_0.5s_cubic-bezier(0.16,1,0.3,1)_forwards]">
+    
+    <div class="cyber-card p-8 md:p-12 relative">
+        <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-secondary"></div>
+        <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-secondary"></div>
+        <div class="absolute top-4 right-4 font-mono text-[9px] text-secondary border border-secondary px-2 py-0.5 bg-black/50">PERSONNEL_FILE: W-01</div>
+
+        <div class="flex flex-col md:flex-row gap-12 items-start">
+            
+            <div class="relative flex-shrink-0 mx-auto md:mx-0">
+                <div class="w-40 h-40 avatar-glitch border-2 border-primary bg-black/50 flex items-center justify-center">
+                    <span class="text-6xl font-black text-primary select-none font-serif">W</span>
+                </div>
+                <div class="mt-4 flex justify-between items-center border-t border-white/10 pt-2">
+                    <span class="font-mono text-[10px] text-gray-400">SYNC_RATE</span>
+                    <span class="font-mono text-xs text-secondary font-bold animate-pulse">400%</span>
+                </div>
+            </div>
+
+            <div class="flex-1 space-y-6">
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-black text-white mb-2 tracking-tighter uppercase font-serif">Wh1te<span class="text-secondary">.log</span></h1>
+                    <p class="font-mono text-xs text-primary inline-block border-b border-primary/30 pb-1 tracking-widest">
+                        // DIGITAL_NOMAD // MAGI_ARCHITECT
+                    </p>
+                </div>
+                
+                <p class="text-gray-300 leading-relaxed font-sans text-sm">
+                    你好，我是 <strong class="text-white">Wh1te</strong>。一名扭曲病娇姐系爱好者。<br>
+                    这里是我的树屋，记录着从 <span class="text-secondary">AI</span> 代码开发到 <span class="text-secondary">Web</span> 构建的全过程。
+                    最近沉迷《白色相簿2》，冬马和纱是绝对的信仰。
+                </p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+                    <div class="bg-black/20 border border-white/10 p-4 hover:border-secondary transition-colors group">
+                        <div class="flex justify-between text-xs font-mono mb-2 text-gray-400 group-hover:text-secondary">
+                            <span>PYTHON_CORE</span>
+                            <span>65%</span>
+                        </div>
+                        <div class="w-full h-1 bg-gray-800">
+                            <div class="h-full load-bar-fill" style="--target-width: 65%"></div>
+                        </div>
+                    </div>
+                    <div class="bg-black/20 border border-white/10 p-4 hover:border-secondary transition-colors group">
+                        <div class="flex justify-between text-xs font-mono mb-2 text-gray-400 group-hover:text-secondary">
+                            <span>WEB_DEV</span>
+                            <span>40%</span>
+                        </div>
+                        <div class="w-full h-1 bg-gray-800">
+                            <div class="h-full load-bar-fill" style="--target-width: 40%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-3xl mx-auto pb-10">
+        <h2 class="font-mono text-lg text-secondary mb-8 flex items-center gap-4">
+            <span class="w-2 h-2 bg-secondary animate-pulse"></span>
+            :: CHRONICLE_LOGS
+        </h2>
+        
+        <div class="space-y-8 border-l-2 border-white/10 ml-3 pl-8 relative">
+            <div class="relative group">
+                <div class="absolute -left-[39px] top-1 w-5 h-5 bg-bg border-2 border-primary rounded-full group-hover:bg-primary group-hover:shadow-[0_0_15px_var(--primary-color)] transition-all"></div>
+                <span class="font-mono text-xs text-gray-500 mb-1 block">2025.10 // CURRENT</span>
+                <h3 class="text-lg font-bold text-white mb-2 font-serif">互联网补完计划</h3>
+                <p class="text-xs text-gray-400 leading-relaxed font-sans">
+                    放弃了对抢票脚本的执念，转向构建数字花园。MAGI 系统与 EVA 风格重构完成。
+                </p>
+            </div>
+            
+            <div class="relative group">
+                <div class="absolute -left-[39px] top-1 w-5 h-5 bg-bg border-2 border-white/30 rounded-full group-hover:border-secondary transition-all"></div>
+                <span class="font-mono text-xs text-gray-500 mb-1 block">2025.09 // ARCHIVED</span>
+                <h3 class="text-lg font-bold text-gray-300 mb-2 font-serif">初探自动化</h3>
+                <p class="text-xs text-gray-400 leading-relaxed font-sans">
+                    接触 ADB 和 Appium，试图与安卓底层通信。项目未达预期，但理解了“工具”的本质。
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
