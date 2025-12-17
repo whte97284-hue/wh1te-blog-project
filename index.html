@@ -242,32 +242,39 @@ input[type=range]::-webkit-slider-runnable-track {
             --grid-color: rgba(0, 0, 0, 0.1);
         }
 
-        /* --- 亮色模式下的机体配色微调 (为了在白底上更清晰) --- */
+        //* --- 亮色模式下的机体配色微调 (修正版) --- */
+        /* 核心修复：强制所有机体在亮色模式下背景变量为白，消除顶部黑条 */
+        
         /* Unit-01 (Default/Shinji) */
-        [data-mode="light"][data-theme="default"] { --primary-color: #7d2ae8; --secondary-color: #00c000; }
+        [data-mode="light"][data-theme="default"] { 
+            --primary-color: #7d2ae8; 
+            --secondary-color: #00c000;
+            --bg-color: #ffffff; /* 确保为白 */
+        }
         
-        /* Unit-02 (Asuka) - 经典的白红配色 */
-        [data-mode="light"][data-theme="unit-02"] { --primary-color: #ffae00; --secondary-color: #d90000; }
+        /* Unit-02 (Asuka) - 修正：覆盖原主题的深红背景 */
+        [data-mode="light"][data-theme="unit-02"] { 
+            --primary-color: #ffae00; 
+            --secondary-color: #d90000;
+            --bg-color: #ffffff; /* 关键修复 */
+            --surface-color: rgba(255, 255, 255, 0.85);
+        }
         
-        /* Unit-00 (Rei) - 实验室蓝白 */
-        [data-mode="light"][data-theme="unit-00"] { --primary-color: #0056b3; --secondary-color: #0091ff; }
+        /* Unit-00 (Rei) - 修正：覆盖原主题的深蓝背景 */
+        [data-mode="light"][data-theme="unit-00"] { 
+            --primary-color: #0056b3; 
+            --secondary-color: #0091ff; 
+            --bg-color: #ffffff; /* 关键修复 */
+            --surface-color: rgba(255, 255, 255, 0.85);
+        }
         
-        /* Unit-08 (Mari) - 粉色 */
-        [data-mode="light"][data-theme="unit-08"] { --primary-color: #d63384; --secondary-color: #00a846; }
-
-        /* 核心：强制覆盖 Tailwind 的 text-white 类 */
-        [data-mode="light"] .text-white { color: var(--text-main) !important; }
-        [data-mode="light"] .text-gray-400, 
-        [data-mode="light"] .text-gray-500,
-        [data-mode="light"] .text-gray-300 { color: var(--text-muted) !important; }
-        [data-mode="light"] .border-white\/10 { border-color: var(--border-color) !important; }
-        [data-mode="light"] .bg-white\/5 { background-color: rgba(0,0,0,0.05) !important; }
-        [data-mode="light"] .bg-black\/30,
-        [data-mode="light"] .bg-black\/60,
-        [data-mode="light"] .bg-black\/40,
-        [data-mode="light"] .bg-black\/90 { background-color: rgba(255,255,255,0.8) !important; }
-        [data-mode="light"] .backdrop-blur-xl { backdrop-filter: blur(20px); }
-        [data-mode="light"] .bg-black\/20 { background-color: rgba(0,0,0,0.05) !important; }
+        /* Unit-08 (Mari) - 修正：覆盖原主题的深粉背景 */
+        [data-mode="light"][data-theme="unit-08"] { 
+            --primary-color: #d63384; 
+            --secondary-color: #00a846; 
+            --bg-color: #ffffff; /* 关键修复 */
+            --surface-color: rgba(255, 255, 255, 0.85);
+        }
 
         /* 通用样式 */
         body { 
@@ -580,7 +587,7 @@ input[type=range]::-webkit-slider-runnable-track {
             5.1% { top: 110%; opacity: 0; }   /* 到底后立即隐藏 */
             100% { top: 110%; opacity: 0; }   /* 剩下的 95% 时间保持隐藏，直到60s结束 */
         }
-        .cockpit-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 90; background: radial-gradient(circle at center, transparent 65%, rgba(0,0,0,0.6) 100%); box-shadow: inset 0 0 100px rgba(0,0,0,0.4); mix-blend-mode: multiply; }
+        .cockpit-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 90; background: radial-gradient(circle at center, transparent 95%, rgba(0,0,0,0.4) 100%); box-shadow: inset 0 0 50px rgba(0,0,0,0.4); mix-blend-mode: multiply; }
         [data-mode="light"] .cockpit-overlay { background: radial-gradient(circle at center, transparent 55%, rgba(255,255,255,0.8) 100%); box-shadow: none; }
 
         .cockpit-reticle { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 700px; height: 700px; border: 1px dashed var(--secondary-color); border-radius: 50%; opacity: 0.08; pointer-events: none; z-index: -1; animation: spin-slower 120s linear infinite; transition: border-color 0.3s; }
@@ -1292,7 +1299,7 @@ input[type=range]::-webkit-slider-runnable-track {
 
     <div id="sonic-deck" class="
         flex items-center gap-3 
-        bg-black/60 border border-[var(--secondary-color)] 
+        bg-white/60 border border-[var(--secondary-color)] 
         p-2 pr-4 
         backdrop-blur-md transition-all duration-300 
         hover:shadow-[0_0_30px_var(--secondary-color)]
@@ -1367,16 +1374,44 @@ input[type=range]::-webkit-slider-runnable-track {
                 <div class="theme-btn" style="background: #ff5cab; border-color: #50c878;" onclick="setTheme('unit-08')" title="Unit-08 (Mari)"></div>
             </div>
         </div>
-        <div class="hidden md:flex gap-8 font-mono text-xs tracking-widest font-bold">
-    <a href="#" onclick="toggleView('home'); return false;" class="text-secondary border-b-2 border-secondary pb-1 shadow-[0_10px_20px_-10px_var(--secondary-color)]">01_HOME</a>
-    <a href="about.html" class="text-gray-500 hover:text-primary transition-colors relative group">02_ARCHIVES<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span></a>
-    <a href="about.html" class="text-gray-500 hover:text-primary transition-colors relative group">03_ABOUT<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span></a>
+        <div class="hidden md:flex items-center gap-8 select-none h-full">
     
-    <a href="#" onclick="toggleView('bangumi'); return false;" class="text-gray-500 hover:text-[#ff69b4] transition-colors relative group">
-        站长追番
-        <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#ff69b4] transition-all group-hover:w-full"></span>
+    <a href="#" onclick="toggleView('home'); return false;" class="group relative flex items-center h-full py-2">
+        <span class="font-mono text-xs text-gray-500/60 group-hover:text-[var(--primary-color)] transition-colors mr-2">01</span>
+        <span class="font-serif text-sm font-black tracking-widest text-gray-400 group-hover:text-[var(--primary-color)] transition-colors" style="font-family: 'Noto Serif SC', serif;">主控枢纽</span>
+        <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
     </a>
+
+    <div class="relative group h-full flex items-center">
+        <a href="javascript:void(0)" class="relative flex items-center h-full py-2 cursor-pointer">
+            <span class="font-mono text-xs text-gray-500/60 group-hover:text-[var(--primary-color)] transition-colors mr-2">02</span>
+            <span class="font-serif text-sm font-black tracking-widest text-gray-400 group-hover:text-[var(--primary-color)] transition-colors" style="font-family: 'Noto Serif SC', serif;">档案检索</span>
+            <i data-lucide="chevron-down" class="w-3 h-3 ml-1 text-gray-500/40 group-hover:text-[var(--primary-color)] transition-transform duration-300 group-hover:rotate-180"></i>
+            <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
+        </a>
+        
+        <div class="absolute top-full left-1/2 -translate-x-1/2 pt-3 w-44 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 z-50">
+            <div class="bg-[#0a0a0a]/95 backdrop-blur-md border border-white/10 border-t-[var(--primary-color)] shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
+                <div id="category-dropdown-list" class="flex flex-col py-2">
+                    <span class="text-[10px] text-gray-500 px-4 py-2 font-mono opacity-70">/// AWAITING_SYNC...</span>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <a href="#" onclick="toggleView('about'); return false;" class="group relative flex items-center h-full py-2">
+        <span class="font-mono text-xs text-gray-500/60 group-hover:text-[var(--primary-color)] transition-colors mr-2">03</span>
+        <span class="font-serif text-sm font-black tracking-widest text-gray-400 group-hover:text-[var(--primary-color)] transition-colors" style="font-family: 'Noto Serif SC', serif;">身份验证</span>
+        <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
+    </a>
+
+    <a href="#" onclick="toggleView('bangumi'); return false;" class="group relative flex items-center h-full py-2">
+        <span class="font-mono text-xs text-gray-500/60 group-hover:text-[var(--primary-color)] transition-colors mr-2">04</span>
+        <span class="font-serif text-sm font-black tracking-widest text-gray-400 group-hover:text-[var(--primary-color)] transition-colors" style="font-family: 'Noto Serif SC', serif;">观测计划</span>
+        <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
+    </a>
+
+</div>
     </nav>
 
     <header class="relative pt-48 pb-12 max-w-screen-xl mx-auto px-6 md:px-12 flex flex-col justify-center items-start text-left z-20 min-h-[65vh]">
@@ -1417,7 +1452,7 @@ input[type=range]::-webkit-slider-runnable-track {
 
             <div class="mt-16 relative w-full max-w-xl group transform transition-transform hover:scale-[1.02]">
                 <div class="absolute -top-4 left-0 bg-bg px-2 text-[10px] font-mono text-secondary border border-secondary/50">SEARCH_DATABASE</div>
-                <input type="text" id="search-input" placeholder="ENTER KEYWORD..." oninput="searchArticles()" class="w-full pl-6 pr-12 py-5 bg-black/30 backdrop-blur-xl border-b-2 border-white/20 text-white font-mono text-xl placeholder-white/10 focus:border-secondary focus:bg-black/60 focus:outline-none transition-all uppercase tracking-widest focus:shadow-[0_10px_30px_-10px_var(--secondary-color)]">
+                <input type="text" id="search-input" placeholder="ENTER KEYWORD..." oninput="searchArticles()" class="w-full pl-6 pr-12 py-5 bg-white/60 backdrop-blur-xl border-b-2 border-white/20 text-white font-mono text-xl placeholder-white/10 focus:border-secondary focus:bg-white/60 focus:outline-none transition-all uppercase tracking-widest focus:shadow-[0_10px_30px_-10px_var(--secondary-color)]">
                 <div class="absolute right-0 bottom-0 w-0 h-0 border-l-[12px] border-l-transparent border-b-[12px] border-b-secondary"></div>
                 <div class="absolute top-12 right-4 -translate-y-12 text-secondary opacity-50 group-focus-within:opacity-100 animate-pulse">></div>
             </div>
@@ -1622,6 +1657,29 @@ input[type=range]::-webkit-slider-runnable-track {
                 </div>
                 <div id="article-list-container" class="space-y-8">
     </main>
+    <div id="category-view-container" class="hidden min-h-screen pt-32 px-6 md:px-12 max-w-screen-xl mx-auto relative z-20 pb-20">
+    
+    <div class="flex justify-between items-end border-b border-white/10 pb-4 mb-8 max-w-7xl mx-auto w-full animate-[fadeIn_0.5s_ease-out]">
+        <div>
+            <div class="text-[var(--primary-color)] font-mono text-xs mb-1">/// ARCHIVE_PROTOCOL</div>
+            <h1 id="current-category-title" class="text-4xl md:text-5xl font-black text-white italic font-serif tracking-tighter">CATEGORY_NAME</h1>
+        </div>
+        <button onclick="ArchivesManager.closeView()" class="group flex items-center gap-2 text-gray-400 hover:text-[var(--primary-color)] transition-colors">
+            <span class="text-xs font-mono group-hover:underline">返回</span>
+            <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+    </div>
+
+    <div id="category-posts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto w-full pb-20">
+        </div>
+
+    <div id="archive-loader" class="absolute inset-0 flex items-center justify-center bg-black/50 z-50 hidden">
+        <div class="flex flex-col items-center gap-2">
+            <div class="w-8 h-8 border-2 border-[var(--primary-color)] border-t-transparent rounded-full animate-spin"></div>
+            <span class="text-[var(--primary-color)] font-mono text-xs animate-pulse">SYNCING DATA...</span>
+        </div>
+    </div>
+</div>
 
     <div id="anime-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-300" onclick="if(event.target === this) closeAnimeModal()">
         <div class="eva-card w-[90%] max-w-2xl bg-bg border border-secondary relative p-6 transform scale-95 transition-transform duration-300" style="box-shadow: 0 0 50px rgba(var(--secondary-color), 0.2);">
@@ -1674,6 +1732,8 @@ input[type=range]::-webkit-slider-runnable-track {
         <div class="ring-option" onclick="AnimeManager.setStatus(currentContextId, 'watched')" style="transform: translate(0, 50px)">DONE</div>
         <div class="ring-option" onclick="AnimeManager.setStatus(currentContextId, 'dropped')" style="transform: translate(-50px, 0)">DROP</div>
     </div>
+    <div id="about-view-container" class="hidden min-h-screen pt-32 px-6 md:px-12 max-w-screen-xl mx-auto relative z-20 pb-20">
+    </div>ViewCommander
 
     <script>
         lucide.createIcons();
@@ -3135,7 +3195,7 @@ MusicCore.init();
                     // 使用 Bangumi v0 API 获取章节
                     // 同样使用代理防止 CORS
                     const url = `https://api.bgm.tv/v0/episodes?subject_id=${id}&type=0`; // type=0 是本篇
-                    const res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url));
+                    const res = await fetch('https://corsproxy.io/?' + encodeURIComponent('https://api.bgm.tv/calendar'));
                     const data = await res.json();
                     
                     if (data && data.data && Array.isArray(data.data)) {
@@ -3186,7 +3246,7 @@ MusicCore.init();
             try {
                 if(dateDisplay) dateDisplay.innerHTML = 'SYNCING...';
                 // 使用 AllOrigins 代理解决跨域
-                const res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://api.bgm.tv/calendar'));
+                const res = await fetch('https://corsproxy.io/?' + encodeURIComponent(url));
                 animeCalendarData = await res.json();
                 
                 localStorage.setItem(CACHE_KEY, JSON.stringify(animeCalendarData));
@@ -3620,9 +3680,9 @@ MusicCore.init();
         // 网络请求辅助函数 (用于获取详情简介)
         async function fetchWithFallback(targetUrl) {
             const PROXIES = [
-                'https://api.allorigins.win/raw?url=',
-                'https://corsproxy.io/?' 
-            ];
+                 'https://corsproxy.io/?',
+                 'https://api.allorigins.win/raw?url='
+        ];
             for (const proxy of PROXIES) {
                 try {
                     const res = await fetch(proxy + encodeURIComponent(targetUrl));
@@ -4011,6 +4071,281 @@ window.addEventListener('popstate', () => {
 
 // 初始化检查
 if(location.hash === '#bangumi') toggleView('bangumi');
+
+/* ==========================================================================
+   VIEW COMMANDER (已更新 About 路由)
+   ========================================================================== */
+const ViewCommander = {
+    elements: {
+        header: () => document.querySelector('header'),
+        main: () => document.querySelector('main'),
+        hero: () => document.querySelector('.hero-character-container'),
+        biliView: () => document.getElementById('bilibili-view'),
+        archiveView: () => document.getElementById('category-view-container'),
+        aboutView: () => document.getElementById('about-view-container') // 👈 必须有这个
+    },
+
+    navigate(targetView) {
+        const el = this.elements;
+        
+        // 播放音效
+        const sfx = document.getElementById('sfx-click');
+        if(sfx) sfx.play().catch(()=>{});
+
+        // 隐藏所有
+        this._hide(el.header());
+        this._hide(el.main());
+        this._hide(el.biliView());
+        this._hide(el.archiveView());
+        this._hide(el.aboutView());
+
+        // 立绘淡出
+        if(el.hero()) el.hero().style.opacity = '0.05'; 
+        
+        // 路由分发
+        switch (targetView) {
+            case 'home':
+                this._show(el.header());
+                this._show(el.main());
+                if(el.hero()) el.hero().style.opacity = '1';
+                history.pushState(null, '', 'index.html');
+                break;
+
+            case 'bangumi':
+                this._show(el.biliView());
+                if(window.BiliManager) window.BiliManager.init(); 
+                history.pushState(null, '', '#bangumi');
+                break;
+
+            case 'archive':
+                this._show(el.archiveView());
+                break;
+
+            case 'about':
+                this._show(el.aboutView());
+                // 👇 关键：触发加载器
+                if(window.AboutManager) {
+                    window.AboutManager.init();
+                } else {
+                    console.error("AboutManager 依然丢失！");
+                }
+                history.pushState(null, '', '#about');
+                break;
+        }
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    
+    _show(dom) { if(dom) dom.classList.remove('hidden'); },
+    _hide(dom) { if(dom) dom.classList.add('hidden'); }
+};
+
+// 兼容旧代码：重写全局 toggleView 函数，防止导航栏报错
+window.toggleView = function(viewName) {
+    ViewCommander.navigate(viewName);
+};
+
+/* ==========================================================================
+   ARCHIVES MANAGER (OPTIMIZED V2.0)
+   修复：API路径分离、视图互斥切换、分类筛选
+   ========================================================================== */
+const ArchivesManager = {
+    workerBase: 'https://eva-proxy.whte97284.workers.dev/blog',
+
+    init() { this.fetchCategories(); },
+
+    // 辅助函数：切换主页内容的显示/隐藏
+    toggleMainView(show) {
+        const header = document.querySelector('header');
+        const main = document.querySelector('main');
+        const heroChar = document.querySelector('.hero-character-container');
+        
+        if (show) {
+            if(header) header.classList.remove('hidden');
+            if(main) main.classList.remove('hidden');
+            if(heroChar) heroChar.style.opacity = '1';
+        } else {
+            if(header) header.classList.add('hidden');
+            if(main) main.classList.add('hidden');
+            // 让立绘变淡，作为背景装饰，不完全消失
+            if(heroChar) heroChar.style.opacity = '0.1'; 
+        }
+    },
+
+    // 1. 获取分类并渲染下拉菜单
+    fetchCategories() {
+        // [修正] 路径拼接：workerBase + /categories
+        fetch(`${this.workerBase}/categories?hide_empty=true`) 
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.json();
+            })
+            .then(categories => {
+                const list = document.getElementById('category-dropdown-list');
+                if (!categories || categories.length === 0) {
+                    list.innerHTML = '<span class="text-[10px] text-gray-500 px-4">NO_CATEGORIES</span>';
+                    return;
+                }
+
+                // 渲染分类列表
+                list.innerHTML = categories.map(cat => `
+                    <a href="javascript:void(0)" 
+                       onclick="ArchivesManager.openCategory(${cat.id}, '${cat.name}')"
+                       class="px-4 py-2 text-xs text-gray-300 hover:text-black hover:bg-[var(--primary-color)] transition-all font-mono uppercase border-l-2 border-transparent hover:border-white block group">
+                       <span class="group-hover:font-bold">${cat.name}</span> 
+                       <span class="opacity-30 text-[9px] ml-1">/// ${cat.count}</span>
+                    </a>
+                `).join('');
+            })
+            .catch(err => {
+                console.error("Category Fetch Error:", err);
+                const list = document.getElementById('category-dropdown-list');
+                if(list) list.innerHTML = '<span class="text-[10px] text-red-500 px-4">SYNC_FAIL</span>';
+            });
+    },
+
+    // [修改] 打开分类 -> 呼叫指挥官切换到 archive 视图
+    openCategory(id, name) {
+        const title = document.getElementById('current-category-title');
+        const grid = document.getElementById('category-posts-grid');
+        const loader = document.getElementById('archive-loader');
+
+        // 1. 切换视图
+        ViewCommander.navigate('archive');
+
+        // 2. 设置 UI
+        if(title) title.innerText = name;
+        if(grid) grid.innerHTML = '';
+        if(loader) loader.classList.remove('hidden');
+
+        // 3. 数据请求
+        fetch(`${this.workerBase}/posts?categories=${id}&_embed&per_page=12`)
+            .then(res => res.json())
+            .then(posts => {
+                if(loader) loader.classList.add('hidden');
+                this.renderPosts(posts, grid);
+            })
+            .catch(err => {
+                if(loader) loader.classList.add('hidden');
+                grid.innerHTML = `<div class="text-red-500 font-mono text-center">DATA_CORRUPTED: ${err.message}</div>`;
+            });
+    },
+
+    // 3. 渲染文章卡片 (保持原有 EVA 风格)
+    renderPosts(posts, container) {
+        if (!posts || posts.length === 0) {
+            container.innerHTML = `<div class="text-gray-500 font-mono col-span-full text-center py-20">/// SECTOR_EMPTY: NO DATA FOUND</div>`;
+            return;
+        }
+
+        container.innerHTML = posts.map((post, index) => {
+            // 获取特色图片
+            let imgUrl = 'https://via.placeholder.com/600x400/000000/ffffff?text=NO+SIGNAL';
+            if (post._embedded && post._embedded['wp:featuredmedia'] && post._embedded['wp:featuredmedia'][0]) {
+                imgUrl = post._embedded['wp:featuredmedia'][0].source_url;
+            }
+
+            // 格式化日期
+            const date = new Date(post.date).toLocaleDateString();
+            // 处理摘要：去除 HTML 标签
+            const rawExcerpt = post.excerpt ? post.excerpt.rendered.replace(/<[^>]+>/g, '').trim() : "NO DATA";
+            const excerpt = rawExcerpt.length > 80 ? rawExcerpt.substring(0, 80) + '...' : rawExcerpt;
+
+            return `
+            <article class="group relative bg-black/40 border border-white/10 hover:border-[var(--primary-color)] transition-all duration-300 overflow-hidden animate-[fadeIn_0.5s_ease-out] flex flex-col h-full" style="animation-delay: ${index * 0.1}s">
+                
+                <div class="h-48 overflow-hidden relative shrink-0">
+                    <img src="${imgUrl}" alt="${post.title.rendered}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100 filter grayscale group-hover:grayscale-0">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60"></div>
+                    <div class="absolute top-2 right-2 bg-black/80 border border-[var(--primary-color)] text-[var(--primary-color)] text-[10px] px-2 py-0.5 font-mono z-10">
+                        LOG_${post.id}
+                    </div>
+                </div>
+
+                <div class="p-5 relative flex flex-col flex-1">
+                    <div class="text-[10px] text-gray-500 font-mono mb-2 flex justify-between border-b border-white/5 pb-2">
+                        <span>${date}</span>
+                        <span class="text-[var(--secondary-color)]">SYNCED</span>
+                    </div>
+                    
+                    <h2 class="text-lg font-bold text-white mb-3 group-hover:text-[var(--primary-color)] transition-colors line-clamp-2 leading-tight font-serif">
+                        ${post.title.rendered}
+                    </h2>
+                    
+                    <div class="text-gray-400 text-xs leading-relaxed line-clamp-3 mb-4 font-sans flex-1">
+                        ${excerpt}
+                    </div>
+
+                    <a href="reader.html?id=${post.id}" target="_blank" class="mt-auto inline-flex items-center gap-2 text-xs font-bold text-white group-hover:text-[var(--primary-color)] transition-colors uppercase tracking-widest border-b border-transparent group-hover:border-[var(--primary-color)] pb-0.5 w-fit">
+                        Read Data <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                    </a>
+                </div>
+
+                <div class="absolute inset-0 pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNCIgaGVpZ2h0PSI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjEiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            </article>
+            `;
+        }).join('');
+        
+        // 刷新图标
+        if(typeof lucide !== 'undefined') lucide.createIcons();
+    },
+
+    // [修改] 关闭视图 -> 呼叫指挥官返回 home 视图
+    closeView() {
+        ViewCommander.navigate('home');
+    }
+};
+
+// 启动
+ArchivesManager.init();
+
+/* ==========================================================================
+   ABOUT MANAGER (修复缺失的模块)
+   ========================================================================== */
+const AboutManager = {
+    isLoaded: false,
+
+    init() {
+        // 防止重复加载
+        if (this.isLoaded) return; 
+
+        const container = document.getElementById('about-view-container');
+        if(!container) return;
+
+        // 1. 先显示加载动画
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-64 opacity-50">
+                <div class="w-8 h-8 border-2 border-[var(--secondary-color)] border-t-transparent rounded-full animate-spin mb-4"></div>
+                <span class="font-mono text-xs text-[var(--secondary-color)] tracking-widest">DECODING IDENTITY_FILE...</span>
+            </div>
+        `;
+
+        // 2. 去抓取 about-fragment.html 文件
+        fetch('about-fragment.html')
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}: File not found`);
+                return response.text();
+            })
+            .then(html => {
+                // 3. 注入内容
+                container.innerHTML = html;
+                this.isLoaded = true;
+                
+                // 4. 刷新图标
+                if(typeof lucide !== 'undefined') lucide.createIcons();
+            })
+            .catch(err => {
+                console.error(err);
+                container.innerHTML = `<div class="text-red-500 font-mono text-center pt-20">
+                    LOAD ERROR: ${err.message}<br>
+                    <span class="text-xs opacity-50">请检查 about-fragment.html 是否存在且文件名正确</span>
+                </div>`;
+            });
+    }
+};
+
+// 将其挂载到全局，确保控制台能访问
+window.AboutManager = AboutManager;
     </script>
 </body>
 </html>
