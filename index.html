@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="public, max-age=3600">
@@ -12,9 +13,11 @@
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@300;500;700;900&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Serif+SC:wght@700;900&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@300;500;700;900&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Serif+SC:wght@700;900&display=swap"
+        rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    
+
     <script>
         window.tailwind = window.tailwind || {};
         window.tailwind.config = {
@@ -36,8 +39,8 @@
                     animation: {
                         'spin-slow': 'spin 30s linear infinite',
                         'spin-slower': 'spin 60s linear infinite',
-                        'glitch': 'glitch 3s linear infinite', 
-                        'scan': 'scan 4s linear infinite', 
+                        'glitch': 'glitch 3s linear infinite',
+                        'scan': 'scan 4s linear infinite',
                         'magi-pulse': 'magiPulse 4s ease-in-out infinite',
                         'pop-in': 'popIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
                         'red-alert': 'redAlert 2s ease-in-out infinite',
@@ -58,10 +61,10 @@
                         typing: { '0%': { width: '0' }, '100%': { width: '100%' } },
                         flash: { '0%, 100%': { opacity: 1 }, '50%': { opacity: 0.3 } },
                         scannerBeam: { '0%': { left: '-100%' }, '100%': { left: '200%' } },
-                        iconGlitch: { 
+                        iconGlitch: {
                             '0%': { transform: 'scale(0.8) skewX(20deg)', opacity: 0 },
                             '50%': { transform: 'scale(1.1) skewX(-10deg)', opacity: 1 },
-                            '100%': { transform: 'scale(1) skewX(0deg)', opacity: 1 } 
+                            '100%': { transform: 'scale(1) skewX(0deg)', opacity: 1 }
                         },
                         speakingShake: {
                             '0%, 100%': { transform: 'translate(0, 0) scale(1.02)' },
@@ -92,6 +95,7 @@
         }
     </script>
 </head>
+
 <body class="antialiased overflow-x-hidden font-sans selection:bg-secondary selection:text-black">
 
     <div id="tactical-cursor">
@@ -111,7 +115,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div id="cursor-trail-1" class="cursor-layer cursor-trail-1">
             <div class="cursor-wrapper">
                 <div class="cursor-center"></div>
@@ -125,7 +129,7 @@
     </div>
 
     <canvas id="matrix-bg"></canvas>
-    
+
     <canvas id="lcl-bg"></canvas>
 
     <div class="rebuild-overlay"></div>
@@ -137,15 +141,20 @@
     <div class="crt-overlay"></div>
     <div class="scan-bar"></div>
     <div id="particles-container"></div>
-    
+
     <div id="bg-layer">
-        <svg id="magi-rings" viewBox="0 0 800 800" fill="none" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[130vmax] h-[130vmax] pointer-events-none opacity-30 transition-opacity duration-500" style="filter: drop-shadow(0 0 10px var(--secondary-color));">
+        <svg id="magi-rings" viewBox="0 0 800 800" fill="none"
+            class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[130vmax] h-[130vmax] pointer-events-none opacity-30 transition-opacity duration-500"
+            style="filter: drop-shadow(0 0 10px var(--secondary-color));">
             <g stroke="var(--secondary-color)" stroke-width="1.5">
                 <circle cx="400" cy="400" r="150" stroke-dasharray="20 10" class="animate-[spin_25s_linear_infinite]" />
-                <circle cx="400" cy="400" r="250" stroke-dasharray="40 20" class="animate-[spin_40s_linear_infinite_reverse]" stroke-opacity="0.8" />
-                <circle cx="400" cy="400" r="350" stroke-dasharray="10 10" class="animate-[spin_55s_linear_infinite]" stroke-opacity="0.6" />
+                <circle cx="400" cy="400" r="250" stroke-dasharray="40 20"
+                    class="animate-[spin_40s_linear_infinite_reverse]" stroke-opacity="0.8" />
+                <circle cx="400" cy="400" r="350" stroke-dasharray="10 10" class="animate-[spin_55s_linear_infinite]"
+                    stroke-opacity="0.6" />
                 <path d="M400 50 L400 750 M50 400 L750 400" stroke-opacity="0.2" />
-                <rect x="250" y="250" width="300" height="300" stroke-opacity="0.3" class="animate-[spin_60s_linear_infinite]" />
+                <rect x="250" y="250" width="300" height="300" stroke-opacity="0.3"
+                    class="animate-[spin_60s_linear_infinite]" />
                 <path d="M187 187 L613 613 M613 187 L187 613" stroke-opacity="0.3" />
             </g>
         </svg>
@@ -153,25 +162,25 @@
         <div class="hex-flash" style="top: 20%; left: 10%;"></div>
         <div class="hex-flash" style="top: 60%; right: 15%; animation-delay: 2s;"></div>
     </div>
-    
+
     <div id="cursor-glow"></div>
-    
+
     <div class="bottom-bar-container">
         <div id="holo-bar" class="holo-status-bar">
             <div class="holo-scanner"></div> <canvas id="holo-wave" class="holo-wave-canvas"></canvas>
-            
+
             <div class="holo-segment">
                 <div class="holo-hex-deco"></div>
                 <div><span class="holo-label">SYS</span><span class="holo-val">NORMAL</span></div>
                 <div class="w-px h-3 bg-secondary opacity-30 mx-2"></div>
                 <div><span class="holo-label">SYNC</span><span class="holo-val">400%</span></div>
             </div>
-            
+
             <div class="holo-marquee-container" id="marquee-container">
                 <div class="holo-marquee-wrapper" id="marquee-wrapper">
-                    </div>
+                </div>
             </div>
-            
+
             <div class="holo-segment justify-end">
                 <div><span class="holo-label">POS</span><span class="holo-val" id="mouse-pos">000,000</span></div>
                 <div class="w-px h-3 bg-secondary opacity-30 mx-2"></div>
@@ -188,69 +197,79 @@
     <audio id="background-music" crossorigin="anonymous" loop>
         <source src="./audio/bgm.mp3" type="audio/mp3">
     </audio>
-    
+
     <audio id="sfx-hover" preload="auto">
-         <source src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" type="audio/mp3">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" type="audio/mp3">
     </audio>
     <audio id="sfx-click" preload="auto">
-         <source src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" type="audio/mp3">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" type="audio/mp3">
     </audio>
 
-       <div id="magi-audio-terminal" class="fixed bottom-16 left-8 z-[1000] group font-mono select-none">
-    
-    <div id="playlist-popover" class="
+    <div id="magi-audio-terminal" class="fixed bottom-16 left-8 z-[1000] group font-mono select-none">
+
+        <div id="playlist-popover" class="
         absolute bottom-full left-0 w-64 mb-2 p-1
         opacity-0 translate-y-4 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto
         transition-all duration-300 ease-out delay-75
         bg-black/80 backdrop-blur-md border border-white/20 border-l-2 border-l-[var(--secondary-color)]
         shadow-[0_0_30px_rgba(0,0,0,0.5)]
     ">
-        <div class="text-[10px] font-mono text-gray-500 px-2 py-1 border-b border-white/10 flex justify-between">
-            <span>/// PLAYLIST_DATA</span>
-            <span id="vol-text">VOL:50%</span>
-        </div>
-        <div id="playlist-ui" class="max-h-40 overflow-y-auto custom-scrollbar p-1 space-y-1">
+            <div class="text-[10px] font-mono text-gray-500 px-2 py-1 border-b border-white/10 flex justify-between">
+                <span>/// PLAYLIST_DATA</span>
+                <span id="vol-text">VOL:50%</span>
             </div>
-    </div>
+            <div id="playlist-ui" class="max-h-40 overflow-y-auto custom-scrollbar p-1 space-y-1">
+            </div>
+        </div>
 
-    <div id="sonic-deck" class="
+        <div id="sonic-deck" class="
         flex items-center gap-3 
         bg-xxx/60 border border-[var(--secondary-color)] 
         p-2 pr-4 
         backdrop-blur-md transition-all duration-300 
         hover:shadow-[0_0_30px_var(--secondary-color)]
     ">
-        <canvas id="audio-visualizer" class="absolute bottom-0 left-0 w-full h-full opacity-30 pointer-events-none"></canvas>
-        
-        <div id="music-trigger" class="
+            <canvas id="audio-visualizer"
+                class="absolute bottom-0 left-0 w-full h-full opacity-30 pointer-events-none"></canvas>
+
+            <div id="music-trigger" class="
             w-12 h-12 flex items-center justify-center cursor-pointer 
             bg-[var(--secondary-color)]/10 hover:bg-[var(--secondary-color)]/20 transition-colors 
             border border-[var(--secondary-color)]/30 relative z-20
         " onclick="MusicCore.toggle()">
-            <div id="deck-wave" class="absolute border border-[var(--secondary-color)] w-full h-full animate-ping hidden"></div>
-            <i id="icon-disc" data-lucide="disc" class="w-6 h-6 text-[var(--secondary-color)] animate-[spin_4s_linear_infinite]" style="animation-play-state: paused;"></i>
-            <i id="icon-pause" data-lucide="pause" class="w-6 h-6 text-[var(--secondary-color)] hidden"></i>
-        </div>
-
-        <div class="flex flex-col w-0 group-hover:w-56 overflow-hidden transition-all duration-300 opacity-0 group-hover:opacity-100 pl-2 relative z-20">
-            
-            <div class="text-[10px] font-mono text-[var(--primary-color)] whitespace-nowrap font-bold truncate">
-                <span id="track-title">SOUND_ONLY</span> | <span id="track-artist" class="opacity-70">SYSTEM_IDLE</span>
+                <div id="deck-wave"
+                    class="absolute border border-[var(--secondary-color)] w-full h-full animate-ping hidden"></div>
+                <i id="icon-disc" data-lucide="disc"
+                    class="w-6 h-6 text-[var(--secondary-color)] animate-[spin_4s_linear_infinite]"
+                    style="animation-play-state: paused;"></i>
+                <i id="icon-pause" data-lucide="pause" class="w-6 h-6 text-[var(--secondary-color)] hidden"></i>
             </div>
-            
-            <div class="flex items-center gap-2 mt-1">
-                 <span class="text-[8px] text-[var(--secondary-color)]">VOL</span>
-                 
-                 <input type="range" id="volume-slider" class="w-16 h-1 bg-white/20 appearance-none cursor-pointer rounded-full" min="0" max="1" step="0.01" oninput="MusicCore.setVolume(this.value)">
-                 
-                 <div class="flex gap-1 ml-auto">
-                     <button onclick="MusicCore.prev()" class="p-1 hover:text-white text-gray-400"><i data-lucide="skip-back" class="w-3 h-3"></i></button>
-                     <button onclick="MusicCore.next()" class="p-1 hover:text-white text-gray-400"><i data-lucide="skip-forward" class="w-3 h-3"></i></button>
-                 </div>
+
+            <div
+                class="flex flex-col w-0 group-hover:w-56 overflow-hidden transition-all duration-300 opacity-0 group-hover:opacity-100 pl-2 relative z-20">
+
+                <div class="text-[10px] font-mono text-[var(--primary-color)] whitespace-nowrap font-bold truncate">
+                    <span id="track-title">SOUND_ONLY</span> | <span id="track-artist"
+                        class="opacity-70">SYSTEM_IDLE</span>
+                </div>
+
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="text-[8px] text-[var(--secondary-color)]">VOL</span>
+
+                    <input type="range" id="volume-slider"
+                        class="w-16 h-1 bg-white/20 appearance-none cursor-pointer rounded-full" min="0" max="1"
+                        step="0.01" oninput="MusicCore.setVolume(this.value)">
+
+                    <div class="flex gap-1 ml-auto">
+                        <button onclick="MusicCore.prev()" class="p-1 hover:text-white text-gray-400"><i
+                                data-lucide="skip-back" class="w-3 h-3"></i></button>
+                        <button onclick="MusicCore.next()" class="p-1 hover:text-white text-gray-400"><i
+                                data-lucide="skip-forward" class="w-3 h-3"></i></button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
     <nav class="fixed top-0 w-full z-40 px-6 md:px-12 flex items-center justify-between select-none transition-all duration-500
             /* 基础样式 */
@@ -269,151 +288,214 @@
             data-[mode=light]:bg-white/90 
             data-[mode=light]:border-white/40
             data-[mode=light]:shadow-[0_4px_30px_rgba(255,255,255,0.2)]">
-    
-    <div class="flex items-center gap-8 z-50">
-        <a href="index.html" class="group w-fit">
-            <span class="text-2xl font-black tracking-tighter leading-none italic font-serif transition-colors
+
+        <div class="flex items-center gap-8 z-50">
+            <a href="index.html" class="group w-fit">
+                <span class="text-2xl font-black tracking-tighter leading-none italic font-serif transition-colors
                          text-white group-hover:text-[var(--primary-color)]
                          /* 亮色模式下 Logo 使用深色或主题色，对比度更高 */
-                         data-[mode=light]:text-black/80 data-[mode=light]:group-hover:text-[var(--primary-color)]" 
-                  style="font-family: 'Noto Serif SC', serif;">WH1TE.LOG</span>
-        </a>
-        
-        <div class="flex flex-col gap-1 border-l pl-5 transition-colors
+                         data-[mode=light]:text-black/80 data-[mode=light]:group-hover:text-[var(--primary-color)]"
+                    style="font-family: 'Noto Serif SC', serif;">WH1TE.LOG</span>
+            </a>
+
+            <div class="flex flex-col gap-1 border-l pl-5 transition-colors
                     border-white/20 data-[mode=light]:border-black/10">
-            
-            <div class="flex items-center gap-3 scale-75 origin-left">
-                <div class="tactical-switch" onclick="toggleTacticalMode()">
-                    <div class="switch-box" style="border-color: currentColor;">
-                        <div class="switch-box-inner" style="background-color: currentColor;"></div>
+
+                <div class="flex items-center gap-3 scale-75 origin-left">
+                    <div class="tactical-switch" onclick="toggleTacticalMode()">
+                        <div class="switch-box" style="border-color: currentColor;">
+                            <div class="switch-box-inner" style="background-color: currentColor;"></div>
+                        </div>
+                        <span class="text-gray-400 data-[mode=light]:text-gray-600">LOCK</span>
                     </div>
-                    <span class="text-gray-400 data-[mode=light]:text-gray-600">LOCK</span>
+
+                    <div class="tactical-switch" onclick="toggleLightMode()">
+                        <div class="switch-box" style="border-color: currentColor;">
+                            <div class="switch-box-inner" id="light-mode-indicator"
+                                style="background-color: currentColor;"></div>
+                        </div>
+                        <span class="text-gray-400 data-[mode=light]:text-gray-600">明暗</span>
+                    </div>
+
+                    <div class="tactical-switch tactical-switch-lcl" onclick="toggleLCLMode()">
+                        <div class="switch-box" style="border-color: currentColor;">
+                            <div class="switch-box-inner switch-box-inner-lcl" style="background-color: currentColor;">
+                            </div>
+                        </div>
+                        <span class="text-gray-400 data-[mode=light]:text-gray-600">LCL</span>
+                    </div>
                 </div>
 
-                <div class="tactical-switch" onclick="toggleLightMode()">
-                    <div class="switch-box" style="border-color: currentColor;">
-                        <div class="switch-box-inner" id="light-mode-indicator" style="background-color: currentColor;"></div>
-                    </div>
-                    <span class="text-gray-400 data-[mode=light]:text-gray-600">明暗</span>
+                <div class="flex gap-2 items-center px-1 scale-90 origin-left">
+                    <div class="theme-btn active" style="background: #7d2ae8; border-color: #39ff14;"
+                        onclick="setTheme('default')" title="Unit-01"></div>
+                    <div class="theme-btn" style="background: #d90000; border-color: #ffae00;"
+                        onclick="setTheme('unit-02')" title="Unit-02"></div>
+                    <div class="theme-btn" style="background: #0091ff; border-color: #ffffff;"
+                        onclick="setTheme('unit-00')" title="Unit-00"></div>
+                    <div class="theme-btn" style="background: #ff5cab; border-color: #50c878;"
+                        onclick="setTheme('unit-08')" title="Unit-08"></div>
                 </div>
-
-                <div class="tactical-switch tactical-switch-lcl" onclick="toggleLCLMode()">
-                    <div class="switch-box" style="border-color: currentColor;">
-                        <div class="switch-box-inner switch-box-inner-lcl" style="background-color: currentColor;"></div>
-                    </div>
-                    <span class="text-gray-400 data-[mode=light]:text-gray-600">LCL</span>
-                </div>
-            </div>
-
-            <div class="flex gap-2 items-center px-1 scale-90 origin-left">
-                <div class="theme-btn active" style="background: #7d2ae8; border-color: #39ff14;" onclick="setTheme('default')" title="Unit-01"></div>
-                <div class="theme-btn" style="background: #d90000; border-color: #ffae00;" onclick="setTheme('unit-02')" title="Unit-02"></div>
-                <div class="theme-btn" style="background: #0091ff; border-color: #ffffff;" onclick="setTheme('unit-00')" title="Unit-00"></div>
-                <div class="theme-btn" style="background: #ff5cab; border-color: #50c878;" onclick="setTheme('unit-08')" title="Unit-08"></div>
             </div>
         </div>
-    </div>
-    
-    <div class="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-10 h-full z-40">
-        
-        <a href="#" onclick="toggleView('home'); return false;" class="group relative flex items-center h-full py-2">
-            <span class="font-mono text-xs mr-2 transition-colors text-gray-500/60 group-hover:text-[var(--primary-color)] data-[mode=light]:text-[var(--primary-color)]/80">01</span>
-            <span class="font-serif text-sm font-black tracking-widest transition-colors text-gray-400 group-hover:text-[var(--primary-color)] data-[mode=light]:text-black/70 data-[mode=light]:group-hover:text-[var(--primary-color)]" style="font-family: 'Noto Serif SC', serif;">主控枢纽</span>
-            <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
-        </a>
 
-        <div class="relative group h-full flex items-center">
-            <a href="javascript:void(0)" class="relative flex items-center h-full py-2 cursor-pointer">
-                <span class="font-mono text-xs mr-2 transition-colors text-gray-500/60 group-hover:text-[var(--primary-color)] data-[mode=light]:text-[var(--primary-color)]/80">02</span>
-                <span class="font-serif text-sm font-black tracking-widest transition-colors text-gray-400 group-hover:text-[var(--primary-color)] data-[mode=light]:text-black/70 data-[mode=light]:group-hover:text-[var(--primary-color)]" style="font-family: 'Noto Serif SC', serif;">档案检索</span>
-                <i data-lucide="chevron-down" class="w-3 h-3 ml-1 transition-transform duration-300 group-hover:rotate-180 text-gray-500/40 group-hover:text-[var(--primary-color)] data-[mode=light]:text-black/50"></i>
-                <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
+        <div
+            class="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-10 h-full z-40">
+
+            <a href="#" onclick="toggleView('home'); return false;"
+                class="group relative flex items-center h-full py-2">
+                <span
+                    class="font-mono text-xs mr-2 transition-colors text-gray-500/60 group-hover:text-[var(--primary-color)] data-[mode=light]:text-[var(--primary-color)]/80">01</span>
+                <span
+                    class="font-serif text-sm font-black tracking-widest transition-colors text-gray-400 group-hover:text-[var(--primary-color)] data-[mode=light]:text-black/70 data-[mode=light]:group-hover:text-[var(--primary-color)]"
+                    style="font-family: 'Noto Serif SC', serif;">主控枢纽</span>
+                <span
+                    class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
             </a>
-            
-            <div class="absolute top-full left-1/2 -translate-x-1/2 pt-6 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 z-50">
-                <div class="backdrop-blur-xl border shadow-[0_4px_30px_rgba(0,0,0,0.5)] rounded-lg overflow-hidden
+
+            <div class="relative group h-full flex items-center">
+                <a href="javascript:void(0)" class="relative flex items-center h-full py-2 cursor-pointer">
+                    <span
+                        class="font-mono text-xs mr-2 transition-colors text-gray-500/60 group-hover:text-[var(--primary-color)] data-[mode=light]:text-[var(--primary-color)]/80">02</span>
+                    <span
+                        class="font-serif text-sm font-black tracking-widest transition-colors text-gray-400 group-hover:text-[var(--primary-color)] data-[mode=light]:text-black/70 data-[mode=light]:group-hover:text-[var(--primary-color)]"
+                        style="font-family: 'Noto Serif SC', serif;">档案检索</span>
+                    <i data-lucide="chevron-down"
+                        class="w-3 h-3 ml-1 transition-transform duration-300 group-hover:rotate-180 text-gray-500/40 group-hover:text-[var(--primary-color)] data-[mode=light]:text-black/50"></i>
+                    <span
+                        class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
+                </a>
+
+                <div
+                    class="absolute top-full left-1/2 -translate-x-1/2 pt-6 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 z-50">
+                    <div
+                        class="backdrop-blur-xl border shadow-[0_4px_30px_rgba(0,0,0,0.5)] rounded-lg overflow-hidden
                             bg-[#0a0a0a]/95 border-white/10 border-t-[var(--primary-color)]
                             data-[mode=light]:bg-white/95 data-[mode=light]:border-white/50 data-[mode=light]:shadow-xl">
-                    <div id="category-dropdown-list" class="flex flex-col py-2">
-                        <span class="text-[10px] px-4 py-2 font-mono opacity-70 text-gray-500 data-[mode=light]:text-[var(--primary-color)]">/// AWAITING_SYNC...</span>
+                        <div id="category-dropdown-list" class="flex flex-col py-2">
+                            <span
+                                class="text-[10px] px-4 py-2 font-mono opacity-70 text-gray-500 data-[mode=light]:text-[var(--primary-color)]">///
+                                AWAITING_SYNC...</span>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <a href="#" onclick="toggleView('about'); return false;"
+                class="group relative flex items-center h-full py-2">
+                <span
+                    class="font-mono text-xs mr-2 transition-colors text-gray-500/60 group-hover:text-[var(--primary-color)] data-[mode=light]:text-[var(--primary-color)]/80">03</span>
+                <span
+                    class="font-serif text-sm font-black tracking-widest transition-colors text-gray-400 group-hover:text-[var(--primary-color)] data-[mode=light]:text-black/70 data-[mode=light]:group-hover:text-[var(--primary-color)]"
+                    style="font-family: 'Noto Serif SC', serif;">身份验证</span>
+                <span
+                    class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
+            </a>
+
+            <a href="#" onclick="toggleView('bangumi'); return false;"
+                class="group relative flex items-center h-full py-2">
+                <span
+                    class="font-mono text-xs mr-2 transition-colors text-gray-500/60 group-hover:text-[var(--primary-color)] data-[mode=light]:text-[var(--primary-color)]/80">04</span>
+                <span
+                    class="font-serif text-sm font-black tracking-widest transition-colors text-gray-400 group-hover:text-[var(--primary-color)] data-[mode=light]:text-black/70 data-[mode=light]:group-hover:text-[var(--primary-color)]"
+                    style="font-family: 'Noto Serif SC', serif;">观测计划</span>
+                <span
+                    class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
+            </a>
+
+            <a href="#" onclick="toggleView('pixiv'); return false;"
+                class="group relative flex items-center h-full py-2">
+                <span
+                    class="font-mono text-xs mr-2 transition-colors text-gray-500/60 group-hover:text-[var(--primary-color)] data-[mode=light]:text-[var(--primary-color)]/80">05</span>
+                <span
+                    class="font-serif text-sm font-black tracking-widest transition-colors text-gray-400 group-hover:text-[var(--primary-color)] data-[mode=light]:text-black/70 data-[mode=light]:group-hover:text-[var(--primary-color)]"
+                    style="font-family: 'Noto Serif SC', serif;">视觉档案</span>
+                <span
+                    class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
+            </a>
+
+            <a href="#" onclick="toggleView('steam'); return false;"
+                class="group relative flex items-center h-full py-2">
+                <span
+                    class="font-mono text-xs mr-2 transition-colors text-gray-500/60 group-hover:text-[var(--primary-color)] data-[mode=light]:text-[var(--primary-color)]/80">06</span>
+                <span
+                    class="font-serif text-sm font-black tracking-widest transition-colors text-gray-400 group-hover:text-[var(--primary-color)] data-[mode=light]:text-black/70 data-[mode=light]:group-hover:text-[var(--primary-color)]"
+                    style="font-family: 'Noto Serif SC', serif;">模拟记录</span>
+                <span
+                    class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
+            </a>
         </div>
 
-        <a href="#" onclick="toggleView('about'); return false;" class="group relative flex items-center h-full py-2">
-            <span class="font-mono text-xs mr-2 transition-colors text-gray-500/60 group-hover:text-[var(--primary-color)] data-[mode=light]:text-[var(--primary-color)]/80">03</span>
-            <span class="font-serif text-sm font-black tracking-widest transition-colors text-gray-400 group-hover:text-[var(--primary-color)] data-[mode=light]:text-black/70 data-[mode=light]:group-hover:text-[var(--primary-color)]" style="font-family: 'Noto Serif SC', serif;">身份验证</span>
-            <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
-        </a>
+        <button class="md:hidden z-50 ml-auto transition-colors text-white data-[mode=light]:text-black"
+            onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+            <i data-lucide="menu"></i>
+        </button>
+    </nav>
 
-        <a href="#" onclick="toggleView('bangumi'); return false;" class="group relative flex items-center h-full py-2">
-            <span class="font-mono text-xs mr-2 transition-colors text-gray-500/60 group-hover:text-[var(--primary-color)] data-[mode=light]:text-[var(--primary-color)]/80">04</span>
-            <span class="font-serif text-sm font-black tracking-widest transition-colors text-gray-400 group-hover:text-[var(--primary-color)] data-[mode=light]:text-black/70 data-[mode=light]:group-hover:text-[var(--primary-color)]" style="font-family: 'Noto Serif SC', serif;">观测计划</span>
-            <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
-        </a>
-        
-        <a href="#" onclick="toggleView('pixiv'); return false;" class="group relative flex items-center h-full py-2">
-            <span class="font-mono text-xs mr-2 transition-colors text-gray-500/60 group-hover:text-[var(--primary-color)] data-[mode=light]:text-[var(--primary-color)]/80">05</span>
-            <span class="font-serif text-sm font-black tracking-widest transition-colors text-gray-400 group-hover:text-[var(--primary-color)] data-[mode=light]:text-black/70 data-[mode=light]:group-hover:text-[var(--primary-color)]" style="font-family: 'Noto Serif SC', serif;">视觉档案</span>
-            <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
-        </a>
-
-        <a href="#" onclick="toggleView('steam'); return false;" class="group relative flex items-center h-full py-2">
-            <span class="font-mono text-xs mr-2 transition-colors text-gray-500/60 group-hover:text-[var(--primary-color)] data-[mode=light]:text-[var(--primary-color)]/80">06</span>
-            <span class="font-serif text-sm font-black tracking-widest transition-colors text-gray-400 group-hover:text-[var(--primary-color)] data-[mode=light]:text-black/70 data-[mode=light]:group-hover:text-[var(--primary-color)]" style="font-family: 'Noto Serif SC', serif;">模拟记录</span>
-            <span class="absolute bottom-0 left-0 w-0 h-[2px] bg-[var(--primary-color)] transition-all duration-300 group-hover:w-full shadow-[0_0_6px_var(--primary-color)]"></span>
-        </a>
-    </div>
-
-    <button class="md:hidden z-50 ml-auto transition-colors text-white data-[mode=light]:text-black" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
-        <i data-lucide="menu"></i>
-    </button>
-</nav>
-
-    <header class="relative pt-48 pb-12 max-w-screen-xl mx-auto px-6 md:px-12 flex flex-col justify-center items-start text-left z-20 min-h-[65vh]">
-        <div class="absolute top-24 right-[20%] opacity-80 pointer-events-none z-0 hidden lg:flex flex-col gap-3 scale-90 origin-top-right">
-            <div class="magi-node w-56 h-12 skew-x-12 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold shadow-[0_0_15px_var(--secondary-color)] bg-black/60 backdrop-blur-sm">MELCHIOR - 1</div>
-            <div class="magi-node w-56 h-12 skew-x-12 ml-12 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold shadow-[0_0_15px_var(--secondary-color)] bg-black/60 backdrop-blur-sm" style="animation-delay: 1s;">BALTHASAR - 2</div>
-            <div class="magi-node w-56 h-12 skew-x-12 ml-24 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold shadow-[0_0_15px_var(--secondary-color)] bg-black/60 backdrop-blur-sm" style="animation-delay: 2s;">CASPER - 3</div>
+    <header
+        class="relative pt-48 pb-12 max-w-screen-xl mx-auto px-6 md:px-12 flex flex-col justify-center items-start text-left z-20 min-h-[65vh]">
+        <div
+            class="absolute top-24 right-[20%] opacity-80 pointer-events-none z-0 hidden lg:flex flex-col gap-3 scale-90 origin-top-right">
+            <div
+                class="magi-node w-56 h-12 skew-x-12 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold shadow-[0_0_15px_var(--secondary-color)] bg-black/60 backdrop-blur-sm">
+                MELCHIOR - 1</div>
+            <div class="magi-node w-56 h-12 skew-x-12 ml-12 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold shadow-[0_0_15px_var(--secondary-color)] bg-black/60 backdrop-blur-sm"
+                style="animation-delay: 1s;">BALTHASAR - 2</div>
+            <div class="magi-node w-56 h-12 skew-x-12 ml-24 animate-magi-pulse border border-secondary text-secondary flex items-center justify-center text-xs font-bold shadow-[0_0_15px_var(--secondary-color)] bg-black/60 backdrop-blur-sm"
+                style="animation-delay: 2s;">CASPER - 3</div>
         </div>
         <div class="space-y-8 animate-pop-in w-full relative z-10 max-w-3xl">
             <div class="flex items-center gap-3 mb-2">
-                <span class="px-3 py-1 bg-secondary text-black font-mono text-[10px] font-black uppercase tracking-widest border border-secondary/50 shadow-[0_0_10px_var(--secondary-color)]">INTERNAL STATE</span>
+                <span
+                    class="px-3 py-1 bg-secondary text-black font-mono text-[10px] font-black uppercase tracking-widest border border-secondary/50 shadow-[0_0_10px_var(--secondary-color)]">INTERNAL
+                    STATE</span>
                 <span class="w-24 h-px bg-secondary/50"></span>
                 <span class="font-mono text-[10px] text-primary typing-cursor">SYNC RATE 400%</span>
             </div>
-            
+
             <div class="relative inline-block group">
-                <div class="absolute -top-6 -left-6 w-12 h-12 border-t-2 border-l-2 border-secondary/50 pointer-events-none"></div>
-                <div class="absolute -bottom-4 -right-6 w-12 h-12 border-b-2 border-r-2 border-secondary/50 pointer-events-none"></div>
-                
-                <div class="absolute -top-8 right-0 text-[10px] font-mono text-secondary/70 tracking-[0.2em]">PROJECT_EVA</div>
-                
-                <h1 class="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-none text-white font-serif mix-blend-overlay opacity-90 glitch-text" style="font-family: 'Noto Serif SC', serif;" data-text="WH1TE_LOG">WH1TE_LOG</h1>
-                
-                <h1 class="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-none text-stroke-layer absolute top-0 left-0 w-full h-full translate-x-[2px] translate-y-[2px] opacity-50 group-hover:translate-x-[4px] group-hover:translate-y-[4px] transition-transform font-serif text-transparent" style="font-family: 'Noto Serif SC', serif; -webkit-text-stroke: 1px var(--secondary-color);">WH1TE_LOG</h1>
+                <div
+                    class="absolute -top-6 -left-6 w-12 h-12 border-t-2 border-l-2 border-secondary/50 pointer-events-none">
+                </div>
+                <div
+                    class="absolute -bottom-4 -right-6 w-12 h-12 border-b-2 border-r-2 border-secondary/50 pointer-events-none">
+                </div>
+
+                <div class="absolute -top-8 right-0 text-[10px] font-mono text-secondary/70 tracking-[0.2em]">
+                    PROJECT_EVA</div>
+
+                <h1 class="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-none text-white font-serif mix-blend-overlay opacity-90 glitch-text"
+                    style="font-family: 'Noto Serif SC', serif;" data-text="WH1TE_LOG">WH1TE_LOG</h1>
+
+                <h1 class="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-none text-stroke-layer absolute top-0 left-0 w-full h-full translate-x-[2px] translate-y-[2px] opacity-50 group-hover:translate-x-[4px] group-hover:translate-y-[4px] transition-transform font-serif text-transparent"
+                    style="font-family: 'Noto Serif SC', serif; -webkit-text-stroke: 1px var(--secondary-color);">
+                    WH1TE_LOG</h1>
             </div>
 
-            <div class="flex items-center gap-4 pl-4 border-l-4 border-secondary bg-gradient-to-r from-secondary/10 to-transparent py-3 relative overflow-hidden">
-                <div class="absolute inset-0 opacity-10 animate-scan pointer-events-none" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, #000 2px, #000 4px);"></div>
-                
-                <h2 class="text-2xl font-bold text-white tracking-tight font-serif z-10" style="font-family: 'Noto Serif SC', serif;">
-                    <span class="text-4xl mr-1">『</span>互联网<span class="text-secondary glitch-text mx-1" data-text="补完计划">补完计划</span><span class="text-4xl ml-1">』</span>
+            <div
+                class="flex items-center gap-4 pl-4 border-l-4 border-secondary bg-gradient-to-r from-secondary/10 to-transparent py-3 relative overflow-hidden">
+                <div class="absolute inset-0 opacity-10 animate-scan pointer-events-none"
+                    style="background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, #000 2px, #000 4px);">
+                </div>
+
+                <h2 class="text-2xl font-bold text-white tracking-tight font-serif z-10"
+                    style="font-family: 'Noto Serif SC', serif;">
+                    <span class="text-4xl mr-1">『</span>互联网<span class="text-secondary glitch-text mx-1"
+                        data-text="补完计划">补完计划</span><span class="text-4xl ml-1">』</span>
                 </h2>
                 <div class="flex flex-col z-10">
-                    <span class="text-[9px] font-mono opacity-80 tracking-widest text-primary leading-tight">HUMAN INSTRUMENTALITY PROJECT</span>
-                    <span class="text-[8px] font-mono opacity-50 tracking-widest text-gray-400 leading-tight">TOP SECRET | NERV ONLY</span>
+                    <span class="text-[9px] font-mono opacity-80 tracking-widest text-primary leading-tight">HUMAN
+                        INSTRUMENTALITY PROJECT</span>
+                    <span class="text-[8px] font-mono opacity-50 tracking-widest text-gray-400 leading-tight">TOP SECRET
+                        | NERV ONLY</span>
                 </div>
             </div>
 
             <div class="mt-16 relative w-full max-w-xl group transform transition-transform hover:scale-[1.02]">
-                <div class="absolute -top-4 left-0 bg-bg px-2 text-[10px] font-mono text-secondary border border-secondary/50">SEARCH_DATABASE</div>
-                <input type="text" 
-       id="search-input" 
-       placeholder="ENTER KEYWORD..." 
-       oninput="searchArticles()" 
-       class="w-full pl-6 pr-12 py-5 
+                <div
+                    class="absolute -top-4 left-0 bg-bg px-2 text-[10px] font-mono text-secondary border border-secondary/50">
+                    SEARCH_DATABASE</div>
+                <input type="text" id="search-input" placeholder="ENTER KEYWORD..." oninput="searchArticles()" class="w-full pl-6 pr-12 py-5 
               font-mono text-xl uppercase tracking-widest backdrop-blur-xl border-b-2 transition-all focus:outline-none
               focus:border-[var(--secondary-color)] focus:shadow-[0_10px_30px_-10px_var(--secondary-color)]
               
@@ -427,33 +509,43 @@
               data-[mode=light]:placeholder-gray-400 
               data-[mode=light]:focus:bg-white">
 
-<div class="absolute right-0 bottom-0 w-0 h-0 border-l-[12px] border-l-transparent border-b-[12px] border-b-[var(--secondary-color)] pointer-events-none"></div>
-                <div class="absolute top-12 right-4 -translate-y-12 text-secondary opacity-50 group-focus-within:opacity-100 animate-pulse">></div>
+                <div
+                    class="absolute right-0 bottom-0 w-0 h-0 border-l-[12px] border-l-transparent border-b-[12px] border-b-[var(--secondary-color)] pointer-events-none">
+                </div>
+                <div
+                    class="absolute top-12 right-4 -translate-y-12 text-secondary opacity-50 group-focus-within:opacity-100 animate-pulse">
+                    ></div>
             </div>
         </div>
     </header>
-    <div id="bilibili-view" class="hidden min-h-screen pt-32 px-6 md:px-12 max-w-screen-2xl mx-auto relative z-20 pb-20">
-    <div class="flex items-end justify-between border-b border-white/10 pb-6 mb-10">
-        <div>
-            <h1 class="text-4xl md:text-5xl font-black text-white font-serif tracking-tighter">追番计划</h1>
-            
-            <div class="flex gap-6 mt-4 font-mono text-xs select-none">
-                <button onclick="BiliManager.switchStatus(0, this)" class="bili-tab active text-[#ff69b4] border-b border-[#ff69b4] pb-1 transition-all">全部</button>
-                <button onclick="BiliManager.switchStatus(2, this)" class="bili-tab text-gray-500 hover:text-white pb-1 transition-all">在看</button>
-                <button onclick="BiliManager.switchStatus(1, this)" class="bili-tab text-gray-500 hover:text-white pb-1 transition-all">想看</button>
-                <button onclick="BiliManager.switchStatus(3, this)" class="bili-tab text-gray-500 hover:text-white pb-1 transition-all">看过</button>
+    <div id="bilibili-view"
+        class="hidden min-h-screen pt-32 px-6 md:px-12 max-w-screen-2xl mx-auto relative z-20 pb-20">
+        <div class="flex items-end justify-between border-b border-white/10 pb-6 mb-10">
+            <div>
+                <h1 class="text-4xl md:text-5xl font-black text-white font-serif tracking-tighter">追番计划</h1>
+
+                <div class="flex gap-6 mt-4 font-mono text-xs select-none">
+                    <button onclick="BiliManager.switchStatus(0, this)"
+                        class="bili-tab active text-[#ff69b4] border-b border-[#ff69b4] pb-1 transition-all">全部</button>
+                    <button onclick="BiliManager.switchStatus(2, this)"
+                        class="bili-tab text-gray-500 hover:text-white pb-1 transition-all">在看</button>
+                    <button onclick="BiliManager.switchStatus(1, this)"
+                        class="bili-tab text-gray-500 hover:text-white pb-1 transition-all">想看</button>
+                    <button onclick="BiliManager.switchStatus(3, this)"
+                        class="bili-tab text-gray-500 hover:text-white pb-1 transition-all">看过</button>
+                </div>
             </div>
-            </div>
-        </div>
-    
-    <div id="bili-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
         </div>
 
-    <div id="bili-load-more" class="hidden text-center mt-12">
-        <button onclick="BiliManager.loadMore()" class="px-8 py-3 border border-[#ff69b4]/30 bg-[#ff69b4]/5 text-[#ff69b4] font-mono text-xs hover:bg-[#ff69b4] hover:text-black transition-all">
-            /// LOAD_NEXT_PAGE_DATA ///
-        </button>
-    </div>
+        <div id="bili-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+        </div>
+
+        <div id="bili-load-more" class="hidden text-center mt-12">
+            <button onclick="BiliManager.loadMore()"
+                class="px-8 py-3 border border-[#ff69b4]/30 bg-[#ff69b4]/5 text-[#ff69b4] font-mono text-xs hover:bg-[#ff69b4] hover:text-black transition-all">
+                /// LOAD_NEXT_PAGE_DATA ///
+            </button>
+        </div>
     </div>
 
     <div class="hero-character-container">
@@ -464,16 +556,24 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-16">
             <aside class="lg:col-span-4 space-y-10 lg:sticky lg:top-32 h-fit">
                 <div class="relative z-50">
-                     <div id="ai-speech-bubble" class="hidden absolute bottom-full mb-4 left-0 w-full z-[100] animate-pop-in pointer-events-none">
-                        <div class="magi-terminal-container bg-black/95 border-2 border-secondary p-1 shadow-[0_0_20px_rgba(57,255,20,0.3)] backdrop-blur-md transition-colors duration-500" style="clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);">
-                            <div class="magi-terminal-border border border-secondary/30 p-3 relative overflow-hidden transition-colors duration-300">
-                                
-                                <div class="flex justify-between items-end mb-2 border-b border-secondary/50 pb-1 relative z-10">
-                                    <span class="font-mono text-[10px] font-bold text-secondary/70">MAGI_SYS | V8.0</span>
-                                    <span id="magi-status-indicator" class="font-mono text-[9px] text-emergency font-bold animate-pulse">STANDBY</span>
+                    <div id="ai-speech-bubble"
+                        class="hidden absolute bottom-full mb-4 left-0 w-full z-[100] animate-pop-in pointer-events-none">
+                        <div class="magi-terminal-container bg-black/95 border-2 border-secondary p-1 shadow-[0_0_20px_rgba(57,255,20,0.3)] backdrop-blur-md transition-colors duration-500"
+                            style="clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);">
+                            <div
+                                class="magi-terminal-border border border-secondary/30 p-3 relative overflow-hidden transition-colors duration-300">
+
+                                <div
+                                    class="flex justify-between items-end mb-2 border-b border-secondary/50 pb-1 relative z-10">
+                                    <span class="font-mono text-[10px] font-bold text-secondary/70">MAGI_SYS |
+                                        V8.0</span>
+                                    <span id="magi-status-indicator"
+                                        class="font-mono text-[9px] text-emergency font-bold animate-pulse">STANDBY</span>
                                 </div>
 
-                                <div id="magi-visualizer" class="magi-hex-container transition-all duration-500 relative z-10" style="opacity: 0;">
+                                <div id="magi-visualizer"
+                                    class="magi-hex-container transition-all duration-500 relative z-10"
+                                    style="opacity: 0;">
                                     <div id="node-melchior" class="magi-hex">
                                         <span class="magi-node-name text-[10px]">メルキオール•1</span>
                                         <span class="magi-node-status">STANDBY</span>
@@ -489,77 +589,112 @@
                                 </div>
 
                                 <div class="relative min-h-[3em] z-10">
-                                    <div class="absolute top-0 left-0 w-2 h-2 border-t border-l border-secondary opacity-50"></div>
-                                    <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-secondary opacity-50"></div>
-                                    
-                                    <p id="ai-speech-text" class="text-sm md:text-base text-secondary font-serif font-bold leading-relaxed p-2" style="font-family: 'Noto Serif SC', serif; text-shadow: 0 0 5px rgba(57,255,20,0.5);"></p>
+                                    <div
+                                        class="absolute top-0 left-0 w-2 h-2 border-t border-l border-secondary opacity-50">
+                                    </div>
+                                    <div
+                                        class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-secondary opacity-50">
+                                    </div>
+
+                                    <p id="ai-speech-text"
+                                        class="text-sm md:text-base text-secondary font-serif font-bold leading-relaxed p-2"
+                                        style="font-family: 'Noto Serif SC', serif; text-shadow: 0 0 5px rgba(57,255,20,0.5);">
+                                    </p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div id="ai-card" class="eva-card ai-card-container cursor-pointer group hover:bg-secondary/10 transition-colors holo-container">
+                    <div id="ai-card"
+                        class="eva-card ai-card-container cursor-pointer group hover:bg-secondary/10 transition-colors holo-container">
                         <div class="eva-glare"></div>
                         <div class="holo-overlay"></div>
                         <div class="rage-overlay"></div>
-                        
+
                         <div class="w-full relative aspect-[4/5] overflow-hidden bg-black/40">
-                            <img id="ai-avatar-display" src="./images/ai-assistant.jpg" onerror="this.src='./images/ai-assistant.jpg'" alt="AI" class="ai-avatar-img w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity mix-blend-lighten filter contrast-125 grayscale group-hover:grayscale-0 duration-500 holo-glitch-effect holo-breathing relative z-10">
-                            
+                            <img id="ai-avatar-display" src="./images/ai-assistant.jpg"
+                                onerror="this.src='./images/ai-assistant.jpg'" alt="AI"
+                                class="ai-avatar-img w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity mix-blend-lighten filter contrast-125 grayscale group-hover:grayscale-0 duration-500 holo-glitch-effect holo-breathing relative z-10">
+
                             <canvas id="sync-wave-canvas"></canvas>
-                            
-                            <div class="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent z-20"></div>
-                            <div class="absolute top-2 right-2 text-[9px] font-mono text-black bg-secondary px-1 font-bold z-30">LIVE</div>
+
+                            <div class="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent z-20">
+                            </div>
+                            <div
+                                class="absolute top-2 right-2 text-[9px] font-mono text-black bg-secondary px-1 font-bold z-30">
+                                LIVE</div>
                         </div>
                         <div class="p-5 border-t border-secondary/30 relative overflow-hidden">
                             <div class="flex items-center justify-between mb-2 relative z-10">
                                 <h3 class="font-mono text-primary text-sm font-bold tracking-wider">ERIRI.MODE</h3>
-                                <div class="w-2 h-2 bg-secondary animate-pulse rounded-full shadow-[0_0_5px_var(--secondary-color)]"></div>
+                                <div
+                                    class="w-2 h-2 bg-secondary animate-pulse rounded-full shadow-[0_0_5px_var(--secondary-color)]">
+                                </div>
                             </div>
-                            <p class="text-gray-400 text-[10px] font-mono relative z-10">STATUS: <span id="ai-status-text" class="text-secondary font-bold">ONLINE</span></p>
+                            <p class="text-gray-400 text-[10px] font-mono relative z-10">STATUS: <span
+                                    id="ai-status-text" class="text-secondary font-bold">ONLINE</span></p>
                         </div>
                     </div>
-                    
+
                     <div id="magi-input-container" class="mt-4 relative group">
-                        <div class="absolute -top-2 left-2 text-[8px] font-mono text-secondary bg-bg px-1 z-10">MAGI_LINK</div>
+                        <div class="absolute -top-2 left-2 text-[8px] font-mono text-secondary bg-bg px-1 z-10">
+                            MAGI_LINK</div>
                         <div class="flex border border-secondary/50 bg-black/20 backdrop-blur-sm">
-                            <input type="text" id="magi-input" placeholder="Ask ERIRI..." class="w-full bg-transparent border-none px-3 py-2 text-xs font-mono text-primary focus:outline-none placeholder-secondary/30" onkeypress="handleChatInput(event)">
-                            <button onclick="sendToMagi()" class="px-3 border-l border-secondary/50 hover:bg-secondary hover:text-black transition-colors text-secondary" aria-label="Send Message" title="Send Message">
+                            <input type="text" id="magi-input" placeholder="Ask ERIRI..."
+                                class="w-full bg-transparent border-none px-3 py-2 text-xs font-mono text-primary focus:outline-none placeholder-secondary/30"
+                                onkeypress="handleChatInput(event)">
+                            <button onclick="sendToMagi()"
+                                class="px-3 border-l border-secondary/50 hover:bg-secondary hover:text-black transition-colors text-secondary"
+                                aria-label="Send Message" title="Send Message">
                                 <i data-lucide="send" class="w-3 h-3"></i>
                             </button>
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="">
                     <div class="eva-card p-0 relative overflow-hidden flex flex-col" style="border-width: 2px;">
                         <div class="eva-glare"></div>
-                        <div class="bg-black/40 border-b border-secondary/30 p-3 flex justify-between items-center relative">
+                        <div
+                            class="bg-black/40 border-b border-secondary/30 p-3 flex justify-between items-center relative">
                             <div class="absolute top-0 left-0 w-2 h-2 bg-secondary"></div>
                             <div class="absolute top-0 right-0 w-2 h-2 bg-secondary"></div>
-                            
+
                             <div class="flex items-center gap-2">
-                                <div class="w-2 h-2 bg-secondary animate-pulse shadow-[0_0_5px_var(--secondary-color)]"></div>
-                                <span class="font-mono text-[10px] tracking-[0.2em] text-secondary font-bold">TACTICAL SCHEDULE</span>
+                                <div class="w-2 h-2 bg-secondary animate-pulse shadow-[0_0_5px_var(--secondary-color)]">
+                                </div>
+                                <span class="font-mono text-[10px] tracking-[0.2em] text-secondary font-bold">TACTICAL
+                                    SCHEDULE</span>
                             </div>
-                            <span id="anime-date" class="text-primary text-[10px] font-mono border border-primary/30 px-2 py-0.5 bg-primary/5">LOADING...</span>
+                            <span id="anime-date"
+                                class="text-primary text-[10px] font-mono border border-primary/30 px-2 py-0.5 bg-primary/5">LOADING...</span>
                         </div>
-                        
-                        <div id="week-selector" class="flex justify-between px-2 py-2 bg-black/20 overflow-x-auto no-scrollbar" style="scrollbar-width: none;">
-                            </div>
+
+                        <div id="week-selector"
+                            class="flex justify-between px-2 py-2 bg-black/20 overflow-x-auto no-scrollbar"
+                            style="scrollbar-width: none;">
+                        </div>
 
                         <div class="bg-black/10 relative min-h-[150px]">
-                            <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); background-size: 10px 10px;"></div>
-                            
-                            <div id="anime-list" class="space-y-1 p-2 max-h-96 overflow-y-auto custom-scrollbar relative">
-                                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-50 space-y-2">
-                                    <div class="w-8 h-8 border-2 border-secondary border-t-transparent rounded-full animate-spin"></div>
-                                    <span class="font-mono text-[9px] tracking-widest text-secondary">CONNECTING TO MAGI...</span>
+                            <div class="absolute inset-0 opacity-10 pointer-events-none"
+                                style="background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); background-size: 10px 10px;">
+                            </div>
+
+                            <div id="anime-list"
+                                class="space-y-1 p-2 max-h-96 overflow-y-auto custom-scrollbar relative">
+                                <div
+                                    class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-50 space-y-2">
+                                    <div
+                                        class="w-8 h-8 border-2 border-secondary border-t-transparent rounded-full animate-spin">
+                                    </div>
+                                    <span class="font-mono text-[9px] tracking-widest text-secondary">CONNECTING TO
+                                        MAGI...</span>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div class="p-2 border-t border-secondary/30 bg-black/30 flex justify-between text-[8px] font-mono text-gray-500">
+
+                        <div
+                            class="p-2 border-t border-secondary/30 bg-black/30 flex justify-between text-[8px] font-mono text-gray-500">
                             <span class="text-secondary/50">DATA_SOURCE: BANGUMI.TV</span>
                             <span id="update-time">LAST_SYNC: 0000</span>
                         </div>
@@ -567,25 +702,40 @@
                 </div>
 
                 <div class="eva-card p-6 relative overflow-hidden">
-                     <div class="eva-glare"></div>
-                     <div class="eva-header">
-                        <div class="flex items-center"><div class="eva-header-deco"></div><span>DATA_UPLINK</span></div>
+                    <div class="eva-glare"></div>
+                    <div class="eva-header">
+                        <div class="flex items-center">
+                            <div class="eva-header-deco"></div><span>DATA_UPLINK</span>
+                        </div>
                         <span class="w-2 h-2 bg-secondary animate-pulse"></span>
-                     </div>
-                     <div class="grid grid-cols-3 gap-3">
-                        <a href="https://github.com/whte97284-hue/wh1te-blog-project/tree/main" target="_blank" class="social-btn group h-16 bg-white/5 border border-white/10 flex items-center justify-center cursor-pointer">
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <a href="https://github.com/whte97284-hue/wh1te-blog-project/tree/main" target="_blank"
+                            class="social-btn group h-16 bg-white/5 border border-white/10 flex items-center justify-center cursor-pointer">
                             <div class="social-shutter"></div>
-                            <span class="social-text font-mono text-[10px] tracking-widest text-gray-400 group-hover:text-secondary relative z-10">GH_REPO</span>
+                            <span
+                                class="social-text font-mono text-[10px] tracking-widest text-gray-400 group-hover:text-secondary relative z-10">GH_REPO</span>
                             <div class="social-icon-container z-20">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-github w-8 h-8 text-secondary filter drop-shadow-[0_0_5px_rgba(57,255,20,0.8)]"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    class="lucide lucide-github w-8 h-8 text-secondary filter drop-shadow-[0_0_5px_rgba(57,255,20,0.8)]">
+                                    <path
+                                        d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+                                    <path d="M9 18c-4.51 2-5-2-7-2" />
+                                </svg>
                             </div>
                         </a>
-                        
-                        <a href="https://space.bilibili.com/551898501" target="_blank" class="social-btn group h-16 bg-white/5 border border-white/10 flex items-center justify-center cursor-pointer">
+
+                        <a href="https://space.bilibili.com/551898501" target="_blank"
+                            class="social-btn group h-16 bg-white/5 border border-white/10 flex items-center justify-center cursor-pointer">
                             <div class="social-shutter" style="background: #ff69b4;"></div>
-                            <span class="social-text font-mono text-[10px] tracking-widest text-gray-400 group-hover:text-[#ff69b4] relative z-10">BL_SPACE</span>
+                            <span
+                                class="social-text font-mono text-[10px] tracking-widest text-gray-400 group-hover:text-[#ff69b4] relative z-10">BL_SPACE</span>
                             <div class="social-icon-container z-20">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 text-[#ff69b4] filter drop-shadow-[0_0_5px_rgba(255,105,180,0.8)]">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round"
+                                    class="w-8 h-8 text-[#ff69b4] filter drop-shadow-[0_0_5px_rgba(255,105,180,0.8)]">
                                     <rect x="2" y="4" width="20" height="16" rx="4" />
                                     <path d="M8 2l4 4" />
                                     <path d="M16 2l-4 4" />
@@ -594,28 +744,43 @@
                                 </svg>
                             </div>
                         </a>
-                        
-                        <a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw?from_tab_name=main" target="_blank" class="social-btn group h-16 bg-white/5 border border-white/10 flex items-center justify-center cursor-pointer">
+
+                        <a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw?from_tab_name=main"
+                            target="_blank"
+                            class="social-btn group h-16 bg-white/5 border border-white/10 flex items-center justify-center cursor-pointer">
                             <div class="social-shutter" style="background: white;"></div>
-                            <span class="social-text font-mono text-[10px] tracking-widest text-gray-400 group-hover:text-white relative z-10">DY_USER</span>
+                            <span
+                                class="social-text font-mono text-[10px] tracking-widest text-gray-400 group-hover:text-white relative z-10">DY_USER</span>
                             <div class="social-icon-container z-20">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-music w-8 h-8 text-white filter drop-shadow-[2px_2px_0px_rgba(255,0,0,0.8)] drop-shadow-[-2px_-2px_0px_rgba(0,255,255,0.8)]"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    class="lucide lucide-music w-8 h-8 text-white filter drop-shadow-[2px_2px_0px_rgba(255,0,0,0.8)] drop-shadow-[-2px_-2px_0px_rgba(0,255,255,0.8)]">
+                                    <path d="M9 18V5l12-2v13" />
+                                    <circle cx="6" cy="18" r="3" />
+                                    <circle cx="18" cy="16" r="3" />
+                                </svg>
                             </div>
                         </a>
-                     </div>
+                    </div>
                 </div>
 
                 <div class="">
                     <div class="eva-card p-6">
                         <div class="eva-glare"></div>
                         <div class="eva-header">
-                            <div class="flex items-center"><div class="eva-header-deco"></div><span>TAG_CLOUD</span></div>
+                            <div class="flex items-center">
+                                <div class="eva-header-deco"></div><span>TAG_CLOUD</span>
+                            </div>
                             <span class="w-1 h-1 bg-secondary rounded-full animate-pulse"></span>
                         </div>
                         <div class="flex flex-wrap gap-3">
-                             <button onclick="filterByTag('Novel')" class="px-3 py-1.5 bg-white/5 border border-white/10 hover:bg-secondary hover:text-black hover:border-secondary hover:shadow-[0_0_15px_var(--secondary-color)] text-[10px] font-mono transition-all uppercase tracking-wider skew-x-[-10deg]">#Novel</button>
-                             <button onclick="filterByTag('Code')" class="px-3 py-1.5 bg-white/5 border border-white/10 hover:bg-secondary hover:text-black hover:border-secondary hover:shadow-[0_0_15px_var(--secondary-color)] text-[10px] font-mono transition-all uppercase tracking-wider skew-x-[-10deg]">#Code</button>
-                             <button onclick="filterByTag('Web')" class="px-3 py-1.5 bg-white/5 border border-white/10 hover:bg-secondary hover:text-black hover:border-secondary hover:shadow-[0_0_15px_var(--secondary-color)] text-[10px] font-mono transition-all uppercase tracking-wider skew-x-[-10deg]">#Web</button>
+                            <button onclick="filterByTag('Novel')"
+                                class="px-3 py-1.5 bg-white/5 border border-white/10 hover:bg-secondary hover:text-black hover:border-secondary hover:shadow-[0_0_15px_var(--secondary-color)] text-[10px] font-mono transition-all uppercase tracking-wider skew-x-[-10deg]">#Novel</button>
+                            <button onclick="filterByTag('Code')"
+                                class="px-3 py-1.5 bg-white/5 border border-white/10 hover:bg-secondary hover:text-black hover:border-secondary hover:shadow-[0_0_15px_var(--secondary-color)] text-[10px] font-mono transition-all uppercase tracking-wider skew-x-[-10deg]">#Code</button>
+                            <button onclick="filterByTag('Web')"
+                                class="px-3 py-1.5 bg-white/5 border border-white/10 hover:bg-secondary hover:text-black hover:border-secondary hover:shadow-[0_0_15px_var(--secondary-color)] text-[10px] font-mono transition-all uppercase tracking-wider skew-x-[-10deg]">#Web</button>
                         </div>
                     </div>
                 </div>
@@ -623,7 +788,8 @@
 
             <div class="lg:col-span-8 space-y-10">
                 <div class="flex items-center justify-between border-b-2 border-white/10 pb-4">
-                    <h2 class="text-3xl font-black tracking-tighter text-white glitch-text" data-text="DATA_LOGS">DATA_LOGS</h2>
+                    <h2 class="text-3xl font-black tracking-tighter text-white glitch-text" data-text="DATA_LOGS">
+                        DATA_LOGS</h2>
                     <div class="flex items-center gap-2">
                         <div class="w-1.5 h-1.5 bg-secondary animate-ping"></div>
                         <span class="font-mono text-xs text-secondary">[ RECORDING ]</span>
@@ -631,60 +797,77 @@
                 </div>
                 <div id="article-list-container" class="space-y-8">
     </main>
-    <div id="category-view-container" class="hidden min-h-screen pt-32 px-6 md:px-12 max-w-screen-xl mx-auto relative z-20 pb-20">
-    
-    <div class="flex justify-between items-end border-b border-white/10 pb-4 mb-8 max-w-7xl mx-auto w-full animate-[fadeIn_0.5s_ease-out]">
-        <div>
-            <div class="text-[var(--primary-color)] font-mono text-xs mb-1">/// ARCHIVE_PROTOCOL</div>
-            <h1 id="current-category-title" class="text-4xl md:text-5xl font-black text-white italic font-serif tracking-tighter">CATEGORY_NAME</h1>
+    <div id="category-view-container"
+        class="hidden min-h-screen pt-32 px-6 md:px-12 max-w-screen-xl mx-auto relative z-20 pb-20">
+
+        <div
+            class="flex justify-between items-end border-b border-white/10 pb-4 mb-8 max-w-7xl mx-auto w-full animate-[fadeIn_0.5s_ease-out]">
+            <div>
+                <div class="text-[var(--primary-color)] font-mono text-xs mb-1">/// ARCHIVE_PROTOCOL</div>
+                <h1 id="current-category-title"
+                    class="text-4xl md:text-5xl font-black text-white italic font-serif tracking-tighter">CATEGORY_NAME
+                </h1>
+            </div>
+            <button onclick="ArchivesManager.closeView()"
+                class="group flex items-center gap-2 text-gray-400 hover:text-[var(--primary-color)] transition-colors">
+                <span class="text-xs font-mono group-hover:underline">返回</span>
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
         </div>
-        <button onclick="ArchivesManager.closeView()" class="group flex items-center gap-2 text-gray-400 hover:text-[var(--primary-color)] transition-colors">
-            <span class="text-xs font-mono group-hover:underline">返回</span>
-            <i data-lucide="x" class="w-6 h-6"></i>
-        </button>
+
+        <div id="category-posts-grid"
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto w-full pb-20">
+        </div>
+
+        <div id="archive-loader" class="absolute inset-0 flex items-center justify-center bg-black/50 z-50 hidden">
+            <div class="flex flex-col items-center gap-2">
+                <div
+                    class="w-8 h-8 border-2 border-[var(--primary-color)] border-t-transparent rounded-full animate-spin">
+                </div>
+                <span class="text-[var(--primary-color)] font-mono text-xs animate-pulse">SYNCING DATA...</span>
+            </div>
+        </div>
     </div>
 
-    <div id="category-posts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto w-full pb-20">
-        </div>
-
-    <div id="archive-loader" class="absolute inset-0 flex items-center justify-center bg-black/50 z-50 hidden">
-        <div class="flex flex-col items-center gap-2">
-            <div class="w-8 h-8 border-2 border-[var(--primary-color)] border-t-transparent rounded-full animate-spin"></div>
-            <span class="text-[var(--primary-color)] font-mono text-xs animate-pulse">SYNCING DATA...</span>
-        </div>
-    </div>
-</div>
-
-    <div id="anime-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-300" onclick="if(event.target === this) closeAnimeModal()">
-        <div class="eva-card w-[90%] max-w-2xl bg-bg border border-secondary relative p-6 transform scale-95 transition-transform duration-300" style="box-shadow: 0 0 50px rgba(var(--secondary-color), 0.2);">
+    <div id="anime-modal"
+        class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-300"
+        onclick="if(event.target === this) closeAnimeModal()">
+        <div class="eva-card w-[90%] max-w-2xl bg-bg border border-secondary relative p-6 transform scale-95 transition-transform duration-300"
+            style="box-shadow: 0 0 50px rgba(var(--secondary-color), 0.2);">
             <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-primary"></div>
             <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-primary"></div>
-            
+
             <div class="flex justify-between items-center border-b border-white/10 pb-4 mb-6">
                 <div class="flex items-center gap-2">
                     <div class="w-2 h-2 bg-secondary animate-pulse"></div>
                     <span class="font-mono text-secondary tracking-widest text-xs">MAGI_ARCHIVE | DATA_RETRIEVAL</span>
                 </div>
-                <button onclick="closeAnimeModal()" class="text-gray-500 hover:text-emergency font-mono text-xs">[ TERMINATE ]</button>
+                <button onclick="closeAnimeModal()" class="text-gray-500 hover:text-emergency font-mono text-xs">[
+                    TERMINATE ]</button>
             </div>
 
             <div class="flex flex-col md:flex-row gap-6">
                 <div class="w-full md:w-1/3 shrink-0">
                     <div class="relative aspect-[2/3] overflow-hidden border border-white/10 group">
-                        <img id="modal-cover" src="" alt="Cover" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                        <img id="modal-cover" src="" alt="Cover"
+                            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                        <div class="absolute bottom-2 right-2 font-mono text-[10px] text-white bg-primary px-1">IMG_01</div>
+                        <div class="absolute bottom-2 right-2 font-mono text-[10px] text-white bg-primary px-1">IMG_01
+                        </div>
                     </div>
                 </div>
 
                 <div class="flex-1 space-y-4">
                     <div>
-                        <div class="font-mono text-[10px] text-gray-500 mb-1">SUBJECT_ID: <span id="modal-id" class="text-primary">00000</span></div>
-                        <h3 id="modal-title" class="text-2xl font-bold text-white font-serif leading-tight">LOADING...</h3>
+                        <div class="font-mono text-[10px] text-gray-500 mb-1">SUBJECT_ID: <span id="modal-id"
+                                class="text-primary">00000</span></div>
+                        <h3 id="modal-title" class="text-2xl font-bold text-white font-serif leading-tight">LOADING...
+                        </h3>
                     </div>
 
                     <div class="flex items-center gap-4">
-                        <div class="px-3 py-1 border border-secondary/50 text-secondary font-mono text-xs bg-secondary/10">
+                        <div
+                            class="px-3 py-1 border border-secondary/50 text-secondary font-mono text-xs bg-secondary/10">
                             SCORE: <span id="modal-rating" class="font-bold text-white">0.0</span>
                         </div>
                         <div class="h-px flex-1 bg-white/10"></div>
@@ -699,29 +882,36 @@
             </div>
         </div>
     </div>
-    <div id="pixiv-view-container" class="hidden min-h-screen pt-32 px-6 md:px-12 max-w-screen-2xl mx-auto relative z-20 pb-20">
+    <div id="pixiv-view-container"
+        class="hidden min-h-screen pt-32 px-6 md:px-12 max-w-screen-2xl mx-auto relative z-20 pb-20">
         <div class="flex justify-between items-end border-b border-white/10 pb-6 mb-10">
             <div>
-                <h1 class="text-4xl md:text-5xl font-black text-white font-serif tracking-tighter glitch-text" data-text="VISUAL_ARCHIVE">VISUAL_ARCHIVE</h1>
-                <div class="text-[var(--primary-color)] font-mono text-xs mt-2 tracking-widest">/// PIXIV_DAILY_RANKING_SYNC</div>
+                <h1 class="text-4xl md:text-5xl font-black text-white font-serif tracking-tighter glitch-text"
+                    data-text="VISUAL_ARCHIVE">VISUAL_ARCHIVE</h1>
+                <div class="text-[var(--primary-color)] font-mono text-xs mt-2 tracking-widest">///
+                    PIXIV_DAILY_RANKING_SYNC</div>
             </div>
             <div class="font-mono text-[10px] text-gray-500 text-right">
                 <div id="pixiv-date">DATE: CALC...</div>
                 <div class="text-[var(--secondary-color)]">STATUS: CONNECTING</div>
             </div>
         </div>
-        
+
         <div id="pixiv-grid" class="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
-            </div>
+        </div>
     </div>
 
-    <div id="steam-view-container" class="hidden min-h-screen pt-32 px-6 md:px-12 max-w-screen-xl mx-auto relative z-20 pb-20">
+    <div id="steam-view-container"
+        class="hidden min-h-screen pt-32 px-6 md:px-12 max-w-screen-xl mx-auto relative z-20 pb-20">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-16">
             <div class="lg:col-span-4 flex flex-col items-center justify-center relative">
                 <div class="relative w-48 h-48 flex items-center justify-center">
                     <svg class="w-full h-full transform -rotate-90">
-                        <circle cx="96" cy="96" r="88" stroke="rgba(255,255,255,0.1)" stroke-width="8" fill="none"></circle>
-                        <circle id="sync-rate-circle" cx="96" cy="96" r="88" stroke="var(--secondary-color)" stroke-width="8" fill="none" stroke-dasharray="552" stroke-dashoffset="552" class="transition-all duration-[2s] ease-out"></circle>
+                        <circle cx="96" cy="96" r="88" stroke="rgba(255,255,255,0.1)" stroke-width="8" fill="none">
+                        </circle>
+                        <circle id="sync-rate-circle" cx="96" cy="96" r="88" stroke="var(--secondary-color)"
+                            stroke-width="8" fill="none" stroke-dasharray="552" stroke-dashoffset="552"
+                            class="transition-all duration-[2s] ease-out"></circle>
                     </svg>
                     <div class="absolute flex flex-col items-center">
                         <span class="text-4xl font-black text-white font-serif" id="total-hours">0</span>
@@ -740,184 +930,245 @@
                     <span class="font-mono text-[10px] text-[var(--secondary-color)] animate-pulse">LIVE_DATA</span>
                 </div>
                 <div id="steam-game-list" class="space-y-3">
-                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div id="about-view-container" class="hidden min-h-screen pt-28 px-4 md:px-8 max-w-screen-2xl mx-auto relative z-20 pb-20">
-    
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6 animate-[popIn_0.5s_cubic-bezier(0.16,1,0.3,1)_forwards]">
-        
-        <div class="lg:col-span-4 cyber-card p-6 flex flex-col items-center relative overflow-hidden group">
-            <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgMGg0MHY0MEgwVjB6bTEgMWgzOHYzOEgxVjF6IiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDUpIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiLz48L3N2Zz4=')] opacity-20"></div>
-            
-            <div class="absolute top-2 left-2 text-[8px] font-mono text-gray-500">ID_REF: W-01</div>
-            <div class="absolute top-2 right-2 text-[8px] font-mono text-[var(--secondary-color)] border border-[var(--secondary-color)] px-1">ACTIVE</div>
+    <div id="about-view-container"
+        class="hidden min-h-screen pt-28 px-4 md:px-8 max-w-screen-2xl mx-auto relative z-20 pb-20">
 
-            <div class="relative w-48 h-48 mb-6 mt-4">
-                <div class="absolute inset-0 border-2 border-dashed border-[var(--primary-color)] rounded-full animate-[spin_30s_linear_infinite]"></div>
-                <div class="absolute inset-2 border border-[var(--secondary-color)] rounded-full opacity-50"></div>
-                <div class="absolute inset-0 flex items-center justify-center overflow-hidden rounded-full avatar-glitch bg-black/50">
-                    <span class="text-6xl font-black text-white font-serif z-10">W</span>
+        <div
+            class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6 animate-[popIn_0.5s_cubic-bezier(0.16,1,0.3,1)_forwards]">
+
+            <div class="lg:col-span-4 cyber-card p-6 flex flex-col items-center relative overflow-hidden group">
+                <div
+                    class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgMGg0MHY0MEgwVjB6bTEgMWgzOHYzOEgxVjF6IiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDUpIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiLz48L3N2Zz4=')] opacity-20">
+                </div>
+
+                <div class="absolute top-2 left-2 text-[8px] font-mono text-gray-500">ID_REF: W-01</div>
+                <div
+                    class="absolute top-2 right-2 text-[8px] font-mono text-[var(--secondary-color)] border border-[var(--secondary-color)] px-1">
+                    ACTIVE</div>
+
+                <div class="relative w-48 h-48 mb-6 mt-4">
+                    <div
+                        class="absolute inset-0 border-2 border-dashed border-[var(--primary-color)] rounded-full animate-[spin_30s_linear_infinite]">
                     </div>
-                <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-black border border-[var(--secondary-color)] px-3 py-1 text-[10px] font-mono text-[var(--secondary-color)] shadow-[0_0_10px_var(--secondary-color)]">
-                    SYNC: 400%
+                    <div class="absolute inset-2 border border-[var(--secondary-color)] rounded-full opacity-50"></div>
+                    <div
+                        class="absolute inset-0 flex items-center justify-center overflow-hidden rounded-full avatar-glitch bg-black/50">
+                        <span class="text-6xl font-black text-white font-serif z-10">W</span>
+                    </div>
+                    <div
+                        class="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-black border border-[var(--secondary-color)] px-3 py-1 text-[10px] font-mono text-[var(--secondary-color)] shadow-[0_0_10px_var(--secondary-color)]">
+                        SYNC: 400%
+                    </div>
+                </div>
+
+                <div class="text-center space-y-1 z-10">
+                    <h1 class="text-4xl font-black text-white tracking-tighter font-serif">Wh1te<span
+                            class="text-[var(--secondary-color)]">.log</span></h1>
+                    <p class="text-[10px] font-mono text-gray-400 tracking-[0.2em] uppercase">Magi System Architect</p>
+                </div>
+
+                <div class="w-full mt-8 grid grid-cols-3 gap-2 text-center border-t border-white/10 pt-4">
+                    <div>
+                        <div class="text-[8px] text-gray-500 mb-1">STATUS</div>
+                        <div class="text-xs font-bold text-[var(--primary-color)]">NORMAL</div>
+                    </div>
+                    <div>
+                        <div class="text-[8px] text-gray-500 mb-1">LOC</div>
+                        <div class="text-xs font-bold text-white">CN/GEO</div>
+                    </div>
+                    <div>
+                        <div class="text-[8px] text-gray-500 mb-1">ACCESS</div>
+                        <div class="text-xs font-bold text-[var(--secondary-color)]">LV.5</div>
+                    </div>
                 </div>
             </div>
 
-            <div class="text-center space-y-1 z-10">
-                <h1 class="text-4xl font-black text-white tracking-tighter font-serif">Wh1te<span class="text-[var(--secondary-color)]">.log</span></h1>
-                <p class="text-[10px] font-mono text-gray-400 tracking-[0.2em] uppercase">Magi System Architect</p>
-            </div>
+            <div class="lg:col-span-8 flex flex-col gap-6">
 
-            <div class="w-full mt-8 grid grid-cols-3 gap-2 text-center border-t border-white/10 pt-4">
-                <div>
-                    <div class="text-[8px] text-gray-500 mb-1">STATUS</div>
-                    <div class="text-xs font-bold text-[var(--primary-color)]">NORMAL</div>
+                <div class="cyber-card p-8 flex-1 relative">
+                    <div class="eva-header mb-4">
+                        <div class="flex items-center">
+                            <div class="eva-header-deco"></div><span>BIO_MATRIX</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-300 leading-relaxed font-sans text-sm md:text-base relative z-10">
+                        你好，我是 <strong class="text-white">Wh1te</strong>。一名扭曲病娇姐系爱好者。<br>
+                        这里是我的鼠窝，记录着从 <span class="text-[var(--secondary-color)]">AI</span> 代码开发到 <span
+                            class="text-[var(--primary-color)]">Web</span> 构建的全过程。
+                        关注露早GOGO谢谢喵，关注柚恩不加糖谢谢喵。最近沉迷《白色相簿2》，<span
+                            class="border-b border-dashed border-gray-500 hover:text-white hover:border-white transition-colors cursor-help"
+                            title="不共戴天">不喜欢冬马和纱的有难了</span>。
+                    </p>
                 </div>
-                <div>
-                    <div class="text-[8px] text-gray-500 mb-1">LOC</div>
-                    <div class="text-xs font-bold text-white">CN/GEO</div>
-                </div>
-                <div>
-                    <div class="text-[8px] text-gray-500 mb-1">ACCESS</div>
-                    <div class="text-xs font-bold text-[var(--secondary-color)]">LV.5</div>
+
+                <div class="cyber-card p-6">
+                    <div class="eva-header mb-4">
+                        <div class="flex items-center">
+                            <div class="eva-header-deco"></div><span>SKILL_SYNCHRONIZATION</span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-black/40 border border-white/10 p-3 relative group overflow-hidden">
+                            <div
+                                class="flex justify-between text-[10px] font-mono mb-2 text-gray-400 group-hover:text-[var(--secondary-color)] relative z-10">
+                                <span>PYTHON_CORE</span><span>65%</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-gray-800 relative z-10">
+                                <div class="h-full load-bar-fill" style="--target-width: 65%"></div>
+                            </div>
+                            <div
+                                class="absolute inset-0 bg-[var(--secondary-color)]/5 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500">
+                            </div>
+                        </div>
+                        <div class="bg-black/40 border border-white/10 p-3 relative group overflow-hidden">
+                            <div
+                                class="flex justify-between text-[10px] font-mono mb-2 text-gray-400 group-hover:text-[var(--primary-color)] relative z-10">
+                                <span>WEB_STACK</span><span>40%</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-gray-800 relative z-10">
+                                <div class="h-full load-bar-fill"
+                                    style="--target-width: 40%; background: var(--primary-color); box-shadow: 0 0 10px var(--primary-color);">
+                                </div>
+                            </div>
+                            <div
+                                class="absolute inset-0 bg-[var(--primary-color)]/5 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="lg:col-span-8 flex flex-col gap-6">
-            
-            <div class="cyber-card p-8 flex-1 relative">
-                <div class="eva-header mb-4">
-                    <div class="flex items-center"><div class="eva-header-deco"></div><span>BIO_MATRIX</span></div>
-                </div>
-                <p class="text-gray-300 leading-relaxed font-sans text-sm md:text-base relative z-10">
-                    你好，我是 <strong class="text-white">Wh1te</strong>。一名扭曲病娇姐系爱好者。<br>
-                    这里是我的鼠窝，记录着从 <span class="text-[var(--secondary-color)]">AI</span> 代码开发到 <span class="text-[var(--primary-color)]">Web</span> 构建的全过程。
-                    关注露早GOGO谢谢喵，关注柚恩不加糖谢谢喵。最近沉迷《白色相簿2》，<span class="border-b border-dashed border-gray-500 hover:text-white hover:border-white transition-colors cursor-help" title="不共戴天">不喜欢冬马和纱的有难了</span>。
-                </p>
-            </div>
-
+        <div class="mb-6 animate-[popIn_0.5s_cubic-bezier(0.16,1,0.3,1)_forwards]" style="animation-delay: 0.1s;">
             <div class="cyber-card p-6">
                 <div class="eva-header mb-4">
-                    <div class="flex items-center"><div class="eva-header-deco"></div><span>SKILL_SYNCHRONIZATION</span></div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-black/40 border border-white/10 p-3 relative group overflow-hidden">
-                        <div class="flex justify-between text-[10px] font-mono mb-2 text-gray-400 group-hover:text-[var(--secondary-color)] relative z-10">
-                            <span>PYTHON_CORE</span><span>65%</span>
-                        </div>
-                        <div class="w-full h-1.5 bg-gray-800 relative z-10">
-                            <div class="h-full load-bar-fill" style="--target-width: 65%"></div>
-                        </div>
-                        <div class="absolute inset-0 bg-[var(--secondary-color)]/5 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500"></div>
+                    <div class="flex items-center">
+                        <div class="eva-header-deco"></div><span>NEURAL_UPLINK</span>
                     </div>
-                    <div class="bg-black/40 border border-white/10 p-3 relative group overflow-hidden">
-                        <div class="flex justify-between text-[10px] font-mono mb-2 text-gray-400 group-hover:text-[var(--primary-color)] relative z-10">
-                            <span>WEB_STACK</span><span>40%</span>
-                        </div>
-                        <div class="w-full h-1.5 bg-gray-800 relative z-10">
-                            <div class="h-full load-bar-fill" style="--target-width: 40%; background: var(--primary-color); box-shadow: 0 0 10px var(--primary-color);"></div>
-                        </div>
-                        <div class="absolute inset-0 bg-[var(--primary-color)]/5 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="mb-6 animate-[popIn_0.5s_cubic-bezier(0.16,1,0.3,1)_forwards]" style="animation-delay: 0.1s;">
-        <div class="cyber-card p-6">
-            <div class="eva-header mb-4">
-                <div class="flex items-center"><div class="eva-header-deco"></div><span>NEURAL_UPLINK</span></div>
-                <div class="text-[9px] font-mono text-gray-500 animate-pulse">ESTABLISHING CONNECTION...</div>
-            </div>
-            
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                
-                <a href="https://github.com/whte97284-hue/wh1te-blog-project/tree/main" target="_blank" class="social-btn group h-20 bg-white/5 border border-white/10 flex flex-col items-center justify-center cursor-pointer relative overflow-hidden">
-                    <div class="social-shutter" style="background: var(--secondary-color);"></div>
-                    <div class="social-text flex flex-col items-center gap-1 transition-all duration-300 group-hover:translate-y-[-150%] group-hover:opacity-0">
-                        <i data-lucide="github" class="w-6 h-6 text-gray-400"></i>
-                        <span class="font-mono text-[10px] tracking-widest text-gray-500">GITHUB</span>
-                    </div>
-                    <div class="social-icon-container absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 scale-50 group-hover:scale-100">
-                        <span class="font-black text-xl text-black font-serif">CODE</span>
-                    </div>
-                </a>
-
-                <a href="https://space.bilibili.com/551898501" target="_blank" class="social-btn group h-20 bg-white/5 border border-white/10 flex flex-col items-center justify-center cursor-pointer relative overflow-hidden">
-                    <div class="social-shutter" style="background: #ff69b4;"></div>
-                    <div class="social-text flex flex-col items-center gap-1 transition-all duration-300 group-hover:translate-y-[-150%] group-hover:opacity-0">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-gray-400">
-                            <rect x="2" y="4" width="20" height="16" rx="4" /><path d="M8 2l4 4" /><path d="M16 2l-4 4" /><path d="M9 12v2" /><path d="M15 12v2" />
-                        </svg>
-                        <span class="font-mono text-[10px] tracking-widest text-gray-500">BILIBILI</span>
-                    </div>
-                    <div class="social-icon-container absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 scale-50 group-hover:scale-100">
-                        <span class="font-black text-xl text-white font-serif">VIDEO</span>
-                    </div>
-                </a>
-
-                <a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw?from_tab_name=main" target="_blank" class="social-btn group h-20 bg-white/5 border border-white/10 flex flex-col items-center justify-center cursor-pointer relative overflow-hidden">
-                    <div class="social-shutter" style="background: white;"></div>
-                    <div class="social-text flex flex-col items-center gap-1 transition-all duration-300 group-hover:translate-y-[-150%] group-hover:opacity-0">
-                        <i data-lucide="music-2" class="w-6 h-6 text-gray-400"></i>
-                        <span class="font-mono text-[10px] tracking-widest text-gray-500">DOUYIN</span>
-                    </div>
-                    <div class="social-icon-container absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 scale-50 group-hover:scale-100">
-                        <span class="font-black text-xl text-black font-serif">VLOG</span>
-                    </div>
-                </a>
-
-                <div class="social-btn group h-20 bg-white/5 border border-white/10 flex flex-col items-center justify-center cursor-pointer relative overflow-hidden"
-                     onclick="navigator.clipboard.writeText('3301168409').then(() => { this.querySelector('.qq-tip').innerText = 'COPIED!'; setTimeout(()=>this.querySelector('.qq-tip').innerText='3301168409', 2000) })">
-                    
-                    <div class="social-shutter" style="background: #12B7F5;"></div> <div class="social-text flex flex-col items-center gap-1 transition-all duration-300 group-hover:translate-y-[-150%] group-hover:opacity-0">
-                        <i data-lucide="message-circle" class="w-6 h-6 text-gray-400"></i>
-                        <span class="font-mono text-[10px] tracking-widest text-gray-500">QQ</span>
-                    </div>
-                    
-                    <div class="social-icon-container absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 scale-50 group-hover:scale-100">
-                        <span class="font-black text-xl text-white font-serif">CHAT</span>
-                        <span class="qq-tip font-mono text-[9px] text-white/80 mt-1">3301168409</span>
-                    </div>
+                    <div class="text-[9px] font-mono text-gray-500 animate-pulse">ESTABLISHING CONNECTION...</div>
                 </div>
 
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+                    <a href="https://github.com/whte97284-hue/wh1te-blog-project/tree/main" target="_blank"
+                        class="social-btn group h-20 bg-white/5 border border-white/10 flex flex-col items-center justify-center cursor-pointer relative overflow-hidden">
+                        <div class="social-shutter" style="background: var(--secondary-color);"></div>
+                        <div
+                            class="social-text flex flex-col items-center gap-1 transition-all duration-300 group-hover:translate-y-[-150%] group-hover:opacity-0">
+                            <i data-lucide="github" class="w-6 h-6 text-gray-400"></i>
+                            <span class="font-mono text-[10px] tracking-widest text-gray-500">GITHUB</span>
+                        </div>
+                        <div
+                            class="social-icon-container absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 scale-50 group-hover:scale-100">
+                            <span class="font-black text-xl text-black font-serif">CODE</span>
+                        </div>
+                    </a>
+
+                    <a href="https://space.bilibili.com/551898501" target="_blank"
+                        class="social-btn group h-20 bg-white/5 border border-white/10 flex flex-col items-center justify-center cursor-pointer relative overflow-hidden">
+                        <div class="social-shutter" style="background: #ff69b4;"></div>
+                        <div
+                            class="social-text flex flex-col items-center gap-1 transition-all duration-300 group-hover:translate-y-[-150%] group-hover:opacity-0">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-gray-400">
+                                <rect x="2" y="4" width="20" height="16" rx="4" />
+                                <path d="M8 2l4 4" />
+                                <path d="M16 2l-4 4" />
+                                <path d="M9 12v2" />
+                                <path d="M15 12v2" />
+                            </svg>
+                            <span class="font-mono text-[10px] tracking-widest text-gray-500">BILIBILI</span>
+                        </div>
+                        <div
+                            class="social-icon-container absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 scale-50 group-hover:scale-100">
+                            <span class="font-black text-xl text-white font-serif">VIDEO</span>
+                        </div>
+                    </a>
+
+                    <a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw?from_tab_name=main"
+                        target="_blank"
+                        class="social-btn group h-20 bg-white/5 border border-white/10 flex flex-col items-center justify-center cursor-pointer relative overflow-hidden">
+                        <div class="social-shutter" style="background: white;"></div>
+                        <div
+                            class="social-text flex flex-col items-center gap-1 transition-all duration-300 group-hover:translate-y-[-150%] group-hover:opacity-0">
+                            <i data-lucide="music-2" class="w-6 h-6 text-gray-400"></i>
+                            <span class="font-mono text-[10px] tracking-widest text-gray-500">DOUYIN</span>
+                        </div>
+                        <div
+                            class="social-icon-container absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 scale-50 group-hover:scale-100">
+                            <span class="font-black text-xl text-black font-serif">VLOG</span>
+                        </div>
+                    </a>
+
+                    <div class="social-btn group h-20 bg-white/5 border border-white/10 flex flex-col items-center justify-center cursor-pointer relative overflow-hidden"
+                        onclick="navigator.clipboard.writeText('3301168409').then(() => { this.querySelector('.qq-tip').innerText = 'COPIED!'; setTimeout(()=>this.querySelector('.qq-tip').innerText='3301168409', 2000) })">
+
+                        <div class="social-shutter" style="background: #12B7F5;"></div>
+                        <div
+                            class="social-text flex flex-col items-center gap-1 transition-all duration-300 group-hover:translate-y-[-150%] group-hover:opacity-0">
+                            <i data-lucide="message-circle" class="w-6 h-6 text-gray-400"></i>
+                            <span class="font-mono text-[10px] tracking-widest text-gray-500">QQ</span>
+                        </div>
+
+                        <div
+                            class="social-icon-container absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 scale-50 group-hover:scale-100">
+                            <span class="font-black text-xl text-white font-serif">CHAT</span>
+                            <span class="qq-tip font-mono text-[9px] text-white/80 mt-1">3301168409</span>
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div>
+
+        <div class="cyber-card p-8 animate-[popIn_0.5s_cubic-bezier(0.16,1,0.3,1)_forwards]"
+            style="animation-delay: 0.2s;">
+            <div class="eva-header mb-8">
+                <div class="flex items-center">
+                    <div class="eva-header-deco"></div><span>CHRONICLE_LOGS</span>
+                </div>
+            </div>
+
+            <div class="space-y-8 border-l-2 border-white/10 ml-3 pl-8 relative">
+                <div class="relative group">
+                    <div
+                        class="absolute -left-[39px] top-1 w-5 h-5 bg-black border-2 border-[var(--primary-color)] rounded-full group-hover:bg-[var(--primary-color)] group-hover:shadow-[0_0_15px_var(--primary-color)] transition-all z-10">
+                    </div>
+                    <span class="font-mono text-xs text-gray-500 mb-1 block">2025.10 // CURRENT</span>
+                    <h3
+                        class="text-lg font-bold text-white mb-2 font-serif group-hover:text-[var(--primary-color)] transition-colors">
+                        互联网补完计划</h3>
+                    <p class="text-xs text-gray-400 leading-relaxed font-sans border-b border-white/5 pb-4">
+                        放弃了对抢票脚本的执念，转向构建数字花园。MAGI 系统与 EVA 风格重构完成。
+                    </p>
+                </div>
+
+                <div class="relative group">
+                    <div
+                        class="absolute -left-[39px] top-1 w-5 h-5 bg-black border-2 border-white/30 rounded-full group-hover:border-[var(--secondary-color)] transition-all z-10">
+                    </div>
+                    <span class="font-mono text-xs text-gray-500 mb-1 block">2025.09 // ARCHIVED</span>
+                    <h3
+                        class="text-lg font-bold text-gray-300 mb-2 font-serif group-hover:text-[var(--secondary-color)] transition-colors">
+                        初探自动化</h3>
+                    <p class="text-xs text-gray-400 leading-relaxed font-sans">
+                        接触 ADB 和 Appium，试图与安卓底层通信。项目未达预期，但理解了“工具”的本质。
+                    </p>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <div class="cyber-card p-8 animate-[popIn_0.5s_cubic-bezier(0.16,1,0.3,1)_forwards]" style="animation-delay: 0.2s;">
-        <div class="eva-header mb-8">
-            <div class="flex items-center"><div class="eva-header-deco"></div><span>CHRONICLE_LOGS</span></div>
-        </div>
-        
-        <div class="space-y-8 border-l-2 border-white/10 ml-3 pl-8 relative">
-            <div class="relative group">
-                <div class="absolute -left-[39px] top-1 w-5 h-5 bg-black border-2 border-[var(--primary-color)] rounded-full group-hover:bg-[var(--primary-color)] group-hover:shadow-[0_0_15px_var(--primary-color)] transition-all z-10"></div>
-                <span class="font-mono text-xs text-gray-500 mb-1 block">2025.10 // CURRENT</span>
-                <h3 class="text-lg font-bold text-white mb-2 font-serif group-hover:text-[var(--primary-color)] transition-colors">互联网补完计划</h3>
-                <p class="text-xs text-gray-400 leading-relaxed font-sans border-b border-white/5 pb-4">
-                    放弃了对抢票脚本的执念，转向构建数字花园。MAGI 系统与 EVA 风格重构完成。
-                </p>
-            </div>
-            
-            <div class="relative group">
-                <div class="absolute -left-[39px] top-1 w-5 h-5 bg-black border-2 border-white/30 rounded-full group-hover:border-[var(--secondary-color)] transition-all z-10"></div>
-                <span class="font-mono text-xs text-gray-500 mb-1 block">2025.09 // ARCHIVED</span>
-                <h3 class="text-lg font-bold text-gray-300 mb-2 font-serif group-hover:text-[var(--secondary-color)] transition-colors">初探自动化</h3>
-                <p class="text-xs text-gray-400 leading-relaxed font-sans">
-                    接触 ADB 和 Appium，试图与安卓底层通信。项目未达预期，但理解了“工具”的本质。
-                </p>
-            </div>
-        </div>
-    </div>
 
-</div>
-    
 
-<script src="main.js"></script>
+    <!-- Live2D 已禁用，恢复静态图片模式 -->
+
+    <script src="main.js"></script>
 </body>
+
 </html>
