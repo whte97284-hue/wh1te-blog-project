@@ -207,8 +207,27 @@ function initLCL() {
     /* Create bubbles */
     for (let i = 0; i < 100; i++) bubbles.push(new Bubble());
 
-    function animateLCL() {
+    /* [优化] 帧率限制变量 */
+    const LCL_FPS = 30;
+    const LCL_INTERVAL = 1000 / LCL_FPS;
+    let lclLastTime = 0;
+
+    function animateLCL(timestamp) {
+        // 休眠检测：页面不可见时暂停
+        if (document.hidden) {
+            lclAnimationId = requestAnimationFrame(animateLCL);
+            return;
+        }
+
         if (!document.body.classList.contains('lcl-mode')) return;
+
+        // 帧率限制
+        const elapsed = timestamp - lclLastTime;
+        if (elapsed < LCL_INTERVAL) {
+            lclAnimationId = requestAnimationFrame(animateLCL);
+            return;
+        }
+        lclLastTime = timestamp - (elapsed % LCL_INTERVAL);
 
         ctx.clearRect(0, 0, lclCanvas.width, lclCanvas.height);
 
@@ -227,7 +246,7 @@ function initLCL() {
         lclAnimationId = requestAnimationFrame(animateLCL);
     }
 
-    animateLCL();
+    animateLCL(performance.now());
 }
 
 
@@ -291,8 +310,14 @@ if (!isTouchDevice) {
 
     document.addEventListener('mouseup', () => document.body.classList.remove('clicking'));
 
-    /* 4. RENDER LOOP */
+    /* 4. RENDER LOOP (优化：添加页面休眠检测) */
     function renderCursorLoop() {
+        // 休眠检测：页面不可见时跳过渲染
+        if (document.hidden) {
+            requestAnimationFrame(renderCursorLoop);
+            return;
+        }
+
         if (document.body.classList.contains('tactical-mode')) {
             posTrail1.x = lerp(posTrail1.x, mouse.x, LERP_TRAIL1);
             posTrail1.y = lerp(posTrail1.y, mouse.y, LERP_TRAIL1);
@@ -460,6 +485,18 @@ function initMatrixWorker() {
                 });
             }
         }, 50);
+    });
+
+    // [优化] 页面隐藏时暂停 Worker，可见时恢复
+    document.addEventListener('visibilitychange', () => {
+        if (!matrixWorker) return;
+        if (document.hidden) {
+            matrixWorker.postMessage({ type: 'stop' });
+            console.log('[MAGI] Matrix Worker Hibernating...');
+        } else {
+            matrixWorker.postMessage({ type: 'start' });
+            console.log('[MAGI] Matrix Worker Resumed.');
+        }
     });
 }
 
@@ -961,71 +998,37 @@ function showAiSpeech(text) {
 }
 
 /* ==========================================================================
-   MAGI AVATAR EXPRESSION SYSTEM
+   MAGI AVATAR EXPRESSION SYSTEM (STATIC IMAGE MODE)
    ========================================================================== */
 
-/* --- 1. 定义表情差分映射 (Expression Maps) --- */
+/* 静态图片映射 */
 const AVATAR_MAP = {
-    normal: './images/ai-assistant.jpg',    /* 常态 */
-    angry: './images/AA95A211-7406-4C4F-AFEE-3488FE9F4886.png',  /* 连点暴怒 */
-    happy: './images/未标题-2.png'          /* 回复后开心 */
+    normal: './images/ai-assistant.jpg',
+    angry: './images/ai-assistant.jpg',
+    happy: './images/ai-assistant.jpg'
 };
 
-/* --- 2. 交互逻辑 (Interaction Logic) --- */
-let clickCount = 0;
-let clickResetTimer = null;
-let emotionResetTimer = null;
+/* 交互逻辑变量 */
 const aiAvatarDisplay = document.getElementById('ai-avatar-display');
 const aiCardContainer = document.getElementById('ai-card');
 
-/* 更新表情函数 */
+/* 更新表情函数 (静态图片模式) */
 function setAvatarEmotion(emotion) {
-    if (!aiAvatarDisplay) return;
-
-    /* 切换图片 */
-    if (AVATAR_MAP[emotion]) {
+    if (aiAvatarDisplay && AVATAR_MAP[emotion]) {
         aiAvatarDisplay.src = AVATAR_MAP[emotion];
     }
 
-    /* 特殊状态样式处理 */
-    if (emotion === 'angry') {
-        aiCardContainer.classList.add('rage-mode');
-        /* 播放红色警告动画 */
-        document.documentElement.style.setProperty('--lock-color', '#ff0000');
-    } else {
+    // 移除所有 rage-mode 样式
+    if (aiCardContainer) {
         aiCardContainer.classList.remove('rage-mode');
         document.documentElement.style.setProperty('--lock-color', '#ff0055');
     }
 }
 
-/* 头像点击事件监听 (连点触发暴怒) */
+/* 头像点击事件监听 */
 if (aiCardContainer) {
     aiCardContainer.addEventListener('click', (e) => {
-        /* 增加点击计数 */
-        clickCount++;
-
-        /* 清除之前的重置计时器 */
-        if (clickResetTimer) clearTimeout(clickResetTimer);
-
-        /* 3秒内没有继续点击则重置计数 */
-        clickResetTimer = setTimeout(() => {
-            clickCount = 0;
-            /* 如果不是在开心状态(回复后)，则恢复常态 */
-            if (aiAvatarDisplay.src.includes(AVATAR_MAP.angry)) {
-                setAvatarEmotion('normal');
-            }
-        }, 3000);
-
-        /* 连点 5 次触发暴怒 */
-        if (clickCount >= 5) {
-            setAvatarEmotion('angry');
-            showAiSpeech("喂！不要一直戳我啦！很烦诶！💢");
-            /* 重置计数防止一直触发 */
-            clickCount = 0;
-        } else {
-            /* 正常触发对话 */
-            triggerAiSpeech();
-        }
+        triggerAiSpeech();
     });
 }
 
