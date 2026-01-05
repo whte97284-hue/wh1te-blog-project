@@ -159,8 +159,11 @@ function initLCL() {
     let bubbles = [];
 
     function resize() {
-        lclCanvas.width = window.innerWidth;
-        lclCanvas.height = window.innerHeight;
+        /* [优化] 限制 DPR 最大为 1.5，避免 4K 屏渲染压力过大 */
+        const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+        lclCanvas.width = window.innerWidth * dpr;
+        lclCanvas.height = window.innerHeight * dpr;
+        ctx.scale(dpr, dpr); /* 缩放 Context 以匹配分辨率 */
     }
     window.addEventListener('resize', resize);
     resize();
@@ -464,6 +467,7 @@ function initMatrixWorker() {
             canvas: offscreen,
             width: window.innerWidth,
             height: window.innerHeight,
+            dpr: Math.min(window.devicePixelRatio || 1, 1), /* [优化] 强制 DPR=1 */
             fontSize: fontSize,
             color: matrixColor,
             isLightMode: document.documentElement.getAttribute('data-mode') === 'light'
@@ -507,10 +511,13 @@ function initMatrixFallback() {
     matrixCtx = matrixCanvas.getContext('2d');
 
     function initDrops() {
-        matrixCanvas.width = window.innerWidth;
-        matrixCanvas.height = window.innerHeight;
+        /* [优化] 强制 DPR 最大为 1，代码雨不需要 Retina 清晰度，反而能提升 CRT 质感并大幅提升性能 */
+        const dpr = Math.min(window.devicePixelRatio || 1, 1);
+        matrixCanvas.width = window.innerWidth * dpr;
+        matrixCanvas.height = window.innerHeight * dpr;
+        // matrixCtx.scale(dpr, dpr); // 注意：这里不需要 scale，因为我们要利用低分辨率特性
 
-        const columns = Math.floor(matrixCanvas.width / fontSize);
+        const columns = Math.floor(matrixCanvas.width / fontSize); /* 使用实际像素计算列数 */
         const newDrops = [];
         for (let i = 0; i < columns; i++) {
             newDrops[i] = drops[i] || Math.floor(Math.random() * -matrixCanvas.height / fontSize);
@@ -2146,8 +2153,113 @@ function renderItems(container, items, showProgressBar) {
     container.innerHTML += html;
 }
 
-function searchArticles() { const query = document.getElementById('search-input').value.toLowerCase(); document.querySelectorAll('.eva-card').forEach(card => { const text = card.textContent.toLowerCase(); const tags = card.dataset.tags ? card.dataset.tags.toLowerCase() : ''; card.style.display = (text.includes(query) || tags.includes(query)) ? '' : 'none'; }); }
-function filterByTag(tag) { document.getElementById('search-input').value = tag; searchArticles(); }
+/* ==========================================================================
+   MAGI SEARCH SYSTEM V2.0 (FUSE.JS POWERED)
+   功能：模糊搜索、typo 容错、权重排序
+   ========================================================================== */
+
+let fuseInstance = null;
+let searchableData = [];
+
+/**
+ * 初始化 Fuse.js 搜索引擎
+ * @param {Array} posts - 文章数据数组
+ */
+function initFuseSearch(posts) {
+    if (!posts || posts.length === 0) return;
+
+    // 构建搜索数据
+    searchableData = posts.map(post => {
+        const title = post.title?.rendered || '';
+        const excerpt = post.excerpt?.rendered?.replace(/<[^>]+>/g, '') || '';
+        let tags = [];
+        let category = '';
+
+        if (post._embedded?.['wp:term']) {
+            // 分类
+            if (post._embedded['wp:term'][0]) {
+                category = post._embedded['wp:term'][0].map(c => c.name).join(' ');
+            }
+            // 标签
+            if (post._embedded['wp:term'][1]) {
+                tags = post._embedded['wp:term'][1].map(t => t.name);
+            }
+        }
+
+        return {
+            id: post.id,
+            title: title,
+            excerpt: excerpt,
+            tags: tags.join(' '),
+            category: category
+        };
+    });
+
+    // 配置 Fuse.js
+    const options = {
+        keys: [
+            { name: 'title', weight: 0.5 },      // 标题权重最高
+            { name: 'excerpt', weight: 0.25 },   // 摘要次之
+            { name: 'tags', weight: 0.15 },      // 标签
+            { name: 'category', weight: 0.1 }    // 分类
+        ],
+        threshold: 0.4,           // 模糊度 (0=精确, 1=全匹配)
+        distance: 100,            // 匹配位置容差
+        includeScore: true,       // 返回匹配分数
+        ignoreLocation: true,     // 不限制匹配位置
+        minMatchCharLength: 2,    // 最小匹配长度
+        useExtendedSearch: false  // 保持简单模式
+    };
+
+    fuseInstance = new Fuse(searchableData, options);
+    console.log(`[MAGI] Fuse.js 搜索引擎已初始化: ${searchableData.length} 条数据`);
+}
+
+/**
+ * 执行模糊搜索
+ */
+function searchArticles() {
+    const query = document.getElementById('search-input').value.trim();
+    const cards = document.querySelectorAll('.eva-card');
+
+    // 空查询: 显示所有
+    if (!query) {
+        cards.forEach(card => card.style.display = '');
+        return;
+    }
+
+    // Fuse.js 未初始化: 回退到简单搜索
+    if (!fuseInstance) {
+        cards.forEach(card => {
+            const text = card.textContent.toLowerCase();
+            card.style.display = text.includes(query.toLowerCase()) ? '' : 'none';
+        });
+        return;
+    }
+
+    // 执行 Fuse.js 搜索
+    const results = fuseInstance.search(query);
+    const matchedIds = new Set(results.map(r => r.item.id));
+
+    // 显示/隐藏卡片
+    cards.forEach(card => {
+        // 从 onclick 属性提取文章 ID
+        const onclick = card.getAttribute('onclick') || '';
+        const match = onclick.match(/id=(\d+)/);
+        if (match) {
+            const cardId = parseInt(match[1]);
+            card.style.display = matchedIds.has(cardId) ? '' : 'none';
+        }
+    });
+
+    // 更新搜索状态提示
+    console.log(`[MAGI] 搜索 "${query}" 找到 ${results.length} 条结果`);
+}
+
+function filterByTag(tag) {
+    document.getElementById('search-input').value = tag;
+    searchArticles();
+}
 
 startHeroGlitch();
 loadAnimeData(); /* New function call */
@@ -2495,9 +2607,11 @@ const BlogManager = {
 
             const posts = JSON.parse(text);
 
-            // 首次加载时缓存所有数据
+            // 首次加载时缓存所有数据并初始化搜索
             if (isReset && posts.length > 0) {
                 this.setCache(posts);
+                // 初始化 Fuse.js 搜索引擎
+                initFuseSearch(posts);
             }
 
             // 判断是否还有更多
