@@ -96,6 +96,31 @@
             transition: background-color 0.5s ease, color 0.3s ease;
         }
 
+        /* --- 滚动条布局稳定性修复 --- */
+        html {
+            scrollbar-gutter: stable;
+            /* 始终预留滚动条空间，防止布局跳动 */
+        }
+
+        /* 美化滚动条 (Webkit) */
+        ::-webkit-scrollbar {
+            width: 8px;
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--secondary-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-color);
+        }
+
         /* --- 核心修复：手动实现导航栏布局 (脱离 Tailwind 依赖) --- */
         .tactical-nav {
             position: fixed;
