@@ -170,15 +170,14 @@
             padding-right: 1rem;
         }
 
-        /* PC端三栏布局 - 强制生效 */
+        /* PC端三栏布局 */
         @media (min-width: 1280px) {
             .tactical-grid {
-                grid-template-columns: 280px minmax(0, 1fr) 280px !important;
+                grid-template-columns: 280px minmax(0, 1fr) 280px;
                 align-items: start;
             }
 
             .sidebar-left {
-                display: block !important;
                 position: sticky;
                 top: 6rem;
                 height: calc(100vh - 8rem);
@@ -187,7 +186,6 @@
             }
 
             .sidebar-right {
-                display: block !important;
                 position: sticky;
                 top: 6rem;
                 height: calc(100vh - 8rem);
