@@ -82,7 +82,8 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
 
 /* 📊 性能等级判断 */
 const getPerformanceTier = () => {
-    const memory = navigator.deviceMemory || 4;
+    // 检查设备内存 (如果可用)
+    const memory = navigator.deviceMemory || 4; // 默认 4GB
     const cores = navigator.hardwareConcurrency || 4;
 
     if (isMobileDevice) {
@@ -90,181 +91,61 @@ const getPerformanceTier = () => {
         if (memory <= 4 || cores <= 4) return 'medium';
         return 'high';
     }
-    return 'ultra';
+    return 'ultra'; // PC 默认最高性能
 };
 
 const performanceTier = getPerformanceTier();
 console.log(`[PERF] Device Tier: ${performanceTier}, Touch: ${isTouchDevice}, Mobile: ${isMobileDevice}`);
 
-/* ==========================================================================
-   🔋 POWER SAVER MODULE (省电模式)
-   ========================================================================== */
-const PowerSaver = {
-    // 状态
-    isEnabled: false,
+/* 📱 移动端性能配置 */
+const MobilePerf = {
+    // FPS 设置
+    fps: isMobileDevice ? 20 : 30,
 
-    // 配置 (省电模式下的设置)
-    config: {
-        normal: {
-            fps: isMobileDevice ? 20 : 30,
-            particleCount: isMobileDevice ? 50 : 150,
-            enableMatrixRain: !isMobileDevice,
-            enableLCL: !isMobileDevice,
-            enableSonicWave: true,
-            enableGlitchEffects: !isMobileDevice,
-            enableBackdropBlur: true,
-            enableCRT: true
-        },
-        powerSave: {
-            fps: 15,
-            particleCount: 0,
-            enableMatrixRain: false,
-            enableLCL: false,
-            enableSonicWave: false,
-            enableGlitchEffects: false,
-            enableBackdropBlur: false,
-            enableCRT: false
-        }
-    },
+    // 粒子数量
+    particleCount: (() => {
+        if (prefersReducedMotion) return 0;
+        if (performanceTier === 'low') return 15;
+        if (performanceTier === 'medium') return 30;
+        if (performanceTier === 'high') return 50;
+        return 150; // PC
+    })(),
 
-    // 当前生效的配置
-    get current() {
-        return this.isEnabled ? this.config.powerSave : this.config.normal;
-    },
+    // 是否启用各种动画
+    enableMatrixRain: !prefersReducedMotion && performanceTier !== 'low',
+    enableLCL: !isMobileDevice, // 移动端禁用 LCL 流体
+    enableParticles: !prefersReducedMotion && performanceTier !== 'low',
+    enableSonicWave: !isMobileDevice || performanceTier === 'high',
+    enableGlitchEffects: !isMobileDevice,
+    enableBackdropBlur: !isMobileDevice || performanceTier === 'high',
 
-    // 初始化
-    init() {
-        // 读取用户偏好
-        const saved = localStorage.getItem('powerSaverMode');
-
-        // 自动检测：系统级省电模式 或 低性能设备 或 用户手动开启
-        if (saved === 'true' || prefersReducedMotion || performanceTier === 'low') {
-            this.enable(false); // 静默启用，不保存
-        }
-
-        // 如果是用户明确保存的设置，尊重它
-        if (saved === 'true') {
-            this.enable(true);
-        } else if (saved === 'false') {
-            this.disable(true);
-        }
-
-        console.log(`[POWER] Mode: ${this.isEnabled ? '🔋 POWER SAVER' : '⚡ PERFORMANCE'}`);
-    },
-
-    // 启用省电模式
-    enable(save = true) {
-        this.isEnabled = true;
-        if (save) localStorage.setItem('powerSaverMode', 'true');
-        this.apply();
-        this.updateUI();
-    },
-
-    // 禁用省电模式
-    disable(save = true) {
-        this.isEnabled = false;
-        if (save) localStorage.setItem('powerSaverMode', 'false');
-        this.apply();
-        this.updateUI();
-    },
-
-    // 切换
-    toggle() {
-        if (this.isEnabled) {
-            this.disable();
-        } else {
-            this.enable();
-        }
-        return this.isEnabled;
-    },
-
-    // 应用设置
+    // 应用优化
     apply() {
-        const cfg = this.current;
-
-        // 更新渲染核心 FPS
-        if (typeof GlobalRender !== 'undefined') {
-            GlobalRender.fps = cfg.fps;
-            GlobalRender.interval = 1000 / cfg.fps;
-        }
-
-        // CSS 类切换
-        if (this.isEnabled) {
-            document.body.classList.add('power-saver-mode');
-            document.body.classList.add('reduce-motion');
-        } else {
-            document.body.classList.remove('power-saver-mode');
-            if (!isMobileDevice) {
-                document.body.classList.remove('reduce-motion');
+        if (isMobileDevice) {
+            // 禁用 backdrop-filter 提升性能
+            if (!this.enableBackdropBlur) {
+                document.documentElement.style.setProperty('--backdrop-blur', 'none');
             }
-        }
 
-        // 停止/启动 Matrix Worker
-        if (typeof matrixWorker !== 'undefined' && matrixWorker) {
-            matrixWorker.postMessage({
-                type: this.isEnabled ? 'stop' : 'start'
-            });
-        }
+            // 禁用 CSS 动画
+            if (!this.enableGlitchEffects) {
+                document.body.classList.add('reduce-motion');
+            }
 
-        // 隐藏/显示高耗能元素
-        const matrixCanvas = document.getElementById('matrix-bg');
-        const lclCanvas = document.getElementById('lcl-bg');
-        const crtOverlay = document.querySelector('.crt-overlay');
-
-        if (matrixCanvas) {
-            matrixCanvas.style.display = cfg.enableMatrixRain ? '' : 'none';
-        }
-        if (lclCanvas) {
-            lclCanvas.style.display = cfg.enableLCL ? '' : 'none';
-        }
-        if (crtOverlay) {
-            crtOverlay.style.display = cfg.enableCRT ? '' : 'none';
-        }
-
-        console.log(`[POWER] Applied: FPS=${cfg.fps}, Matrix=${cfg.enableMatrixRain}, Particles=${cfg.particleCount}`);
-    },
-
-    // 更新 UI 指示器
-    updateUI() {
-        const indicator = document.getElementById('power-saver-indicator');
-        const btn = document.getElementById('power-saver-btn');
-
-        if (indicator) {
-            indicator.style.opacity = this.isEnabled ? '1' : '0';
-            indicator.textContent = this.isEnabled ? '🔋' : '⚡';
-        }
-        if (btn) {
-            btn.classList.toggle('active', this.isEnabled);
-            btn.title = this.isEnabled ? '省电模式 ON' : '省电模式 OFF';
+            console.log(`[PERF] Mobile optimizations applied: FPS=${this.fps}, Particles=${this.particleCount}`);
         }
     }
 };
 
-// 初始化省电模式
-PowerSaver.init();
+// 立即应用移动端优化
+MobilePerf.apply();
 
-// 挂载到全局
-window.PowerSaver = PowerSaver;
+/* 重新配置 RenderCore 使用移动端 FPS */
+GlobalRender.fps = MobilePerf.fps;
+GlobalRender.interval = 1000 / MobilePerf.fps;
 
-// 兼容旧代码
-const MobilePerf = {
-    fps: PowerSaver.current.fps,
-    particleCount: PowerSaver.current.particleCount,
-    enableMatrixRain: PowerSaver.current.enableMatrixRain,
-    enableLCL: PowerSaver.current.enableLCL,
-    enableParticles: PowerSaver.current.particleCount > 0,
-    enableSonicWave: PowerSaver.current.enableSonicWave,
-    enableGlitchEffects: PowerSaver.current.enableGlitchEffects,
-    enableBackdropBlur: PowerSaver.current.enableBackdropBlur,
-    apply() { PowerSaver.apply(); }
-};
-
-/* 重新配置 RenderCore 使用当前 FPS */
-GlobalRender.fps = PowerSaver.current.fps;
-GlobalRender.interval = 1000 / PowerSaver.current.fps;
-
-/* Adjust particle count based on current mode */
-const PARTICLE_COUNT = PowerSaver.current.particleCount;
+/* Adjust particle count based on device capability */
+const PARTICLE_COUNT = MobilePerf.particleCount;
 
 /* --- TACTICAL MODE TOGGLE LOGIC --- */
 const savedTactical = localStorage.getItem('tacticalMode');
