@@ -325,15 +325,6 @@
                         </div>
                         <span class="text-gray-400 data-[mode=light]:text-gray-600">LCL</span>
                     </div>
-
-                    <!-- 🔋 省电模式开关 -->
-                    <div class="tactical-switch" onclick="PowerSaver.toggle()" id="power-saver-btn" title="省电模式">
-                        <div class="switch-box" style="border-color: currentColor;">
-                            <div class="switch-box-inner" id="power-saver-indicator"
-                                style="background-color: currentColor; opacity: 0;"></div>
-                        </div>
-                        <span class="text-gray-400 data-[mode=light]:text-gray-600">🔋</span>
-                    </div>
                 </div>
 
                 <div class="flex gap-2 items-center px-1 scale-90 origin-left">
@@ -520,16 +511,6 @@
                     class="w-full p-3 rounded border border-[var(--border-color)] text-sm font-mono flex items-center justify-center gap-2 hover:bg-white/5">
                     <i data-lucide="sun" class="w-4 h-4"></i>
                     <span>切换明暗模式</span>
-                </button>
-            </div>
-
-            <!-- 🔋 省电模式 -->
-            <div class="p-4 border-t border-[var(--border-color)]">
-                <button onclick="PowerSaver.toggle(); MobileMenu.close();" id="mobile-power-saver-btn"
-                    class="w-full p-3 rounded border border-[var(--border-color)] text-sm font-mono flex items-center justify-center gap-2 hover:bg-white/5">
-                    <span>🔋</span>
-                    <span>省电模式</span>
-                    <span id="mobile-power-status" class="text-xs opacity-60">(自动)</span>
                 </button>
             </div>
         </div>
