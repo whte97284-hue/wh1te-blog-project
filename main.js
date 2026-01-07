@@ -74,8 +74,197 @@ const GlobalRender = new RenderCore(30);
 /* Check if device supports touch (Mobile/Tablet) */
 const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-/* Adjust particle count based on device capability */
-const PARTICLE_COUNT = isTouchDevice ? 50 : 150;
+/* 📱 更精确的移动端检测 */
+const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+/* 🔋 省电模式检测 (iOS 低电量模式，部分 Android) */
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* 📊 性能等级判断 */
+const getPerformanceTier = () => {
+    const memory = navigator.deviceMemory || 4;
+    const cores = navigator.hardwareConcurrency || 4;
+
+    if (isMobileDevice) {
+        if (memory <= 2 || cores <= 2) return 'low';
+        if (memory <= 4 || cores <= 4) return 'medium';
+        return 'high';
+    }
+    return 'ultra';
+};
+
+const performanceTier = getPerformanceTier();
+console.log(`[PERF] Device Tier: ${performanceTier}, Touch: ${isTouchDevice}, Mobile: ${isMobileDevice}`);
+
+/* ==========================================================================
+   🔋 POWER SAVER MODULE (省电模式)
+   ========================================================================== */
+const PowerSaver = {
+    // 状态
+    isEnabled: false,
+
+    // 配置 (省电模式下的设置)
+    config: {
+        normal: {
+            fps: isMobileDevice ? 20 : 30,
+            particleCount: isMobileDevice ? 50 : 150,
+            enableMatrixRain: !isMobileDevice,
+            enableLCL: !isMobileDevice,
+            enableSonicWave: true,
+            enableGlitchEffects: !isMobileDevice,
+            enableBackdropBlur: true,
+            enableCRT: true
+        },
+        powerSave: {
+            fps: 15,
+            particleCount: 0,
+            enableMatrixRain: false,
+            enableLCL: false,
+            enableSonicWave: false,
+            enableGlitchEffects: false,
+            enableBackdropBlur: false,
+            enableCRT: false
+        }
+    },
+
+    // 当前生效的配置
+    get current() {
+        return this.isEnabled ? this.config.powerSave : this.config.normal;
+    },
+
+    // 初始化
+    init() {
+        // 读取用户偏好
+        const saved = localStorage.getItem('powerSaverMode');
+
+        // 自动检测：系统级省电模式 或 低性能设备 或 用户手动开启
+        if (saved === 'true' || prefersReducedMotion || performanceTier === 'low') {
+            this.enable(false); // 静默启用，不保存
+        }
+
+        // 如果是用户明确保存的设置，尊重它
+        if (saved === 'true') {
+            this.enable(true);
+        } else if (saved === 'false') {
+            this.disable(true);
+        }
+
+        console.log(`[POWER] Mode: ${this.isEnabled ? '🔋 POWER SAVER' : '⚡ PERFORMANCE'}`);
+    },
+
+    // 启用省电模式
+    enable(save = true) {
+        this.isEnabled = true;
+        if (save) localStorage.setItem('powerSaverMode', 'true');
+        this.apply();
+        this.updateUI();
+    },
+
+    // 禁用省电模式
+    disable(save = true) {
+        this.isEnabled = false;
+        if (save) localStorage.setItem('powerSaverMode', 'false');
+        this.apply();
+        this.updateUI();
+    },
+
+    // 切换
+    toggle() {
+        if (this.isEnabled) {
+            this.disable();
+        } else {
+            this.enable();
+        }
+        return this.isEnabled;
+    },
+
+    // 应用设置
+    apply() {
+        const cfg = this.current;
+
+        // 更新渲染核心 FPS
+        if (typeof GlobalRender !== 'undefined') {
+            GlobalRender.fps = cfg.fps;
+            GlobalRender.interval = 1000 / cfg.fps;
+        }
+
+        // CSS 类切换
+        if (this.isEnabled) {
+            document.body.classList.add('power-saver-mode');
+            document.body.classList.add('reduce-motion');
+        } else {
+            document.body.classList.remove('power-saver-mode');
+            if (!isMobileDevice) {
+                document.body.classList.remove('reduce-motion');
+            }
+        }
+
+        // 停止/启动 Matrix Worker
+        if (typeof matrixWorker !== 'undefined' && matrixWorker) {
+            matrixWorker.postMessage({
+                type: this.isEnabled ? 'stop' : 'start'
+            });
+        }
+
+        // 隐藏/显示高耗能元素
+        const matrixCanvas = document.getElementById('matrix-bg');
+        const lclCanvas = document.getElementById('lcl-bg');
+        const crtOverlay = document.querySelector('.crt-overlay');
+
+        if (matrixCanvas) {
+            matrixCanvas.style.display = cfg.enableMatrixRain ? '' : 'none';
+        }
+        if (lclCanvas) {
+            lclCanvas.style.display = cfg.enableLCL ? '' : 'none';
+        }
+        if (crtOverlay) {
+            crtOverlay.style.display = cfg.enableCRT ? '' : 'none';
+        }
+
+        console.log(`[POWER] Applied: FPS=${cfg.fps}, Matrix=${cfg.enableMatrixRain}, Particles=${cfg.particleCount}`);
+    },
+
+    // 更新 UI 指示器
+    updateUI() {
+        const indicator = document.getElementById('power-saver-indicator');
+        const btn = document.getElementById('power-saver-btn');
+
+        if (indicator) {
+            indicator.style.opacity = this.isEnabled ? '1' : '0';
+            indicator.textContent = this.isEnabled ? '🔋' : '⚡';
+        }
+        if (btn) {
+            btn.classList.toggle('active', this.isEnabled);
+            btn.title = this.isEnabled ? '省电模式 ON' : '省电模式 OFF';
+        }
+    }
+};
+
+// 初始化省电模式
+PowerSaver.init();
+
+// 挂载到全局
+window.PowerSaver = PowerSaver;
+
+// 兼容旧代码
+const MobilePerf = {
+    fps: PowerSaver.current.fps,
+    particleCount: PowerSaver.current.particleCount,
+    enableMatrixRain: PowerSaver.current.enableMatrixRain,
+    enableLCL: PowerSaver.current.enableLCL,
+    enableParticles: PowerSaver.current.particleCount > 0,
+    enableSonicWave: PowerSaver.current.enableSonicWave,
+    enableGlitchEffects: PowerSaver.current.enableGlitchEffects,
+    enableBackdropBlur: PowerSaver.current.enableBackdropBlur,
+    apply() { PowerSaver.apply(); }
+};
+
+/* 重新配置 RenderCore 使用当前 FPS */
+GlobalRender.fps = PowerSaver.current.fps;
+GlobalRender.interval = 1000 / PowerSaver.current.fps;
+
+/* Adjust particle count based on current mode */
+const PARTICLE_COUNT = PowerSaver.current.particleCount;
 
 /* --- TACTICAL MODE TOGGLE LOGIC --- */
 const savedTactical = localStorage.getItem('tacticalMode');
@@ -430,6 +619,16 @@ const katakana = 'アァカサタナハマヤャラワガザダバパイィキ�
  * 初始化 Matrix 系统 (自动检测并选择渲染模式)
  */
 function initMatrixSystem() {
+    /* 📱 [性能优化] 移动端完全禁用 Matrix Rain */
+    if (!MobilePerf.enableMatrixRain) {
+        console.log('[MAGI] Matrix Rain: DISABLED (Mobile Power Saving)');
+        // 隐藏 Canvas，使用纯色背景
+        if (matrixCanvas) {
+            matrixCanvas.style.display = 'none';
+        }
+        return;
+    }
+
     // 检测是否支持 OffscreenCanvas 和 Worker
     const supportsOffscreen = typeof OffscreenCanvas !== 'undefined'
         && typeof matrixCanvas.transferControlToOffscreen === 'function';
@@ -1130,6 +1329,7 @@ function persistMemory() {
 
 /* 5. 交互逻辑 */
 let magiAnimationInterval;
+let emotionResetTimer = null;  // [BUG FIX] 声明表情重置计时器
 
 /* 频率限制配置 */
 let lastMessageTime = 0;
@@ -1440,10 +1640,32 @@ function stopMagiAnimation(isSuccess) {
 }
 
 /* ==========================================================================
-SONIC WAVE CONTROLLER (安全修复版)
+SONIC WAVE CONTROLLER (安全修复版 V2.0)
 ========================================================================== */
 // 使用立即执行函数 (IIFE) 隔离作用域，防止变量冲突报错
 (function () {
+    // [BUG FIX] 初始化 Canvas 上下文和尺寸变量
+    const waveCanvas = document.getElementById('sync-wave-canvas');
+    let ctx = null;
+    let width = 0;
+
+    // 初始化 Canvas
+    if (waveCanvas) {
+        ctx = waveCanvas.getContext('2d');
+        width = waveCanvas.width = 300;  // 默认宽度
+        waveCanvas.height = 120;
+
+        // 响应式调整
+        const resizeWaveCanvas = () => {
+            const container = waveCanvas.parentElement;
+            if (container) {
+                width = waveCanvas.width = container.offsetWidth || 300;
+            }
+        };
+        resizeWaveCanvas();
+        window.addEventListener('resize', resizeWaveCanvas);
+    }
+
     // 内部变量定义
     let localWaveState = 'normal';
     let speed = 0.05;
@@ -1465,9 +1687,8 @@ SONIC WAVE CONTROLLER (安全修复版)
 
     // 核心绘制函数
     function drawWave() {
-        // 确保 ctx 和 width 存在 (这两个应该是你代码里全局定义的)
-        if (typeof ctx === 'undefined' || !ctx) return;
-        if (typeof width === 'undefined') return;
+        // [BUG FIX] 使用 IIFE 内部定义的 ctx 和 width
+        if (!ctx || !width) return;
 
         // 清空画布
         ctx.clearRect(0, 0, width, 120);
@@ -3494,6 +3715,87 @@ window.PixivManager = PixivManager;
 
 // 将其挂载到全局，确保控制台能访问
 window.AboutManager = AboutManager;
+
+/* ==========================================================================
+   📱 MOBILE MENU MODULE
+   ========================================================================== */
+const MobileMenu = {
+    menu: null,
+    content: null,
+    isOpen: false,
+
+    init() {
+        this.menu = document.getElementById('mobile-menu');
+        this.content = document.getElementById('mobile-menu-content');
+
+        // ESC 键关闭菜单
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.isOpen) {
+                this.close();
+            }
+        });
+    },
+
+    toggle() {
+        if (this.isOpen) {
+            this.close();
+        } else {
+            this.open();
+        }
+    },
+
+    open() {
+        if (!this.menu || !this.content) this.init();
+        if (!this.menu) return;
+
+        this.isOpen = true;
+        this.menu.classList.remove('pointer-events-none', 'opacity-0');
+        this.menu.classList.add('pointer-events-auto', 'opacity-100');
+        this.content.classList.remove('translate-x-full');
+        this.content.classList.add('translate-x-0');
+        document.body.style.overflow = 'hidden';
+
+        // 重新渲染 Lucide 图标
+        if (typeof lucide !== 'undefined') {
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+    },
+
+    close() {
+        if (!this.menu || !this.content) return;
+
+        this.isOpen = false;
+        this.menu.classList.add('pointer-events-none', 'opacity-0');
+        this.menu.classList.remove('pointer-events-auto', 'opacity-100');
+        this.content.classList.add('translate-x-full');
+        this.content.classList.remove('translate-x-0');
+        document.body.style.overflow = '';
+    }
+};
+
+// 初始化移动端菜单
+document.addEventListener('DOMContentLoaded', () => {
+    MobileMenu.init();
+});
+
+// 挂载到全局
+window.MobileMenu = MobileMenu;
+
+// 兼容性：创建 toggleMode 别名
+window.toggleMode = toggleLightMode;
+
+// 主题切换函数 (如果尚未定义)
+if (typeof window.setTheme === 'undefined') {
+    window.setTheme = function (themeName) {
+        if (themeName === 'default') {
+            document.documentElement.removeAttribute('data-theme');
+        } else {
+            document.documentElement.setAttribute('data-theme', themeName);
+        }
+        localStorage.setItem('theme', themeName);
+    };
+}
+
 // ==========================================
 // SYSTEM STARTUP
 // ==========================================
@@ -3501,3 +3803,4 @@ window.AboutManager = AboutManager;
 GlobalRender.start();
 
 console.log("MAGI SYSTEM: GRAPHICS ENGINE LINKED.");
+console.log("📱 MOBILE MENU: INITIALIZED.");
