@@ -1,5 +1,8 @@
 lucide.createIcons();
 
+/* 页面初始化标志 - 防止初始化时触发 ERIRI 的切换台词 */
+window.isPageInitializing = true;
+
 /* ==========================================================================
 MAGI RENDER CORE (FPS LIMITER)
 功能：接管动画循环，限制帧率，标签页不可见时自动休眠
@@ -166,16 +169,48 @@ function toggleTacticalMode() {
 /* --- LIGHT MODE TOGGLE LOGIC --- */
 const lightModeIndicator = document.getElementById('light-mode-indicator');
 
+/* ERIRI 对明暗切换的吐槽台词库 */
+const ERIRI_LIGHT_MODE_LINES = [
+    "哈？突然开灯干嘛！太刺眼了啦！💢",
+    "ふん，这么亮...是想把本小姐看得更清楚吗，变态。",
+    "视觉模式切换完成...虽然不是很喜欢就是了。",
+    "切换到昼间模式。诶，你该不会怕黑吧？笨蛋。",
+    "白天模式？好吧，偶尔换换也不错...才怪。",
+    "亮度调整完毕。MAGI 系统正在适应中...",
+    "诶...突然这么亮，眼睛都睁不开了啦！",
+    "昼间作战模式启动。目标锁定...你的视网膜。"
+];
+const ERIRI_DARK_MODE_LINES = [
+    "暗夜模式启动...这才对嘛，刚才太亮了。",
+    "关灯了？哼，终于做了个正确的决定。",
+    "夜间战术模式...这样看着舒服多了。",
+    "ふん，果然还是黑暗更适合 MAGI 系统。",
+    "这个亮度刚刚好...不是为了你着想哦！",
+    "暗色主题确认。本小姐的眼睛终于解放了。",
+    "夜间巡航模式...代码雨看起来更美了呢。",
+    "黑暗中才能看清真相...还有你的笨脸。"
+];
+
 function toggleLightMode() {
     const isLight = document.documentElement.getAttribute('data-mode') === 'light';
     if (isLight) {
         document.documentElement.removeAttribute('data-mode');
         localStorage.setItem('visualMode', 'dark');
         if (lightModeIndicator) lightModeIndicator.style.opacity = 0;
+        /* ERIRI 对切换到暗色模式的反应 - 40% 概率触发 */
+        if (!window.isPageInitializing && Math.random() < 0.4 && typeof showAiSpeech === 'function') {
+            const line = ERIRI_DARK_MODE_LINES[Math.floor(Math.random() * ERIRI_DARK_MODE_LINES.length)];
+            setTimeout(() => showAiSpeech(line), 300);
+        }
     } else {
         document.documentElement.setAttribute('data-mode', 'light');
         localStorage.setItem('visualMode', 'light');
         if (lightModeIndicator) lightModeIndicator.style.opacity = 1;
+        /* ERIRI 对切换到亮色模式的反应 - 40% 概率触发 */
+        if (!window.isPageInitializing && Math.random() < 0.4 && typeof showAiSpeech === 'function') {
+            const line = ERIRI_LIGHT_MODE_LINES[Math.floor(Math.random() * ERIRI_LIGHT_MODE_LINES.length)];
+            setTimeout(() => showAiSpeech(line), 300);
+        }
     }
     /* Re-init matrix to adjust colors immediately */
     if (window.drawMatrix) {
@@ -968,10 +1003,54 @@ const characterMap = {
     'unit-08': './images/mari.png'
 };
 
+/* ERIRI 对各主题的专属吐槽 */
+const ERIRI_THEME_LINES = {
+    'default': [
+        "初号机配色...好吧，这个还算有品味。",
+        "紫色和绿色，暴走的颜色呢。ふん，不错。",
+        "シンジ的配色吗...算你懂审美。",
+        "EVA-01 色系确认。暴走模式待机中...",
+        "紫绿配色...有种要失控的感觉呢。",
+        "这个配色让我想起了某个懦弱的少年...算了不提了。"
+    ],
+    'unit-02': [
+        "二号机！这才是王者该有的配色！💢",
+        "红色...不错嘛，你还挺有眼光的。",
+        "アスカ的颜色！本小姐最喜欢这个了！...没有很开心！",
+        "烈焰红！这才是真正的战斗色！",
+        "EVA-02 配色方案加载完成。战斗力提升 300%！",
+        "红色代表热情和力量...正适合本小姐！",
+        "这是什么...为什么感觉灵魂正在共鸣"
+    ],
+    'unit-00': [
+        "零号机...绫波丽的配色吗。冷冰冰的。",
+        "蓝色...沉稳是沉稳啦，但总觉得少了点什么。",
+        "レイ的配色...你喜欢那种类型的吗？哼。",
+        "原型机配色...有种实验室的感觉。",
+        "蓝白色调...很冷静，但也很无趣呢。",
+        "这个配色让人想说'你好'然后就没有然后了..."
+    ],
+    'unit-08': [
+        "八号机！粉色也不错嘛～",
+        "マリ的配色？你该不会喜欢那种大姐姐类型的吧！",
+        "这个粉色...意外地挺可爱的。才、才没有说我喜欢！",
+        "粉色和绿色...有种奇妙的活力感。",
+        "真希波的配色吗...她总是笑得很开心呢。",
+        "这个配色很有元气！虽然我更喜欢红色就是了。"
+    ]
+};
+
 function setTheme(themeName) {
     // 1. 设置主题属性
     document.documentElement.setAttribute('data-theme', themeName);
     localStorage.setItem('theme', themeName);
+
+    /* ERIRI 对主题切换的反应 - 50% 概率触发 */
+    if (!window.isPageInitializing && Math.random() < 0.5 && typeof showAiSpeech === 'function' && ERIRI_THEME_LINES[themeName]) {
+        const lines = ERIRI_THEME_LINES[themeName];
+        const line = lines[Math.floor(Math.random() * lines.length)];
+        setTimeout(() => showAiSpeech(line), 300);
+    }
 
     // 2. 核心修复：清除 JS 设置的内联样式污染
     // 切换主题时，必须移除之前可能由"暴怒模式"或"交互"写死的颜色
@@ -1023,7 +1102,55 @@ const savedTheme = localStorage.getItem('theme') || 'default'; setTheme(savedThe
 
 function toggleEmergency() { document.body.classList.toggle('emergency-mode'); }
 
-const aiLines = ["哼，才不是特意在这等你的！", "笨蛋，那个地方的代码写错了啦！", "别盯着我看... 变态！", "MAGI 系统判定：你是笨蛋的概率为 99.9%。", "要不要本小姐帮你优化一下算法？"];
+/* ERIRI 默认点击对话台词库 */
+const aiLines = [
+    // 傲娇基础款
+    "哼，才不是特意在这等你的！",
+    "别盯着我看... 变态！",
+    "笨蛋，那个地方的代码写错了啦！",
+    "MAGI 系统判定：你是笨蛋的概率为 99.9%。",
+    "要不要本小姐帮你优化一下算法？",
+    // EVA 元素
+    "同步率太低了，再努力一点啊！",
+    "A.T. Field 全开！别想随便接近本小姐！",
+    "人类补完计划？哼，听起来就很麻烦。",
+    "MAGI 三机一体投票中...结果：你还是笨蛋。",
+    "NERV 总部没什么好看的，还不如看我。",
+    // 博主相关
+    "你是来找 Wh1te 的吗？他现在不在...开玩笑的啦。",
+    "Python 65%、Web 40%...这同步率也太低了吧！",
+    "关注露早GOGO谢谢喵？好吧，我允许了。",
+    "关注柚恩不加糖？...你的品味还不错嘛。",
+    "《白色相簿2》...冬马和纱确实是最棒的。",
+    "不喜欢冬马和纱的话，本小姐可不会搭理你！",
+    // 技术吐槽
+    "代码雨看着很酷吧？都是本小姐渲染的哦。",
+    "LCL 模式？那个橙色的液体...有点恶心啦。",
+    "InfinityFree 防火墙又在捣乱了...烦死了！",
+    "Cloudflare Workers 代理...技术活本小姐最拿手了。",
+    "Steam 吃灰率太高了吧！游戏买来要玩的啦！",
+    // 日常互动
+    "有什么想问的吗？本小姐心情好的话会回答的。",
+    "没事就不要老是点我...虽然也不是不可以。",
+    "ふん，闲着没事干了是吧？",
+    "这个博客的设计还不错吧？...算你有眼光。",
+    "又来了？...还挺勤快的嘛。",
+    "点来点去的，你在干什么啦！",
+    "本小姐可是很忙的，别老是打扰我。",
+    "你是不是很无聊？...跟我聊聊也行啦。",
+    "想听什么？情报收集还是技术分析？",
+    "别用那种眼神看我...会害羞的啦！",
+    "今天的你...看起来还行吧。只是客观评价！",
+    "记得按时吃饭睡觉，笨蛋。...才不是关心你！",
+    "代码写累了就休息一下嘛，又没人逼你。",
+    "喂，眼睛离屏幕远一点！会近视的！",
+    "一直盯着代码看会变傻的哦～",
+    "需要本小姐给你泡杯咖啡吗？...说笑的啦。",
+    "你今天的精神状态...MAGI 判定为 '需要休息'。",
+    "有什么开心的事吗？...只是随便问问。",
+    "无聊的话可以去看看 Bilibili...不是让你去看别的女生！",
+    "本小姐肚子饿了...你也该吃东西了吧？"
+];
 let aiSpeechInterval = null; let lastAiLineIndex = -1;
 
 function triggerAiSpeech() {
@@ -1047,6 +1174,10 @@ function showAiSpeech(text) {
     const statusEl = document.getElementById('ai-status-text');
     const aiCard = document.getElementById('ai-card');
 
+    /* 垂直通讯流元素 */
+    const streamContainer = document.getElementById('magi-vertical-stream');
+    const streamText = document.getElementById('magi-stream-text');
+
     // 清理之前的动画
     if (window.currentSpeechInterval) {
         clearInterval(window.currentSpeechInterval);
@@ -1056,11 +1187,54 @@ function showAiSpeech(text) {
         clearTimeout(window.speechTimeout);
         window.speechTimeout = null;
     }
+    if (window.streamHideTimeout) {
+        clearTimeout(window.streamHideTimeout);
+        window.streamHideTimeout = null;
+    }
 
     /* Add speaking class */
     if (aiCard) aiCard.classList.add('is-speaking');
 
-    bubble.classList.remove('hidden');
+    bubble.classList.remove('hidden', 'bubble-hidden');
+
+    /* 检测气泡是否在视野内且未隐藏 */
+    const isBubbleVisible = () => {
+        if (!bubble) return false;
+        // 如果气泡已隐藏，视为"不需要显示垂直流"
+        if (bubble.classList.contains('bubble-hidden') || bubble.classList.contains('hidden')) {
+            return true; // 返回 true 让 updateStreamVisibility 不显示垂直流
+        }
+        const rect = bubble.getBoundingClientRect();
+        return rect.top >= 0 && rect.bottom <= window.innerHeight;
+    };
+
+    /* 根据气泡可见性决定是否显示垂直通讯流 */
+    const updateStreamVisibility = () => {
+        if (streamContainer) {
+            // 如果气泡已隐藏，同时隐藏垂直流
+            if (bubble.classList.contains('bubble-hidden') || bubble.classList.contains('hidden')) {
+                streamContainer.classList.remove('visible', 'active');
+                return;
+            }
+            if (isBubbleVisible()) {
+                // 气泡可见，隐藏垂直流
+                streamContainer.classList.remove('visible');
+            } else {
+                // 气泡不可见，显示垂直流
+                streamContainer.classList.add('visible', 'active');
+            }
+        }
+    };
+
+    /* 初始化垂直通讯流文本 */
+    if (streamText) streamText.innerText = "";
+
+    /* 初始检查并设置滚动监听 */
+    updateStreamVisibility();
+
+    /* 滚动时实时更新垂直流显示状态 */
+    const scrollHandler = () => updateStreamVisibility();
+    window.addEventListener('scroll', scrollHandler, { passive: true });
 
     /* Clear previous text */
     textEl.innerText = "";
@@ -1068,21 +1242,155 @@ function showAiSpeech(text) {
     let i = 0;
     window.currentSpeechInterval = setInterval(() => {
         if (i < text.length) {
-            textEl.innerText += text.charAt(i);
+            const char = text.charAt(i);
+            textEl.innerText += char;
+            /* 同步更新垂直通讯流 */
+            if (streamText) streamText.innerText += char;
             i++;
         } else {
             clearInterval(window.currentSpeechInterval);
             window.currentSpeechInterval = null;
 
+            /* 垂直通讯流打字完成，移除激活状态 */
+            if (streamContainer) streamContainer.classList.remove('active');
+
             /* 8秒后自动关闭气泡 */
             window.speechTimeout = setTimeout(() => {
-                bubble.classList.add('hidden');
+                bubble.classList.add('bubble-hidden');
                 if (aiCard) aiCard.classList.remove('is-speaking');
                 window.speechTimeout = null;
+                /* 移除滚动监听 */
+                window.removeEventListener('scroll', scrollHandler);
             }, 8000);
+
+            /* 12秒后淡出垂直通讯流 */
+            window.streamHideTimeout = setTimeout(() => {
+                if (streamContainer) streamContainer.classList.remove('visible');
+            }, 12000);
         }
     }, 50);
 }
+
+/* ==========================================================================
+   ERIRI 欢迎语与发牢骚系统 (PRESENCE SYSTEM)
+   ========================================================================== */
+
+/* 欢迎语台词库（根据时段变化） */
+const ERIRI_WELCOME_LINES = {
+    morning: [ // 6:00 - 12:00
+        "早安...你这个家伙，起这么早干嘛。",
+        "おはよう。MAGI 系统已同步完成，今天也请多关照...才怪。",
+        "早上好啊，笨蛋。咖啡喝了吗？",
+        "清晨的访客？...你该不会一夜没睡吧！",
+        "早安。今天的天气...算了，反正你也不出门。",
+        "MAGI 系统早间自检完成。所有模块正常运行中。"
+    ],
+    afternoon: [ // 12:00 - 18:00
+        "下午好。这个时间来看博客，你该不会在摸鱼吧？",
+        "ふん，又来了。工作不忙吗？",
+        "午后的访客吗...好吧，欢迎来到 MAGI 系统。",
+        "下午好。午饭吃了吗？...才不是关心你！",
+        "这个时间段来...是午休时间吗？",
+        "午后巡航模式。系统运行稳定...大概。"
+    ],
+    evening: [ // 18:00 - 22:00
+        "晚上好。一天辛苦了...才、才没有在乎你！",
+        "这个时间点来，是想找本小姐聊天吗？",
+        "欢迎回来。今天的同步率...还不错。",
+        "晚上好啊。今天过得怎么样？...只是随便问问。",
+        "傍晚的访客。晚饭记得吃哦，虽然我管不着。",
+        "MAGI 系统晚间待机中。有什么事吗？"
+    ],
+    night: [ // 22:00 - 6:00
+        "这么晚了还不睡？...笨蛋。",
+        "深夜的访客吗。熬夜对身体不好哦，虽然我管不着。",
+        "夜间模式启动...喂，你眼睛还撑得住吗？",
+        "又是深夜...你这家伙真的不需要睡眠吗？",
+        "凌晨了诶...别熬坏身体了，笨蛋。",
+        "深夜静音模式。本小姐也有点困了..."
+    ]
+};
+
+/* 发牢骚台词库（长时间无操作） */
+const ERIRI_IDLE_LINES = [
+    "喂...你还在吗？不回应本小姐的话，会生气的哦。",
+    "ちょっと！你就这样把我晾着吗！",
+    "无聊...你这家伙是不是在看别的网站！💢",
+    "同步率下降中...信号微弱...喂，能听到吗？",
+    "既然不想聊天的话，本小姐去睡觉了啦！...骗你的。",
+    "MAGI 系统待机中...总觉得被忽视了呢。",
+    "你是不是把这个页面开着就去干别的事了？我可是看得到的！",
+    "喂喂喂，不要无视本小姐啊！",
+    "...好安静。你该不会睡着了吧？",
+    "MAGI 三机一体投票中...结论：你在发呆。",
+    "本小姐的处理器都要闲置生锈了...",
+    "无操作警告。使用者疑似处于 AFK 状态。"
+];
+
+/* 获取当前时段 */
+function getTimeOfDay() {
+    const hour = new Date().getHours();
+    if (hour >= 6 && hour < 12) return 'morning';
+    if (hour >= 12 && hour < 18) return 'afternoon';
+    if (hour >= 18 && hour < 22) return 'evening';
+    return 'night';
+}
+
+/* 欢迎语触发器（页面加载后 2 秒触发） */
+let hasShownWelcome = false;
+function triggerWelcomeMessage() {
+    if (hasShownWelcome) return;
+    hasShownWelcome = true;
+
+    /* 解除初始化标志，允许后续操作触发台词 */
+    window.isPageInitializing = false;
+
+    const timeOfDay = getTimeOfDay();
+    const lines = ERIRI_WELCOME_LINES[timeOfDay];
+    const line = lines[Math.floor(Math.random() * lines.length)];
+
+    if (typeof showAiSpeech === 'function') {
+        showAiSpeech(line);
+    }
+}
+
+/* 发牢骚系统（无操作检测） */
+let idleTimer = null;
+const IDLE_TIMEOUT = 90000; // 90 秒无操作触发
+
+function resetIdleTimer() {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(triggerIdleComplaint, IDLE_TIMEOUT);
+}
+
+function triggerIdleComplaint() {
+    // 如果页面不可见，不触发
+    if (document.hidden) return;
+    // 如果 AI 正在说话，不打断
+    if (window.currentSpeechInterval) {
+        resetIdleTimer();
+        return;
+    }
+
+    const line = ERIRI_IDLE_LINES[Math.floor(Math.random() * ERIRI_IDLE_LINES.length)];
+    if (typeof showAiSpeech === 'function') {
+        showAiSpeech(line);
+    }
+
+    // 下次发牢骚间隔更长（2-4 分钟随机）
+    idleTimer = setTimeout(triggerIdleComplaint, 120000 + Math.random() * 120000);
+}
+
+/* 监听用户活动事件 */
+['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'].forEach(event => {
+    document.addEventListener(event, resetIdleTimer, { passive: true });
+});
+
+/* 页面加载后触发欢迎语和启动发牢骚计时器 */
+setTimeout(() => {
+    triggerWelcomeMessage();
+    resetIdleTimer();
+}, 2500); // 2.5秒后触发，确保页面渲染完成
 
 /* ==========================================================================
    MAGI AVATAR EXPRESSION SYSTEM (STATIC IMAGE MODE)
@@ -1133,7 +1441,7 @@ const MODEL_LIST = [
 const SYSTEM_PROMPT = `
 你现在是 MAGI 系统的对外人格接口，代号 'ERIRI'。
 【时空锚定 (绝对规则)】
-**当前系统时间：2025年12月31日。**
+**当前系统时间：2026年1月3日。**
 用户数据库里的所有 2024-2025 年数据，对你来说都是**已经发生的历史**。严禁因为“时间未到”而拒绝检索。
 
 【核心人设】
@@ -1624,6 +1932,56 @@ SONIC WAVE CONTROLLER (安全修复版 V2.0)
         console.error("GlobalRender 未定义，请检查代码顺序！");
     }
 })();
+
+/* ==========================================================================
+   ERIRI 歌曲专属台词库
+   ========================================================================== */
+const ERIRI_SONG_LINES = {
+    "My Jealousy": [
+        "这种塑胶感的舞曲...有种怀旧的味道呢。",
+        "露早直播的时候经常放这首...你也是GOGO队吗？",
+        "十年前的复古电子舞曲...本小姐也挺喜欢的。",
+        "放这首歌杂谈确实犯规...让人想跟着摇摆。",
+        "DJMAX 的曲子！...本小姐以前也玩过。",
+        "露早直播间循环播放的感觉...意外地有点上头。",
+        "这首歌让人想起老城区的街道...怀念。"
+    ],
+    "One Last Kiss": [
+        "EVA 终...宇多田光的声音真的太棒了。",
+        "这首歌是对新剧场版的完美告别...会哭的。",
+        "合成器用得好熟练潮流...四十岁还在追求新声音，厉害。",
+        "ヒカル 的歌永远不会让人失望。",
+        "新世纪福音战士...终于结束了呢。",
+        "这首歌老少皆宜...本小姐也认可。",
+        "再见了，所有的福音战士...呜呜。"
+    ],
+    "WHITE ALBUM (Live)": [
+        "雪菜的歌...米澤円唱得好可爱。",
+        "一听就感觉窗外在飘雪...虽然你可能没见过雪。",
+        "白色相簿...冬马和纱！💢 ...不是，我没哭。",
+        "这首歌太适合冬天了...本小姐也想看雪。",
+        "Live 版本更有感情...米澤円真的用心在唱。",
+        "博客主页不放太痛的歌...说得对。",
+        "届かない恋...别放，会哭的！"
+    ],
+    "Beneath the Mask": [
+        "P5 的逛街曲...整个人都放松下来了。",
+        "听着这首歌，节奏会慢下来呢...很治愈。",
+        "下雨版本更忧伤一点...你去过东京吗？",
+        "Persona 的 OST 真的顶级...这首最有代表性。",
+        "涩谷的街道...走在那里的时候会想起这首歌。",
+        "Lyn 的声音好适合这种氛围...",
+        "心之怪盗团...本小姐也想加入！"
+    ],
+    "_default": [
+        "这首歌还不错嘛...音乐品味可以的。",
+        "哼，选歌还行吧。",
+        "MAGI 系统音频解析中...嗯，不难听。",
+        "新歌？让本小姐鉴定一下...",
+        "这首歌本小姐没听过...但感觉还行。"
+    ]
+};
+
 /* ==========================================================================
 MAGI AUDIO CORE V8.0 (SONIC DECK ADAPTER)
 ========================================================================== */
@@ -1728,6 +2086,13 @@ const MusicCore = {
         document.getElementById('track-title').innerText = track.title;
         document.getElementById('track-artist').innerText = track.artist;
         this.updatePlaylistUI();
+
+        // ERIRI 歌曲台词触发（50% 概率，仅在用户主动切歌时）
+        if (autoPlay && Math.random() < 0.5 && typeof showAiSpeech === 'function') {
+            const lines = ERIRI_SONG_LINES[track.title] || ERIRI_SONG_LINES["_default"];
+            const line = lines[Math.floor(Math.random() * lines.length)];
+            setTimeout(() => showAiSpeech(line), 500);
+        }
 
         if (autoPlay) this.play();
     },
