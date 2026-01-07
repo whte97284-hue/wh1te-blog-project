@@ -143,6 +143,18 @@
     <div class="scan-bar"></div>
     <div id="particles-container"></div>
 
+    <!-- MAGI 垂直通讯流 (左侧竖向打字效果) -->
+    <div id="magi-vertical-stream"
+        class="fixed left-12 top-1/2 -translate-y-1/2 z-50 pointer-events-none hidden md:block">
+        <div class="magi-stream-container">
+            <div class="magi-stream-header">
+                <span class="magi-stream-label">MAGI_LINK</span>
+                <div class="magi-stream-indicator"></div>
+            </div>
+            <div id="magi-stream-text" class="magi-stream-content"></div>
+        </div>
+    </div>
+
     <div id="bg-layer">
         <svg id="magi-rings" viewBox="0 0 800 800" fill="none"
             class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[130vmax] h-[130vmax] pointer-events-none opacity-30 transition-opacity duration-500"
