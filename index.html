@@ -12,11 +12,12 @@
     <link rel="apple-touch-icon" href="./favicon.svg">
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.0"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@300;500;700;900&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Serif+SC:wght@700;900&display=swap"
         rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- [STABILITY] 固定版本号防止突然更新导致样式失效 -->
+    <script src="https://unpkg.com/lucide@0.294.0"></script>
 
     <script>
         window.tailwind = window.tailwind || {};
@@ -324,6 +325,15 @@
                         </div>
                         <span class="text-gray-400 data-[mode=light]:text-gray-600">LCL</span>
                     </div>
+
+                    <!-- 🔋 省电模式开关 -->
+                    <div class="tactical-switch" onclick="PowerSaver.toggle()" id="power-saver-btn" title="省电模式">
+                        <div class="switch-box" style="border-color: currentColor;">
+                            <div class="switch-box-inner" id="power-saver-indicator"
+                                style="background-color: currentColor; opacity: 0;"></div>
+                        </div>
+                        <span class="text-gray-400 data-[mode=light]:text-gray-600">🔋</span>
+                    </div>
                 </div>
 
                 <div class="flex gap-2 items-center px-1 scale-90 origin-left">
@@ -427,10 +437,103 @@
         </div>
 
         <button class="md:hidden z-50 ml-auto transition-colors text-white data-[mode=light]:text-black"
-            onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+            onclick="MobileMenu.toggle()" id="mobile-menu-btn">
             <i data-lucide="menu"></i>
         </button>
     </nav>
+
+    <!-- 📱 移动端导航菜单抽屉 -->
+    <div id="mobile-menu" class="fixed inset-0 z-[999] pointer-events-none opacity-0 transition-opacity duration-300">
+        <!-- 遮罩层 -->
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="MobileMenu.close()"></div>
+
+        <!-- 菜单内容 -->
+        <div id="mobile-menu-content"
+            class="absolute right-0 top-0 bottom-0 w-72 max-w-[80vw] bg-[var(--bg-color)] border-l border-[var(--border-color)] transform translate-x-full transition-transform duration-300 overflow-y-auto">
+            <!-- 头部 -->
+            <div class="flex items-center justify-between p-4 border-b border-[var(--border-color)]">
+                <span class="font-mono text-xs text-[var(--secondary-color)]">NAVIGATION</span>
+                <button onclick="MobileMenu.close()"
+                    class="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-white">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <!-- 导航链接 -->
+            <div class="p-4 space-y-2">
+                <a href="#" onclick="toggleView('home'); MobileMenu.close(); return false;"
+                    class="flex items-center gap-3 p-3 rounded hover:bg-white/5 transition-colors">
+                    <span class="font-mono text-xs text-[var(--primary-color)]">01</span>
+                    <span class="font-serif text-sm">主页</span>
+                </a>
+                <a href="#" onclick="toggleView('search'); MobileMenu.close(); return false;"
+                    class="flex items-center gap-3 p-3 rounded hover:bg-white/5 transition-colors">
+                    <span class="font-mono text-xs text-[var(--primary-color)]">02</span>
+                    <span class="font-serif text-sm">本站搜索</span>
+                </a>
+                <a href="#" onclick="toggleView('bilibili'); MobileMenu.close(); return false;"
+                    class="flex items-center gap-3 p-3 rounded hover:bg-white/5 transition-colors">
+                    <span class="font-mono text-xs text-[var(--primary-color)]">03</span>
+                    <span class="font-serif text-sm">追番记录</span>
+                </a>
+                <a href="#" onclick="toggleView('anime'); MobileMenu.close(); return false;"
+                    class="flex items-center gap-3 p-3 rounded hover:bg-white/5 transition-colors">
+                    <span class="font-mono text-xs text-[var(--primary-color)]">04</span>
+                    <span class="font-serif text-sm">观测计划</span>
+                </a>
+                <a href="#" onclick="toggleView('pixiv'); MobileMenu.close(); return false;"
+                    class="flex items-center gap-3 p-3 rounded hover:bg-white/5 transition-colors">
+                    <span class="font-mono text-xs text-[var(--primary-color)]">05</span>
+                    <span class="font-serif text-sm">视觉档案</span>
+                </a>
+                <a href="#" onclick="toggleView('steam'); MobileMenu.close(); return false;"
+                    class="flex items-center gap-3 p-3 rounded hover:bg-white/5 transition-colors">
+                    <span class="font-mono text-xs text-[var(--primary-color)]">06</span>
+                    <span class="font-serif text-sm">模拟记录</span>
+                </a>
+                <a href="#" onclick="toggleView('about'); MobileMenu.close(); return false;"
+                    class="flex items-center gap-3 p-3 rounded hover:bg-white/5 transition-colors">
+                    <span class="font-mono text-xs text-[var(--primary-color)]">07</span>
+                    <span class="font-serif text-sm">关于</span>
+                </a>
+            </div>
+
+            <!-- 主题切换 -->
+            <div class="p-4 border-t border-[var(--border-color)]">
+                <div class="font-mono text-xs text-gray-500 mb-3">THEME</div>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="setTheme('default')"
+                        class="h-10 rounded border border-[var(--border-color)] bg-purple-600 hover:ring-2 ring-white/50"
+                        title="Unit-01"></button>
+                    <button onclick="setTheme('unit-02')"
+                        class="h-10 rounded border border-[var(--border-color)] bg-orange-500 hover:ring-2 ring-white/50"
+                        title="Unit-02"></button>
+                    <button onclick="setTheme('unit-00')"
+                        class="h-10 rounded border border-[var(--border-color)] bg-blue-500 hover:ring-2 ring-white/50"
+                        title="Unit-00"></button>
+                </div>
+            </div>
+
+            <!-- 模式切换 -->
+            <div class="p-4 border-t border-[var(--border-color)]">
+                <button onclick="toggleMode(); MobileMenu.close();"
+                    class="w-full p-3 rounded border border-[var(--border-color)] text-sm font-mono flex items-center justify-center gap-2 hover:bg-white/5">
+                    <i data-lucide="sun" class="w-4 h-4"></i>
+                    <span>切换明暗模式</span>
+                </button>
+            </div>
+
+            <!-- 🔋 省电模式 -->
+            <div class="p-4 border-t border-[var(--border-color)]">
+                <button onclick="PowerSaver.toggle(); MobileMenu.close();" id="mobile-power-saver-btn"
+                    class="w-full p-3 rounded border border-[var(--border-color)] text-sm font-mono flex items-center justify-center gap-2 hover:bg-white/5">
+                    <span>🔋</span>
+                    <span>省电模式</span>
+                    <span id="mobile-power-status" class="text-xs opacity-60">(自动)</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <header
         class="relative pt-48 pb-12 max-w-screen-xl mx-auto px-6 md:px-12 flex flex-col justify-center items-start text-left z-20 min-h-[65vh]">
