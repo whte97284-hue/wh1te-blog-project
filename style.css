@@ -2515,48 +2515,184 @@ body.lcl-mode #particles-container {
             display: none !important;
         }
     }
+}
 
-    /* 省电模式按钮激活状态 */
-    #power-saver-btn.active,
-    #mobile-power-saver-btn.active {
-        background: rgba(57, 255, 20, 0.2) !important;
-        border-color: var(--secondary-color) !important;
-        color: var(--secondary-color) !important;
+/* ==========================================================================
+   AI 气泡框过渡动画
+   ========================================================================== */
+
+#ai-speech-bubble {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition: opacity 0.5s ease-out, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    /* 禁用可能冲突的 animation */
+    animation: none !important;
+}
+
+/* 自定义隐藏类 - 支持动画过渡 */
+#ai-speech-bubble.bubble-hidden {
+    opacity: 0 !important;
+    transform: translateY(15px) scale(0.95) !important;
+    pointer-events: none !important;
+    visibility: visible !important;
+    /* 保持可见以便动画生效 */
+}
+
+/* 初始 hidden 状态 - 首次加载时直接隐藏 */
+#ai-speech-bubble.hidden {
+    display: none !important;
+}
+
+/* ==========================================================================
+   MAGI 垂直通讯流样式 (VERTICAL STREAM)
+   ========================================================================== */
+
+.magi-stream-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 6px;
+    /* 更透明的背景，融入感更强 */
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.15), transparent);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    max-height: 60vh;
+    overflow: hidden;
+}
+
+.magi-stream-header {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0.6;
+}
+
+.magi-stream-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+}
+
+.magi-stream-indicator {
+    width: 6px;
+    height: 6px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow:
+        0 0 4px #fff,
+        0 0 8px #fff,
+        0 0 12px #fff;
+    animation: magi-stream-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes magi-stream-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
     }
 
-    #power-saver-btn.active .switch-box-inner,
-    #power-saver-indicator {
-        transition: opacity 0.3s;
+    50% {
+        opacity: 0.5;
+        transform: scale(0.8);
+    }
+}
+
+.magi-stream-content {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-family: 'Noto Sans SC', 'JetBrains Mono', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.6;
+    letter-spacing: 0.15em;
+    /* 更柔和的发光效果 */
+    color: rgba(255, 255, 255, 0.85);
+    text-shadow:
+        0 0 1px rgba(255, 255, 255, 0.8),
+        0 0 3px rgba(255, 255, 255, 0.4),
+        0 0 8px rgba(255, 255, 255, 0.2);
+    max-height: 50vh;
+    padding: 12px 4px;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%);
+    /* 呼吸动画 */
+    animation: magi-stream-breathe 4s ease-in-out infinite;
+}
+
+@keyframes magi-stream-breathe {
+
+    0%,
+    100% {
+        opacity: 0.9;
     }
 
-    /* 省电模式下的简化背景 */
-    .power-saver-mode {
-        background-image: none !important;
-    }
-
-    .power-saver-mode::before {
-        display: none !important;
-    }
-
-    /* 省电模式提示 Toast */
-    .power-toast {
-        position: fixed;
-        bottom: 80px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: var(--secondary-color);
-        color: #000;
-        padding: 12px 24px;
-        border-radius: 4px;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 12px;
-        font-weight: bold;
-        z-index: 10000;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.3s;
-    }
-
-    .power-toast.show {
+    50% {
         opacity: 1;
     }
+}
+
+/* 激活状态 - 打字时的高亮 */
+#magi-vertical-stream.active .magi-stream-indicator {
+    background: var(--secondary-color);
+    box-shadow:
+        0 0 4px var(--secondary-color),
+        0 0 8px var(--secondary-color),
+        0 0 16px var(--secondary-color);
+}
+
+#magi-vertical-stream.active .magi-stream-content {
+    color: var(--secondary-color);
+    text-shadow:
+        0 0 2px var(--secondary-color),
+        0 0 4px var(--secondary-color),
+        0 0 8px var(--secondary-color),
+        0 0 16px rgba(57, 255, 20, 0.5);
+}
+
+/* 淡入淡出过渡 - 更自然 */
+#magi-vertical-stream {
+    opacity: 0;
+    transform: translateX(-10px) translateY(-50%);
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#magi-vertical-stream.visible {
+    opacity: 1;
+    transform: translateX(0) translateY(-50%);
+}
+
+#magi-vertical-stream.active .magi-stream-content {
+    animation: none;
+    /* 打字时停止呼吸动画 */
+    opacity: 1;
+}
+
+/* 亮色模式适配 */
+[data-mode="light"] .magi-stream-container {
+    background: rgba(255, 255, 255, 0.4);
+    border-left-color: rgba(0, 0, 0, 0.2);
+}
+
+[data-mode="light"] .magi-stream-label {
+    color: rgba(0, 0, 0, 0.5);
+}
+
+[data-mode="light"] .magi-stream-content {
+    color: #333;
+    text-shadow:
+        0 0 2px rgba(0, 0, 0, 0.3),
+        0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+[data-mode="light"] .magi-stream-indicator {
+    background: var(--primary-color);
+    box-shadow:
+        0 0 4px var(--primary-color),
+        0 0 8px var(--primary-color);
+}
