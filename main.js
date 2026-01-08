@@ -264,8 +264,8 @@ function initLCL() {
     let bubbles = [];
 
     function resize() {
-        /* [优化] 限制 DPR 最大为 1.5，避免 4K 屏渲染压力过大 */
-        const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+        /* [优化] 限制 DPR 最大为 1，不再追求 Retina 高清，大幅减轻 GPU 压力并增加复古噪点感 */
+        const dpr = Math.min(window.devicePixelRatio || 1, 1);
         lclCanvas.width = window.innerWidth * dpr;
         lclCanvas.height = window.innerHeight * dpr;
         ctx.scale(dpr, dpr); /* 缩放 Context 以匹配分辨率 */
@@ -1096,6 +1096,15 @@ function setTheme(themeName) {
         // 强制浏览器重算样式
         void cursorWrapper.offsetWidth;
         cursorWrapper.style.transition = oldTransition;
+    }
+
+    // 7. 清空频谱 Canvas，确保暂停状态下切换主题后颜色正确更新
+    const audioVisualizer = document.getElementById('audio-visualizer');
+    if (audioVisualizer) {
+        const ctx = audioVisualizer.getContext('2d');
+        if (ctx) {
+            ctx.clearRect(0, 0, audioVisualizer.width, audioVisualizer.height);
+        }
     }
 }
 const savedTheme = localStorage.getItem('theme') || 'default'; setTheme(savedTheme);
@@ -2161,8 +2170,22 @@ const MusicCore = {
         }
     },
 
-    // 绘制背景频谱
+    // [PERF] 30FPS 节流变量
+    lastVisualizerFrame: 0,
+    VISUALIZER_FPS: 30,
+    VISUALIZER_INTERVAL: 1000 / 30, // ~33ms
+
+    // 绘制背景频谱 (优化版)
     drawVisualizer() {
+        const now = performance.now();
+
+        // [PERF] 30FPS 节流：如果距离上一帧不足 33ms，跳过本次绘制
+        if (now - this.lastVisualizerFrame < this.VISUALIZER_INTERVAL) {
+            requestAnimationFrame(() => this.drawVisualizer());
+            return;
+        }
+        this.lastVisualizerFrame = now;
+
         if (!this.isPlaying) {
             requestAnimationFrame(() => this.drawVisualizer());
             return;
@@ -2178,14 +2201,23 @@ const MusicCore = {
         const barWidth = (canvas.width / bufferLength) * 2.5;
         let x = 0;
 
-        // 获取当前主题色
+        // 获取当前主题色并创建渐变
         const style = getComputedStyle(document.documentElement);
-        const color = style.getPropertyValue('--secondary-color').trim();
-        ctx.fillStyle = color;
+        const primaryColor = style.getPropertyValue('--primary-color').trim();
+        const secondaryColor = style.getPropertyValue('--secondary-color').trim();
+
+        // 创建从底部到顶部的渐变
+        const gradient = ctx.createLinearGradient(0, canvas.height, 0, 0);
+        gradient.addColorStop(0, secondaryColor);  // 底部：次色
+        gradient.addColorStop(0.5, primaryColor);  // 中部：主色
+        gradient.addColorStop(1, secondaryColor);  // 顶部：次色
+
+        ctx.fillStyle = gradient;
 
         for (let i = 0; i < bufferLength; i++) {
             const barHeight = (dataArray[i] / 255) * canvas.height;
-            ctx.globalAlpha = 0.3; // 半透明
+            // [VISUAL] 提高透明度从 0.3 到 0.6，让频谱更明显
+            ctx.globalAlpha = 0.6;
             ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
             x += barWidth + 1;
         }
