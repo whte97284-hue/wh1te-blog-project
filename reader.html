@@ -1,1567 +1,2798 @@
-<!DOCTYPE html>
-<html lang="zh">
+:root {
+    /* --- 默认暗色模式变量 (EVA-01 Dark) --- */
+    --mouse-x: 50%;
+    --mouse-y: 50%;
+    --cursor-size: 800px;
+    --primary-color: #b15dff;
+    --secondary-color: #39ff14;
+    --bg-color: #0f0518;
+    --surface-color: rgba(20, 10, 30, 0.6);
+    --grid-color: rgba(125, 42, 232, 0.15);
+    --lock-color: #ff0055;
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MAGI ARCHIVE | TACTICAL READER</title>
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    /* 背景渐变 - 暗色 */
+    --bg-gradient: radial-gradient(circle at 50% 50%, #2d1b4e 0%, #1a0b2e 45%, #0a0a0a 100%);
+    /* 混合模式：暗色背景用 screen (滤色) 让光发亮 */
+    --blend-mode: screen;
+    --overlay-opacity: 0.18;
 
-    <!-- [STABILITY] 固定版本号防止突然更新导致样式失效 -->
-    <script src="https://cdn.tailwindcss.com/3.4.0"></script>
-    <script src="https://unpkg.com/lucide@0.294.0"></script>
+    /* 文字颜色基准 */
+    --text-main: #ffffff;
+    --text-muted: #9ca3af;
+    --border-color: rgba(255, 255, 255, 0.1);
+}
 
-    <link
-        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@300;500;700;900&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap"
-        rel="stylesheet">
+/* 自定义音量滑块样式 */
+input[type=range] {
+    -webkit-appearance: none;
+    /* 移除默认样式 */
+    background: transparent;
+}
 
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 12px;
+    width: 6px;
+    background: var(--primary-color);
+    border: 1px solid black;
+    cursor: pointer;
+    margin-top: -4px;
+    /* 对齐轨道 */
+    box-shadow: 0 0 5px var(--primary-color);
+}
 
-    <script>
-        window.tailwind = window.tailwind || {};
-        window.tailwind.config = {
-            darkMode: ['class', '[data-mode="light"]'],
-            theme: {
-                extend: {
-                    colors: { primary: 'var(--primary-color)', secondary: 'var(--secondary-color)', bg: 'var(--bg-color)' },
-                    fontFamily: {
-                        sans: ['Space Grotesk', 'Noto Sans JP', 'Noto Sans SC', 'sans-serif'],
-                        serif: ['Noto Serif SC', 'serif'],
-                        mono: ['JetBrains Mono', 'monospace']
-                    },
-                    animation: { 'scan': 'scan 4s linear infinite' }
-                }
-            }
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+/* 列表激活样式优化 */
+.track-item.active {
+    background: var(--primary-color);
+    color: black;
+    /* 激活时反色，更显眼 */
+    font-weight: bold;
+}
+
+/* --- 音频系统专用样式 --- */
+.track-item {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #666;
+    padding: 4px 6px;
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.track-item:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.track-item.active {
+    color: var(--primary-color);
+    /* 继承主题色 */
+    border-left-color: var(--primary-color);
+    background: rgba(0, 0, 0, 0.3);
+}
+
+/* 隐藏滚动条 */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 0;
+}
+
+.custom-scrollbar {
+    scrollbar-width: none;
+}
+
+/* --- EVA 风格字体模拟 --- */
+.eva-font {
+    /* 优先使用极粗的黑体 */
+    font-family: "Impact", "Arial Black", "PingFang SC", "Microsoft YaHei UI", sans-serif;
+    font-weight: 900;
+    /* 最粗 */
+    letter-spacing: -0.05em;
+    /* 字间距收紧 */
+    text-transform: uppercase;
+}
+
+/* 战术切角边框 (用于替换子弹头) */
+.tactical-cut {
+    clip-path: polygon(0 0,
+            100% 0,
+            100% 70%,
+            90% 100%,
+            0 100%);
+    border-right: 4px solid var(--primary-color);
+    /* 右侧重型边框 */
+}
+
+/* --- 音频终端专用样式 (修复亮色模式 & 交互) --- */
+
+/* 1. 亮色模式适配：让面板变白，字变黑 */
+[data-mode="light"] #control-deck {
+    background: rgba(255, 255, 255, 0.85) !important;
+    /* 磨砂白 */
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-mode="light"] #control-deck h3 {
+    color: #000 !important;
+}
+
+[data-mode="light"] #control-deck .text-white {
+    color: #333 !important;
+}
+
+/* 强制反转白字 */
+[data-mode="light"] #control-deck button {
+    border-color: rgba(0, 0, 0, 0.2);
+    color: #555;
+}
+
+[data-mode="light"] #control-deck button:hover {
+    background: var(--secondary-color);
+    color: #000;
+}
+
+/* 列表背景适配 */
+[data-mode="light"] #playlist-ui {
+    background: rgba(0, 0, 0, 0.03) !important;
+    border-color: rgba(0, 0, 0, 0.05);
+}
+
+/* ===============================================
+   SONIC DECK 音频终端样式 (阴影强化版)
+   =============================================== */
+
+/* 暗色模式 - 基础样式 */
+#sonic-deck {
+    position: relative;
+    /* 多层阴影：外发光 + 多层投影 + 内阴影 */
+    /* 使用 CSS 变量让阴影颜色跟随主题变化 */
+    box-shadow:
+        0 0 20px color-mix(in srgb, var(--secondary-color) 25%, transparent),
+        /* 主题色外发光 */
+        0 0 40px color-mix(in srgb, var(--secondary-color) 10%, transparent),
+        /* 扩散发光 */
+        0 4px 15px rgba(0, 0, 0, 0.3),
+        /* 近距投影 */
+        0 12px 40px rgba(0, 0, 0, 0.5),
+        /* 深度投影 */
+        inset 0 1px 0 rgba(255, 255, 255, 0.15),
+        /* 顶部高光线 */
+        inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+        /* 底部阴影线 */
+        inset 2px 0 0 color-mix(in srgb, var(--secondary-color) 30%, transparent),
+        /* 左侧边缘光 */
+        inset 0 0 40px rgba(0, 0, 0, 0.6);
+    /* 内部深度 */
+}
+
+#sonic-deck:hover {
+    box-shadow:
+        0 0 35px var(--secondary-color),
+        /* 加强主题色发光 */
+        0 0 60px color-mix(in srgb, var(--secondary-color) 20%, transparent),
+        /* 扩散发光 */
+        0 6px 20px rgba(0, 0, 0, 0.4),
+        /* 近距投影 */
+        0 15px 50px rgba(0, 0, 0, 0.6),
+        /* 深度投影（悬浮感） */
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        /* 顶部高光线 */
+        inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+        /* 底部阴影线 */
+        inset 2px 0 0 var(--secondary-color),
+        /* 左侧边缘光加强 */
+        inset 0 0 40px rgba(0, 0, 0, 0.5);
+    /* 内部深度 */
+    transform: translateY(-2px);
+    /* 微微悬浮 */
+}
+
+/* 亮色模式适配 */
+[data-mode="light"] #sonic-deck {
+    background: rgba(255, 255, 255, 0.92) !important;
+    border-color: var(--primary-color) !important;
+    box-shadow:
+        0 0 20px rgba(125, 42, 232, 0.15),
+        0 0 40px rgba(125, 42, 232, 0.08),
+        0 4px 15px rgba(0, 0, 0, 0.08),
+        0 12px 40px rgba(0, 0, 0, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.05),
+        inset 2px 0 0 rgba(125, 42, 232, 0.3),
+        inset 0 0 40px rgba(255, 255, 255, 0.6) !important;
+}
+
+[data-mode="light"] #sonic-deck:hover {
+    box-shadow:
+        0 0 35px var(--primary-color),
+        0 0 60px rgba(125, 42, 232, 0.15),
+        0 6px 20px rgba(0, 0, 0, 0.1),
+        0 15px 50px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 1),
+        inset 2px 0 0 var(--primary-color),
+        inset 0 0 40px rgba(255, 255, 255, 0.7) !important;
+    transform: translateY(-2px);
+}
+
+[data-mode="light"] #music-trigger {
+    background: rgba(125, 42, 232, 0.1);
+    border-color: var(--primary-color);
+}
+
+[data-mode="light"] #track-title,
+[data-mode="light"] #track-artist {
+    color: #333 !important;
+}
+
+/* 2. 默认圆形按钮适配 */
+#terminal-trigger {
+    width: 42px;
+    /* 默认宽度 */
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 亮色模式下圆球的背景 */
+[data-mode="light"] #terminal-trigger {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+/* --- EVA 白红美学模式 (Light Mode) --- */
+[data-mode="light"] {
+    /* 基础配色：纯白 + 实验室灰 */
+    --bg-color: #ffffff;
+    --bg-gradient: radial-gradient(circle at 50% 50%, #ffffff 0%, #f2f2f2 60%, #e0e0e0 100%);
+    --surface-color: rgba(255, 255, 255, 0.75);
+    /* 毛玻璃变白 */
+
+    /* 混合模式：亮色背景用 multiply (正片叠底) 让网格变黑 */
+    --blend-mode: multiply;
+    --overlay-opacity: 0.08;
+    /* 亮背景下纹理稍微淡一点 */
+
+    /* 文字反转 */
+    --text-main: #1a1a1a;
+    --text-muted: #4b5563;
+    --border-color: rgba(0, 0, 0, 0.1);
+
+    /* 网格变为深灰色 */
+    --grid-color: rgba(0, 0, 0, 0.1);
+}
+
+//* --- 亮色模式下的机体配色微调 (修正版) --- */
+/* 核心修复：强制所有机体在亮色模式下背景变量为白，消除顶部黑条 */
+
+/* Unit-01 (Default/Shinji) */
+[data-mode="light"][data-theme="default"] {
+    --primary-color: #7d2ae8;
+    --secondary-color: #00c000;
+    --bg-color: #ffffff;
+    /* 确保为白 */
+}
+
+/* Unit-02 (Asuka) - 修正：覆盖原主题的深红背景 */
+[data-mode="light"][data-theme="unit-02"] {
+    --primary-color: #ffae00;
+    --secondary-color: #d90000;
+    --bg-color: #ffffff;
+    /* 关键修复 */
+    --surface-color: rgba(255, 255, 255, 0.85);
+}
+
+/* Unit-00 (Rei) - 修正：覆盖原主题的深蓝背景 */
+[data-mode="light"][data-theme="unit-00"] {
+    --primary-color: #0056b3;
+    --secondary-color: #0091ff;
+    --bg-color: #ffffff;
+    /* 关键修复 */
+    --surface-color: rgba(255, 255, 255, 0.85);
+}
+
+/* Unit-08 (Mari) - 修正：覆盖原主题的深粉背景 */
+[data-mode="light"][data-theme="unit-08"] {
+    --primary-color: #d63384;
+    --secondary-color: #00a846;
+    --bg-color: #ffffff;
+    /* 关键修复 */
+    --surface-color: rgba(255, 255, 255, 0.85);
+}
+
+/* 通用样式 */
+body {
+    background: var(--bg-gradient);
+    min-height: 100vh;
+    color: var(--text-main);
+    transition: background 0.5s ease, color 0.3s ease;
+    overflow-x: hidden;
+    cursor: auto;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* 蜂巢干扰层 */
+.rebuild-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+        linear-gradient(30deg, var(--grid-color) 12%, transparent 12.5%, transparent 87%, var(--grid-color) 87.5%, var(--grid-color)),
+        linear-gradient(150deg, var(--grid-color) 12%, transparent 12.5%, transparent 87%, var(--grid-color) 87.5%, var(--grid-color)),
+        linear-gradient(30deg, var(--grid-color) 12%, transparent 12.5%, transparent 87%, var(--grid-color) 87.5%, var(--grid-color)),
+        linear-gradient(150deg, var(--grid-color) 12%, transparent 12.5%, transparent 87%, var(--grid-color) 87.5%, var(--grid-color)),
+        linear-gradient(60deg, var(--grid-color) 25%, transparent 25.5%, transparent 75%, var(--grid-color) 75%, var(--grid-color)),
+        linear-gradient(60deg, var(--grid-color) 25%, transparent 25.5%, transparent 75%, var(--grid-color) 75%, var(--grid-color));
+    background-size: 20px 35px;
+    background-position: 0 0, 0 0, 10px 18px, 10px 18px, 0 0, 10px 18px;
+    opacity: var(--overlay-opacity);
+    mix-blend-mode: var(--blend-mode);
+    /* 动态混合模式 */
+    transition: mix-blend-mode 0.3s, opacity 0.3s;
+}
+
+/* 字体发光增强 */
+h1,
+h2,
+h3,
+.eva-header {
+    text-shadow: 0 0 10px rgba(var(--secondary-color), 0.4);
+}
+
+/* --- 战术模式：PC端隐藏系统鼠标 --- */
+@media (hover: hover) and (pointer: fine) {
+
+    body.tactical-mode,
+    body.tactical-mode a,
+    body.tactical-mode button,
+    body.tactical-mode input,
+    body.tactical-mode .cursor-pointer {
+        cursor: none !important;
+    }
+
+    body.tactical-mode #tactical-cursor {
+        display: block;
+    }
+}
+
+/* 战术光标容器 */
+#tactical-cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 99999;
+    pointer-events: none;
+    display: none;
+}
+
+.cursor-layer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    will-change: transform;
+    pointer-events: none;
+    transition: none !important;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+
+.cursor-main {
+    z-index: 100;
+}
+
+.cursor-trail-1 {
+    z-index: 99;
+    opacity: 0.6;
+}
+
+.cursor-trail-2 {
+    z-index: 98;
+    opacity: 0.3;
+}
+
+/* --- EVA 3.0+ 风格光标设计 --- */
+.cursor-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--secondary-color);
+    transition: color 0.2s ease;
+}
+
+/* 中心点 */
+.cursor-center {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: currentColor;
+    border-radius: 50%;
+    box-shadow: 0 0 8px currentColor;
+}
+
+/* 极细十字线 */
+.cursor-cross-v {
+    position: absolute;
+    width: 1px;
+    height: 24px;
+    background: currentColor;
+    opacity: 0.6;
+}
+
+.cursor-cross-h {
+    position: absolute;
+    width: 24px;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.6;
+}
+
+/* 旋转扫描环 (常态) */
+.cursor-ring {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border: 1px dashed currentColor;
+    border-radius: 50%;
+    opacity: 0.3;
+    animation: spin 10s linear infinite;
+    transition: all 0.3s ease;
+}
+
+/* 锁定括号 (EVA HUD Brackets) */
+.cursor-bracket {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border: 2px solid currentColor;
+    opacity: 0.8;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    /* 弹跳效果 */
+}
+
+.cb-tl {
+    top: -16px;
+    left: -16px;
+    border-right: 0;
+    border-bottom: 0;
+}
+
+.cb-tr {
+    top: -16px;
+    right: -16px;
+    border-left: 0;
+    border-bottom: 0;
+}
+
+.cb-bl {
+    bottom: -16px;
+    left: -16px;
+    border-right: 0;
+    border-top: 0;
+}
+
+.cb-br {
+    bottom: -16px;
+    right: -16px;
+    border-left: 0;
+    border-top: 0;
+}
+
+/* 战术文字 */
+.cursor-info-wrapper {
+    position: absolute;
+    top: 20px;
+    left: 24px;
+    font-family: 'JetBrains Mono';
+    font-size: 9px;
+    font-weight: 700;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    opacity: 0.8;
+    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.8);
+}
+
+.cursor-mode {
+    font-size: 7px;
+    opacity: 0.7;
+    letter-spacing: 1px;
+}
+
+/* --- 锁定状态 (LOCK-ON) 动效 --- */
+body.hovering #tactical-cursor .cursor-wrapper {
+    color: var(--lock-color);
+}
+
+/* 锁定瞬间括号收缩 (Snap In) */
+body.hovering .cursor-bracket {
+    border-width: 3px;
+    opacity: 1;
+    box-shadow: 0 0 10px var(--lock-color);
+}
+
+body.hovering .cb-tl {
+    transform: translate(8px, 8px);
+}
+
+body.hovering .cb-tr {
+    transform: translate(-8px, 8px);
+}
+
+body.hovering .cb-bl {
+    transform: translate(8px, -8px);
+}
+
+body.hovering .cb-br {
+    transform: translate(-8px, -8px);
+}
+
+/* 外部环加速旋转并变实 */
+body.hovering .cursor-ring {
+    width: 50px;
+    height: 50px;
+    border-style: solid;
+    border-width: 1px;
+    border-color: transparent;
+    border-top-color: var(--lock-color);
+    border-bottom-color: var(--lock-color);
+    animation: spin 1s linear infinite;
+    opacity: 0.8;
+}
+
+/* 十字线消失 */
+body.hovering .cursor-cross-v,
+body.hovering .cursor-cross-h {
+    opacity: 0;
+    height: 0;
+    width: 0;
+}
+
+/* 拖尾特化样式 (仅显示轮廓) */
+.cursor-trail-1 .cursor-bracket,
+.cursor-trail-1 .cursor-ring,
+.cursor-trail-1 .cursor-cross-v,
+.cursor-trail-1 .cursor-cross-h {
+    display: none;
+}
+
+.cursor-trail-1 .cursor-center {
+    width: 30px;
+    height: 30px;
+    background: transparent;
+    border: 1px dotted currentColor;
+    box-shadow: none;
+}
+
+.cursor-trail-2 .cursor-center {
+    display: none;
+}
+
+/* 点击反馈 */
+.click-ripple {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 10px;
+    border: 2px solid var(--secondary-color);
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 1;
+    animation: ripple-effect 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes ripple-effect {
+    0% {
+        width: 10px;
+        height: 10px;
+        opacity: 1;
+        border-width: 2px;
+    }
+
+    100% {
+        width: 100px;
+        height: 100px;
+        opacity: 0;
+        border-width: 0px;
+    }
+}
+
+/* --- 社交按钮优化 --- */
+.social-btn {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    touch-action: manipulation;
+}
+
+.social-btn:hover {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 15px rgba(var(--secondary-color), 0.3);
+}
+
+.social-text {
+    transition: transform 0.3s ease, opacity: 0.2s;
+}
+
+@media (hover: hover) {
+    .social-btn:hover .social-text {
+        transform: translateY(-150%);
+        opacity: 0;
+    }
+
+    .social-btn:hover .social-icon-container {
+        opacity: 1;
+        transform: scale(1);
+        animation: icon-glitch 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .social-btn:hover .social-shutter {
+        transform: scaleY(1);
+    }
+}
+
+.social-icon-container {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.3s ease;
+}
+
+.social-shutter {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--secondary-color);
+    transform: scaleY(0);
+    transform-origin: bottom;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.1;
+    pointer-events: none;
+}
+
+/* Toggle Switch Style */
+.tactical-switch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono';
+    font-size: 10px;
+    cursor: pointer;
+    select-none: none;
+    padding: 4px 8px;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s;
+}
+
+[data-mode="light"] .tactical-switch {
+    border-color: rgba(0, 0, 0, 0.2);
+    color: #333;
+}
+
+[data-mode="light"] .tactical-switch:hover {
+    border-color: #000;
+}
+
+@media (hover: none) {
+    .tactical-switch {
+        display: none;
+    }
+}
+
+.tactical-switch:hover {
+    border-color: var(--text-main);
+}
+
+.switch-box {
+    width: 12px;
+    height: 12px;
+    border: 1px solid currentColor;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.switch-box-inner {
+    width: 6px;
+    height: 6px;
+    background: var(--secondary-color);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+body.tactical-mode .switch-box-inner {
+    opacity: 1;
+}
+
+body.tactical-mode .tactical-switch {
+    color: var(--secondary-color);
+    border-color: var(--secondary-color);
+    text-shadow: 0 0 5px rgba(var(--secondary-color), 0.5);
+}
+
+/* LCL Mode Switch specific styles */
+body.lcl-mode .switch-box-inner-lcl {
+    opacity: 1;
+}
+
+body.lcl-mode .tactical-switch-lcl {
+    color: #ffa500;
+    border-color: #ffa500;
+    text-shadow: 0 0 5px rgba(255, 165, 0, 0.5);
+}
+
+.switch-box-inner-lcl {
+    width: 6px;
+    height: 6px;
+    background: #ffa500;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+/* Existing styles... */
+[data-theme="unit-02"] {
+    --primary-color: #ffae00;
+    --secondary-color: #ff0000;
+    --bg-color: #140202;
+    --surface-color: rgba(40, 10, 10, 0.6);
+    --grid-color: rgba(255, 0, 0, 0.15);
+    --lock-color: #ffae00;
+}
+
+[data-theme="unit-00"] {
+    --primary-color: #ffffff;
+    --secondary-color: #0091ff;
+    --bg-color: #020a14;
+    --surface-color: rgba(10, 20, 40, 0.6);
+    --grid-color: rgba(0, 145, 255, 0.15);
+    --lock-color: #ffffff;
+}
+
+[data-theme="unit-08"] {
+    --primary-color: #ff5cab;
+    --secondary-color: #50c878;
+    --bg-color: #14020d;
+    --surface-color: rgba(40, 10, 30, 0.6);
+    --grid-color: rgba(255, 0, 153, 0.15);
+    --lock-color: #ff5cab;
+}
+
+/* Cleaned up emergency styles */
+
+#matrix-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -3;
+    opacity: 0.15;
+    pointer-events: none;
+    transition: opacity 0.5s;
+}
+
+body.lcl-mode #matrix-bg {
+    opacity: 0;
+}
+
+/* Hide matrix rain when LCL is on */
+
+/* LCL Canvas Style */
+#lcl-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -3;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1s ease;
+}
+
+body.lcl-mode #lcl-bg {
+    opacity: 1;
+}
+
+/* Hex BG 增强：更高的对比度和全息感 */
+.hex-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -2;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ffffff' stroke-opacity='0.12' stroke-width='1'/%3E%3C/svg%3E");
+    background-size: 60px 104px;
+    mask-image: linear-gradient(to bottom, black 20%, transparent 90%);
+    animation: bg-scroll 60s linear infinite;
+    transition: background-image 0.3s;
+    opacity: 0.5;
+    /* [PERF] 移除 drop-shadow 滤镜，2px 发光肉眼几乎不可见，但滤镜计算开销巨大 */
+    /* filter: drop-shadow(0 0 2px var(--grid-color)); */
+    mix-blend-mode: var(--blend-mode);
+    /* 随主题变化 */
+    will-change: background-position;
+}
+
+[data-mode="light"] .hex-bg {
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23000000' stroke-opacity='0.12' stroke-width='1'/%3E%3C/svg%3E");
+}
+
+@keyframes bg-scroll {
+    0% {
+        background-position: 0 0;
+    }
+
+    100% {
+        background-position: 60px 104px;
+    }
+}
+
+.hex-flash {
+    position: absolute;
+    width: 60px;
+    height: 104px;
+    background: var(--secondary-color);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    opacity: 0;
+    animation: hexFlash 4s infinite;
+    box-shadow: 0 0 20px var(--secondary-color);
+}
+
+@keyframes hexFlash {
+
+    0%,
+    90% {
+        opacity: 0;
+    }
+
+    92% {
+        opacity: 0.3;
+    }
+
+    94% {
+        opacity: 0;
+    }
+}
+
+#particles-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    overflow: hidden;
+    perspective: 1000px;
+    transition: opacity 0.5s;
+}
+
+body.lcl-mode #particles-container {
+    opacity: 0;
+}
+
+/* Hide green particles in LCL mode */
+
+.particle {
+    position: absolute;
+    background: var(--secondary-color);
+    opacity: 0;
+    bottom: -50px;
+    transition: background-color: 0.3s;
+}
+
+.particle.bubble {
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--secondary-color);
+}
+
+.particle.bit {
+    height: 1px !important;
+    box-shadow: 0 0 4px var(--secondary-color);
+}
+
+@keyframes floatUp {
+    0% {
+        transform: translateY(0) scale(var(--p-scale));
+        opacity: 0;
+    }
+
+    15% {
+        opacity: var(--p-opacity);
+    }
+
+    85% {
+        opacity: var(--p-opacity);
+    }
+
+    100% {
+        transform: translateY(-120vh) scale(var(--p-scale));
+        opacity: 0;
+    }
+}
+
+.scan-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 20px;
+    background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent);
+    opacity: 0;
+    box-shadow: 0 0 40px var(--secondary-color);
+    z-index: 40;
+    pointer-events: none;
+    /* [PERF] 使用 transform 代替 top，避免 Layout 重排 */
+    transform: translateY(-10vh);
+    animation: scanDown 60s linear infinite;
+    will-change: transform, opacity;
+}
+
+@keyframes scanDown {
+    0% {
+        transform: translateY(-10vh);
+        opacity: 0;
+    }
+
+    0.1% {
+        opacity: 0.4;
+    }
+
+    /* 开始瞬间显示 */
+    5% {
+        transform: translateY(110vh);
+        opacity: 0.4;
+    }
+
+    /* 在 5% 的时间点(约3秒)扫到底部 */
+    5.1% {
+        transform: translateY(110vh);
+        opacity: 0;
+    }
+
+    /* 到底后立即隐藏 */
+    100% {
+        transform: translateY(110vh);
+        opacity: 0;
+    }
+
+    /* 剩下的 95% 时间保持隐藏，直到60s结束 */
+}
+
+.cockpit-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 90;
+    background: radial-gradient(circle at center, transparent 95%, rgba(0, 0, 0, 0.4) 100%);
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.4);
+    mix-blend-mode: multiply;
+    /* [PERF] 隔离重绘区域，避免全屏混合层影响其他元素性能 */
+    contain: strict;
+    will-change: opacity;
+}
+
+[data-mode="light"] .cockpit-overlay {
+    background: radial-gradient(circle at center, transparent 55%, rgba(255, 255, 255, 0.8) 100%);
+    box-shadow: none;
+}
+
+.cockpit-reticle {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 700px;
+    height: 700px;
+    border: 1px dashed var(--secondary-color);
+    border-radius: 50%;
+    opacity: 0.08;
+    pointer-events: none;
+    z-index: -1;
+    animation: spin-slower 120s linear infinite;
+    transition: border-color 0.3s;
+}
+
+/* 手机端优化：隐藏过于复杂的座舱装饰，减少视觉干扰 */
+@media (max-width: 768px) {
+    .cockpit-reticle {
+        display: none;
+    }
+
+    .cockpit-side-meter {
+        display: none;
+    }
+}
+
+.cockpit-side-meter {
+    position: fixed;
+    top: 20%;
+    bottom: 20%;
+    width: 4px;
+    z-index: 80;
+    pointer-events: none;
+    background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent);
+    opacity: 0.25;
+    transition: background 0.3s;
+}
+
+.meter-left {
+    left: 40px;
+}
+
+.meter-right {
+    right: 40px;
+}
+
+#cursor-glow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+    background-image: radial-gradient(circle var(--cursor-size) at var(--mouse-x) var(--mouse-y), var(--grid-color) 0%, transparent 60%);
+    transition: --cursor-size 0.1s ease;
+    will-change: background-image;
+    mix-blend-mode: screen;
+}
+
+.hero-character-container {
+    position: fixed;
+    right: -5%;
+    top: 0;
+    bottom: 0;
+    z-index: 0;
+    width: 60vw;
+    max-width: 1000px;
+    height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    pointer-events: none;
+    overflow: hidden;
+    mix-blend-mode: screen;
+}
+
+[data-mode="light"] .hero-character-container {
+    mix-blend-mode: multiply;
+    opacity: 0.8;
+}
+
+.hero-character-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    filter: brightness(0.8) contrast(1.1);
+    opacity: 0.9;
+    will-change: transform, opacity, clip-path, filter;
+    transition: opacity 0.5s ease;
+}
+
+@keyframes cyberSwap {
+    0% {
+        opacity: 1;
+        transform: translateX(0) skewX(0deg);
+        filter: hue-rotate(0deg);
+        clip-path: inset(0 0 0 0);
+    }
+
+    5% {
+        opacity: 0.8;
+        transform: translateX(-10px) skewX(20deg);
+        filter: hue-rotate(90deg) contrast(2);
+        clip-path: inset(10% 0 60% 0);
+    }
+
+    10% {
+        opacity: 0.9;
+        transform: translateX(10px) skewX(-10deg);
+        filter: hue-rotate(-90deg) contrast(1.5);
+        clip-path: inset(40% 0 40% 0);
+    }
+
+    15% {
+        opacity: 0.4;
+        transform: translateX(-5px) skewX(5deg);
+        filter: hue-rotate(180deg);
+        clip-path: inset(80% 0 5% 0);
+    }
+
+    20% {
+        opacity: 0.9;
+        transform: translateX(0) skewX(0deg);
+        filter: hue-rotate(0deg);
+        clip-path: none;
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateX(0) skewX(0deg);
+        filter: hue-rotate(0deg);
+    }
+}
+
+.cyber-swap-active {
+    animation: cyberSwap 0.5s steps(3) forwards;
+}
+
+.eva-card {
+    background: var(--surface-color);
+    /* [PERF] 降低模糊半径：10px → 4px，视觉几乎无差异，性能提升 2-3 倍 */
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    /* Safari 兼容 */
+    will-change: backdrop-filter;
+    /* 提示浏览器预优化 */
+    border: 1px solid var(--border-color);
+    border-left: 2px solid var(--secondary-color);
+    position: relative;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+
+.eva-glare {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at var(--mouse-x) var(--mouse-y), rgba(255, 255, 255, 0.3) 0%, transparent 60%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    mix-blend-mode: overlay;
+    z-index: 20;
+}
+
+/* 只有在支持 hover 的设备上启用反光和位移，手机端禁用以节省性能 */
+@media (hover: hover) {
+    .eva-card:hover .eva-glare {
+        opacity: 1;
+    }
+
+    .eva-card:hover {
+        box-shadow: 0 10px 40px rgba(var(--secondary-color), 0.2), inset 0 0 20px rgba(var(--secondary-color), 0.1);
+        border-color: rgba(255, 255, 255, 0.4);
+        z-index: 10;
+        transform: translateY(-5px);
+    }
+
+    .eva-card:hover::before {
+        width: 30px;
+        height: 30px;
+    }
+
+    .eva-card:hover::after {
+        width: 30px;
+        height: 30px;
+    }
+}
+
+.eva-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 15px;
+    height: 15px;
+    border-top: 2px solid var(--secondary-color);
+    border-right: 2px solid var(--secondary-color);
+    opacity: 0.8;
+    box-shadow: 2px -2px 8px var(--secondary-color);
+    transition: all 0.3s;
+}
+
+.eva-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 15px;
+    height: 15px;
+    border-bottom: 2px solid var(--secondary-color);
+    border-left: 2px solid var(--secondary-color);
+    opacity: 0.8;
+    box-shadow: -2px 2px 8px var(--secondary-color);
+    transition: all 0.3s;
+}
+
+.glitch-text {
+    position: relative;
+    display: inline-block;
+}
+
+.glitch-text::before,
+.glitch-text::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.8;
+}
+
+.glitch-text::before {
+    color: #0ff;
+    z-index: -1;
+    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+    animation: glitch-anim-1 2s infinite linear alternate-reverse;
+    transform: translate(-2px);
+}
+
+.glitch-text::after {
+    color: #f0f;
+    z-index: -2;
+    clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+    animation: glitch-anim-2 2s infinite linear alternate-reverse;
+    transform: translate(2px);
+}
+
+@keyframes glitch-anim-1 {
+    0% {
+        clip-path: inset(20% 0 80% 0);
+    }
+
+    20% {
+        clip-path: inset(60% 0 10% 0);
+    }
+
+    40% {
+        clip-path: inset(40% 0 50% 0);
+    }
+
+    60% {
+        clip-path: inset(80% 0 5% 0);
+    }
+
+    80% {
+        clip-path: inset(10% 0 70% 0);
+    }
+
+    100% {
+        clip-path: inset(30% 0 20% 0);
+    }
+}
+
+@keyframes glitch-anim-2 {
+    0% {
+        clip-path: inset(10% 0 60% 0);
+    }
+
+    20% {
+        clip-path: inset(30% 0 20% 0);
+    }
+
+    40% {
+        clip-path: inset(70% 0 10% 0);
+    }
+
+    60% {
+        clip-path: inset(20% 0 50% 0);
+    }
+
+    80% {
+        clip-path: inset(60% 0 30% 0);
+    }
+
+    100% {
+        clip-path: inset(50% 0 40% 0);
+    }
+}
+
+.typing-cursor::after {
+    content: '_';
+    animation: blink 1s step-end infinite;
+    color: var(--secondary-color);
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
+}
+
+.eva-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+    font-family: 'JetBrains Mono';
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--secondary-color);
+    text-shadow: 0 0 5px var(--secondary-color);
+}
+
+.eva-header-deco {
+    width: 4px;
+    height: 4px;
+    background: var(--primary-color);
+    margin-right: 6px;
+    box-shadow: 0 0 5px var(--primary-color);
+}
+
+.magi-font {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+}
+
+.bottom-bar-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 48px;
+    z-index: 900;
+    pointer-events: none;
+}
+
+.holo-status-bar {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.5) 70%, transparent 100%);
+    border-bottom: 1px solid rgba(var(--secondary-color), 0.5);
+    border-top: 1px solid rgba(var(--secondary-color), 0.1);
+    backdrop-filter: blur(4px);
+    mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+    overflow: hidden;
+}
+
+[data-mode="light"] .holo-status-bar {
+    background: linear-gradient(to top, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.5) 70%, transparent 100%);
+    mask-image: none;
+    -webkit-mask-image: none;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--secondary-color);
+}
+
+.holo-scanner {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 20%;
+    height: 100%;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transform: skewX(-20deg);
+    animation: scanner-beam 5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.holo-wave-canvas {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    opacity: 0.3;
+    mix-blend-mode: screen;
+}
+
+.holo-segment {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 40px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--secondary-color);
+    text-shadow: 0 0 5px var(--secondary-color);
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.3);
+    height: 100%;
+}
+
+[data-mode="light"] .holo-segment {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.holo-label {
+    opacity: 0.7;
+    margin-right: 4px;
+    letter-spacing: 1px;
+}
+
+.holo-val {
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 8px var(--primary-color);
+}
+
+[data-mode="light"] .holo-val {
+    color: #000;
+}
+
+.holo-marquee-container {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.2);
+    background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 20px 20px;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+}
+
+[data-mode="light"] .holo-marquee-container {
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.holo-marquee-wrapper {
+    display: flex;
+    white-space: nowrap;
+    position: absolute;
+    left: 0;
+    animation: scrollText 60s linear infinite;
+}
+
+.holo-marquee-item {
+    display: inline-flex;
+    align-items: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.85);
+    padding-right: 4rem;
+}
+
+[data-mode="light"] .holo-marquee-item {
+    color: rgba(0, 0, 0, 0.85);
+}
+
+@keyframes scrollText {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+.holo-hex-deco {
+    width: 8px;
+    height: 8px;
+    background: var(--secondary-color);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    animation: flash 2s infinite;
+}
+
+.theme-btn {
+    width: 30px;
+    height: 6px;
+    transform: skewX(-30deg);
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.3s;
+    margin-right: 4px;
+}
+
+.theme-btn.active {
+    border-color: white;
+    box-shadow: 0 0 15px currentColor;
+    background-color: currentColor !important;
+}
+
+.hud-corner {
+    position: fixed;
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--secondary-color);
+    z-index: 50;
+    pointer-events: none;
+    opacity: 0.7;
+    box-shadow: 0 0 10px var(--secondary-color);
+}
+
+.hud-tl {
+    top: 20px;
+    left: 20px;
+    border-right: 0;
+    border-bottom: 0;
+}
+
+.hud-tr {
+    top: 20px;
+    right: 20px;
+    border-left: 0;
+    border-bottom: 0;
+}
+
+.hud-bl {
+    bottom: 20px;
+    left: 20px;
+    border-right: 0;
+    border-top: 0;
+}
+
+.hud-br {
+    bottom: 20px;
+    right: 20px;
+    border-left: 0;
+    border-top: 0;
+}
+
+/* CRT 扫描线增强 */
+.crt-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    pointer-events: none;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+    background-size: 100% 2px, 3px 100%;
+    opacity: 0.6;
+    mix-blend-mode: overlay;
+    box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.9);
+}
+
+[data-mode="light"] .crt-overlay {
+    background: linear-gradient(rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.05) 50%), linear-gradient(90deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.01), rgba(0, 0, 0, 0.02));
+    background-size: 100% 2px, 3px 100%;
+    opacity: 0.3;
+    mix-blend-mode: multiply;
+    box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.1);
+}
+
+/* --- AI 助手视觉修复 (针对亮色模式) --- */
+[data-mode="light"] .ai-avatar-img {
+    mix-blend-mode: normal !important;
+    /* 取消滤色混合，否则在白底上会消失 */
+    filter: brightness(1.05) contrast(1.05) drop-shadow(0 5px 15px rgba(0, 0, 0, 0.15)) !important;
+    /* 增加阴影提升立体感 */
+    opacity: 1 !important;
+}
+
+/* 调整亮色模式下 AI 卡片图片容器背景，避免过于苍白 */
+[data-mode="light"] .ai-card-container .overflow-hidden.bg-black\/40 {
+    background-color: rgba(240, 240, 240, 0.8) !important;
+}
+
+/* Speaking State */
+.ai-card-container.is-speaking {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 20px var(--primary-color), inset 0 0 10px var(--primary-color);
+    animation: speaking-pulse 0.5s ease-in-out infinite alternate;
+}
+
+.ai-card-container.is-speaking .ai-avatar-img {
+    filter: grayscale(0) contrast(1.2) brightness(1.1) !important;
+    opacity: 1 !important;
+    mix-blend-mode: normal !important;
+    /* Ensure colors are seen */
+    animation: speakingShake 0.5s infinite;
+}
+
+@keyframes speaking-pulse {
+    0% {
+        box-shadow: 0 0 15px var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    100% {
+        box-shadow: 0 0 30px var(--primary-color), 0 0 50px var(--secondary-color);
+        border-color: var(--secondary-color);
+    }
+}
+
+/* --- MAGI SYSTEM VISUALIZER REBUILD [Evangelion 3.0+1.0 Style] --- */
+
+/* 容器布局优化：宽距撑满 */
+.magi-hex-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    /* 确保撑满两端 */
+    gap: 6px;
+    /* 间隙微调 */
+    width: 100%;
+    /* 强制占满宽度 */
+    margin-bottom: 12px;
+    perspective: 1000px;
+}
+
+/* 节点基础样式：自适应宽度 */
+.magi-hex {
+    position: relative;
+    flex: 1;
+    /* 核心：自动伸缩填充 */
+    height: 38px;
+    /* 稍微增高以容纳大号汉字 */
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid var(--secondary-color);
+    /* 还原 Rebuild 风格的倒角矩形 */
+    clip-path: polygon(0 0, 100% 0, 100% 70%, 85% 100%, 0 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* 节点内的文字排版 - 初始状态 */
+.magi-node-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    /* 稍微调大初始字号 */
+    font-weight: 800;
+    line-height: 1;
+    z-index: 2;
+    color: var(--secondary-color);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.magi-node-status {
+    font-family: 'Noto Sans JP', sans-serif;
+    /* 强制使用日文字体 */
+    font-size: 9px;
+    font-weight: 700;
+    margin-top: 2px;
+    z-index: 2;
+    opacity: 0.9;
+    color: var(--secondary-color);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    /* 弹性动画 */
+}
+
+/* 背景扫描线纹理 */
+.magi-hex::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(0deg,
+            transparent 0px,
+            rgba(57, 255, 20, 0.1) 1px,
+            transparent 2px);
+    z-index: 0;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* --- 状态：思考中 (High-Speed Polling) --- */
+.magi-hex.thinking {
+    background: rgba(0, 0, 0, 0.9);
+    border-color: rgba(255, 174, 0, 0.3);
+}
+
+/* --- 新增：轮询激活态 (Polling Highlight) - REBUILD SCHEME --- */
+.magi-hex.polling {
+    transform: scale(1.05);
+    z-index: 20;
+    background: #000 !important;
+    /* 黑色背景突出光效 */
+}
+
+/* Melchior - 科学家 - 逻辑冷青 (Cyan) */
+#node-melchior.polling {
+    border-color: #00ccff !important;
+    box-shadow: 0 0 15px rgba(0, 204, 255, 0.6), inset 0 0 10px rgba(0, 204, 255, 0.3);
+}
+
+#node-melchior.polling .magi-node-name,
+#node-melchior.polling .magi-node-status {
+    color: #00ccff !important;
+    text-shadow: 0 0 8px #00ccff;
+}
+
+/* Balthasar - 母亲 - 经典琥珀橙 (Orange) */
+#node-balthasar.polling {
+    border-color: #ffae00 !important;
+    box-shadow: 0 0 15px rgba(255, 174, 0, 0.6), inset 0 0 10px rgba(255, 174, 0, 0.3);
+}
+
+#node-balthasar.polling .magi-node-name,
+#node-balthasar.polling .magi-node-status {
+    color: #ffae00 !important;
+    text-shadow: 0 0 8px #ffae00;
+}
+
+/* Casper - 女人 - 偏执洋红 (Magenta) */
+#node-casper.polling {
+    border-color: #ff0055 !important;
+    box-shadow: 0 0 15px rgba(255, 0, 85, 0.6), inset 0 0 10px rgba(255, 0, 85, 0.3);
+}
+
+#node-casper.polling .magi-node-name,
+#node-casper.polling .magi-node-status {
+    color: #ff0055 !important;
+    text-shadow: 0 0 8px #ff0055;
+}
+
+/* 覆盖原来的通用样式，避免文字模糊 */
+.magi-hex.polling .magi-node-name {
+    text-shadow: none;
+}
+
+/* --- 状态：决议一致 (Consensus) - 核心修改：巨大化汉字 --- */
+.magi-hex.active {
+    background: var(--secondary-color);
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 30px var(--secondary-color);
+    /* 强光晕 */
+    transform: scale(1.1);
+    /* 整体放大 */
+    z-index: 100;
+}
+
+/* 决议通过时，缩小节点名称，为大汉字让路 */
+.magi-hex.active .magi-node-name {
+    color: #000;
+    font-size: 5px;
+    /* 极小化 */
+    opacity: 0.7;
+    margin-bottom: -4px;
+    /* 上移 */
+}
+
+/* 决议通过时，巨大化状态汉字 */
+.magi-hex.active .magi-node-status {
+    color: #000;
+    /* 反白显示 */
+    text-shadow: none;
+    font-size: 18px !important;
+    /* 巨大化 */
+    font-weight: 900 !important;
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+    transform: scaleY(1.1);
+    /* 纵向拉伸，更有冲击力 */
+}
+
+/* --- 状态：否决 (Denied) --- */
+.magi-hex.denied {
+    background: #ff0000;
+    border-color: #ff0000;
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
+    animation: rejection-shake 0.4s ease-in-out;
+    transform: scale(1.1);
+    z-index: 100;
+}
+
+.magi-hex.denied .magi-node-name {
+    color: #fff;
+    font-size: 5px;
+    /* 极小化 */
+    opacity: 0.7;
+    margin-bottom: -4px;
+}
+
+.magi-hex.denied .magi-node-status {
+    color: #fff;
+    font-size: 18px !important;
+    /* 巨大化 */
+    font-weight: 900 !important;
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+    transform: scaleY(1.1);
+}
+
+/* 移除旧的数据流遮罩，保持画面干净 */
+.magi-hex.thinking::after {
+    display: none;
+}
+
+/* 亮色模式适配 */
+[data-mode="light"] .magi-hex {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: #000;
+}
+
+[data-mode="light"] .magi-node-name {
+    color: #000;
+}
+
+[data-mode="light"] .magi-hex.thinking {
+    background: #fff;
+    border-color: #ffae00;
+}
+
+/* --- Sync Rate Waveform Canvas --- */
+#sync-wave-canvas {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 120px;
+    /* Cover lower part of avatar */
+    pointer-events: none;
+    z-index: 5;
+    mix-blend-mode: screen;
+    /* Holographic overlay effect */
+    opacity: 0.8;
+    transition: opacity 0.3s;
+}
+
+[data-mode="light"] #sync-wave-canvas {
+    mix-blend-mode: multiply;
+    /* Darker waves on light bg */
+    opacity: 0.6;
+}
+
+
+::-webkit-scrollbar {
+    width: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--secondary-color);
+    border-radius: 2px;
+}
+
+.holo-card-3d {
+    transition: transform 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform-style: preserve-3d;
+    will-change: transform;
+}
+
+.holo-card-3d .eva-header,
+.holo-card-3d h3,
+.holo-card-3d p,
+.holo-card-3d .social-btn,
+.holo-card-3d button {
+    transform: translateZ(20px);
+    transform-style: preserve-3d;
+}
+
+.holo-card-3d .eva-glare {
+    transform: translateZ(1px);
+}
+
+.scramble-text {
+    display: inline-block;
+    min-width: 1em;
+}
+
+/* --- 全息投影效果 (Holographic Effect) --- */
+.holo-container {
+    position: relative;
+    overflow: hidden;
+    background: rgba(0, 20, 0, 0.2);
+    /* 略微深绿底色 */
+}
+
+/* 青色扫描线覆盖层 */
+.holo-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    pointer-events: none;
+    background:
+        repeating-linear-gradient(0deg,
+            transparent 0px,
+            rgba(0, 255, 255, 0.05) 1px,
+            transparent 2px),
+        linear-gradient(to bottom, rgba(0, 255, 255, 0.0) 50%, rgba(0, 255, 255, 0.05) 50%);
+    background-size: 100% 4px, 100% 6px;
+    /* 两种不同频率的扫描 */
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+    /* 边缘暗角 */
+    mix-blend-mode: overlay;
+}
+
+/* RGB 色散错位动画效果 - 应用于图片 */
+.holo-glitch-effect {
+    animation: hologram-flicker 4s infinite;
+}
+
+/* 呼吸闪烁 */
+.holo-breathing {
+    animation: magiPulse 4s ease-in-out infinite;
+}
+
+/* 暴怒模式下的红色警告覆盖 */
+.rage-overlay {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(45deg, rgba(255, 0, 0, 0.1), rgba(255, 0, 0, 0.1) 10px, transparent 10px, transparent 20px);
+    z-index: 20;
+    pointer-events: none;
+    animation: red-alert 0.5s infinite;
+    display: none;
+}
+
+.rage-mode .rage-overlay {
+    display: block;
+}
+
+.rage-mode .holo-overlay {
+    background: repeating-linear-gradient(0deg, transparent 0px, rgba(255, 0, 0, 0.1) 1px, transparent 2px);
+}
+
+/* --- EVA Day Selector & New List Animations --- */
+/* UPGRADED: Monolith Sound Only Style Buttons */
+.day-btn {
+    font-family: 'JetBrains Mono';
+    font-size: 10px;
+    font-weight: 800;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+    margin-right: 2px;
+    flex-shrink: 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    clip-path: polygon(0 0, 100% 0, 100% 90%, 90% 100%, 0 100%);
+}
+
+.day-btn:hover {
+    border-color: var(--secondary-color);
+    color: var(--secondary-color);
+    box-shadow: inset 0 0 10px rgba(var(--secondary-color), 0.2);
+}
+
+.day-btn.active {
+    background: var(--secondary-color);
+    color: #000;
+    border-color: var(--secondary-color);
+    text-shadow: none;
+    box-shadow: 0 0 15px rgba(var(--secondary-color), 0.5);
+    transform: translateY(-2px);
+    z-index: 10;
+}
+
+/* Active indicator for buttons */
+.day-btn.active::after {
+    content: 'ACTIVE';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    font-size: 6px;
+    background: #000;
+    color: var(--secondary-color);
+    text-align: center;
+    line-height: 8px;
+}
+
+/* Tech Card Style for Anime Items */
+.anime-card-tech {
+    position: relative;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.anime-card-tech:hover {
+    background: rgba(var(--secondary-color), 0.05);
+    border-color: var(--secondary-color);
+}
+
+.anime-card-tech::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border-color);
+    transition: background 0.3s;
+}
+
+.anime-card-tech:hover::before {
+    background: var(--secondary-color);
+    box-shadow: 0 0 8px var(--secondary-color);
+}
+
+/* --- 修复核心：确保动画 Keyframes 在纯 CSS 中可用 --- */
+/* List enter animation */
+.anime-item-enter {
+    opacity: 0;
+    animation: dataStream 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes dataStream {
+    0% {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* 兼容性增强：如果用户系统开启了减弱动画，直接显示 */
+@media (prefers-reduced-motion: reduce) {
+    .anime-item-enter {
+        opacity: 1;
+        animation: none;
+    }
+
+    /* --- UPGRADE: TACTICAL PROGRESS & MENU --- */
+
+    /* 1. 进度条样式 (Energy Cell) */
+    .tactical-progress-container {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 6px;
+    }
+
+    .progress-cells {
+        display: flex;
+        gap: 1px;
+        flex: 1;
+        height: 6px;
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid var(--border-color);
+    }
+
+    .p-cell {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.1);
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .p-cell:hover {
+        background: var(--secondary-color);
+        opacity: 0.5;
+    }
+
+    .p-cell.filled {
+        background: var(--secondary-color);
+        box-shadow: 0 0 5px var(--secondary-color);
+    }
+
+    .progress-btn {
+        width: 16px;
+        height: 16px;
+        display: flex;
+        items-center;
+        justify-center;
+        border: 1px solid var(--secondary-color);
+        color: var(--secondary-color);
+        font-size: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .progress-btn:hover {
+        background: var(--secondary-color);
+        color: black;
+    }
+
+    /* ==========================================================================
+   MODULE: 05 PIXIV & 06 STEAM (TACTICAL STYLES)
+   ========================================================================== */
+
+    /* --- Steam: 同步率仪表盘动画 --- */
+    #sync-rate-circle {
+        transition: stroke-dashoffset 2s cubic-bezier(0.25, 1, 0.5, 1), stroke 2s ease;
+        /* 初始状态：让圆环看起来有点发光 */
+        filter: drop-shadow(0 0 5px currentColor);
+    }
+
+    /* --- Pixiv: 瀑布流布局 (Masonry Layout) --- */
+    /* 覆盖 Tailwind 的 columns，使用更稳定的 CSS 原生列布局 */
+    #pixiv-grid {
+        column-count: 2;
+        column-gap: 1rem;
+    }
+
+    @media (min-width: 768px) {
+        #pixiv-grid {
+            column-count: 3;
         }
-    </script>
+    }
 
-    <style>
-        /* --- 核心变量 --- */
-        :root {
-            --primary-color: #b15dff;
-            --secondary-color: #39ff14;
-            --bg-color: #0f0518;
-            --text-main: #c0c0c0;
-            --text-muted: #666;
-            --glass-bg: rgba(10, 10, 12, 0.75);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --widget-bg: rgba(0, 0, 0, 0.4);
-            --code-bg: #0b0b0b;
-            --hud-opacity: 0.5;
-            --nav-height: 4rem;
+    @media (min-width: 1024px) {
+        #pixiv-grid {
+            column-count: 4;
         }
+    }
 
-        [data-mode="light"] {
-            --bg-color: #f2f2f5;
-            --text-main: #1a1a1a;
-            --text-muted: #888;
-            --glass-bg: rgba(255, 255, 255, 0.9);
-            --glass-border: rgba(0, 0, 0, 0.05);
-            --widget-bg: rgba(255, 255, 255, 0.6);
-            --code-bg: #1e1e1e;
-            --hud-opacity: 0.8;
-        }
+    /* 防止卡片在列之间断裂 */
+    #pixiv-grid>div {
+        break-inside: avoid;
+        margin-bottom: 1rem;
+        backface-visibility: hidden;
+        /* 修复部分浏览器闪烁 */
+    }
 
-        [data-theme="unit-02"] {
-            --primary-color: #ffae00;
-            --secondary-color: #d90000;
-        }
-
-        [data-mode="light"][data-theme="unit-02"] {
-            --bg-color: #fff5f5;
-        }
-
-        [data-theme="unit-00"] {
-            --primary-color: #0056b3;
-            --secondary-color: #0091ff;
-        }
-
-        [data-mode="light"][data-theme="unit-00"] {
-            --bg-color: #f0f8ff;
-        }
-
-        /* --- 基础重置 --- */
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif;
-            background-image: radial-gradient(circle at 50% 0%, rgba(var(--secondary-color), 0.05) 0%, transparent 60%), linear-gradient(var(--glass-border) 1px, transparent 1px), linear-gradient(90deg, var(--glass-border) 1px, transparent 1px);
-            background-size: 100% 100%, 40px 40px, 40px 40px;
-            background-attachment: fixed;
-            overflow-x: hidden;
-            margin: 0;
-            padding: 0;
-            transition: background-color 0.5s ease, color 0.3s ease;
-        }
-
-        /* --- 滚动条布局稳定性修复 --- */
-        html {
-            scrollbar-gutter: stable;
-            /* 始终预留滚动条空间，防止布局跳动 */
-        }
-
-        /* 美化滚动条 (Webkit) */
-        ::-webkit-scrollbar {
-            width: 8px;
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.2);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--secondary-color);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--primary-color);
-        }
-
-        /* --- 核心修复：手动实现导航栏布局 (脱离 Tailwind 依赖) --- */
-        .tactical-nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: var(--nav-height);
-            background: rgba(var(--bg-color), 0.9);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 1.5rem;
-            box-sizing: border-box;
-            /* 防止padding撑大宽度 */
-        }
-
-        .nav-group {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .nav-btn-link {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
-            font-weight: bold;
-            transition: color 0.2s;
-            cursor: pointer;
-        }
-
-        .nav-btn-link:hover {
-            color: var(--secondary-color);
-        }
-
-        .nav-btn-link svg {
-            width: 16px;
-            height: 16px;
-            flex-shrink: 0;
-        }
-
-        /* 强制图标尺寸 */
-
-        /* --- 核心修复：防止图标被挤压 (全局生效) --- */
-        svg.lucide {
-            flex-shrink: 0 !important;
-            min-width: 1em;
-            min-height: 1em;
-            display: inline-block;
-            vertical-align: middle;
-        }
-
-        /* --- 布局系统 (Grid Layout) --- */
-        .tactical-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 2rem;
-            max-width: 1400px;
-            margin: 0 auto;
-            position: relative;
-            padding-top: calc(var(--nav-height) + 2rem);
-            /* 留出导航栏高度 */
-            padding-bottom: 5rem;
-            padding-left: 1rem;
-            padding-right: 1rem;
-        }
-
-        /* PC端三栏布局 */
-        @media (min-width: 1280px) {
-            .tactical-grid {
-                grid-template-columns: 280px minmax(0, 1fr) 280px;
-                align-items: start;
-            }
-
-            .sidebar-left {
-                position: sticky;
-                top: 6rem;
-                height: calc(100vh - 8rem);
-                overflow-y: auto;
-                padding-right: 10px;
-            }
-
-            .sidebar-right {
-                position: sticky;
-                top: 6rem;
-                height: calc(100vh - 8rem);
-            }
-        }
-
-        /* 移动端隐藏侧边栏 */
-        @media (max-width: 1279px) {
-
-            .sidebar-left,
-            .sidebar-right {
-                display: none;
-            }
-        }
-
-        /* --- Widget 通用样式 --- */
-        .widget-card {
-            background: var(--widget-bg);
-            border: 1px solid var(--glass-border);
-            border-left: 2px solid var(--glass-border);
-            backdrop-filter: blur(8px);
-            padding: 1.25rem;
-            margin-bottom: 1.5rem;
-            position: relative;
-            transition: all 0.3s;
-        }
-
-        .widget-card:hover {
-            border-left-color: var(--secondary-color);
-            border-color: rgba(var(--secondary-color), 0.3);
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .widget-header {
-            font-family: 'JetBrains Mono';
-            font-size: 10px;
-            color: var(--secondary-color);
-            margin-bottom: 1rem;
-            letter-spacing: 0.1em;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px dashed var(--glass-border);
-            padding-bottom: 0.5rem;
-            white-space: nowrap;
-        }
-
-        /* Widget 1: Pilot Data */
-        .pilot-avatar-so {
-            width: 48px;
-            height: 48px;
-            background: #000;
-            border: 1px solid var(--secondary-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'JetBrains Mono';
-            font-weight: bold;
-            font-size: 8px;
-            color: var(--secondary-color);
-            text-align: center;
-            box-shadow: 0 0 5px rgba(var(--secondary-color), 0.3);
-            flex-shrink: 0;
-        }
-
-        .pilot-info {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .sync-bar-container {
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            margin-top: 8px;
-            overflow: hidden;
-        }
-
-        .sync-bar-fill {
-            height: 100%;
-            background: var(--secondary-color);
-            width: 85%;
-            animation: pulse-width 3s infinite ease-in-out;
-        }
-
-        @keyframes pulse-width {
-
-            0%,
-            100% {
-                width: 85%;
-                opacity: 0.8;
-            }
-
-            50% {
-                width: 95%;
-                opacity: 1;
-                box-shadow: 0 0 10px var(--secondary-color);
-            }
-        }
-
-        /* Widget 2: Ops Controls */
-        .ops-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.5rem;
-        }
-
-        .ops-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
-            color: var(--text-muted);
-            font-family: 'JetBrains Mono';
-            font-size: 10px;
-            padding: 0.5rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            overflow: hidden;
-        }
-
-        .ops-btn:hover {
-            background: var(--secondary-color);
-            color: #000;
-            border-color: var(--secondary-color);
-        }
-
-        .ops-btn.active {
-            background: var(--primary-color);
-            color: #fff;
-            border-color: var(--primary-color);
-        }
-
-        /* Widget 3: TOC */
-        .toc-item {
-            display: block;
-            padding: 4px 0 4px 10px;
-            color: var(--text-muted);
-            border-left: 1px solid transparent;
-            font-size: 0.75rem;
-            transition: all 0.2s;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            cursor: pointer;
-        }
-
-        .toc-item:hover,
-        .toc-item.active {
-            color: var(--secondary-color);
-            border-left-color: var(--secondary-color);
-            background: linear-gradient(90deg, rgba(var(--secondary-color), 0.05), transparent);
-            padding-left: 14px;
-        }
-
-        /* 主阅读器容器 */
-        .glass-panel {
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-            position: relative;
-            margin-bottom: 4rem;
-            min-height: 80vh;
-            opacity: 1 !important;
-            animation: none !important;
-        }
-
-        /* 装饰性 HUD 角标 */
-        .hud-corner {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            border: 2px solid var(--secondary-color);
-            transition: all 0.3s;
-            opacity: var(--hud-opacity);
-            pointer-events: none;
-        }
-
-        .hc-tl {
-            top: -1px;
-            left: -1px;
-            border-right: 0;
-            border-bottom: 0;
-        }
-
-        .hc-tr {
-            top: -1px;
-            right: -1px;
-            border-left: 0;
-            border-bottom: 0;
-        }
-
-        .hc-bl {
-            bottom: -1px;
-            left: -1px;
-            border-right: 0;
-            border-top: 0;
-        }
-
-        .hc-br {
-            bottom: -1px;
-            right: -1px;
-            border-left: 0;
-            border-top: 0;
-        }
-
-        /* 文章通用样式 */
-        .prose-eva h1 {
-            font-family: 'Noto Serif SC', serif;
-            font-size: 2.5rem;
-            color: var(--text-main);
-            margin: 2em 0 1em;
-            line-height: 1.2;
-            text-align: center;
-        }
-
-        .prose-eva h2 {
-            font-family: 'Noto Serif SC', serif;
-            font-size: 1.8rem;
-            color: var(--secondary-color);
-            border-bottom: 1px solid var(--glass-border);
-            padding-bottom: 0.5rem;
-            margin-top: 2.5em;
-        }
-
-        .prose-eva h2::before {
-            content: '##';
-            margin-right: 0.5rem;
-            opacity: 0.3;
-            font-family: 'JetBrains Mono';
-        }
-
-        .prose-eva p {
-            margin-bottom: 1.5em;
-            line-height: 1.8;
-            font-size: 1.05rem;
-            text-align: justify;
-            color: var(--text-main);
-            opacity: 0.9;
-        }
-
-        .prose-eva img {
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin: 2rem auto;
-            border: 1px solid var(--glass-border);
-            border-radius: 2px;
-            transition: all 0.3s;
-            cursor: zoom-in;
-            opacity: 1 !important;
-            animation: none !important;
-            visibility: visible !important;
-        }
-
-        .prose-eva img:hover {
-            border-color: var(--secondary-color);
-            box-shadow: 0 0 15px rgba(var(--secondary-color), 0.2);
-        }
-
-        .prose-eva pre {
-            background: var(--code-bg) !important;
-            padding: 1rem;
-            border-radius: 4px;
-            overflow-x: auto;
-            margin: 2em 0;
-            border: 1px solid var(--glass-border);
-        }
-
-        .prose-eva code {
-            font-family: 'JetBrains Mono', monospace !important;
-            font-size: 0.85em;
-            color: #abb2bf;
-        }
-
-        .prose-eva blockquote {
-            border-left: 3px solid var(--secondary-color);
-            background: rgba(var(--secondary-color), 0.05);
-            padding: 1rem 1.5rem;
-            font-style: italic;
-            color: var(--text-muted);
-            margin: 2em 0;
-        }
-
-        [data-mode="light"] .prose-eva blockquote {
-            background: rgba(0, 0, 0, 0.03);
-        }
-
-        /* 灯箱 */
-        #lightbox {
-            position: fixed;
-            inset: 0;
-            z-index: 1000;
-            background: rgba(0, 0, 0, 0.9);
-            backdrop-filter: blur(5px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+    /* 游戏列表的进入动画增强 */
+    @keyframes dataStream {
+        0% {
             opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
+            transform: translateX(-20px);
         }
 
-        #lightbox.active {
+        100% {
             opacity: 1;
-            pointer-events: auto;
+            transform: translateX(0);
+        }
+    }
+
+    /* --- TACTICAL BUTTONS (强制水平修正版) --- */
+    .tactical-controls {
+        display: flex !important;
+        /* 强制 Flex 布局 */
+        flex-direction: row !important;
+        /* 强制水平排列 */
+        flex-wrap: nowrap !important;
+        /* 禁止换行 */
+        align-items: center;
+        width: 100%;
+        /* 占满容器宽度 */
+        gap: 2px;
+        margin-top: 6px;
+        padding-top: 4px;
+        border-top: 1px dashed rgba(255, 255, 255, 0.15);
+    }
+
+    .ctrl-btn {
+        flex: 1 1 0% !important;
+        /* 强制均分宽度，允许压缩 */
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        white-space: nowrap;
+        /* 禁止文字换行 */
+
+        text-align: center;
+        font-size: 9px;
+        font-weight: bold;
+        height: 20px;
+        /* 固定高度，防止被拉长 */
+        line-height: 20px;
+
+        cursor: pointer;
+        border: 1px solid var(--border-color);
+        background: rgba(0, 0, 0, 0.4);
+        color: var(--text-muted);
+        transition: all 0.2s;
+        font-family: 'Noto Sans JP', sans-serif;
+        border-radius: 2px;
+        min-width: 0;
+        /* 关键：允许 Flex 子项缩小到内容以下 */
+    }
+
+    .ctrl-btn:hover {
+        background: var(--secondary-color);
+        color: black;
+        border-color: var(--secondary-color);
+    }
+
+    .ctrl-btn svg {
+        width: 10px;
+        height: 10px;
+        flex-shrink: 0;
+    }
+
+    /* 防止图标被压扁 */
+
+    /* 激活状态颜色保持不变 */
+    .ctrl-btn.active-watching {
+        background: #39ff14;
+        color: black;
+        border-color: #39ff14;
+    }
+
+    .ctrl-btn.active-todo {
+        background: #ffae00;
+        color: black;
+        border-color: #ffae00;
+    }
+
+    .ctrl-btn.active-watched {
+        background: #ff2a2a;
+        color: white;
+        border-color: #ff2a2a;
+    }
+
+    .ctrl-btn.active-dropped {
+        background: #555;
+        color: #aaa;
+        border-color: #555;
+    }
+
+    /* --- ABOUT MODULE STYLES (身份验证模块) --- */
+    .cyber-card {
+        background: rgba(20, 10, 30, 0.6);
+        /* [PERF] 降低模糊半径：12px → 6px */
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        border: 1px solid var(--border-color);
+        border-left: 2px solid var(--secondary-color);
+        clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .cyber-card:hover {
+        background: rgba(255, 255, 255, 0.03);
+        box-shadow: 0 0 20px rgba(var(--secondary-color), 0.2);
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+    }
+
+    /* 技能条动画 */
+    .load-bar-fill {
+        background: var(--secondary-color);
+        box-shadow: 0 0 10px var(--secondary-color);
+        width: 0%;
+        animation: loadBar 1.5s ease-out forwards;
+    }
+
+    @keyframes loadBar {
+        to {
+            width: var(--target-width);
+        }
+    }
+
+    /* 头像故障微效 */
+    .avatar-glitch {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .avatar-glitch::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: var(--secondary-color);
+        mix-blend-mode: hard-light;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .avatar-glitch:hover::before {
+        opacity: 0.2;
+        animation: glitch 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
+    }
+
+    /* 3. 分组标题 */
+    .group-header {
+        font-family: 'JetBrains Mono';
+        font-size: 10px;
+        font-weight: bold;
+        color: var(--text-muted);
+        padding: 8px 4px 4px;
+        border-bottom: 1px solid var(--border-color);
+        margin-top: 12px;
+        margin-bottom: 4px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .group-header.syncing {
+        color: var(--secondary-color);
+        border-color: var(--secondary-color);
+    }
+
+    /* ==========================================================================
+   📱 MOBILE OPTIMIZATION PATCH V1.0
+   修复：水平溢出、触控目标、网格布局、导航体验
+   ========================================================================== */
+
+    /* --- 全局溢出修复 --- */
+    html,
+    body {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
+    }
+
+    /* --- 移动端媒体查询 (max-width: 768px) --- */
+    @media (max-width: 768px) {
+
+        /* 1. 修复水平溢出 - 所有 fixed 定位元素 */
+        .bottom-bar-container,
+        .holo-status-bar,
+        .cockpit-overlay,
+        .crt-overlay,
+        #cursor-glow,
+        #tactical-cursor {
+            max-width: 100vw !important;
+            overflow: hidden !important;
         }
 
-        #lightbox img {
-            max-width: 90vw;
-            max-height: 90vh;
-            border: 1px solid var(--secondary-color);
-            box-shadow: 0 0 30px rgba(var(--secondary-color), 0.3);
-            transform: scale(0.9);
-            transition: transform 0.3s;
-        }
-
-        #lightbox.active img {
-            transform: scale(1);
-        }
-
-        /* 评论区 (MAGI COMMS) */
-        .comm-entry {
-            border-left: 2px solid var(--glass-border);
-            padding-left: 1rem;
-            margin-bottom: 1.5rem;
-            transition: all 0.3s;
-        }
-
-        .comm-entry:hover {
-            border-left-color: var(--secondary-color);
-        }
-
-        .comm-meta {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
-            font-family: 'JetBrains Mono';
-            font-size: 0.75rem;
-            color: var(--text-muted);
-        }
-
-        .comm-author {
-            color: var(--secondary-color);
-            font-weight: bold;
-        }
-
-        .comm-body {
-            font-size: 0.9rem;
-            color: var(--text-main);
-            line-height: 1.6;
-            opacity: 0.9;
-        }
-
-        .magi-input {
-            background: rgba(0, 0, 0, 0.1);
-            border: 1px solid var(--glass-border);
-            color: var(--text-main);
-            font-family: 'JetBrains Mono';
-            font-size: 0.85rem;
-            padding: 0.5rem;
-            width: 100%;
-            transition: all 0.3s;
-            box-sizing: border-box;
-        }
-
-        .magi-input:focus {
-            outline: none;
-            border-color: var(--secondary-color);
-            box-shadow: 0 0 10px rgba(var(--secondary-color), 0.1);
-            background: rgba(var(--secondary-color), 0.05);
-        }
-
-        .avatar-so {
-            width: 32px;
-            height: 32px;
-            background: #000;
-            border: 1px solid var(--secondary-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 6px;
-            color: var(--secondary-color);
-            text-align: center;
-            line-height: 1;
-            font-family: 'JetBrains Mono';
-            box-shadow: 0 0 5px rgba(var(--secondary-color), 0.2);
-            flex-shrink: 0;
-        }
-
-        .comm-chevron {
-            transition: transform 0.3s;
-            flex-shrink: 0;
-        }
-
-        /* Utility */
-        .hidden {
+        /* 2. 隐藏不必要的装饰元素 */
+        .hero-character-container,
+        .hud-corner,
+        #tactical-cursor,
+        .cockpit-reticle,
+        .cockpit-side-meter,
+        .magi-node.hidden-mobile,
+        .holo-scanner {
             display: none !important;
         }
 
-        .flex {
+        /* 3. 底部状态栏简化 */
+        .bottom-bar-container {
+            height: 36px;
+        }
+
+        .holo-segment {
+            padding: 0 12px !important;
+            font-size: 8px !important;
+        }
+
+        .holo-marquee-container {
+            display: none !important;
+            /* 手机端隐藏跑马灯 */
+        }
+
+        /* 4. 导航栏优化 */
+        nav {
+            padding: 0 12px !important;
+        }
+
+        nav .gap-8 {
+            gap: 1rem !important;
+        }
+
+        /* 5. 增大触控目标 - 最小 44x44px (Apple HIG) */
+        .theme-btn {
+            width: 44px !important;
+            height: 44px !important;
+            transform: none !important;
+            border-radius: 4px;
             display: flex;
-        }
-
-        .items-center {
-            align-items: center;
-        }
-
-        .justify-center {
-            justify-content: center;
-        }
-
-        .gap-2 {
-            gap: 0.5rem;
-        }
-
-        .w-full {
-            width: 100%;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .animate-pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: .5;
-            }
-        }
-
-        /* 滚动条 */
-        ::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #555;
-            border-radius: 2px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--secondary-color);
-        }
-
-        /* ==========================================================================
-           📱 MOBILE OPTIMIZATION - READER PAGE
-           ========================================================================== */
-
-        /* 移动端底部导航栏 */
-        .mobile-bottom-nav {
-            display: none;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 56px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            border-top: 1px solid var(--glass-border);
-            z-index: 100;
-            padding: 0;
-            padding-bottom: env(safe-area-inset-bottom, 0);
-        }
-
-        .mobile-nav-inner {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            height: 56px;
-        }
-
-        .mobile-nav-btn {
-            display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
+        }
+
+        .tactical-switch {
+            min-height: 44px !important;
+            padding: 8px 12px !important;
+        }
+
+        /* 6. 网格布局响应式 */
+        .grid-cols-3 {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+
+        .grid-cols-4 {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+
+        .grid-cols-5 {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+
+        /* 7. EVA 卡片优化 */
+        .eva-card {
+            clip-path: none !important;
+            /* 移除切角，防止内容被裁切 */
+        }
+
+        /* 8. MAGI 系统组件缩放 */
+        .magi-hex-container {
+            flex-wrap: wrap;
             gap: 4px;
-            color: var(--text-muted);
-            background: transparent;
-            border: none;
-            padding: 8px 16px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 9px;
-            cursor: pointer;
-            transition: color 0.2s;
-            min-width: 60px;
         }
 
-        .mobile-nav-btn:active,
-        .mobile-nav-btn:hover {
-            color: var(--secondary-color);
-        }
-
-        .mobile-nav-btn svg {
-            width: 20px;
-            height: 20px;
-        }
-
-        /* 移动端 TOC 抽屉 */
-        .mobile-toc-drawer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 200;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
-        }
-
-        .mobile-toc-drawer.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .mobile-toc-content {
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 280px;
-            max-width: 80vw;
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            border-right: 1px solid var(--glass-border);
-            padding: 1rem;
-            overflow-y: auto;
-            transform: translateX(-100%);
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .mobile-toc-drawer.active .mobile-toc-content {
-            transform: translateX(0);
-        }
-
-        .mobile-toc-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--glass-border);
-            margin-bottom: 1rem;
-        }
-
-        .mobile-toc-title {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 12px;
-            color: var(--secondary-color);
-            letter-spacing: 0.1em;
-        }
-
-        .mobile-toc-close {
-            background: transparent;
-            border: 1px solid var(--glass-border);
-            color: var(--text-muted);
-            width: 32px;
+        .magi-hex {
+            flex: 1 1 calc(50% - 4px);
+            /* 两列布局 */
+            min-width: 80px;
             height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
         }
 
-        /* 阅读时间估算 */
-        .reading-time {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 10px;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 4px;
+        .magi-node-name {
+            font-size: 7px !important;
         }
 
-        @media (max-width: 1279px) {
-
-            /* 显示移动端底部导航 */
-            .mobile-bottom-nav {
-                display: block;
-            }
-
-            /* 为底栏留空间 */
-            body {
-                padding-bottom: 70px !important;
-            }
-
-            /* 减少内容区边距 */
-            .tactical-grid {
-                padding-left: 0.75rem !important;
-                padding-right: 0.75rem !important;
-            }
-
-            /* 导航栏简化 */
-            .tactical-nav {
-                padding: 0 0.75rem !important;
-            }
-
-            /* A+ 按钮增大触控区域 */
-            .nav-btn-link {
-                min-height: 44px;
-                min-width: 44px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
+        .magi-node-status {
+            font-size: 8px !important;
         }
 
-        @media (max-width: 768px) {
-
-            /* 文章标题字号调整 */
-            .prose-eva h1 {
-                font-size: 1.75rem !important;
-                margin-top: 1rem !important;
-            }
-
-            .prose-eva h2 {
-                font-size: 1.25rem !important;
-            }
-
-            .prose-eva p {
-                font-size: 1rem !important;
-                text-align: left !important;
-                /* 取消两端对齐，移动端更好读 */
-            }
-
-            /* 代码块横向滚动 */
-            .prose-eva pre {
-                max-width: calc(100vw - 2rem);
-                font-size: 0.75rem;
-            }
-
-            /* 图片全宽 */
-            .prose-eva img {
-                margin-left: -0.75rem;
-                margin-right: -0.75rem;
-                max-width: calc(100% + 1.5rem);
-                width: calc(100% + 1.5rem);
-            }
-
-            /* 评论区优化 */
-            .comm-entry {
-                padding-left: 0.5rem;
-            }
-
-            /* 引用框 */
-            .prose-eva blockquote {
-                padding: 0.75rem 1rem;
-                margin-left: 0;
-                margin-right: 0;
-            }
-
-            /* 隐藏 PC 端元素 */
-            .hidden-mobile {
-                display: none !important;
-            }
+        /* 9. 标题缩放 */
+        h1,
+        .hero-title {
+            font-size: 2rem !important;
+            line-height: 1.2 !important;
         }
 
-        @media (max-width: 480px) {
-            .tactical-nav {
-                height: 3rem;
-            }
-
-            .tactical-grid {
-                padding-top: calc(3rem + 1rem) !important;
-            }
-
-            .prose-eva h1 {
-                font-size: 1.5rem !important;
-            }
+        h2 {
+            font-size: 1.5rem !important;
         }
 
-        /* 触控设备优化 */
-        @media (hover: none) and (pointer: coarse) {
-            .widget-card:hover {
-                border-left-color: inherit;
-            }
-
-            .toc-item:hover {
-                color: inherit;
-                border-left-color: transparent;
-            }
-
-            .toc-item:active {
-                color: var(--secondary-color);
-                border-left-color: var(--secondary-color);
-            }
-        }
-    </style>
-</head>
-
-<body class="min-h-screen flex flex-col">
-
-    <script>
-            (function () {
-                const mode = localStorage.getItem('visualMode') || 'dark';
-                if (mode === 'light') {
-                    document.documentElement.setAttribute('data-mode', 'light');
-                    document.documentElement.classList.remove('dark');
-                }
-                const theme = localStorage.getItem('theme') || 'default';
-                if (theme !== 'default') document.documentElement.setAttribute('data-theme', theme);
-            })();
-    </script>
-
-    <div class="fixed top-0 left-0 w-full h-1 z-[200] bg-gray-800/20">
-        <div id="scroll-progress"
-            class="h-full bg-secondary w-0 shadow-[0_0_10px_var(--secondary-color)] transition-all duration-75"></div>
-    </div>
-
-    <div id="lightbox" onclick="Lightbox.close()">
-        <img id="lightbox-img" src="" onclick="event.stopPropagation()">
-    </div>
-
-    <!-- 📱 移动端 TOC 抽屉 -->
-    <div id="mobile-toc-drawer" class="mobile-toc-drawer" onclick="MobileNav.closeToc()">
-        <div class="mobile-toc-content" onclick="event.stopPropagation()">
-            <div class="mobile-toc-header">
-                <span class="mobile-toc-title">NAVIGATION</span>
-                <button class="mobile-toc-close" onclick="MobileNav.closeToc()">
-                    <i data-lucide="x"></i>
-                </button>
-            </div>
-            <div id="mobile-toc-list">
-                <!-- TOC 内容将由 JS 动态填充 -->
-            </div>
-        </div>
-    </div>
-
-    <!-- 📱 移动端底部导航栏 -->
-    <nav class="mobile-bottom-nav">
-        <div class="mobile-nav-inner">
-            <button class="mobile-nav-btn" onclick="MobileNav.openToc()">
-                <i data-lucide="list"></i>
-                <span>目录</span>
-            </button>
-            <button class="mobile-nav-btn" onclick="MobileNav.scrollToComments()">
-                <i data-lucide="message-square"></i>
-                <span>评论</span>
-            </button>
-            <button class="mobile-nav-btn" onclick="MobileNav.scrollToTop()">
-                <i data-lucide="arrow-up"></i>
-                <span>顶部</span>
-            </button>
-            <a href="index.html" class="mobile-nav-btn">
-                <i data-lucide="home"></i>
-                <span>主页</span>
-            </a>
-        </div>
-    </nav>
-
-    <nav class="tactical-nav">
-        <a href="index.html" class="nav-btn-link group">
-            <i data-lucide="arrow-left"></i>
-            <span>ABORT</span>
-        </a>
-        <div class="nav-group" style="font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-muted);">
-            <span class="hidden md:inline">MAGI_ARCHIVE:</span>
-            <span id="stream-status" style="color: var(--secondary-color);">CONNECTING</span>
-        </div>
-        <div class="nav-group">
-            <button onclick="changeFontSize(1)" class="nav-btn-link" style="font-size: 12px;">A+</button>
-        </div>
-    </nav>
-
-    <div class="tactical-grid">
-
-        <aside class="sidebar-left">
-
-            <div class="widget-card" style="opacity: 1;">
-                <div class="hud-corner hc-tl"></div>
-                <div class="hud-corner hc-tr"></div>
-                <div class="widget-header">
-                    <span>PILOT_DATA</span>
-                    <i data-lucide="user"></i>
-                </div>
-                <div class="flex items-center" style="gap: 1rem;">
-                    <div class="pilot-avatar-so">SOUND<br>ONLY</div>
-                    <div class="flex-1 font-mono text-xs pilot-info">
-                        <div style="color: #999;">ID: <span style="color: var(--secondary-color);">Wh1te</span></div>
-                        <div style="color: #999;">RANK: <span style="color: var(--primary-color);">CAPTAIN</span></div>
-                        <div style="color: #666; font-size: 10px;">STATUS: ONLINE</div>
-                    </div>
-                </div>
-                <div class="mt-4" style="margin-top: 1rem;">
-                    <div class="flex"
-                        style="justify-content: space-between; font-family: 'JetBrains Mono'; font-size: 9px; color: #666; margin-bottom: 4px;">
-                        <span>SYNC_RATIO</span>
-                        <span style="color: var(--secondary-color);">400%</span>
-                    </div>
-                    <div class="sync-bar-container">
-                        <div class="sync-bar-fill"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="widget-card" style="opacity: 1;">
-                <div class="hud-corner hc-bl"></div>
-                <div class="hud-corner hc-br"></div>
-                <div class="widget-header">
-                    <span>OPS_CONTROLS</span>
-                    <i data-lucide="settings-2"></i>
-                </div>
-                <div class="ops-grid">
-                    <div class="ops-btn" onclick="OpsControl.toggleTheme()" title="Toggle Light/Dark Mode">
-                        <i data-lucide="sun-moon"></i> <span>MODE</span>
-                    </div>
-                    <div class="ops-btn" onclick="window.scrollTo({top:0, behavior:'smooth'})" title="Return to Top">
-                        <i data-lucide="arrow-up-to-line"></i> <span>TOP</span>
-                    </div>
-                    <div class="ops-btn" onclick="changeFontSize(-1)">A-</div>
-                    <div class="ops-btn" onclick="changeFontSize(1)">A+</div>
-                    <div class="ops-btn" style="grid-column: span 2; border-color: rgba(255,0,0,0.3); color: #ff6b6b;"
-                        onclick="window.location.href='index.html'">
-                        <i data-lucide="log-out"></i> <span>EMERGENCY EJECT</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="widget-card" style="opacity: 1;">
-                <div class="widget-header">
-                    <span>INDEX_STRUCTURE</span>
-                    <i data-lucide="list-tree"></i>
-                </div>
-                <div id="toc-container"
-                    style="max-height: 300px; overflow-y: auto; font-family: 'JetBrains Mono'; font-size: 12px; gap: 4px; display: flex; flex-direction: column;">
-                    <div class="text-center" style="opacity: 0.3; padding: 1rem;">SCANNING...</div>
-                </div>
-            </div>
-
-        </aside>
-
-        <main id="infinite-wrapper" class="w-full relative">
-            <div id="initial-loader" class="flex"
-                style="flex-direction: column; align-items: center; justify-content: center; min-height: 50vh;">
-                <div style="font-family: 'JetBrains Mono'; color: var(--secondary-color); font-size: 1.2rem; margin-bottom: 1rem; letter-spacing: 2px;"
-                    class="animate-pulse">DECRYPTING...</div>
-                <div style="width: 200px; height: 2px; background: rgba(255,255,255,0.1); overflow: hidden;">
-                    <div
-                        style="height: 100%; width: 30%; background: var(--secondary-color); animation: scan 2s linear infinite;">
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <aside class="sidebar-right">
-            <div class="widget-card h-full"
-                style="height: 100%; border-style: dashed; border-color: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
-                <div
-                    style="font-family: 'JetBrains Mono'; font-size: 10px; color: #555; transform: rotate(-90deg); letter-spacing: 2px;">
-                    RIGHT_WING_RESERVED</div>
-            </div>
-        </aside>
-
-    </div>
-
-    <div id="loading-more" class="hidden" style="padding: 2rem; text-align: center;">
-        <div
-            style="display: inline-flex; align-items: center; gap: 0.5rem; font-family: 'JetBrains Mono'; font-size: 12px; color: var(--secondary-color);">
-            <i data-lucide="loader-2" class="animate-spin"></i>
-            FETCHING NEXT ARCHIVE...
-        </div>
-    </div>
-    <div id="end-of-line" class="hidden"
-        style="padding: 3rem; text-align: center; opacity: 0.5; font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.5em; color: #555;">
-        /// END OF ALL RECORDS ///
-    </div>
-
-    <script>
-        lucide.createIcons();
-
-        /* --- 0. 战术控制台逻辑 --- */
-        const OpsControl = {
-            toggleTheme() {
-                const isLight = document.documentElement.getAttribute('data-mode') === 'light';
-                if (isLight) {
-                    document.documentElement.removeAttribute('data-mode');
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('visualMode', 'dark');
-                } else {
-                    document.documentElement.setAttribute('data-mode', 'light');
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('visualMode', 'light');
-                }
-            }
-        };
-
-        /* --- 1. 灯箱系统 --- */
-        const Lightbox = {
-            open(src) {
-                const box = document.getElementById('lightbox');
-                const img = document.getElementById('lightbox-img');
-                img.src = src;
-                box.classList.add('active');
-            },
-            close() { document.getElementById('lightbox').classList.remove('active'); }
-        };
-
-        /* --- 2. 战术图像处理器 --- */
-        const TacticalImager = {
-            processUrl(url) {
-                if (!url || typeof url !== 'string' || url === 'undefined') return '';
-                if (url.includes('images.weserv.nl')) return url;
-                if (url.startsWith('http://') || url.includes('infinityfreeapp.com')) {
-                    let cleanUrl = url.replace(/^https?:\/\//i, '');
-                    return `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&output=webp&q=85&we`;
-                }
-                return url;
-            },
-            sanitizeHtmlString(htmlString) {
-                if (!htmlString) return '';
-                let safeHtml = htmlString;
-                safeHtml = safeHtml.replace(/srcset=["'][^"']*["']/gi, '');
-                safeHtml = safeHtml.replace(/src=["'](http:\/\/[^"']+|https:\/\/[^"']*infinityfreeapp[^"']*)["']/gi, (match, url) => {
-                    return `src="${this.processUrl(url)}"`;
-                });
-                return safeHtml;
-            }
-        };
-
-        /* --- 3. 评论系统 --- */
-        const CommentManager = {
-            apiBase: 'https://eva-proxy.whte97284.workers.dev/blog/comments',
-            toggleComms(btn, postId) {
-                const container = document.getElementById(`comms-${postId}`);
-                const textSpan = btn.querySelector('span');
-                const chevron = btn.querySelector('.comm-chevron');
-                if (container.classList.contains('hidden')) {
-                    container.classList.remove('hidden');
-                    if (textSpan) textSpan.innerText = `CLOSE_COMMS_CHANNEL [ ID: ${postId} ]`;
-                    if (chevron) chevron.classList.add('rotate-180');
-                    this.loadComments(postId);
-                } else {
-                    container.classList.add('hidden');
-                    if (textSpan) textSpan.innerText = `OPEN_COMMS_CHANNEL [ ID: ${postId} ]`;
-                    if (chevron) chevron.classList.remove('rotate-180');
-                }
-            },
-            async loadComments(postId) {
-                const container = document.getElementById(`comms-${postId}`);
-                const url = `${this.apiBase}?post=${postId}&per_page=20`;
-                const proxies = ['https://corsproxy.io/?', 'https://api.allorigins.win/raw?url='];
-                container.innerHTML = `<div class="text-center" style="padding: 1rem; font-family: 'JetBrains Mono'; font-size: 12px; color: var(--secondary-color);">SEARCHING FREQUENCIES...</div>`;
-                try {
-                    const res = await fetch(url);
-                    if (res.ok) {
-                        const data = await res.json();
-                        this.renderForm(container, postId);
-                        this.renderList(container, data);
-                        return;
-                    }
-                } catch (e) { console.log("Worker direct link failed, trying proxies..."); }
-                let success = false;
-                for (const proxy of proxies) {
-                    try {
-                        const res = await fetch(proxy + encodeURIComponent(url));
-                        const text = await res.text();
-                        if (text.trim().startsWith('<')) throw new Error("Firewall Intercepted");
-                        const data = JSON.parse(text);
-                        this.renderForm(container, postId);
-                        this.renderList(container, data);
-                        success = true;
-                        break;
-                    } catch (e) { }
-                }
-                if (!success) container.innerHTML = `<div style="color: #ff5555; font-family: 'JetBrains Mono'; font-size: 12px; text-align: center; border: 1px solid rgba(255,0,0,0.3); padding: 0.5rem;">CONNECTION FAILED</div>`;
-            },
-            renderForm(container, postId) {
-                container.innerHTML = `
-                    <div style="margin-bottom: 2rem; padding: 1rem; border: 1px solid rgba(255,255,255,0.05); background: rgba(0,0,0,0.1);">
-                        <div style="font-family: 'JetBrains Mono'; font-size: 10px; color: var(--secondary-color); margin-bottom: 0.5rem;">/// TRANSMIT_DATA</div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem;">
-                            <input type="text" id="c-name-${postId}" class="magi-input" placeholder="CODENAME (Name)">
-                            <input type="email" id="c-email-${postId}" class="magi-input" placeholder="SIGNAL_ID (Email)">
-                        </div>
-                        <textarea id="c-msg-${postId}" class="magi-input" style="height: 80px; margin-bottom: 0.5rem;" placeholder="DATA_PACKET (Message)..."></textarea>
-                        <button onclick="CommentManager.postComment(${postId})" style="width: 100%; background: rgba(var(--secondary-color), 0.1); border: 1px solid var(--secondary-color); color: var(--secondary-color); font-weight: bold; font-family: 'JetBrains Mono'; font-size: 12px; padding: 0.5rem; cursor: pointer;">SEND TRANSMISSION</button>
-                        <div id="c-status-${postId}" class="hidden" style="margin-top: 0.5rem; font-size: 10px; font-family: 'JetBrains Mono'; color: #666;"></div>
-                    </div><div class="space-y-4"></div>`;
-            },
-            renderList(container, comments) {
-                const listEl = container.lastElementChild;
-                if (!comments || comments.length === 0) {
-                    listEl.innerHTML = `<div style="text-align: center; opacity: 0.3; font-family: 'JetBrains Mono'; font-size: 12px;">NO SIGNALS DETECTED.</div>`;
-                    return;
-                }
-                listEl.innerHTML = comments.map(c => {
-                    let avatarUrl = c.author_avatar_urls ? c.author_avatar_urls['48'] : null;
-                    if (avatarUrl) avatarUrl = TacticalImager.processUrl(avatarUrl);
-                    const avatarHTML = avatarUrl ? `<img src="${avatarUrl}" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0;">` : `<div class="avatar-so">SOUND<br>ONLY</div>`;
-                    return `<div class="comm-entry"><div class="comm-meta">${avatarHTML}<div><span class="comm-author">${c.author_name}</span><span style="opacity: 0.5; margin: 0 0.5rem;">|</span><span>${new Date(c.date).toISOString().replace('T', ' ').substring(0, 16)}</span></div></div><div class="comm-body pl-10 prose-eva text-sm">${c.content.rendered}</div></div>`;
-                }).join('');
-            },
-            async postComment(postId) {
-                const name = document.getElementById(`c-name-${postId}`).value;
-                const email = document.getElementById(`c-email-${postId}`).value;
-                const content = document.getElementById(`c-msg-${postId}`).value;
-                const statusEl = document.getElementById(`c-status-${postId}`);
-                if (!name || !email || !content) {
-                    statusEl.innerText = "ERROR: INCOMPLETE DATA PACKET."; statusEl.classList.remove('hidden'); statusEl.style.color = '#ff5555'; return;
-                }
-                statusEl.innerText = "UPLOADING..."; statusEl.classList.remove('hidden'); statusEl.style.color = 'var(--secondary-color)';
-                const formData = new FormData();
-                formData.append('author_name', name); formData.append('author_email', email); formData.append('content', content); formData.append('post', postId);
-                try {
-                    const res = await fetch(this.apiBase, { method: 'POST', body: formData });
-                    if (!res.ok) { const err = await res.json(); throw new Error(err.message || `HTTP ${res.status}`); }
-                    statusEl.innerText = "TRANSMISSION COMPLETE. SYNCING..."; document.getElementById(`c-msg-${postId}`).value = '';
-                    setTimeout(() => this.loadComments(postId), 1000);
-                } catch (e) { statusEl.innerHTML = `UPLOAD FAILED: ${e.message}`; statusEl.classList.remove('hidden'); statusEl.style.color = '#ff5555'; }
-            }
-        };
-
-        /* --- 4. 流式阅读器 --- */
-        const StreamReader = {
-            apiBase: 'https://eva-proxy.whte97284.workers.dev/blog/post',
-            postsApi: 'https://eva-proxy.whte97284.workers.dev/blog/posts',
-            fullContentNodes: [],
-            renderPointer: 0,
-            CHUNK_SIZE: 15,
-            lastPostDate: null,
-            isFetching: false,
-            hasMore: true,
-
-            init() {
-                const params = new URLSearchParams(window.location.search);
-                const id = params.get('id');
-                if (!id) { this.fetchNextArticle(true); }
-                else {
-                    document.getElementById('stream-status').innerText = `REQ_ID:${id}`;
-                    this.fetchArticleById(id);
-                }
-                window.addEventListener('scroll', () => {
-                    const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
-                    if (scrollTop + clientHeight >= scrollHeight - 300) { this.fetchNextArticle(); }
-                    this.handleScroll();
-                    this.checkStreamTrigger();
-                });
-            },
-
-            async fetchArticleById(id) {
-                const url = `${this.apiBase}?id=${id}`;
-                await this.performFetch(url, true);
-            },
-
-            async fetchNextArticle(isInitial = false) {
-                if (this.isFetching || !this.hasMore) return;
-                let url = `${this.postsApi}?_embed&per_page=1&_fields=id,date,link,title,excerpt,content,_links,_embedded`;
-                if (this.lastPostDate) url += `&before=${this.lastPostDate}`;
-                document.getElementById('loading-more').classList.remove('hidden');
-                await this.performFetch(url, isInitial, true);
-            },
-
-            async performFetch(url, isInitial = false, isList = false) {
-                this.isFetching = true;
-                let lastError = null;
-                try {
-                    const res = await fetch(url);
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    const text = await res.text();
-                    if (text.trim().startsWith('<') && !text.includes('wp-json')) throw new Error("Worker Firewall Intercepted");
-
-                    let data;
-                    try { data = JSON.parse(text); } catch (e) { throw new Error("Invalid JSON Data"); }
-
-                    if (isList) {
-                        if (!Array.isArray(data) || data.length === 0) {
-                            this.hasMore = false;
-                            document.getElementById('loading-more').classList.add('hidden');
-                            document.getElementById('end-of-line').classList.remove('hidden');
-                            return;
-                        }
-                        data = data[0];
-                    }
-                    this.lastPostDate = data.date;
-                    this.render(data);
-                } catch (e) {
-                    console.error(e);
-                    lastError = e;
-                    if (isInitial) this.showError(`CONNECTION FAILED: ${lastError.message}`);
-                } finally {
-                    this.isFetching = false;
-                    if (isInitial) document.getElementById('initial-loader').classList.add('hidden');
-                    document.getElementById('loading-more').classList.add('hidden');
-                }
-            },
-
-            render(data) {
-                if (!data || !data.title || !data.content) {
-                    console.error("DATA CORRUPTED:", data);
-                    const wrapper = document.getElementById('infinite-wrapper');
-                    wrapper.innerHTML += `<div class="glass-panel" style="padding: 2rem; text-align: center; color: #ff5555; font-family: 'JetBrains Mono'; font-size: 12px;">/// ERROR: DATA_SEGMENT_CORRUPTED ///</div>`;
-                    return;
-                }
-
-                const title = data.title.rendered || "UNKNOWN_TITLE";
-                const date = data.date ? new Date(data.date).toISOString().split('T')[0] : "0000-00-00";
-                const contentHtml = data.content.rendered || "";
-
-                const wrapper = document.getElementById('infinite-wrapper');
-                const articleEl = document.createElement('div');
-                articleEl.className = 'glass-panel';
-                articleEl.style.padding = '2rem 4rem'; // 模拟 md:p-16
-                articleEl.style.marginBottom = '4rem';
-                articleEl.style.minHeight = '60vh';
-
-                articleEl.innerHTML = `
-                    <div class="hud-corner hc-tl"></div><div class="hud-corner hc-tr"></div>
-                    <div class="hud-corner hc-bl"></div><div class="hud-corner hc-br"></div>
-                    <header class="mb-10 text-center" style="margin-bottom: 2.5rem; text-align: center;">
-                        <div style="display: inline-flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; opacity: 0.7;">
-                            <span style="padding: 2px 4px; border: 1px solid var(--primary-color); color: var(--primary-color); font-family: 'JetBrains Mono'; font-size: 10px; font-weight: bold;">ARCHIVE</span>
-                            <span style="font-family: 'JetBrains Mono'; font-size: 10px; color: #888;">${date}</span>
-                        </div>
-                        <h1 class="text-3xl md:text-5xl" style="font-family: 'Noto Serif SC', serif; font-weight: 900; font-size: 2.5rem; line-height: 1.2; margin-bottom: 1.5rem; color: var(--text-main);">${title}</h1>
-                    </header>
-                    <div class="prose-eva article-content" id="stream-container-${data.id}" style="font-size: ${currentZoom}rem;"></div>
-                    <div class="chunk-loader hidden" id="stream-trigger-${data.id}"><span>/// DECODING... ///</span></div>
-                    
-                    <div style="margin-top: 3rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 2rem;">
-                        <button onclick="CommentManager.toggleComms(this, ${data.id})" style="width: 100%; border: 1px solid rgba(var(--secondary-color), 0.3); background: rgba(var(--secondary-color), 0.05); color: var(--secondary-color); font-family: 'JetBrains Mono'; font-size: 12px; padding: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                            <i data-lucide="message-square" style="width: 16px; height: 16px;"></i>
-                            <span>OPEN_COMMS_CHANNEL [ ID: ${data.id} ]</span>
-                            <i data-lucide="chevron-down" class="comm-chevron" style="width: 16px; height: 16px;"></i>
-                        </button>
-                        <div id="comms-${data.id}" class="hidden" style="margin-top: 1.5rem;">
-                            <div style="text-align: center; padding: 1rem; font-family: 'JetBrains Mono'; font-size: 12px; color: #888;">INITIALIZING UPLINK...</div>
-                        </div>
-                    </div>
-                    <footer style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.05); text-align: center; opacity: 0.5;">
-                        <div style="font-family: 'JetBrains Mono'; font-size: 10px; letter-spacing: 0.3em;">/// E.O.F ///</div>
-                    </footer>
-                `;
-                wrapper.appendChild(articleEl);
-
-                const safeContent = TacticalImager.sanitizeHtmlString(contentHtml);
-                this.prepareStream(safeContent, data.id);
-
-                lucide.createIcons();
-            },
-
-            prepareStream(html, id) {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                this.fullContentNodes = Array.from(doc.body.children);
-                this.renderPointer = 0;
-                this.currentStreamContainer = document.getElementById(`stream-container-${id}`);
-                this.currentStreamTrigger = document.getElementById(`stream-trigger-${id}`);
-                document.getElementById('initial-loader').classList.add('hidden');
-                document.getElementById('stream-status').innerText = "STREAMING";
-
-                if (!this.tocGenerated) {
-                    this.updateTOC(doc);
-                    this.tocGenerated = true;
-                }
-
-                this.renderNextChunk();
-            },
-
-            renderNextChunk() {
-                if (!this.currentStreamContainer) return;
-                if (this.renderPointer >= this.fullContentNodes.length) {
-                    if (this.currentStreamTrigger) this.currentStreamTrigger.classList.add('hidden');
-                    return;
-                }
-                const end = Math.min(this.renderPointer + this.CHUNK_SIZE, this.fullContentNodes.length);
-                const chunkNodes = this.fullContentNodes.slice(this.renderPointer, end);
-                const chunkDiv = document.createElement('div');
-                chunkDiv.className = 'content-chunk';
-
-                chunkNodes.forEach(node => {
-                    const clone = document.importNode(node, true);
-
-                    if (clone.tagName === 'IMG') {
-                        clone.removeAttribute('srcset');
-                        clone.setAttribute('loading', 'eager');
-                        if (clone.src) clone.src = TacticalImager.processUrl(clone.src);
-                        clone.onclick = () => Lightbox.open(clone.src);
-                    }
-                    const imgs = clone.querySelectorAll('img');
-                    imgs.forEach(img => {
-                        img.removeAttribute('srcset');
-                        img.setAttribute('loading', 'eager');
-                        if (img.src) img.src = TacticalImager.processUrl(img.src);
-                        img.onclick = () => Lightbox.open(img.src);
-                    });
-
-                    if (clone.tagName === 'PRE') hljs.highlightElement(clone.querySelector('code') || clone);
-                    clone.querySelectorAll('pre code').forEach(c => hljs.highlightElement(c));
-                    chunkDiv.appendChild(clone);
-                });
-
-                this.currentStreamContainer.appendChild(chunkDiv);
-                this.renderPointer = end;
-                if (this.renderPointer < this.fullContentNodes.length && this.currentStreamTrigger) {
-                    this.currentStreamTrigger.classList.remove('hidden');
-                }
-            },
-
-            checkStreamTrigger() {
-                if (!this.currentStreamTrigger || this.currentStreamTrigger.classList.contains('hidden')) return;
-                if (this.currentStreamTrigger.getBoundingClientRect().top <= window.innerHeight + 200) this.renderNextChunk();
-            },
-
-            updateTOC(doc) {
-                const tocContainer = document.getElementById('toc-container');
-                const headers = doc.querySelectorAll('h2, h3');
-                if (headers.length > 0) {
-                    tocContainer.innerHTML = '';
-                    headers.forEach((header, index) => {
-                        const item = document.createElement('div');
-                        item.className = `toc-item ${header.tagName === 'H3' ? 'pl-4 opacity-70' : ''}`;
-                        item.innerText = header.innerText;
-                        item.onclick = () => {
-                            const realHeaders = document.querySelectorAll('h2, h3');
-                            if (realHeaders[index]) realHeaders[index].scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        };
-                        tocContainer.appendChild(item);
-                    });
-                } else {
-                    tocContainer.innerHTML = '<div class="text-center opacity-30 py-4">NO INDEX DATA</div>';
-                }
-            },
-
-            handleScroll() {
-                const scrollTop = window.scrollY;
-                const docHeight = document.body.scrollHeight - window.innerHeight;
-                const progress = (scrollTop / docHeight) * 100;
-                const progressBar = document.getElementById('scroll-progress');
-                if (progressBar) progressBar.style.width = `${progress}%`;
-            },
-
-            showError(msg) {
-                const loader = document.getElementById('initial-loader');
-                if (loader) loader.innerHTML = `<div class="text-red-500 font-mono text-xs text-center">${msg}<br><a href="index.html" class="underline mt-2 inline-block">RETURN</a></div>`;
-            }
-        };
-
-        let currentZoom = 1;
-        function changeFontSize(dir) {
-            currentZoom += dir * 0.1;
-            currentZoom = Math.min(Math.max(currentZoom, 0.8), 1.4);
-            const contents = document.querySelectorAll('.article-content');
-            contents.forEach(el => el.style.fontSize = `${currentZoom}rem`);
+        /* 10. AI 助手卡片优化 */
+        .ai-card-container {
+            width: calc(100vw - 2rem) !important;
+            max-width: 100% !important;
         }
 
-        /* ========================================
-           📱 MOBILE NAVIGATION MODULE
-           ======================================== */
-        const MobileNav = {
-            drawer: null,
-            tocList: null,
-
-            init() {
-                this.drawer = document.getElementById('mobile-toc-drawer');
-                this.tocList = document.getElementById('mobile-toc-list');
-
-                // 复制桌面端 TOC 到移动端
-                this.syncToc();
-
-                // 重新初始化 Lucide 图标
-                if (typeof lucide !== 'undefined') {
-                    lucide.createIcons();
-                }
-            },
-
-            syncToc() {
-                // 等待桌面端 TOC 生成后同步
-                const checkToc = setInterval(() => {
-                    const desktopToc = document.getElementById('toc');
-                    if (desktopToc && desktopToc.children.length > 0) {
-                        clearInterval(checkToc);
-                        if (this.tocList) {
-                            this.tocList.innerHTML = desktopToc.innerHTML;
-                            // 为移动端 TOC 项添加关闭抽屉的事件
-                            this.tocList.querySelectorAll('.toc-item').forEach(item => {
-                                item.addEventListener('click', () => {
-                                    this.closeToc();
-                                });
-                            });
-                        }
-                    }
-                }, 500);
-
-                // 10秒后停止检查
-                setTimeout(() => clearInterval(checkToc), 10000);
-            },
-
-            openToc() {
-                if (this.drawer) {
-                    this.drawer.classList.add('active');
-                    document.body.style.overflow = 'hidden';
-                }
-            },
-
-            closeToc() {
-                if (this.drawer) {
-                    this.drawer.classList.remove('active');
-                    document.body.style.overflow = '';
-                }
-            },
-
-            scrollToTop() {
-                window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                });
-            },
-
-            scrollToComments() {
-                const commSection = document.getElementById('magi-comm-section');
-                if (commSection) {
-                    commSection.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            }
-        };
-
-        // 阅读时间估算（基于中文阅读速度约 400 字/分钟）
-        function estimateReadingTime(text) {
-            const charCount = text.replace(/\s/g, '').length;
-            const minutes = Math.ceil(charCount / 400);
-            return minutes;
+        /* 11. 内容区 Padding 调整 */
+        section,
+        main {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
         }
 
-        StreamReader.init();
+        .max-w-screen-xl {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
 
-        // 延迟初始化移动端导航（等待 DOM 完全加载）
-        setTimeout(() => MobileNav.init(), 100);
-    </script>
-</body>
+        /* 12. 搜索框优化 */
+        #magi-search-input {
+            font-size: 16px !important;
+            /* 防止 iOS 自动缩放 */
+        }
 
-</html>
+        /* 13. Sonic Deck（音乐播放器）移动端隐藏 */
+        #control-deck:not(.expanded) {
+            width: 48px !important;
+            height: 48px !important;
+        }
+
+        #control-deck .sonic-content {
+            display: none;
+        }
+
+        #control-deck.expanded .sonic-content {
+            display: block;
+        }
+    }
+
+    /* --- 超小屏幕 (max-width: 480px) --- */
+    @media (max-width: 480px) {
+
+        /* 导航栏极简模式 */
+        nav .nav-links {
+            display: none !important;
+        }
+
+        /* 强制单列网格 */
+        .grid-cols-2,
+        .grid-cols-3,
+        .grid-cols-4,
+        .grid-cols-5 {
+            grid-template-columns: 1fr !important;
+        }
+
+        /* 缩小边距 */
+        section,
+        main,
+        .max-w-screen-xl {
+            padding-left: 0.75rem !important;
+            padding-right: 0.75rem !important;
+        }
+
+        /* 隐藏底部状态栏 */
+        .bottom-bar-container {
+            display: none !important;
+        }
+
+        /* MAGI hex 单列 */
+        .magi-hex {
+            flex: 1 1 100%;
+        }
+    }
+
+    /* --- 触控设备优化 --- */
+    @media (hover: none) and (pointer: coarse) {
+
+        /* 禁用 hover 动效（移动端不需要） */
+        .eva-card:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* 增强点击反馈 */
+        .eva-card:active,
+        .ops-btn:active,
+        .tactical-switch:active,
+        button:active {
+            transform: scale(0.97) !important;
+            transition: transform 0.1s !important;
+        }
+
+        /* 禁用光标跟踪效果 */
+        #cursor-glow,
+        #tactical-cursor {
+            display: none !important;
+        }
+    }
+
+    /* ==========================================================================
+   🔋 POWER SAVING MODE (省电模式)
+   当 JS 检测到低性能设备时添加 .reduce-motion 类
+   ========================================================================== */
+
+    /* 禁用所有 CSS 动画 */
+    .reduce-motion,
+    .reduce-motion * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    /* 隐藏高 GPU 消耗的元素 */
+    .reduce-motion #matrix-bg,
+    .reduce-motion #lcl-bg,
+    .reduce-motion .crt-overlay,
+    .reduce-motion .cockpit-overlay,
+    .reduce-motion .holo-scanner,
+    .reduce-motion .particle-container {
+        display: none !important;
+    }
+
+    /* 禁用 backdrop-filter (GPU 密集) */
+    .reduce-motion .holo-status-bar,
+    .reduce-motion .eva-card,
+    .reduce-motion .glass-panel,
+    .reduce-motion [class*="backdrop-blur"] {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+
+    /* 简化阴影效果 */
+    .reduce-motion * {
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    /* 隐藏装饰性元素 */
+    .reduce-motion .glitch-text::before,
+    .reduce-motion .glitch-text::after,
+    .reduce-motion .cursor-ring,
+    .reduce-motion .magi-node::before {
+        display: none !important;
+    }
+
+    /* 系统级别的 prefers-reduced-motion 支持 */
+    @media (prefers-reduced-motion: reduce) {
+
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+
+        #matrix-bg,
+        #lcl-bg,
+        .crt-overlay,
+        .particle-container {
+            display: none !important;
+        }
+    }
+}
+
+/* ==========================================================================
+   AI 气泡框过渡动画
+   ========================================================================== */
+
+#ai-speech-bubble {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition: opacity 0.5s ease-out, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    /* 禁用可能冲突的 animation */
+    animation: none !important;
+}
+
+/* 自定义隐藏类 - 支持动画过渡 */
+#ai-speech-bubble.bubble-hidden {
+    opacity: 0 !important;
+    transform: translateY(15px) scale(0.95) !important;
+    pointer-events: none !important;
+    visibility: visible !important;
+    /* 保持可见以便动画生效 */
+}
+
+/* 初始 hidden 状态 - 首次加载时直接隐藏 */
+#ai-speech-bubble.hidden {
+    display: none !important;
+}
+
+/* ==========================================================================
+   MAGI 垂直通讯流样式 (VERTICAL STREAM)
+   ========================================================================== */
+
+.magi-stream-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 6px;
+    /* 更透明的背景，融入感更强 */
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.15), transparent);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    max-height: 60vh;
+    overflow: hidden;
+}
+
+.magi-stream-header {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0.6;
+}
+
+.magi-stream-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+}
+
+.magi-stream-indicator {
+    width: 6px;
+    height: 6px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow:
+        0 0 4px #fff,
+        0 0 8px #fff,
+        0 0 12px #fff;
+    animation: magi-stream-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes magi-stream-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.5;
+        transform: scale(0.8);
+    }
+}
+
+.magi-stream-content {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-family: 'Noto Sans SC', 'JetBrains Mono', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.6;
+    letter-spacing: 0.15em;
+    /* 更柔和的发光效果 */
+    color: rgba(255, 255, 255, 0.85);
+    text-shadow:
+        0 0 1px rgba(255, 255, 255, 0.8),
+        0 0 3px rgba(255, 255, 255, 0.4),
+        0 0 8px rgba(255, 255, 255, 0.2);
+    max-height: 50vh;
+    padding: 12px 4px;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%);
+    /* 呼吸动画 */
+    animation: magi-stream-breathe 4s ease-in-out infinite;
+}
+
+@keyframes magi-stream-breathe {
+
+    0%,
+    100% {
+        opacity: 0.9;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+/* 激活状态 - 打字时的高亮 */
+#magi-vertical-stream.active .magi-stream-indicator {
+    background: var(--secondary-color);
+    box-shadow:
+        0 0 4px var(--secondary-color),
+        0 0 8px var(--secondary-color),
+        0 0 16px var(--secondary-color);
+}
+
+#magi-vertical-stream.active .magi-stream-content {
+    color: var(--secondary-color);
+    text-shadow:
+        0 0 2px var(--secondary-color),
+        0 0 4px var(--secondary-color),
+        0 0 8px var(--secondary-color),
+        0 0 16px rgba(57, 255, 20, 0.5);
+}
+
+/* 淡入淡出过渡 - 更自然 */
+#magi-vertical-stream {
+    opacity: 0;
+    transform: translateX(-10px) translateY(-50%);
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#magi-vertical-stream.visible {
+    opacity: 1;
+    transform: translateX(0) translateY(-50%);
+}
+
+#magi-vertical-stream.active .magi-stream-content {
+    animation: none;
+    /* 打字时停止呼吸动画 */
+    opacity: 1;
+}
+
+/* 亮色模式适配 */
+[data-mode="light"] .magi-stream-container {
+    background: rgba(255, 255, 255, 0.4);
+    border-left-color: rgba(0, 0, 0, 0.2);
+}
+
+[data-mode="light"] .magi-stream-label {
+    color: rgba(0, 0, 0, 0.5);
+}
+
+[data-mode="light"] .magi-stream-content {
+    color: #333;
+    text-shadow:
+        0 0 2px rgba(0, 0, 0, 0.3),
+        0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+[data-mode="light"] .magi-stream-indicator {
+    background: var(--primary-color);
+    box-shadow:
+        0 0 4px var(--primary-color),
+        0 0 8px var(--primary-color);
+}
