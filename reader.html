@@ -96,10 +96,20 @@
             transition: background-color 0.5s ease, color 0.3s ease;
         }
 
-        /* --- 滚动条布局稳定性修复 --- */
+        /* --- 滚动条布局稳定性修复 (双保险方案) --- */
         html {
+            /* 方案1: 预留滚动条空间 (现代浏览器) */
             scrollbar-gutter: stable;
-            /* 始终预留滚动条空间，防止布局跳动 */
+            /* 方案2: 强制始终显示滚动条 (兼容性更好) */
+            overflow-y: scroll;
+            /* 确保内容不会超出视口宽度 */
+            overflow-x: hidden;
+        }
+
+        /* 确保 body 宽度正确计算 */
+        body {
+            width: 100%;
+            box-sizing: border-box;
         }
 
         /* 美化滚动条 (Webkit) */
@@ -186,13 +196,17 @@
             grid-template-columns: 1fr;
             gap: 2rem;
             max-width: 1400px;
-            margin: 0 auto;
+            margin-left: auto;
+            margin-right: auto;
             position: relative;
             padding-top: calc(var(--nav-height) + 2rem);
             /* 留出导航栏高度 */
             padding-bottom: 5rem;
             padding-left: 1rem;
             padding-right: 1rem;
+            box-sizing: border-box;
+            /* 确保 padding 不撑大宽度 */
+            width: 100%;
         }
 
         /* PC端三栏布局 */
