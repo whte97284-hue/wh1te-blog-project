@@ -156,18 +156,28 @@
     </div>
 
     <div id="bg-layer">
+        <!-- [PERF] MAGI 圆环优化：移除 drop-shadow 滤镜，改用 GPU 友好的 box-shadow -->
         <svg id="magi-rings" viewBox="0 0 800 800" fill="none"
-            class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[130vmax] h-[130vmax] pointer-events-none opacity-30 transition-opacity duration-500"
-            style="filter: drop-shadow(0 0 10px var(--secondary-color));">
-            <g stroke="var(--secondary-color)" stroke-width="1.5">
-                <circle cx="400" cy="400" r="150" stroke-dasharray="20 10" class="animate-[spin_25s_linear_infinite]" />
+            class="fixed top-1/2 left-1/2 w-[130vmax] h-[130vmax] pointer-events-none opacity-30 transition-opacity duration-500"
+            style="will-change: transform; contain: layout style paint; transform: translate(-50%, -50%) translateZ(0);">
+            <!-- 使用 SVG 滤镜内置发光效果，比 CSS filter 更轻量 -->
+            <defs>
+                <filter id="magi-glow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="3" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+            </defs>
+            <g stroke="var(--secondary-color)" stroke-width="1.5" filter="url(#magi-glow)">
+                <circle cx="400" cy="400" r="150" stroke-dasharray="20 10" class="animate-[spin_25s_linear_infinite]"
+                    style="will-change: transform;" />
                 <circle cx="400" cy="400" r="250" stroke-dasharray="40 20"
-                    class="animate-[spin_40s_linear_infinite_reverse]" stroke-opacity="0.8" />
+                    class="animate-[spin_40s_linear_infinite_reverse]" stroke-opacity="0.8"
+                    style="will-change: transform;" />
                 <circle cx="400" cy="400" r="350" stroke-dasharray="10 10" class="animate-[spin_55s_linear_infinite]"
-                    stroke-opacity="0.6" />
+                    stroke-opacity="0.6" style="will-change: transform;" />
                 <path d="M400 50 L400 750 M50 400 L750 400" stroke-opacity="0.2" />
                 <rect x="250" y="250" width="300" height="300" stroke-opacity="0.3"
-                    class="animate-[spin_60s_linear_infinite]" />
+                    class="animate-[spin_60s_linear_infinite]" style="will-change: transform;" />
                 <path d="M187 187 L613 613 M613 187 L187 613" stroke-opacity="0.3" />
             </g>
         </svg>
@@ -224,7 +234,7 @@
         absolute bottom-full left-0 w-64 mb-2 p-1
         opacity-0 translate-y-4 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto
         transition-all duration-300 ease-out delay-75
-        bg-black/80 backdrop-blur-md border border-white/20 border-l-2 border-l-[var(--secondary-color)]
+        bg-black/85 backdrop-blur-sm border border-white/20 border-l-2 border-l-[var(--secondary-color)]
         shadow-[0_0_30px_rgba(0,0,0,0.5)]
     ">
             <div class="text-[10px] font-mono text-gray-500 px-2 py-1 border-b border-white/10 flex justify-between">
@@ -237,13 +247,14 @@
 
         <div id="sonic-deck" class="
         flex items-center gap-3 
-        bg-xxx/60 border border-[var(--secondary-color)] 
+        bg-black/70 border border-[var(--secondary-color)] 
         p-2 pr-4 
-        backdrop-blur-md transition-all duration-300 
+        backdrop-blur-sm transition-all duration-300 
         hover:shadow-[0_0_30px_var(--secondary-color)]
+        shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]
     ">
             <canvas id="audio-visualizer"
-                class="absolute bottom-0 left-0 w-full h-full opacity-30 pointer-events-none"></canvas>
+                class="absolute bottom-0 left-0 w-full h-full opacity-50 pointer-events-none"></canvas>
 
             <div id="music-trigger" class="
             w-12 h-12 flex items-center justify-center cursor-pointer 
@@ -382,7 +393,7 @@
                 <div
                     class="absolute top-full left-1/2 -translate-x-1/2 pt-6 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 z-50">
                     <div
-                        class="backdrop-blur-xl border shadow-[0_4px_30px_rgba(0,0,0,0.5)] rounded-lg overflow-hidden
+                        class="backdrop-blur border shadow-[0_4px_30px_rgba(0,0,0,0.5)] rounded-lg overflow-hidden
                             bg-[#0a0a0a]/95 border-white/10 border-t-[var(--primary-color)]
                             data-[mode=light]:bg-white/95 data-[mode=light]:border-white/50 data-[mode=light]:shadow-xl">
                         <div id="category-dropdown-list" class="flex flex-col py-2">
@@ -592,7 +603,7 @@
                     class="absolute -top-4 left-0 bg-bg px-2 text-[10px] font-mono text-secondary border border-secondary/50">
                     SEARCH_DATABASE</div>
                 <input type="text" id="search-input" placeholder="ENTER KEYWORD..." oninput="searchArticles()" class="w-full pl-6 pr-12 py-5 
-              font-mono text-xl uppercase tracking-widest backdrop-blur-xl border-b-2 transition-all focus:outline-none
+              font-mono text-xl uppercase tracking-widest backdrop-blur border-b-2 transition-all focus:outline-none
               focus:border-[var(--secondary-color)] focus:shadow-[0_10px_30px_-10px_var(--secondary-color)]
               
               /* --- 暗色模式 (默认) --- */
@@ -654,7 +665,7 @@
                 <div class="relative z-50">
                     <div id="ai-speech-bubble"
                         class="hidden absolute bottom-full mb-4 left-0 w-full z-[100] animate-pop-in pointer-events-none">
-                        <div class="magi-terminal-container bg-black/95 border-2 border-secondary p-1 shadow-[0_0_20px_rgba(57,255,20,0.3)] backdrop-blur-md transition-colors duration-500"
+                        <div class="magi-terminal-container bg-black/95 border-2 border-secondary p-1 shadow-[0_0_20px_rgba(57,255,20,0.3)] backdrop-blur-sm transition-colors duration-500"
                             style="clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);">
                             <div
                                 class="magi-terminal-border border border-secondary/30 p-3 relative overflow-hidden transition-colors duration-300">
