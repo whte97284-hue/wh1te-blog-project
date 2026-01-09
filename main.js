@@ -2321,16 +2321,25 @@ const MusicCore = {
         }
     },
 
-    // [PERF] 30FPS 节流变量
+    // [PERF] 节流变量 + 缓存
     lastVisualizerFrame: 0,
-    VISUALIZER_FPS: 30,
-    VISUALIZER_INTERVAL: 1000 / 30, // ~33ms
+    VISUALIZER_FPS: 20, // [PERF] 降至 20fps，减少 33% 调用
+    VISUALIZER_INTERVAL: 1000 / 20,
 
-    // 绘制背景频谱 (优化版)
+    // [PERF] 缓存对象，避免每帧重新创建
+    _visualizerCache: {
+        dataArray: null,
+        gradient: null,
+        lastTheme: null,
+        canvas: null,
+        ctx: null
+    },
+
+    // 绘制背景频谱 (优化版 V2)
     drawVisualizer() {
         const now = performance.now();
 
-        // [PERF] 30FPS 节流：如果距离上一帧不足 33ms，跳过本次绘制
+        // [PERF] 帧率节流
         if (now - this.lastVisualizerFrame < this.VISUALIZER_INTERVAL) {
             requestAnimationFrame(() => this.drawVisualizer());
             return;
@@ -2341,10 +2350,23 @@ const MusicCore = {
             requestAnimationFrame(() => this.drawVisualizer());
             return;
         }
-        const canvas = document.getElementById('audio-visualizer');
-        const ctx = canvas.getContext('2d');
+
+        // [PERF] 缓存 Canvas 引用
+        const cache = this._visualizerCache;
+        if (!cache.canvas) {
+            cache.canvas = document.getElementById('audio-visualizer');
+            cache.ctx = cache.canvas.getContext('2d');
+        }
+        const canvas = cache.canvas;
+        const ctx = cache.ctx;
+
         const bufferLength = this.analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
+
+        // [PERF] 复用 Uint8Array，避免 GC
+        if (!cache.dataArray || cache.dataArray.length !== bufferLength) {
+            cache.dataArray = new Uint8Array(bufferLength);
+        }
+        const dataArray = cache.dataArray;
 
         this.analyser.getByteFrequencyData(dataArray);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -2352,22 +2374,24 @@ const MusicCore = {
         const barWidth = (canvas.width / bufferLength) * 2.5;
         let x = 0;
 
-        // 获取当前主题色并创建渐变
-        const style = getComputedStyle(document.documentElement);
-        const primaryColor = style.getPropertyValue('--primary-color').trim();
-        const secondaryColor = style.getPropertyValue('--secondary-color').trim();
+        // [PERF] 只在主题变化时更新渐变，而不是每帧
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'default';
+        if (cache.lastTheme !== currentTheme || !cache.gradient) {
+            const style = getComputedStyle(document.documentElement);
+            const primaryColor = style.getPropertyValue('--primary-color').trim();
+            const secondaryColor = style.getPropertyValue('--secondary-color').trim();
 
-        // 创建从底部到顶部的渐变
-        const gradient = ctx.createLinearGradient(0, canvas.height, 0, 0);
-        gradient.addColorStop(0, secondaryColor);  // 底部：次色
-        gradient.addColorStop(0.5, primaryColor);  // 中部：主色
-        gradient.addColorStop(1, secondaryColor);  // 顶部：次色
+            cache.gradient = ctx.createLinearGradient(0, canvas.height, 0, 0);
+            cache.gradient.addColorStop(0, secondaryColor);
+            cache.gradient.addColorStop(0.5, primaryColor);
+            cache.gradient.addColorStop(1, secondaryColor);
+            cache.lastTheme = currentTheme;
+        }
 
-        ctx.fillStyle = gradient;
+        ctx.fillStyle = cache.gradient;
 
         for (let i = 0; i < bufferLength; i++) {
             const barHeight = (dataArray[i] / 255) * canvas.height;
-            // [VISUAL] 提高透明度从 0.3 到 0.6，让频谱更明显
             ctx.globalAlpha = 0.6;
             ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
             x += barWidth + 1;
