@@ -1,0 +1,12 @@
+{
+  "name": "wh1te-blog",
+  "version": "1.0.0",
+  "description": "WH1TE.LOG - MAGI System Blog",
+  "scripts": {
+    "dev": "npx tailwindcss -i ./src/input.css -o ./dist/tailwind.css --watch",
+    "build:css": "npx tailwindcss -i ./src/input.css -o ./dist/tailwind.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}
