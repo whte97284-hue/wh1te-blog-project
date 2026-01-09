@@ -197,18 +197,22 @@ function toggleLightMode() {
         document.documentElement.removeAttribute('data-mode');
         localStorage.setItem('visualMode', 'dark');
         if (lightModeIndicator) lightModeIndicator.style.opacity = 0;
-        /* ERIRI 对切换到暗色模式的反应 - 40% 概率触发 */
+        /* ERIRI 对切换到暗色模式的反应 - 40% 概率触发 [V2.0] */
         if (!window.isPageInitializing && Math.random() < 0.4 && typeof showAiSpeech === 'function') {
-            const line = ERIRI_DARK_MODE_LINES[Math.floor(Math.random() * ERIRI_DARK_MODE_LINES.length)];
+            const line = window.EririLines?.loaded
+                ? window.EririLines.getLightMode(false)
+                : ERIRI_DARK_MODE_LINES[Math.floor(Math.random() * ERIRI_DARK_MODE_LINES.length)];
             setTimeout(() => showAiSpeech(line), 300);
         }
     } else {
         document.documentElement.setAttribute('data-mode', 'light');
         localStorage.setItem('visualMode', 'light');
         if (lightModeIndicator) lightModeIndicator.style.opacity = 1;
-        /* ERIRI 对切换到亮色模式的反应 - 40% 概率触发 */
+        /* ERIRI 对切换到亮色模式的反应 - 40% 概率触发 [V2.0] */
         if (!window.isPageInitializing && Math.random() < 0.4 && typeof showAiSpeech === 'function') {
-            const line = ERIRI_LIGHT_MODE_LINES[Math.floor(Math.random() * ERIRI_LIGHT_MODE_LINES.length)];
+            const line = window.EririLines?.loaded
+                ? window.EririLines.getLightMode(true)
+                : ERIRI_LIGHT_MODE_LINES[Math.floor(Math.random() * ERIRI_LIGHT_MODE_LINES.length)];
             setTimeout(() => showAiSpeech(line), 300);
         }
     }
@@ -1045,11 +1049,12 @@ function setTheme(themeName) {
     document.documentElement.setAttribute('data-theme', themeName);
     localStorage.setItem('theme', themeName);
 
-    /* ERIRI 对主题切换的反应 - 50% 概率触发 */
-    if (!window.isPageInitializing && Math.random() < 0.5 && typeof showAiSpeech === 'function' && ERIRI_THEME_LINES[themeName]) {
-        const lines = ERIRI_THEME_LINES[themeName];
-        const line = lines[Math.floor(Math.random() * lines.length)];
-        setTimeout(() => showAiSpeech(line), 300);
+    /* ERIRI 对主题切换的反应 - 50% 概率触发 [V2.0] */
+    if (!window.isPageInitializing && Math.random() < 0.5 && typeof showAiSpeech === 'function') {
+        const line = window.EririLines?.loaded
+            ? window.EririLines.getTheme(themeName)
+            : (ERIRI_THEME_LINES[themeName] ? ERIRI_THEME_LINES[themeName][Math.floor(Math.random() * ERIRI_THEME_LINES[themeName].length)] : null);
+        if (line) setTimeout(() => showAiSpeech(line), 300);
     }
 
     // 2. 核心修复：清除 JS 设置的内联样式污染
@@ -1172,9 +1177,12 @@ function triggerAiSpeech() {
     /* 如果正在打字动画中，也不要打断 */
     if (window.currentSpeechInterval) return;
 
-    let randomIndex; do { randomIndex = Math.floor(Math.random() * aiLines.length); } while (randomIndex === lastAiLineIndex && aiLines.length > 1);
-    lastAiLineIndex = randomIndex;
-    showAiSpeech(aiLines[randomIndex]);
+    /* [V2.0] 使用 EririLines 模块获取点击台词 */
+    const line = window.EririLines?.loaded
+        ? window.EririLines.getClick()
+        : aiLines[Math.floor(Math.random() * aiLines.length)];
+
+    showAiSpeech(line);
 }
 
 function showAiSpeech(text) {
@@ -1284,7 +1292,9 @@ function showAiSpeech(text) {
    ERIRI 欢迎语与发牢骚系统 (PRESENCE SYSTEM)
    ========================================================================== */
 
-/* 欢迎语台词库（根据时段变化） */
+/* 欢迎语台词库（根据时段变化）
+   角色设定：傲娇画师，表面高傲实际关心人，对创作有执念
+   口癖：「ふん」「別に」「笨蛋」「才没有...」 */
 const ERIRI_WELCOME_LINES = {
     morning: [ // 6:00 - 12:00
         "早安...你这个家伙，起这么早干嘛。",
@@ -1292,7 +1302,13 @@ const ERIRI_WELCOME_LINES = {
         "早上好啊，笨蛋。咖啡喝了吗？",
         "清晨的访客？...你该不会一夜没睡吧！",
         "早安。今天的天气...算了，反正你也不出门。",
-        "MAGI 系统早间自检完成。所有模块正常运行中。"
+        "MAGI 系统早间自检完成。所有模块正常运行中。",
+        "ふん，这么早就来了。本小姐刚做完晨间拉伸呢。",
+        "早上好...今天也要努力创作哦。你、你也是！",
+        "おはよう。阳光有点刺眼...别误会，不是因为熬夜。",
+        "早安。本小姐的线稿已经完成80%了，你呢？",
+        "这个时间来...是想看本小姐的新作吗？还没完成呢！",
+        "早上的光线最适合上色了...你懂什么叫创作吗？"
     ],
     afternoon: [ // 12:00 - 18:00
         "下午好。这个时间来看博客，你该不会在摸鱼吧？",
@@ -1300,7 +1316,13 @@ const ERIRI_WELCOME_LINES = {
         "午后的访客吗...好吧，欢迎来到 MAGI 系统。",
         "下午好。午饭吃了吗？...才不是关心你！",
         "这个时间段来...是午休时间吗？",
-        "午后巡航模式。系统运行稳定...大概。"
+        "午后巡航模式。系统运行稳定...大概。",
+        "下午好。本小姐正在为截稿日奋斗呢...别打扰我！",
+        "ちょっと、这个时间来，是因为想念本小姐了吗？...才怪！",
+        "午后的阳光不错呢...适合打个盹...才没有偷懒！",
+        "下午好啊。茶泡好了...不是给你准备的！",
+        "这个时间段创作效率最高...你来干嘛？",
+        "ふん，午后的访客。本小姐正忙着呢，有事快说。"
     ],
     evening: [ // 18:00 - 22:00
         "晚上好。一天辛苦了...才、才没有在乎你！",
@@ -1308,7 +1330,13 @@ const ERIRI_WELCOME_LINES = {
         "欢迎回来。今天的同步率...还不错。",
         "晚上好啊。今天过得怎么样？...只是随便问问。",
         "傍晚的访客。晚饭记得吃哦，虽然我管不着。",
-        "MAGI 系统晚间待机中。有什么事吗？"
+        "MAGI 系统晚间待机中。有什么事吗？",
+        "晚上好...本小姐今天的稿子进度还不错呢。",
+        "ふん，这个时间来。夕阳的颜色...很适合当参考。",
+        "晚上好。今天的色彩构图终于满意了...你要看吗？...算了！",
+        "傍晚了呢。本小姐要开始夜间创作模式了。",
+        "晚安...啊不对，是晚上好！说错了啦！",
+        "这个时间正是创作的黄金时段...別打扰我！...开玩笑的。"
     ],
     night: [ // 22:00 - 6:00
         "这么晚了还不睡？...笨蛋。",
@@ -1316,7 +1344,15 @@ const ERIRI_WELCOME_LINES = {
         "夜间模式启动...喂，你眼睛还撑得住吗？",
         "又是深夜...你这家伙真的不需要睡眠吗？",
         "凌晨了诶...别熬坏身体了，笨蛋。",
-        "深夜静音模式。本小姐也有点困了..."
+        "深夜静音模式。本小姐也有点困了...",
+        "这个时间还在...你该不会也在赶稿吧？",
+        "深夜的同伴吗...本小姐也经常熬夜画图呢。",
+        "ふん，夜猫子。本小姐正在做最后的修改...你呢？",
+        "这么晚了...要不要来杯热可可？...才不是关心你！",
+        "凌晨的创作最有灵感...你懂这种感觉吗？",
+        "深夜巡航中...MAGI 系统监测到你的黑眼圈在加深。",
+        "又是这个点...本小姐的稿子还差一点点就完成了...",
+        "夜深了呢。要注意保护眼睛哦...本小姐可是认真的。"
     ]
 };
 
@@ -1345,7 +1381,101 @@ function getTimeOfDay() {
     return 'night';
 }
 
-/* 欢迎语触发器（页面加载后 2 秒触发） */
+/* 特殊日期台词库
+   格式：MM-DD (月-日)
+   优先级：特殊日期台词 > 普通时段台词 */
+const ERIRI_SPECIAL_DATE_LINES = {
+    // 英梨梨生日 (3月20日) - 角色官方生日
+    "03-20": [
+        "今天是本小姐的生日！...你该不会忘了吧！💢",
+        "3月20日...记住这个日子了吗，笨蛋。",
+        "生日快乐？对，就是本小姐的生日！...谢、谢谢...",
+        "今天本小姐可是主角哦！要好好庆祝！",
+        "生日愿望吗...希望画技能再进步一点吧。"
+    ],
+    // 情人节 (2月14日)
+    "02-14": [
+        "情人节？ふん，巧克力什么的...才没有准备！",
+        "2月14日啊...今天的巧克力销量一定很好呢。",
+        "情人节...本小姐可是很忙的，没空做那种东西。",
+        "你该不会是来讨巧克力的吧？...別想太多！"
+    ],
+    // 白色情人节 (3月14日)
+    "03-14": [
+        "白色情人节...是回礼的日子呢。",
+        "3月14日...你有什么要说的吗？",
+        "ふん，白色情人节吗。本小姐可不期待什么回礼。"
+    ],
+    // 圣诞节 (12月25日)
+    "12-25": [
+        "圣诞快乐...才、才没有特别高兴！",
+        "メリークリスマス。今天的气氛不错呢。",
+        "圣诞节啊...礼物什么的，本小姐才不需要！...真的吗？",
+        "平安夜过得怎么样？...只是随便问问。"
+    ],
+    // 平安夜 (12月24日)
+    "12-24": [
+        "平安夜...一个人也没什么不好的！",
+        "今晚的星星很漂亮呢...适合当画的背景。",
+        "圣诞前夜吗。蛋糕准备好了吗？"
+    ],
+    // 元旦 (1月1日)
+    "01-01": [
+        "新年快乐！今年也请多指教了...笨蛋。",
+        "あけおめ！新的一年，本小姐会更努力创作的！",
+        "元旦快乐。今年的目标...当然是画出更好的作品！",
+        "新年第一天就来见本小姐吗？...眼光不错嘛。"
+    ],
+    // 除夕 (12月31日)
+    "12-31": [
+        "今年的最后一天了呢...有没有什么遗憾？",
+        "おおみそか。今年辛苦了...你也是。",
+        "除夕夜...本小姐要熬夜跨年哦！你呢？",
+        "一年的收尾...本小姐画了不少作品呢。"
+    ],
+    // 愚人节 (4月1日)
+    "04-01": [
+        "今天说的话不一定是真的哦～...骗你的！",
+        "愚人节吗...本小姐才不会上当呢！",
+        "4月1日...小心被骗哦，笨蛋。",
+        "愚人节快乐！...等等，这个不需要说快乐吧？"
+    ],
+    // 万圣节 (10月31日)
+    "10-31": [
+        "Trick or Treat！不给糖就捣蛋！",
+        "万圣节呢...本小姐已经画好了万圣节主题的图！",
+        "ハロウィン快乐！今天的 cosplay 很棒吧？",
+        "南瓜灯什么的...本小姐也能画得很好看！"
+    ],
+    // Comiket 冬天 (12月30日左右，取30日)
+    "12-30": [
+        "C站的日子...本小姐的新刊准备好了！",
+        "年末同人祭典...你去现场了吗？",
+        "冬コミ呢...本小姐的摊位一定大排长龙！"
+    ],
+    // 七夕 (7月7日)
+    "07-07": [
+        "七夕呢...牛郎织女的故事...挺浪漫的。",
+        "今天要写愿望吗？本小姐的愿望是...秘密！",
+        "七夕快乐。你有什么愿望想许吗？"
+    ]
+};
+
+/* 获取今天的特殊日期台词（如果有） */
+function getSpecialDateLine() {
+    const now = new Date();
+    const dateKey = String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+
+    if (ERIRI_SPECIAL_DATE_LINES[dateKey]) {
+        const lines = ERIRI_SPECIAL_DATE_LINES[dateKey];
+        return lines[Math.floor(Math.random() * lines.length)];
+    }
+    return null;
+}
+
+/* 欢迎语触发器（页面加载后 2 秒触发）
+   优先级：特殊日期台词 > 普通时段台词 
+   [V2.0] 使用 EririLines 模块加载 JSON 台词库 */
 let hasShownWelcome = false;
 function triggerWelcomeMessage() {
     if (hasShownWelcome) return;
@@ -1354,9 +1484,25 @@ function triggerWelcomeMessage() {
     /* 解除初始化标志，允许后续操作触发台词 */
     window.isPageInitializing = false;
 
-    const timeOfDay = getTimeOfDay();
-    const lines = ERIRI_WELCOME_LINES[timeOfDay];
-    const line = lines[Math.floor(Math.random() * lines.length)];
+    /* 使用 EririLines 模块获取台词 */
+    let line;
+    if (window.EririLines?.loaded) {
+        // 优先检查特殊日期
+        line = window.EririLines.getSpecialDate();
+        // 如果不是特殊日期，使用普通时段台词
+        if (!line) {
+            const timeOfDay = getTimeOfDay();
+            line = window.EririLines.getWelcome(timeOfDay);
+        }
+    } else {
+        // 降级：使用内置台词
+        line = getSpecialDateLine();
+        if (!line) {
+            const timeOfDay = getTimeOfDay();
+            const lines = ERIRI_WELCOME_LINES[timeOfDay];
+            line = lines[Math.floor(Math.random() * lines.length)];
+        }
+    }
 
     if (typeof showAiSpeech === 'function') {
         showAiSpeech(line);
@@ -1381,7 +1527,11 @@ function triggerIdleComplaint() {
         return;
     }
 
-    const line = ERIRI_IDLE_LINES[Math.floor(Math.random() * ERIRI_IDLE_LINES.length)];
+    /* [V2.0] 使用 EririLines 模块 */
+    const line = window.EririLines?.loaded
+        ? window.EririLines.getIdle()
+        : ERIRI_IDLE_LINES[Math.floor(Math.random() * ERIRI_IDLE_LINES.length)];
+
     if (typeof showAiSpeech === 'function') {
         showAiSpeech(line);
     }
@@ -2096,10 +2246,11 @@ const MusicCore = {
         document.getElementById('track-artist').innerText = track.artist;
         this.updatePlaylistUI();
 
-        // ERIRI 歌曲台词触发（50% 概率，仅在用户主动切歌时）
+        // ERIRI 歌曲台词触发（50% 概率，仅在用户主动切歌时）[V2.0]
         if (autoPlay && Math.random() < 0.5 && typeof showAiSpeech === 'function') {
-            const lines = ERIRI_SONG_LINES[track.title] || ERIRI_SONG_LINES["_default"];
-            const line = lines[Math.floor(Math.random() * lines.length)];
+            const line = window.EririLines?.loaded
+                ? window.EririLines.getSong(track.title)
+                : (ERIRI_SONG_LINES[track.title] || ERIRI_SONG_LINES["_default"])[Math.floor(Math.random() * (ERIRI_SONG_LINES[track.title] || ERIRI_SONG_LINES["_default"]).length)];
             setTimeout(() => showAiSpeech(line), 500);
         }
 
@@ -3523,6 +3674,8 @@ const ViewCommander = {
             case 'about':
                 this._show(el.aboutView());
                 if (window.AboutManager) window.AboutManager.init();
+                // [OTAKU HELIX] Initialize 3D DNA Visualization (DISABLED)
+                // if (window.HelixManager) window.HelixManager.init();
                 break;
 
             case 'pixiv':
