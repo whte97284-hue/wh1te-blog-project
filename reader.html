@@ -7,18 +7,26 @@
     <title>MAGI ARCHIVE | TACTICAL READER</title>
     <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 
-    <!-- [STABILITY] 固定版本号防止突然更新导致样式失效 -->
-    <script src="https://cdn.tailwindcss.com/3.4.0"></script>
-    <script src="https://unpkg.com/lucide@0.294.0"></script>
+    <!-- ============================================================ -->
+    <!-- [TAILWIND MODE SWITCH] 模式切换说明                           -->
+    <!-- 开发模式：取消下方 CDN 区块的注释，注释掉打包版                  -->
+    <!-- 生产模式：使用打包版（当前），注释掉 CDN 区块                    -->
+    <!-- ============================================================ -->
 
+    <!-- [生产模式] 打包版 Tailwind CSS (极速加载) -->
+    <link rel="stylesheet" href="./dist/tailwind.css">
+
+    <!-- Google Fonts & Lucide Icons & Highlight.js -->
+    <script src="https://unpkg.com/lucide@0.294.0"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@300;500;700;900&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap"
         rel="stylesheet">
-
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
+    <!-- [开发模式] CDN 版 Tailwind (实时调试) - 需要时取消注释
+    <script src="https://cdn.tailwindcss.com/3.4.0"></script>
     <script>
         window.tailwind = window.tailwind || {};
         window.tailwind.config = {
@@ -36,6 +44,7 @@
             }
         }
     </script>
+    [开发模式结束] -->
 
     <style>
         /* --- 核心变量 --- */
@@ -938,15 +947,15 @@
 <body class="min-h-screen">
 
     <script>
-            (function () {
-                const mode = localStorage.getItem('visualMode') || 'dark';
-                if (mode === 'light') {
-                    document.documentElement.setAttribute('data-mode', 'light');
-                    document.documentElement.classList.remove('dark');
-                }
-                const theme = localStorage.getItem('theme') || 'default';
-                if (theme !== 'default') document.documentElement.setAttribute('data-theme', theme);
-            })();
+        (function () {
+            const mode = localStorage.getItem('visualMode') || 'dark';
+            if (mode === 'light') {
+                document.documentElement.setAttribute('data-mode', 'light');
+                document.documentElement.classList.remove('dark');
+            }
+            const theme = localStorage.getItem('theme') || 'default';
+            if (theme !== 'default') document.documentElement.setAttribute('data-theme', theme);
+        })();
     </script>
 
     <div class="fixed top-0 left-0 w-full h-1 z-[200] bg-gray-800/20">
