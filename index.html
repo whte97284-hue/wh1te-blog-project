@@ -12,13 +12,24 @@
     <link rel="apple-touch-icon" href="./favicon.svg">
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.tailwindcss.com/3.4.0"></script>
+
+    <!-- ============================================================ -->
+    <!-- [TAILWIND MODE SWITCH] 模式切换说明                           -->
+    <!-- 开发模式：取消下方 CDN 区块的注释，注释掉打包版                  -->
+    <!-- 生产模式：使用打包版（当前），注释掉 CDN 区块                    -->
+    <!-- ============================================================ -->
+
+    <!-- [生产模式] 打包版 Tailwind CSS (极速加载) -->
+    <link rel="stylesheet" href="./dist/tailwind.css">
+
+    <!-- Google Fonts & Lucide Icons -->
     <link
         href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@300;500;700;900&family=Noto+Sans+JP:wght@400;700;900&family=Noto+Serif+SC:wght@700;900&display=swap"
         rel="stylesheet">
-    <!-- [STABILITY] 固定版本号防止突然更新导致样式失效 -->
     <script src="https://unpkg.com/lucide@0.294.0"></script>
 
+    <!-- [开发模式] CDN 版 Tailwind (实时调试) - 需要时取消注释
+    <script src="https://cdn.tailwindcss.com/3.4.0"></script>
     <script>
         window.tailwind = window.tailwind || {};
         window.tailwind.config = {
@@ -95,6 +106,7 @@
             }
         }
     </script>
+    [开发模式结束] -->
 </head>
 
 <body class="antialiased overflow-x-hidden font-sans selection:bg-secondary selection:text-black">
@@ -1044,8 +1056,35 @@
     <div id="about-view-container"
         class="hidden min-h-screen pt-28 px-4 md:px-8 max-w-screen-2xl mx-auto relative z-20 pb-20">
 
+        <!-- [OTAKU HELIX] 3D DNA Visualization Container -->
+        <!-- [Layout Fix] Moved to right side, fixed size to avoid covering text -->
+        <!-- [OTAKU HELIX] 3D DNA Visualization Container (DISABLED) -->
+        <!-- <div id="about-helix-container"
+            class="fixed -left-[200px] top-1/2 -translate-y-1/2 w-[500px] h-[600px] pointer-events-none overflow-visible"
+            style="z-index: 5;"></div> -->
+
+        <!-- [OTAKU HELIX] Data Card (Floating HUD) -->
+        <div id="helix-data-card"
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none opacity-0 scale-90 transition-all duration-300 backdrop-blur-md bg-black/80 border border-white/20 p-0 shadow-[0_0_30px_rgba(0,0,0,0.8)] min-w-[280px]"
+            style="clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);">
+            <div
+                class="flex justify-between items-center bg-[var(--primary-color)] text-black px-4 py-2 font-mono text-xs font-bold">
+                <span id="helix-card-title">LOADING...</span>
+                <span class="opacity-70">[DATA_REF]</span>
+            </div>
+            <div class="p-4 border-t border-white/10">
+                <p id="helix-card-desc" class="text-gray-300 text-xs font-mono leading-relaxed mb-3">Initializing Otaku
+                    DNA sequence...</p>
+                <div class="flex items-center gap-2 text-[10px] font-mono">
+                    <span id="helix-card-type" class="text-[var(--secondary-color)]">[UNKNOWN]</span>
+                    <div id="helix-card-color-bar" class="h-1 w-12 bg-white/20"></div>
+                </div>
+            </div>
+        </div>
+
+
         <div
-            class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6 animate-[popIn_0.5s_cubic-bezier(0.16,1,0.3,1)_forwards]">
+            class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6 animate-[popIn_0.5s_cubic-bezier(0.16,1,0.3,1)_forwards] relative z-10">
 
             <div class="lg:col-span-4 cyber-card p-6 flex flex-col items-center relative overflow-hidden group">
                 <div
@@ -1276,6 +1315,9 @@
     <!-- Fuse.js 模糊搜索库 -->
     <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>
 
+    <script src="managers/bili-manager.js" type="module"></script>
+    <!-- [ARCHIVED] Otaku Helix Component -->
+    <!-- <script src="managers/helix-manager.js"></script> -->
     <script src="main.js"></script>
 </body>
 
