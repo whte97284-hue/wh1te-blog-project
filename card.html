@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>時の書庫 | 境界線上の観測者</title>
+    <!-- 引入高级衬线字体：Cinzel (英文) 和 Noto Serif JP (日文/汉字) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;700&family=Noto+Serif+SC:wght@200;400;600&family=Orbitron:wght@400&display=swap"
+        rel="stylesheet">
+
+    <!-- 引入 Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        :root {
+            --c-text-main: #f0f0f0;
+            --c-text-dim: #8892b0;
+            --c-accent: #64ffda;
+            /* 灵脉青 */
+            --c-gold: #ffd700;
+            /* 根源金 */
+            --font-main: 'Cinzel', serif;
+            --font-content: 'Noto Serif SC', serif;
+            --font-tech: 'Orbitron', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            /* 禁止选中文本，保持沉浸感 */
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #050505;
+            color: var(--c-text-main);
+            font-family: var(--font-content);
+            cursor: none;
+            /* 隐藏默认光标 */
+        }
+
+        /* --- 核心渲染层 --- */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        /* --- UI 交互层 --- */
+        #ui-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            /* 让鼠标穿透到 Three.js 画布 */
+        }
+
+        /* --- 名片卡片 (玻璃拟态 + 3D 倾斜) --- */
+        .card {
+            pointer-events: auto;
+            /* 恢复卡片交互 */
+            position: relative;
+            width: 450px;
+            padding: 4rem 2rem;
+            background: rgba(10, 25, 47, 0.2);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            text-align: center;
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out;
+            /* 丝滑的倾斜跟随 */
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        /* 卡片内部的高级光辉线条 */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--c-accent), transparent);
+            opacity: 0.5;
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--c-accent), transparent);
+            opacity: 0.5;
+        }
+
+        /* --- 文字排版 --- */
+        .identity-code {
+            font-family: var(--font-tech);
+            font-size: 0.7rem;
+            color: var(--c-accent);
+            letter-spacing: 0.2rem;
+            opacity: 0.8;
+            margin-bottom: 1rem;
+            display: block;
+            text-shadow: 0 0 10px rgba(100, 255, 218, 0.5);
+        }
+
+        h1 {
+            font-family: var(--font-main);
+            font-size: 3.5rem;
+            font-weight: 400;
+            margin: 0;
+            letter-spacing: 0.1em;
+            background: linear-gradient(180deg, #fff, #a8c0ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 15px rgba(168, 192, 255, 0.3));
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: var(--c-text-dim);
+            margin-top: 0.5rem;
+            font-style: italic;
+            letter-spacing: 0.05em;
+        }
+
+        /* --- 魔法阵导航链接 --- */
+        .nav-links {
+            margin-top: 3rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .nav-item {
+            position: relative;
+            text-decoration: none;
+            color: var(--c-text-main);
+            font-family: var(--font-main);
+            font-size: 1.1rem;
+            padding: 10px 0;
+            letter-spacing: 0.2em;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-item span.en {
+            position: relative;
+            z-index: 2;
+        }
+
+        .nav-item span.jp {
+            font-size: 0.7rem;
+            color: var(--c-text-dim);
+            margin-left: 10px;
+            font-weight: 200;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.4s;
+        }
+
+        /* Hover 效果：类似Fate系列的魔力充能 */
+        .nav-item:hover {
+            color: var(--c-accent);
+            text-shadow: 0 0 8px var(--c-accent);
+            letter-spacing: 0.3em;
+        }
+
+        .nav-item:hover span.jp {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* 装饰线 */
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            width: 0%;
+            height: 1px;
+            background: var(--c-accent);
+            transition: width 0.4s ease;
+        }
+
+        .nav-item:hover::before {
+            width: 100%;
+        }
+
+        /* --- 装饰性 HUD 元素 (Corner UI) --- */
+        .hud-text {
+            position: fixed;
+            font-family: var(--font-tech);
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.2);
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .top-left {
+            top: 30px;
+            left: 30px;
+            writing-mode: vertical-lr;
+        }
+
+        .btm-right {
+            bottom: 30px;
+            right: 30px;
+            text-align: right;
+        }
+
+        .btm-right span {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* --- 自定义光标 (粒子跟随) --- */
+        #cursor-ring {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s, border-color 0.3s;
+            mix-blend-mode: difference;
+        }
+
+        #cursor-dot {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 4px;
+            background: var(--c-accent);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+        }
+
+        /* 光标悬停状态 */
+        body.hovered #cursor-ring {
+            width: 60px;
+            height: 60px;
+            border-color: var(--c-accent);
+            background: rgba(100, 255, 218, 0.05);
+        }
+
+        /* Loading 遮罩 */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            transition: opacity 1.5s ease-in-out;
+        }
+
+        .loader-text {
+            font-family: var(--font-tech);
+            color: var(--c-accent);
+            font-size: 0.8rem;
+            letter-spacing: 5px;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 1. 加载动画 -->
+    <div id="loader">
+        <div class="loader-text">世界線を初期化中...</div>
+        <div style="margin-top: 10px; font-size: 10px; color: #555;">世界線変動率: 1.048596%</div>
+    </div>
+
+    <!-- 2. 核心渲染背景 -->
+    <div id="canvas-container"></div>
+
+    <!-- 3. 自定义光标 -->
+    <div id="cursor-ring"></div>
+    <div id="cursor-dot"></div>
+
+    <!-- 4. 装饰性 HUD -->
+    <div class="hud-text top-left">
+        系統: 阿頼耶<br>
+        状態: 正常<br>
+        階層: 07
+    </div>
+    <div class="hud-text btm-right">
+        <span>幀率: <span id="fps-counter">60</span></span>
+        <span>緯度: 無効</span>
+        <span>経度: 無効</span>
+        <span style="color: var(--c-accent)">観測者在線</span>
+    </div>
+
+    <!-- 5. 主内容卡片 -->
+    <div id="ui-layer">
+        <div class="card" id="tilt-card">
+            <span class="identity-code">/// 識別名: 錬金術師 ///</span>
+
+            <h1>虚数</h1>
+            <p class="subtitle">「虚数が踊る場所」</p>
+
+            <div class="nav-links">
+                <!-- 博客入口 -->
+                <a href="index.html" class="nav-item">
+                    <span class="en">言霊</span>
+                    <span class="jp">記憶の欠片</span>
+                </a>
+
+                <!-- GitHub -->
+                <a href="https://github.com/whte97284-hue/wh1te-blog-project" target="_blank" class="nav-item">
+                    <span class="en">固有結界</span>
+                    <span class="jp">代碼之海</span>
+                </a>
+
+                <!-- Bilibili -->
+                <a href="https://space.bilibili.com/551898501" target="_blank" class="nav-item">
+                    <span class="en">霊基</span>
+                    <span class="jp">映像記録</span>
+                </a>
+
+                <!-- 抖音 -->
+                <a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw"
+                    target="_blank" class="nav-item">
+                    <span class="en">共鳴</span>
+                    <span class="jp">精神感応</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 核心脚本 -->
+    <script>
+        // --- 1. 光标逻辑 ---
+        const cursorRing = document.getElementById('cursor-ring');
+        const cursorDot = document.getElementById('cursor-dot');
+        let mouseX = 0, mouseY = 0;
+        let ringX = 0, ringY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            cursorDot.style.left = mouseX + 'px';
+            cursorDot.style.top = mouseY + 'px';
+
+            // 卡片倾斜计算
+            handleTilt(e);
+        });
+
+        // 缓动动画 Loop
+        function animateCursor() {
+            // Lerp 算法让圆圈有延迟跟随感
+            ringX += (mouseX - ringX) * 0.15;
+            ringY += (mouseY - ringY) * 0.15;
+            cursorRing.style.left = ringX + 'px';
+            cursorRing.style.top = ringY + 'px';
+            requestAnimationFrame(animateCursor);
+        }
+        animateCursor();
+
+        // 链接 Hover 效果
+        const links = document.querySelectorAll('.nav-item');
+        links.forEach(link => {
+            link.addEventListener('mouseenter', () => document.body.classList.add('hovered'));
+            link.addEventListener('mouseleave', () => document.body.classList.remove('hovered'));
+        });
+
+        // --- 2. 3D 卡片倾斜逻辑 ---
+        const card = document.getElementById('tilt-card');
+        function handleTilt(e) {
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+
+            // 简单的映射：-10deg 到 10deg
+            const rotateY = (x - 0.5) * 20;
+            const rotateX = (0.5 - y) * 20;
+
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        }
+
+        // --- 3. Three.js & GLSL Shader (核心中的核心) ---
+        // 这是一个程序化生成的星云/量子之海着色器
+        const scene = new THREE.Scene();
+        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1); // 2D 视图
+        const renderer = new THREE.WebGLRenderer({ alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // GLSL Fragment Shader: 這是整個頁面的靈魂
+        // 包含了：噪聲算法(Noise)、分形布朗運動(FBM)、時間變量
+        const fragmentShader = `
+            uniform float u_time;
+            uniform vec2 u_resolution;
+            uniform vec2 u_mouse;
+
+            // 伪随机函数
+            float random(in vec2 _st) {
+                return fract(sin(dot(_st.xy, vec2(12.9898,78.233))) * 43758.5453123);
+            }
+
+            // 噪声函数
+            float noise(in vec2 _st) {
+                vec2 i = floor(_st);
+                vec2 f = fract(_st);
+                float a = random(i);
+                float b = random(i + vec2(1.0, 0.0));
+                float c = random(i + vec2(0.0, 1.0));
+                float d = random(i + vec2(1.0, 1.0));
+                vec2 u = f * f * (3.0 - 2.0 * f);
+                return mix(a, b, u.x) + (c - a)* u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+            }
+
+            // 分形布朗运动 (FBM) - 制造云雾感
+            #define NUM_OCTAVES 5
+            float fbm( in vec2 _st) {
+                float v = 0.0;
+                float a = 0.5;
+                vec2 shift = vec2(100.0);
+                mat2 rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.50));
+                for (int i = 0; i < NUM_OCTAVES; ++i) {
+                    v += a * noise(_st);
+                    _st = rot * _st * 2.0 + shift;
+                    a *= 0.5;
+                }
+                return v;
+            }
+
+            void main() {
+                vec2 st = gl_FragCoord.xy/u_resolution.xy;
+                st.x *= u_resolution.x/u_resolution.y;
+                
+                vec2 mouse = u_mouse.xy / u_resolution.xy;
+
+                // 核心颜色定义 (Type-Moon Blue & Gold)
+                vec3 color1 = vec3(0.05, 0.1, 0.2); // 深蓝
+                vec3 color2 = vec3(0.0, 0.5, 0.5);   // 青色
+                vec3 color3 = vec3(0.8, 0.7, 0.4);   // 金色微光
+
+                // 动态坐标偏移
+                vec2 q = vec2(0.);
+                q.x = fbm( st + 0.00 * u_time);
+                q.y = fbm( st + vec2(1.0));
+
+                vec2 r = vec2(0.);
+                r.x = fbm( st + 1.0 * q + vec2(1.7, 9.2) + 0.15*u_time );
+                r.y = fbm( st + 1.0 * q + vec2(8.3, 2.8) + 0.126*u_time);
+
+                float f = fbm(st+r);
+
+                // 混合颜色
+                vec3 color = mix(color1, color2, clamp((f*f)*4.0, 0.0, 1.0));
+                color = mix(color, color3, clamp(length(q), 0.0, 1.0));
+                
+                // 添加类似星尘的闪烁粒子
+                float star = random(st + u_time * 0.5);
+                if (star > 0.995) {
+                    color += vec3(0.8);
+                }
+
+                // 混合光标位置产生的微妙高光
+                float dist = distance(st, vec2(mouse.x * (u_resolution.x/u_resolution.y), 1.0 - mouse.y));
+                color += vec3(0.1, 0.2, 0.3) * (1.0 - smoothstep(0.0, 0.5, dist));
+
+                // 最终混合并加深背景，制造深空感
+                gl_FragColor = vec4((f*f*f+.6*f*f+.5*f)*color, 1.);
+            }
+        `;
+
+        const uniforms = {
+            u_time: { value: 1.0 },
+            u_resolution: { value: new THREE.Vector2() },
+            u_mouse: { value: new THREE.Vector2() }
+        };
+
+        const material = new THREE.ShaderMaterial({
+            uniforms: uniforms,
+            fragmentShader: fragmentShader,
+            transparent: true
+        });
+
+        const geometry = new THREE.PlaneGeometry(2, 2);
+        const mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+
+        // --- 渲染循环 ---
+        const clock = new THREE.Clock();
+
+        // 伪造 FPS 计数跳动
+        const fpsCounter = document.getElementById('fps-counter');
+        setInterval(() => {
+            fpsCounter.innerText = Math.floor(58 + Math.random() * 4);
+        }, 500);
+
+        function animate() {
+            uniforms.u_time.value = clock.getElapsedTime();
+            uniforms.u_mouse.value.x = mouseX;
+            uniforms.u_mouse.value.y = mouseY; // 简单的坐标传递
+
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+
+        // --- 窗口大小调整 ---
+        function onWindowResize() {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            uniforms.u_resolution.value.x = renderer.domElement.width;
+            uniforms.u_resolution.value.y = renderer.domElement.height;
+        }
+        window.addEventListener('resize', onWindowResize);
+
+        // 初始化一次尺寸
+        onWindowResize();
+        animate();
+
+        // --- 页面加载完成 ---
+        window.addEventListener('load', () => {
+            const loader = document.getElementById('loader');
+            setTimeout(() => {
+                loader.style.opacity = '0';
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                }, 1500);
+            }, 1000);
+        });
+
+    </script>
+</body>
+
+</html>

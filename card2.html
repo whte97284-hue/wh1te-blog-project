@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>境界線 // 久遠の虚空</title>
+
+    <!-- 引入字体：衬线体用于高贵感，无衬线体用于现代感，Noto Sans JP 用于日文美学 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Noto+Sans+JP:wght@100;300;400;700;900&family=Syncopate:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- 依赖库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <!-- 图标库 -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        /* 核心样式重置与自定义 */
+        :root {
+            --c-cyan: #00f0ff;
+            --c-magenta: #ff0055;
+            --c-yellow: #fff200;
+            --c-void: #050505;
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--c-void);
+            font-family: 'Noto Sans JP', sans-serif;
+            color: white;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* 隐藏滚动条 */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* 画布层：绝对底层 */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0;
+            /* JS控制淡入 */
+        }
+
+        /* 噪点纹理层：模拟插画质感，去处CG的塑料感 */
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+            mix-blend-mode: overlay;
+        }
+
+        /* 内容容器 */
+        #ui-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            /* 让鼠标穿透到ThreeJS，特定元素开启pointer-events */
+        }
+
+        /* 文字特效：棱镜色散 (Chromatic Aberration) */
+        .prism-text {
+            font-family: 'Syncopate', sans-serif;
+            position: relative;
+            color: rgba(255, 255, 255, 0.9);
+            mix-blend-mode: difference;
+            /* 关键：米山舞风格的高对比 */
+        }
+
+        .prism-text::before,
+        .prism-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        .prism-text::before {
+            color: var(--c-cyan);
+            z-index: -1;
+            transform: translate(-2px, -1px);
+            mix-blend-mode: screen;
+        }
+
+        .prism-text::after {
+            color: var(--c-magenta);
+            z-index: -2;
+            transform: translate(2px, 1px);
+            mix-blend-mode: screen;
+        }
+
+        /* 竖排日文排版 */
+        .vertical-text {
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            letter-spacing: 0.5em;
+            font-family: 'Cinzel', serif;
+        }
+
+        /* 玻璃拟态卡片 */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            pointer-events: auto;
+            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: scale(1.02);
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.2);
+        }
+
+        /* 链接悬停特效 */
+        .link-hover {
+            position: relative;
+            overflow: hidden;
+            pointer-events: auto;
+            cursor: pointer;
+        }
+
+        .link-hover::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #fff, transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .link-hover:hover::after {
+            transform: translateX(100%);
+        }
+
+        /* Loading Screen */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .loader-line {
+            width: 0%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--c-cyan), var(--c-magenta), var(--c-yellow));
+            transition: width 0.1s;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 1. 加载层 -->
+    <div id="loader">
+        <div class="font-mono text-xs mb-2 tracking-widest text-gray-400">同期中 // 神経接続中</div>
+        <div class="w-64 h-[2px] bg-gray-900 overflow-hidden relative">
+            <div id="progress-bar" class="loader-line absolute top-0 left-0 h-full"></div>
+        </div>
+        <div class="mt-4 text-4xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-600"
+            style="font-family: 'Syncopate'">
+            虚空
+        </div>
+    </div>
+
+    <!-- 2. WebGL 背景层 -->
+    <div id="canvas-container"></div>
+
+    <!-- 3. 噪点层 -->
+    <div class="noise-overlay"></div>
+
+    <!-- 4. UI 内容层 -->
+    <div id="ui-container" class="px-6 md:px-12">
+
+        <!-- 左上角：装饰性编码 -->
+        <div
+            class="absolute top-8 left-8 md:top-12 md:left-16 mix-blend-difference opacity-0 section-reveal pointer-events-auto group cursor-help">
+            <div
+                class="font-mono text-[10px] md:text-xs tracking-[0.2em] text-gray-400 group-hover:text-white transition-colors duration-300">
+                系統: 在線<br>
+                座標: 35.6895° N, 139.6917° E<br>
+                識別: <span class="text-[#00f0ff]">不安定</span>
+            </div>
+        </div>
+
+        <!-- 右上角：导航 -->
+        <div
+            class="absolute top-8 right-8 md:top-12 md:right-16 flex gap-6 md:gap-10 mix-blend-difference opacity-0 section-reveal">
+            <a href="index.html"
+                class="link-hover text-xs md:text-sm font-bold tracking-widest font-sans uppercase">言霊</a>
+            <a href="index.html#about"
+                class="link-hover text-xs md:text-sm font-bold tracking-widest font-sans uppercase">霊基</a>
+            <a href="https://space.bilibili.com/551898501" target="_blank"
+                class="link-hover text-xs md:text-sm font-bold tracking-widest font-sans uppercase">共鳴</a>
+        </div>
+
+        <!-- 中间：核心视觉区域 -->
+        <div class="relative w-full max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center h-[70vh]">
+
+            <!-- 左侧：主要文字 -->
+            <div class="w-full md:w-2/3 relative z-20">
+                <h2
+                    class="text-[#00f0ff] font-mono text-xs md:text-sm tracking-[0.5em] mb-4 opacity-0 section-reveal pl-1">
+                    計画_虚構 // 01
+                </h2>
+
+                <!-- 名字/主标题 -->
+                <h1 id="title-1"
+                    class="prism-text text-6xl md:text-8xl lg:text-9xl font-black uppercase tracking-tighter leading-[0.9] opacity-0 cursor-default select-none"
+                    data-text="光芒">
+                    光芒
+                </h1>
+
+                <h1 id="title-2"
+                    class="prism-text text-6xl md:text-8xl lg:text-9xl font-black uppercase tracking-tighter leading-[0.9] ml-8 md:ml-24 opacity-0 cursor-default select-none"
+                    data-text="流轉">
+                    流轉
+                </h1>
+
+                <!-- 描述 -->
+                <p
+                    class="mt-8 md:mt-12 max-w-lg text-sm md:text-base text-gray-300 leading-relaxed font-light font-sans opacity-0 section-reveal mix-blend-lighten">
+                    探索<span class="text-white font-medium border-b border-white/20">AI</span>与现实的边界。
+                    欢迎来到 WH1TE 的引导页
+                    <br><br>
+                    <span class="font-mono text-[10px] text-gray-500 block mt-2">境界を越えて、色彩の奔流へ。</span>
+                </p>
+
+                <!-- 社交按钮 -->
+                <div class="flex gap-4 mt-8 opacity-0 section-reveal pointer-events-auto">
+                    <!-- 博客入口 -->
+                    <a href="index.html"
+                        class="glass-card w-12 h-12 rounded-full flex items-center justify-center text-white group"
+                        title="博客">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round"
+                            class="w-5 h-5 group-hover:text-[#39ff14] transition-colors">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        </svg>
+                    </a>
+                    <!-- Bilibili -->
+                    <a href="https://space.bilibili.com/551898501" target="_blank"
+                        class="glass-card w-12 h-12 rounded-full flex items-center justify-center text-white group"
+                        title="Bilibili">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round"
+                            class="w-5 h-5 group-hover:text-[#00f0ff] transition-colors">
+                            <rect x="2" y="4" width="20" height="16" rx="4" />
+                            <path d="M8 2l4 4" />
+                            <path d="M16 2l-4 4" />
+                            <path d="M9 12v2" />
+                            <path d="M15 12v2" />
+                        </svg>
+                    </a>
+                    <!-- 抖音 -->
+                    <a href="https://www.douyin.com/user/MS4wLjABAAAAFdOdWTdiTuvMlt0K0C1UvfoYcLWYG5g-aJ8m7kj6QUw"
+                        target="_blank"
+                        class="glass-card w-12 h-12 rounded-full flex items-center justify-center text-white group"
+                        title="抖音">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round"
+                            class="w-5 h-5 group-hover:text-[#ff0055] transition-colors">
+                            <path d="M9 18V5l12-2v13" />
+                            <circle cx="6" cy="18" r="3" />
+                            <circle cx="18" cy="16" r="3" />
+                        </svg>
+                    </a>
+                    <!-- GitHub -->
+                    <a href="https://github.com/whte97284-hue/wh1te-blog-project" target="_blank"
+                        class="glass-card w-12 h-12 rounded-full flex items-center justify-center text-white group"
+                        title="GitHub">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round"
+                            class="w-5 h-5 group-hover:text-[#fff200] transition-colors">
+                            <path
+                                d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+                            <path d="M9 18c-4.51 2-5-2-7-2" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 右侧：装饰性日文与视觉锚点 -->
+            <div
+                class="hidden md:flex flex-col items-center justify-center h-full absolute right-0 top-0 opacity-0 section-reveal delay-300">
+                <div
+                    class="vertical-text text-8xl font-black text-white mix-blend-overlay opacity-30 select-none pointer-events-none">
+                    極彩色
+                </div>
+                <div class="vertical-text text-xl font-light text-[#ff0055] mt-8 tracking-widest"
+                    style="writing-mode: vertical-rl;">
+                    魂の共鳴
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部：页脚信息 -->
+        <div class="absolute bottom-8 w-full flex justify-between items-end px-8 md:px-16 opacity-0 section-reveal">
+            <div class="text-[10px] font-mono text-gray-500 uppercase">
+                設計: AI × 人間 <br>
+                © 2026 虚構存在
+            </div>
+
+            <div class="flex flex-col items-end">
+                <div class="h-16 w-[1px] bg-gradient-to-b from-transparent to-white mb-2"></div>
+                <div class="text-[10px] font-mono tracking-widest animate-pulse">滝動検出</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SHADERS -->
+    <!-- 顶点着色器：标准的平面投影 -->
+    <script id="vertexShader" type="x-shader/x-vertex">
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+    </script>
+
+    <!-- 片段着色器：这是核心艺术部分 -->
+    <!-- 
+       设计思路：
+       1. 使用域扭曲 (Domain Warping) FBM 噪声来模拟液态流动。
+       2. 色彩映射：不使用简单的混合，而是使用余弦调色板 (Cosine Palette) 模拟米山舞画作中的光谱色。
+       3. 增加色散效果，让边缘有RGB分离感。
+    -->
+    <script id="fragmentShader" type="x-shader/x-fragment">
+        uniform float uTime;
+        uniform vec2 uResolution;
+        uniform vec2 uMouse;
+
+        varying vec2 vUv;
+
+        // 经典的伪随机函数
+        float random(in vec2 _st) {
+            return fract(sin(dot(_st.xy, vec2(12.9898,78.233))) * 43758.5453123);
+        }
+
+        // 2D 噪声
+        float noise(in vec2 _st) {
+            vec2 i = floor(_st);
+            vec2 f = fract(_st);
+            // Four corners in 2D of a tile
+            float a = random(i);
+            float b = random(i + vec2(1.0, 0.0));
+            float c = random(i + vec2(0.0, 1.0));
+            float d = random(i + vec2(1.0, 1.0));
+            vec2 u = f * f * (3.0 - 2.0 * f);
+            return mix(a, b, u.x) + (c - a)* u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+        }
+
+        // 分形布朗运动 (FBM)
+        #define NUM_OCTAVES 5
+        float fbm( in vec2 _st) {
+            float v = 0.0;
+            float a = 0.5;
+            vec2 shift = vec2(100.0);
+            // 旋转矩阵
+            mat2 rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.50));
+            for (int i = 0; i < NUM_OCTAVES; ++i) {
+                v += a * noise(_st);
+                _st = rot * _st * 2.0 + shift;
+                a *= 0.5;
+            }
+            return v;
+        }
+
+        // 余弦调色板技术 - 这里的参数调整是模仿米山舞色系的关键
+        // 尝试混合：深蓝背景 + 青色 + 霓虹粉 + 亮黄
+        vec3 palette( in float t ) {
+            vec3 a = vec3(0.5, 0.5, 0.5);
+            vec3 b = vec3(0.5, 0.5, 0.5);
+            vec3 c = vec3(1.0, 1.0, 1.0);
+            vec3 d = vec3(0.263, 0.416, 0.557); // 基础相位
+            return a + b * cos( 6.28318 * (c * t + d) );
+        }
+
+        void main() {
+            vec2 uv = gl_FragCoord.xy / uResolution.xy;
+            // 保持比例
+            if (uResolution.x > uResolution.y) {
+                uv.x *= uResolution.x / uResolution.y;
+            } else {
+                uv.y *= uResolution.y / uResolution.x;
+            }
+
+            // 鼠标交互力场
+            vec2 mouseEffect = uMouse * 0.5; 
+            
+            // 域扭曲 (Domain Warping) - 创造液态/丝绸感
+            vec2 q = vec2(0.);
+            q.x = fbm(uv + 0.00 * uTime);
+            q.y = fbm(uv + vec2(1.0));
+
+            vec2 r = vec2(0.);
+            r.x = fbm(uv + 1.0 * q + vec2(1.7, 9.2) + 0.15 * uTime + mouseEffect.x);
+            r.y = fbm(uv + 1.0 * q + vec2(8.3, 2.8) + 0.126 * uTime + mouseEffect.y);
+
+            float f = fbm(uv + r);
+
+            // 颜色混合
+            // 使用 f 值来驱动调色板，并混合第二次 fbm 的结果来增加复杂度
+            vec3 color = palette(f * 2.0 + length(q));
+
+            // 增强对比度 (High Contrast for Anime style)
+            color = pow(color, vec3(1.2)); 
+            
+            // 添加一些霓虹辉光
+            float glow = 0.02 / length(uv - vec2(0.5) - r * 0.5);
+            color += vec3(0.1, 0.5, 1.0) * glow * 0.5;
+
+            // 混合深色背景以突出亮色 (Deep Space)
+            color = mix(color, vec3(0.05, 0.05, 0.1), 0.3);
+
+            // 最终输出
+            gl_FragColor = vec4(color, 1.0);
+        }
+    </script>
+
+    <script>
+        // ------------------------------------------------------------
+        // 1. 初始化 Three.js 场景
+        // ------------------------------------------------------------
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+        const renderer = new THREE.WebGLRenderer({ alpha: true });
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 性能优化
+        container.appendChild(renderer.domElement);
+
+        // ------------------------------------------------------------
+        // 2. 着色器材质设置
+        // ------------------------------------------------------------
+        const uniforms = {
+            uTime: { value: 0 },
+            uResolution: { value: new THREE.Vector2() },
+            uMouse: { value: new THREE.Vector2() }
+        };
+
+        const geometry = new THREE.PlaneGeometry(2, 2);
+        const material = new THREE.ShaderMaterial({
+            uniforms: uniforms,
+            vertexShader: document.getElementById('vertexShader').textContent,
+            fragmentShader: document.getElementById('fragmentShader').textContent,
+        });
+
+        const mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+
+        // ------------------------------------------------------------
+        // 3. 响应式与交互
+        // ------------------------------------------------------------
+        function onWindowResize() {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            uniforms.uResolution.value.x = renderer.domElement.width;
+            uniforms.uResolution.value.y = renderer.domElement.height;
+        }
+        window.addEventListener('resize', onWindowResize);
+        onWindowResize(); // Init
+
+        // 鼠标平滑跟踪
+        let targetMouseX = 0;
+        let targetMouseY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            // 归一化鼠标坐标 (-1 to 1)
+            targetMouseX = (e.clientX / window.innerWidth) * 2 - 1;
+            targetMouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+
+            // GSAP 视差效果：移动 UI 元素
+            gsap.to(".prism-text", {
+                x: targetMouseX * 20,
+                y: targetMouseY * 20,
+                duration: 1,
+                ease: "power2.out"
+            });
+
+            gsap.to(".glass-card", {
+                x: targetMouseX * 10,
+                y: targetMouseY * 10,
+                duration: 1.5,
+                ease: "power2.out"
+            });
+        });
+
+        // ------------------------------------------------------------
+        // 4. 动画循环
+        // ------------------------------------------------------------
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const elapsedTime = clock.getElapsedTime();
+            uniforms.uTime.value = elapsedTime;
+
+            // 鼠标缓动插值，让液体流动更顺滑
+            uniforms.uMouse.value.x += (targetMouseX - uniforms.uMouse.value.x) * 0.05;
+            uniforms.uMouse.value.y += (targetMouseY - uniforms.uMouse.value.y) * 0.05;
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // ------------------------------------------------------------
+        // 5. 进场序列 (Intro Sequence)
+        // ------------------------------------------------------------
+        window.onload = () => {
+            // 模拟加载
+            const tl = gsap.timeline();
+
+            // 1. 进度条动画
+            tl.to("#progress-bar", {
+                width: "100%",
+                duration: 1.5,
+                ease: "expo.inOut"
+            })
+                // 2. Loader 文字故障闪烁效果
+                .to("#loader div", {
+                    opacity: 0,
+                    duration: 0.2,
+                    stagger: 0.1
+                })
+                // 3. Loader 消失，揭示画布
+                .to("#loader", {
+                    height: 0,
+                    duration: 0.8,
+                    ease: "power4.inOut"
+                })
+                // 4. 背景淡入
+                .to("#canvas-container", {
+                    opacity: 1,
+                    duration: 1
+                }, "-=0.5")
+                // 5. UI 元素阶梯式进场
+                .to(".section-reveal", {
+                    y: 0,
+                    opacity: 1,
+                    duration: 1.2,
+                    stagger: 0.1,
+                    ease: "power3.out"
+                }, "-=0.5")
+                // 6. 第一个标题「光芒」入场动画
+                .fromTo("#title-1",
+                    { opacity: 0, letterSpacing: "0.5em", filter: "blur(10px)", y: 30 },
+                    { opacity: 1, letterSpacing: "-0.05em", filter: "blur(0px)", y: 0, duration: 1.5, ease: "circ.out" },
+                    "-=0.8"
+                )
+                // 7. 第二个标题「流轉」入场动画 (延迟0.3秒)
+                .fromTo("#title-2",
+                    { opacity: 0, letterSpacing: "0.5em", filter: "blur(10px)", y: 30 },
+                    { opacity: 1, letterSpacing: "-0.05em", filter: "blur(0px)", y: 0, duration: 1.5, ease: "circ.out" },
+                    "-=1.2"
+                );
+        };
+    </script>
+</body>
+
+</html>
