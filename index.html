@@ -28,6 +28,10 @@
         rel="stylesheet">
     <script src="https://unpkg.com/lucide@0.294.0"></script>
 
+    <!-- Leaflet 地图库 -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
     <!-- [开发模式] CDN 版 Tailwind (实时调试) - 需要时取消注释
     <script src="https://cdn.tailwindcss.com/3.4.0"></script>
     <script>
@@ -1113,7 +1117,7 @@
 
                 <div class="text-center space-y-1 z-10">
                     <h1 class="text-4xl font-black text-white tracking-tighter font-serif">Wh1te<span
-                            class="text-[var(--secondary-color)]">.log</span></h1>
+                            class="text-[var(--secondary-color)]">.top</span></h1>
                     <p class="text-[10px] font-mono text-gray-400 tracking-[0.2em] uppercase">Magi System Architect</p>
                 </div>
 
@@ -1128,7 +1132,7 @@
                     </div>
                     <div>
                         <div class="text-[8px] text-gray-500 mb-1">ACCESS</div>
-                        <div class="text-xs font-bold text-[var(--secondary-color)]">LV.5</div>
+                        <div class="text-xs font-bold text-[var(--secondary-color)]">LV.6</div>
                     </div>
                 </div>
             </div>
@@ -1136,19 +1140,40 @@
             <div class="lg:col-span-8 flex flex-col gap-6">
 
                 <div class="cyber-card p-8 flex-1 relative">
-                    <div class="eva-header mb-4">
+                    <div class="eva-header mb-6">
                         <div class="flex items-center">
                             <div class="eva-header-deco"></div><span>BIO_MATRIX</span>
                         </div>
                     </div>
-                    <p class="text-gray-300 leading-relaxed font-sans text-sm md:text-base relative z-10">
-                        你好，我是 <strong class="text-white">Wh1te</strong>。一名扭曲病娇姐系爱好者。<br>
-                        这里是我的鼠窝，记录着从 <span class="text-[var(--secondary-color)]">AI</span> 代码开发到 <span
-                            class="text-[var(--primary-color)]">Web</span> 构建的全过程。
-                        关注露早GOGO谢谢喵，关注柚恩不加糖谢谢喵。最近沉迷《白色相簿2》，<span
-                            class="border-b border-dashed border-gray-500 hover:text-white hover:border-white transition-colors cursor-help"
-                            title="不共戴天">不喜欢冬马和纱的有难了</span>。
-                    </p>
+
+                    <!-- 主介绍 -->
+                    <div class="space-y-4 relative z-10">
+                        <p class="text-gray-200 leading-relaxed font-sans text-sm md:text-base">
+                            你好，我是 <strong class="text-white font-bold">Wh1te</strong>。
+                            <span class="text-gray-400">一名扭曲病娇姐系爱好者。</span>
+                        </p>
+
+                        <p class="text-gray-300 leading-relaxed font-sans text-sm md:text-base">
+                            这里是我的墓碑，记录着从
+                            <span class="text-[var(--secondary-color)] font-medium">AI 代码开发</span> 到
+                            <span class="text-[var(--primary-color)] font-medium">Web 前端构建</span> 的全过程。
+                        </p>
+
+                        <p class="text-gray-400 leading-relaxed font-sans text-sm">
+                            关注 <span class="text-pink-400">露早GOGO</span> 谢谢喵，
+                            关注 <span class="text-orange-400">柚恩不加糖</span> 谢谢喵。<br>
+                            最近沉迷《白色相簿2》，<span
+                                class="border-b border-dashed border-gray-500 hover:text-white hover:border-white transition-colors cursor-help"
+                                title="不共戴天">不喜欢冬马和纱的有难了</span>。
+                        </p>
+                    </div>
+
+                    <!-- 个性签名 -->
+                    <div class="mt-6 pt-4 border-t border-white/5 relative z-10">
+                        <p class="text-gray-500 italic text-sm tracking-wider">
+                            「いつか、東京の初雪をこの目で見たい」
+                        </p>
+                    </div>
                 </div>
 
                 <div class="cyber-card p-6">
@@ -1198,7 +1223,7 @@
                     <div class="text-[9px] font-mono text-gray-500 animate-pulse">ESTABLISHING CONNECTION...</div>
                 </div>
 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
 
                     <a href="https://github.com/whte97284-hue/wh1te-blog-project/tree/main" target="_blank"
                         class="social-btn group h-20 bg-white/5 border border-white/10 flex flex-col items-center justify-center cursor-pointer relative overflow-hidden">
@@ -1252,14 +1277,12 @@
 
                     <div class="social-btn group h-20 bg-white/5 border border-white/10 flex flex-col items-center justify-center cursor-pointer relative overflow-hidden"
                         onclick="navigator.clipboard.writeText('3301168409').then(() => { this.querySelector('.qq-tip').innerText = 'COPIED!'; setTimeout(()=>this.querySelector('.qq-tip').innerText='3301168409', 2000) })">
-
                         <div class="social-shutter" style="background: #12B7F5;"></div>
                         <div
                             class="social-text flex flex-col items-center gap-1 transition-all duration-300 group-hover:translate-y-[-150%] group-hover:opacity-0">
                             <i data-lucide="message-circle" class="w-6 h-6 text-gray-400"></i>
                             <span class="font-mono text-[10px] tracking-widest text-gray-500">QQ</span>
                         </div>
-
                         <div
                             class="social-icon-container absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 scale-50 group-hover:scale-100">
                             <span class="font-black text-xl text-white font-serif">CHAT</span>
@@ -1267,62 +1290,191 @@
                         </div>
                     </div>
 
+                    <!-- 密钥终端入口 -->
+                    <a href="password.html" target="_blank"
+                        class="social-btn group h-20 bg-white/5 border border-white/10 flex flex-col items-center justify-center cursor-pointer relative overflow-hidden">
+                        <div class="social-shutter" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                        </div>
+                        <div
+                            class="social-text flex flex-col items-center gap-1 transition-all duration-300 group-hover:translate-y-[-150%] group-hover:opacity-0">
+                            <i data-lucide="key" class="w-6 h-6 text-gray-400"></i>
+                            <span class="font-mono text-[10px] tracking-widest text-gray-500">CIPHER</span>
+                        </div>
+                        <div
+                            class="social-icon-container absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 scale-50 group-hover:scale-100">
+                            <span class="font-black text-lg text-white font-serif">秘文</span>
+                            <span class="font-mono text-[9px] text-white/80 mt-0.5">AETHER</span>
+                        </div>
+                    </a>
+
+                    <!-- 夏日地图入口 -->
+                    <a href="夏日地图.html" target="_blank"
+                        class="social-btn group h-20 bg-white/5 border border-white/10 flex flex-col items-center justify-center cursor-pointer relative overflow-hidden">
+                        <div class="social-shutter" style="background: linear-gradient(135deg, #ec4899, #f472b6);">
+                        </div>
+                        <div
+                            class="social-text flex flex-col items-center gap-1 transition-all duration-300 group-hover:translate-y-[-150%] group-hover:opacity-0">
+                            <i data-lucide="map-pin" class="w-6 h-6 text-gray-400"></i>
+                            <span class="font-mono text-[10px] tracking-widest text-gray-500">SUMMER</span>
+                        </div>
+                        <div
+                            class="social-icon-container absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 scale-50 group-hover:scale-100">
+                            <span class="font-black text-xl text-white font-serif">日本</span>
+                            <span class="font-mono text-[9px] text-white/80 mt-0.5">TOKYO⇄KAMAKURA</span>
+                        </div>
+                    </a>
+
                 </div>
             </div>
         </div>
 
-        <div class="cyber-card p-8 animate-[popIn_0.5s_cubic-bezier(0.16,1,0.3,1)_forwards]"
-            style="animation-delay: 0.2s;">
-            <div class="eva-header mb-8">
-                <div class="flex items-center">
-                    <div class="eva-header-deco"></div><span>CHRONICLE_LOGS</span>
+        <!-- Fuse.js 模糊搜索库 -->
+        <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>
+
+        <script src="managers/bili-manager.js" type="module"></script>
+        <!-- [ARCHIVED] Otaku Helix Component -->
+        <!-- <script src="managers/helix-manager.js"></script> -->
+
+        <!-- ERIRI 台词库加载器 (从 JSON 加载) -->
+        <script src="managers/eriri-lines-manager.js"></script>
+
+        <script src="main.js"></script>
+
+        <!-- Leaflet JS -->
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+        <!-- 圣地巡礼地图初始化 -->
+        <script>
+            // 延迟初始化，确保 DOM 和视图切换后再加载
+            let pilgrimageMap = null;
+
+            function initPilgrimageMap() {
+                if (pilgrimageMap) return; // 已初始化
+                const container = document.getElementById('pilgrimage-map');
+                if (!container || container.offsetParent === null) return; // 容器不存在或不可见
+
+                // 圣地数据 (东京 + 镰仓)
+                const locations = {
+                    'ikebukuro': { lat: 35.7295, lng: 139.7109, label: '池袋', unit: '01', title: 'EVA STORE 本部', desc: '「EVA STORE TOKYO-01」所在地。补给据点。' },
+                    'shinjuku': { lat: 35.6938, lng: 139.7035, label: '新宿', unit: '01', title: '第三新东京市?', desc: '美里小姐飙车的地方。人很多，记得开 A.T.力场。' },
+                    'akihabara': { lat: 35.6984, lng: 139.7731, label: '秋叶原', unit: '02', title: '补给基地', desc: '手办和 RADIO EVA 的天堂。' },
+                    'shibuya': { lat: 35.6580, lng: 139.7016, label: '涩谷', unit: '02', title: 'PARCO', desc: '潮流圣地。' },
+                    'asakusa': { lat: 35.7148, lng: 139.7967, label: '浅草', unit: '02', title: '雷门', desc: '传统和风，补充能量的地方。' },
+                    'tokyobigsight': { lat: 35.6298, lng: 139.7942, label: '有明', unit: '02', title: 'Big Sight', desc: '夏冬两季的人类补完计划（漫展）。' },
+                    'kamakura': { lat: 35.3192, lng: 139.5467, label: '镰仓', unit: '00', title: '江之电沿线', desc: '坐江之电看海，不是红海，是蓝海。' },
+                    'shichirigahama': { lat: 35.3058, lng: 139.5106, label: '七里滨', unit: '00', title: '夕阳海岸', desc: '耳边自动响起 Fly Me To The Moon。' },
+                    'enoshima': { lat: 35.3017, lng: 139.4811, label: '江之岛', unit: '00', title: '圣地', desc: '像个好玩的迷宫。看到猫咪别给它戴使徒面具。' }
+                };
+
+                // 初始化地图 - 视野范围覆盖东京到�的仓
+                pilgrimageMap = L.map('pilgrimage-map', {
+                    zoomControl: true,
+                    attributionControl: false,
+                    scrollWheelZoom: true
+                }).setView([35.50, 139.60], 10); // 中心点和缩放级别
+
+                // OSM 图层
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 16,
+                    minZoom: 9
+                }).addTo(pilgrimageMap);
+
+                // 路线
+                const routePoints = [
+                    [locations.asakusa.lat, locations.asakusa.lng],
+                    [locations.akihabara.lat, locations.akihabara.lng],
+                    [locations.ikebukuro.lat, locations.ikebukuro.lng],
+                    [locations.shinjuku.lat, locations.shinjuku.lng],
+                    [locations.shibuya.lat, locations.shibuya.lng],
+                    [locations.tokyobigsight.lat, locations.tokyobigsight.lng],
+                    [35.5, 139.7],
+                    [locations.kamakura.lat, locations.kamakura.lng],
+                    [locations.shichirigahama.lat, locations.shichirigahama.lng],
+                    [locations.enoshima.lat, locations.enoshima.lng]
+                ];
+
+                L.polyline(routePoints, {
+                    color: '#a78bfa',
+                    weight: 2,
+                    opacity: 0.6,
+                    dashArray: '8, 12'
+                }).addTo(pilgrimageMap);
+
+                // 标记点
+                const unitColors = { '01': '#a78bfa', '02': '#fb7185', '00': '#60a5fa' };
+
+                Object.keys(locations).forEach(key => {
+                    const loc = locations[key];
+                    const color = unitColors[loc.unit];
+
+                    const icon = L.divIcon({
+                        className: 'pilgrimage-marker',
+                        html: `<div style="
+                        width: 24px; height: 24px; 
+                        background: ${color}; 
+                        border: 2px solid white; 
+                        border-radius: 50%; 
+                        box-shadow: 0 0 10px ${color};
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 10px; font-weight: bold; color: white;
+                        font-family: monospace;
+                    ">${loc.unit}</div>`,
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    });
+
+                    L.marker([loc.lat, loc.lng], { icon })
+                        .addTo(pilgrimageMap)
+                        .on('click', () => showMapInfo(loc));
+                });
+
+                // 修复地图尺寸
+                setTimeout(() => pilgrimageMap.invalidateSize(), 200);
+            }
+
+            function showMapInfo(loc) {
+                const panel = document.getElementById('map-info-panel');
+                const content = document.getElementById('map-info-content');
+                const unitColors = { '01': 'text-purple-400', '02': 'text-red-400', '00': 'text-blue-400' };
+
+                content.innerHTML = `
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="${unitColors[loc.unit]} font-mono text-xs">UNIT-${loc.unit}</span>
+                    <span class="text-white font-bold font-serif">${loc.label}</span>
                 </div>
-            </div>
+                <div class="text-[var(--secondary-color)] text-sm font-bold mb-1">${loc.title}</div>
+                <p class="text-gray-400 text-xs leading-relaxed">${loc.desc}</p>
+            `;
+                panel.classList.remove('hidden');
+            }
 
-            <div class="space-y-8 border-l-2 border-white/10 ml-3 pl-8 relative">
-                <div class="relative group">
-                    <div
-                        class="absolute -left-[39px] top-1 w-5 h-5 bg-black border-2 border-[var(--primary-color)] rounded-full group-hover:bg-[var(--primary-color)] group-hover:shadow-[0_0_15px_var(--primary-color)] transition-all z-10">
-                    </div>
-                    <span class="font-mono text-xs text-gray-500 mb-1 block">2025.10 // CURRENT</span>
-                    <h3
-                        class="text-lg font-bold text-white mb-2 font-serif group-hover:text-[var(--primary-color)] transition-colors">
-                        互联网补完计划</h3>
-                    <p class="text-xs text-gray-400 leading-relaxed font-sans border-b border-white/5 pb-4">
-                        放弃了对抢票脚本的执念，转向构建数字花园。MAGI 系统与 EVA 风格重构完成。
-                    </p>
-                </div>
+            function closeMapPanel() {
+                document.getElementById('map-info-panel').classList.add('hidden');
+            }
 
-                <div class="relative group">
-                    <div
-                        class="absolute -left-[39px] top-1 w-5 h-5 bg-black border-2 border-white/30 rounded-full group-hover:border-[var(--secondary-color)] transition-all z-10">
-                    </div>
-                    <span class="font-mono text-xs text-gray-500 mb-1 block">2025.09 // ARCHIVED</span>
-                    <h3
-                        class="text-lg font-bold text-gray-300 mb-2 font-serif group-hover:text-[var(--secondary-color)] transition-colors">
-                        初探自动化</h3>
-                    <p class="text-xs text-gray-400 leading-relaxed font-sans">
-                        接触 ADB 和 Appium，试图与安卓底层通信。项目未达预期，但理解了“工具”的本质。
-                    </p>
-                </div>
-            </div>
-        </div>
+            // 当切换到 About 视图时初始化地图
+            const originalSwitchView = window.switchView;
+            window.switchView = function (view) {
+                if (typeof originalSwitchView === 'function') {
+                    originalSwitchView(view);
+                }
+                if (view === 'about') {
+                    setTimeout(initPilgrimageMap, 300);
+                }
+            };
 
-    </div>
+            // 页面加载后检查是否在 About 视图
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(() => {
+                    const aboutView = document.getElementById('about-view-container');
+                    if (aboutView && !aboutView.classList.contains('hidden')) {
+                        initPilgrimageMap();
+                    }
+                }, 500);
+            });
 
-
-
-    <!-- Fuse.js 模糊搜索库 -->
-    <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>
-
-    <script src="managers/bili-manager.js" type="module"></script>
-    <!-- [ARCHIVED] Otaku Helix Component -->
-    <!-- <script src="managers/helix-manager.js"></script> -->
-
-    <!-- ERIRI 台词库加载器 (从 JSON 加载) -->
-    <script src="managers/eriri-lines-manager.js"></script>
-
-    <script src="main.js"></script>
+        </script>
 </body>
 
 </html>
