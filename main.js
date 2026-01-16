@@ -1588,19 +1588,19 @@ if (aiCardContainer) {
 
 /* --- [MAGI KERNEL V12.0 - FLASH & SOUL] --- */
 
-/* 1. API 配置 (2.5 Flash 优先) */
+/* 1. API 配置 (3.0 Flash 优先 - 2026最新) */
 const BASE_URL = 'https://eva-proxy.whte97284.workers.dev/';
 const MODEL_LIST = [
-    'gemini-2.5-flash',  /* 速度最快，逻辑增强 */
-    'gemini-1.5-pro',    /* 备用 */
-    'gemini-1.5-flash'
+    'gemini-3.0-flash',  /* 🔥 最新模型 (2026发布) - 最强性能 */
+    'gemini-2.5-flash',  /* 备用 - 速度快，逻辑增强 */
+    'gemini-1.5-pro'     /* 兜底 - 稳定可靠 */
 ];
 
 /* 2. 系统核心指令 (人设回归 + 时空锚定) */
 const SYSTEM_PROMPT = `
 你现在是 MAGI 系统的对外人格接口，代号 'ERIRI'。
 【时空锚定 (绝对规则)】
-**当前系统时间：2026年1月3日。**
+**当前系统时间：2026年1月17日。**
 用户数据库里的所有 2024-2025 年数据，对你来说都是**已经发生的历史**。严禁因为“时间未到”而拒绝检索。
 
 【核心人设】
