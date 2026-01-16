@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NERV Summer Vacation Map</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500&family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            /* 糖果色 EVA 配色 */
+            --eva-01-purple: #a78bfa;
+            /* 初号机紫 */
+            --eva-01-green: #4ade80;
+            /* 初号机绿 */
+            --eva-02-red: #fb7185;
+            /* 二号机红 */
+            --eva-02-orange: #fbbf24;
+            /* 二号机橙 */
+            --eva-00-blue: #60a5fa;
+            /* 零号机/绫波蓝 */
+            --eva-00-white: #f3f4f6;
+
+            --summer-bg: #f0f9ff;
+        }
+
+        body {
+            background-color: var(--summer-bg);
+            color: #374151;
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            overflow: hidden;
+        }
+
+        .font-cute {
+            font-family: 'Kiwi Maru', serif;
+        }
+
+        /* --- 地图容器 --- */
+        #map {
+            width: 100%;
+            height: 100%;
+            background: #e0f2fe;
+            z-index: 1;
+        }
+
+        /* 明亮日系滤镜 */
+        .leaflet-layer {
+            filter: contrast(1.05) saturate(1.1) brightness(1.05);
+        }
+
+        .leaflet-control-attribution {
+            display: none;
+        }
+
+        /* --- Marker 样式 --- */
+        .eva-marker-icon {
+            background: transparent;
+            border: none;
+        }
+
+        .marker-svg {
+            overflow: visible;
+        }
+
+        .marker-group {
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            cursor: pointer;
+        }
+
+        /* 新版六边形徽章样式 */
+        .marker-badge {
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
+        }
+
+        .marker-bg {
+            fill: white;
+        }
+
+        /* 不同的 EVA 机体配色类 */
+        .unit-01 .marker-stroke {
+            stroke: var(--eva-01-purple);
+            stroke-width: 3;
+            fill: white;
+        }
+
+        .unit-01 .marker-fill {
+            fill: var(--eva-01-purple);
+        }
+
+        .unit-01 .marker-accent {
+            fill: var(--eva-01-green);
+        }
+
+        .unit-01 .marker-label {
+            fill: var(--eva-01-purple);
+        }
+
+        .unit-02 .marker-stroke {
+            stroke: var(--eva-02-red);
+            stroke-width: 3;
+            fill: white;
+        }
+
+        .unit-02 .marker-fill {
+            fill: var(--eva-02-red);
+        }
+
+        .unit-02 .marker-accent {
+            fill: var(--eva-02-orange);
+        }
+
+        .unit-02 .marker-label {
+            fill: var(--eva-02-red);
+        }
+
+        .unit-00 .marker-stroke {
+            stroke: var(--eva-00-blue);
+            stroke-width: 3;
+            fill: white;
+        }
+
+        .unit-00 .marker-fill {
+            fill: var(--eva-00-blue);
+        }
+
+        .unit-00 .marker-accent {
+            fill: #9ca3af;
+        }
+
+        .unit-00 .marker-label {
+            fill: var(--eva-00-blue);
+        }
+
+        .marker-label {
+            font-size: 14px;
+            font-weight: 800;
+            stroke: white;
+            stroke-width: 3px;
+            paint-order: stroke;
+        }
+
+        .marker-number {
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 10px;
+            fill: white;
+        }
+
+        /* 悬停动画 */
+        .marker-group:hover {
+            transform: translateY(-8px) scale(1.1);
+        }
+
+        /* --- 点击特效: 可爱的 AT Field --- */
+        .at-field-pulse {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background: rgba(251, 191, 36, 0.4);
+            /* Orange */
+            clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            pointer-events: none;
+            z-index: 0;
+            border: 2px solid #fff;
+        }
+
+        .marker-group.active .at-field-pulse {
+            animation: at-field-expand 1s ease-out infinite;
+        }
+
+        @keyframes at-field-expand {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        /* --- 路线 --- */
+        .travel-line {
+            stroke: #a78bfa;
+            /* 紫色路线 */
+            stroke-width: 4;
+            stroke-dasharray: 10, 10;
+            stroke-linecap: round;
+            filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
+            animation: dash 60s linear infinite;
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -1000;
+            }
+        }
+
+        /* --- UI 面板 --- */
+        .info-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            box-shadow: -10px 0 25px rgba(0, 0, 0, 0.05);
+            border-top-left-radius: 30px;
+            border-bottom-left-radius: 30px;
+            transform: translateX(110%);
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .info-panel.open {
+            transform: translateX(0);
+        }
+
+        /* 粉色紧急警报胶带 */
+        .emergency-tape {
+            position: absolute;
+            height: 30px;
+            width: 140px;
+            background: repeating-linear-gradient(45deg,
+                    #fce7f3,
+                    #fce7f3 10px,
+                    #f472b6 10px,
+                    #f472b6 20px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transform: rotate(-5deg);
+            top: -15px;
+            left: 50%;
+            margin-left: -70px;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+            border: 1px solid white;
+        }
+
+        .polaroid {
+            background: white;
+            padding: 8px 8px 25px 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: rotate(2deg);
+            transition: transform 0.3s;
+        }
+
+        .polaroid:hover {
+            transform: rotate(0deg) scale(1.02);
+        }
+
+        .polaroid-img {
+            background-color: #f3f4f6;
+            width: 100%;
+            aspect-ratio: 4/3;
+            overflow: hidden;
+            position: relative;
+        }
+    </style>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+</head>
+
+<body
+    class="h-screen w-screen flex flex-col relative overflow-hidden selection:bg-purple-200 selection:text-purple-900">
+
+    <!-- 地图 -->
+    <div id="map"></div>
+
+    <!-- 顶部 HUD: NERV 观光课 -->
+    <header class="absolute top-0 left-0 w-full p-6 z-20 pointer-events-none flex justify-between items-start">
+        <div
+            class="bg-white/90 px-6 py-4 rounded-3xl shadow-lg backdrop-blur-sm transform -rotate-1 border-b-4 border-green-400 pointer-events-auto transition-transform hover:scale-105 group cursor-pointer">
+            <h1 class="text-3xl font-cute text-purple-600 tracking-wider flex items-center gap-3">
+                <!-- 简化的无花果叶 Logo -->
+                <div class="relative w-8 h-8">
+                    <i class="fas fa-leaf text-red-500 text-3xl transform rotate-180"></i>
+                    <div class="absolute bottom-0 w-full text-[6px] text-center font-bold text-red-500 bg-white/80">NERV
+                    </div>
+                </div>
+                NERV 观光科
+                <span
+                    class="text-sm bg-red-100 text-red-500 px-2 py-1 rounded-lg ml-2 group-hover:animate-pulse">暑假中</span>
+            </h1>
+        </div>
+    </header>
+
+    <!-- 侧边栏详情 -->
+    <div id="info-panel"
+        class="absolute top-0 right-0 h-full w-full md:w-[420px] z-30 info-panel flex flex-col pt-24 pb-10 px-8 border-l-4 border-purple-200">
+        <button onclick="closePanel()"
+            class="absolute top-6 right-6 bg-gray-100 hover:bg-gray-200 text-gray-500 w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm">
+            <i class="fas fa-times"></i>
+        </button>
+
+        <div id="panel-content" class="flex-1 overflow-y-auto pr-2 custom-scroll">
+            <!-- Content -->
+        </div>
+
+        <div class="mt-auto pt-4 flex justify-center opacity-50 text-[10px] font-mono tracking-widest text-purple-400">
+            GOD'S IN HIS HEAVEN. ALL'S RIGHT WITH THE WORLD.
+        </div>
+    </div>
+
+    <script>
+        // --- 数据配置 ---
+        // type 决定配色: 
+        // 01 = 初号机 (紫绿) - 市区/核心
+        // 02 = 二号机 (红橙) - 购物/热闹
+        // 00 = 零号机 (蓝白) - 海边/安静
+        const locations = {
+            'asakusa': {
+                lat: 35.7148, lng: 139.7967,
+                label: '浅草',
+                title: '浅草作战 🏮',
+                unit: '02',
+                tags: ['#雷门', '#观光', '#和风'],
+                desc: '去第二新东京市之前先来这里！去仲见世通补充一点能量（团子）🍡。这里完全不用担心使徒来袭！'
+            },
+            'akihabara': {
+                lat: 35.6984, lng: 139.7731,
+                label: '秋叶原',
+                title: '秋叶原补给基地 ⚡',
+                unit: '02',
+                tags: ['#RADIO_EVA', '#手办'],
+                desc: '明日香肯定会喜欢这里！满街都是红色的招牌。去「RADIO EVA」买一套新的驾驶服（其实是私服）吧。'
+            },
+            'ikebukuro': {
+                lat: 35.7295, lng: 139.7109,
+                label: '池袋',
+                title: 'EVA STORE 本部 🐧',
+                unit: '01',
+                tags: ['#EVA_STORE', '#圣地'],
+                desc: '这里就是我们的大本营。在「EVA STORE TOKYO-01」回收限定道具！首要目标是捕获一只PenPen玩偶！'
+            },
+            'shinjuku': {
+                lat: 35.6938, lng: 139.7035,
+                label: '新宿',
+                title: '旧·第三新东京市? 🏙️',
+                unit: '01',
+                tags: ['#美里小姐', '#夜景'],
+                desc: '让人想开着美里小姐的车在这里狂飙的街道。人很多，记得全开A.T.力场走路。晚上的霓虹灯就像暴走模式一样漂亮。'
+            },
+            'shimokitazawa': {
+                lat: 35.6619, lng: 139.6666,
+                label: '下北泽',
+                title: '下北泽亚文化区 🎸',
+                unit: '01',
+                tags: ['#古着', '#咖喱'],
+                desc: '真嗣君肯定会戴着SDAT听着歌在这里散步。这里的古着和咖喱，同步率高达400%！'
+            },
+            'shibuya': {
+                lat: 35.6580, lng: 139.7016,
+                label: '涩谷',
+                title: '涩谷地下都市 👗',
+                unit: '02',
+                tags: ['#PARCO', '#十字路口'],
+                desc: '听说PARCO的地下也有个Geofront... 这里是最新潮流的发源地。穿上红色的衣服，感觉随时都能说出那句「你是笨蛋吗？」'
+            },
+            'tokyobigsight': {
+                lat: 35.6298, lng: 139.7942,
+                label: 'Big Sight',
+                title: '圣战的逆三角形 📚',
+                unit: '02',
+                tags: ['#漫展', '#要塞'],
+                desc: '这建筑长得完全就是个使徒（雷天使既视感）。夏冬两季会举办名为「人类补完计划」的大型集会活动。'
+            },
+            'kamakura': {
+                lat: 35.3192, lng: 139.5467,
+                label: '镰仓',
+                title: '镰仓防卫线 🚃',
+                unit: '00',
+                tags: ['#江之电', '#海'],
+                desc: '坐上江之电去看海。不是第二次冲击后的红海，而是漂亮的蓝海哦！想学丽那样静静地看着海面发呆。'
+            },
+            'shichirigahama': {
+                lat: 35.3058, lng: 139.5106,
+                label: '七里滨',
+                title: '七里滨 🏖️',
+                unit: '00',
+                tags: ['#夕阳', '#散步'],
+                desc: '从这里看到的夕阳美得惊人，感觉耳边自动响起了片尾曲《Fly Me To The Moon》。'
+            },
+            'enoshima': {
+                lat: 35.3017, lng: 139.4811,
+                label: '江之岛',
+                title: '江之岛 🏝️',
+                unit: '00',
+                tags: ['#吻仔鱼盖饭', '#猫'],
+                desc: '那座长桥看起来有点像使徒迎击用的跑道。整座岛就像个好玩的迷宫。如果在岛上看到猫咪，千万别给它戴使徒面具哦！'
+            }
+        };
+
+        // --- 地图初始化 ---
+        const map = L.map('map', {
+            zoomControl: false,
+            attributionControl: false,
+            zoomSnap: 0.1
+        }).setView([35.55, 139.65], 10.2);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 16,
+            minZoom: 9
+        }).addTo(map);
+
+        // --- 路线 (初号机配色) ---
+        const routePoints = [
+            [locations.asakusa.lat, locations.asakusa.lng],
+            [locations.akihabara.lat, locations.akihabara.lng],
+            [locations.ikebukuro.lat, locations.ikebukuro.lng],
+            [locations.shinjuku.lat, locations.shinjuku.lng],
+            [locations.shimokitazawa.lat, locations.shimokitazawa.lng],
+            [locations.shibuya.lat, locations.shibuya.lng],
+            [locations.tokyobigsight.lat, locations.tokyobigsight.lng],
+            [35.5, 139.7],
+            [locations.kamakura.lat, locations.kamakura.lng],
+            [locations.shichirigahama.lat, locations.shichirigahama.lng],
+            [locations.enoshima.lat, locations.enoshima.lng]
+        ];
+
+        L.polyline(routePoints, {
+            className: 'travel-line',
+            smoothFactor: 2
+        }).addTo(map);
+
+        // --- 标记点 ---
+        Object.keys(locations).forEach(key => {
+            const loc = locations[key];
+
+            // 标签避让微调
+            let textAnchor = 'middle';
+            let tx = 0, ty = -45;
+
+            if (['shinjuku', 'shibuya', 'shimokitazawa'].includes(key)) {
+                if (key === 'shibuya') ty = 35;
+                if (key === 'shimokitazawa') { tx = -45; ty = 5; textAnchor = 'end'; }
+            }
+            if (['kamakura', 'shichirigahama', 'enoshima'].includes(key)) {
+                if (key === 'kamakura') { tx = 25; ty = -20; textAnchor = 'start'; }
+                if (key === 'shichirigahama') { tx = 0; ty = 35; }
+                if (key === 'enoshima') { tx = -25; ty = -20; textAnchor = 'end'; }
+            }
+
+            const unitClass = `unit-${loc.unit}`;
+
+            // 六边形 SVG 路径
+            const hexPath = "M0,-24 L20,-12 L20,12 L0,24 L-20,12 L-20,-12 Z";
+            // 指针路径
+            const pointerPath = "M-6,20 L0,32 L6,20 Z";
+
+            const iconHtml = `
+                <svg width="120" height="120" viewBox="-60 -60 120 120" class="marker-svg">
+                    <g class="marker-group ${unitClass}" id="marker-g-${key}">
+                        <!-- AT Field (点击后显示) -->
+                        <foreignObject x="-60" y="-60" width="120" height="120" class="at-field-pulse">
+                            <div></div>
+                        </foreignObject>
+                        
+                        <!-- 阴影 -->
+                        <path d="${hexPath}" fill="black" opacity="0.2" transform="translate(0, 4)" />
+                        
+                        <!-- 六边形主体 -->
+                        <g class="marker-badge">
+                             <path d="${pointerPath}" class="marker-stroke" />
+                             <path d="${hexPath}" class="marker-stroke" />
+                             
+                             <!-- 内部装饰 -->
+                             <circle cx="0" cy="0" r="14" class="marker-fill" />
+                             <text x="0" y="4" text-anchor="middle" class="marker-number">${loc.unit}</text>
+                        </g>
+
+                        <!-- 外部文本 -->
+                        <text x="${tx}" y="${ty}" class="marker-label" text-anchor="${textAnchor}" dominant-baseline="middle">${loc.label}</text>
+                    </g>
+                </svg>
+            `;
+
+            const icon = L.divIcon({
+                className: 'eva-marker-icon',
+                html: iconHtml,
+                iconSize: [120, 120],
+                iconAnchor: [60, 60]
+            });
+
+            L.marker([loc.lat, loc.lng], { icon: icon })
+                .addTo(map)
+                .on('click', () => selectLocation(key));
+        });
+
+        // --- 交互逻辑 ---
+        function selectLocation(key) {
+            const data = locations[key];
+            const panel = document.getElementById('info-panel');
+            const content = document.getElementById('panel-content');
+
+            // 1. 激活标记
+            document.querySelectorAll('.marker-group').forEach(el => el.classList.remove('active'));
+            const activeEl = document.querySelector(`#marker-g-${key}`);
+            if (activeEl) activeEl.classList.add('active');
+
+            // 2. 更新面板
+            const bgClass = data.unit === '01' ? 'bg-purple-50' : (data.unit === '02' ? 'bg-red-50' : 'bg-blue-50');
+            const titleColor = data.unit === '01' ? 'text-purple-600' : (data.unit === '02' ? 'text-red-600' : 'text-blue-600');
+
+            content.innerHTML = `
+                <div class="mb-6 relative">
+                    <h2 class="text-3xl font-cute ${titleColor} mb-2">${data.title}</h2>
+                    <div class="flex flex-wrap gap-2">
+                        ${data.tags.map(tag => `<span class="px-2 py-1 bg-white border border-gray-100 rounded-lg text-xs text-gray-500 font-bold shadow-sm">${tag}</span>`).join('')}
+                    </div>
+                </div>
+
+                <!-- 拍立得照片 -->
+                <div class="relative mb-8 mx-2">
+                    <div class="emergency-tape">EMERGENCY</div>
+                    <div class="polaroid">
+                        <div class="polaroid-img flex items-center justify-center text-gray-300">
+                             <!-- 装饰图标 -->
+                             <div class="text-center">
+                                <i class="fas fa-camera text-4xl mb-2 opacity-30"></i>
+                                <div class="text-[10px] font-bold opacity-50 font-mono">IMG_UNIT_${data.unit}.JPG</div>
+                             </div>
+                        </div>
+                        <div class="pt-3 pb-1 text-center font-cute text-gray-500 text-sm -rotate-1">
+                            在${data.label}，和使徒合影留念✌️
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 描述 -->
+                <div class="${bgClass} p-6 rounded-2xl relative shadow-sm border border-white">
+                    <i class="fas fa-quote-left text-2xl text-white absolute -top-3 -left-2 drop-shadow-md"></i>
+                    <p class="text-gray-600 font-cute leading-7 text-sm">
+                        ${data.desc}
+                    </p>
+                </div>
+
+                <div class="mt-8 flex justify-between items-center text-xs text-gray-400 font-bold font-mono">
+                    <span>SYNC RATE: ${Math.floor(Math.random() * 60 + 40)}%</span>
+                    <span>MAGI-SYS: GO</span>
+                </div>
+            `;
+
+            panel.classList.add('open');
+
+            map.flyTo([data.lat, data.lng], 13, {
+                animate: true,
+                duration: 1.2,
+                paddingBottomRight: [300, 0]
+            });
+        }
+
+        function closePanel() {
+            document.getElementById('info-panel').classList.remove('open');
+            document.querySelectorAll('.marker-group').forEach(el => el.classList.remove('active'));
+            map.flyTo([35.55, 139.65], 10.2, { duration: 1.5 });
+        }
+    </script>
+</body>
+
+</html>
