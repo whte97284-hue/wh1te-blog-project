@@ -4,7 +4,7 @@
  * 按需加载：仅在访问 Steam 视图时加载
  */
 const SteamManager = {
-    workerEndpoint: 'https://eva-proxy.whte97284.workers.dev/steam/summary',
+    workerEndpoint: 'https://api-worker.wh1te.top/steam/summary',
     isLoaded: false,
 
     init() {
