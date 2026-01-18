@@ -1589,7 +1589,7 @@ if (aiCardContainer) {
 /* --- [MAGI KERNEL V12.0 - FLASH & SOUL] --- */
 
 /* 1. API 配置 (3.0 Flash 优先 - 2026最新) */
-const BASE_URL = 'https://eva-proxy.whte97284.workers.dev/';
+const BASE_URL = 'https://api-worker.wh1te.top/';
 const MODEL_LIST = [
     'gemini-3.0-flash',  /* 🔥 最新模型 (2026发布) - 最强性能 */
     'gemini-2.5-flash',  /* 备用 - 速度快，逻辑增强 */
@@ -3159,7 +3159,7 @@ function closeAnimeModal() {
    ========================================================================== */
 
 const BlogManager = {
-    workerEndpoint: 'https://eva-proxy.whte97284.workers.dev/blog/posts',
+    workerEndpoint: 'https://api-worker.wh1te.top/blog/posts',
 
     // 分页配置
     state: {
@@ -3496,7 +3496,7 @@ function toggleView(viewName) {
 
 /* --- B站数据管理器 (V3.0 Pro) --- */
 const BiliManager = {
-    workerEndpoint: 'https://eva-proxy.whte97284.workers.dev/bili/bangumi',
+    workerEndpoint: 'https://api-worker.wh1te.top/bili/bangumi',
     uid: '551898501',
 
     // 状态管理
@@ -3762,7 +3762,7 @@ window.toggleView = function (viewName) {
    修复：API路径分离、视图互斥切换、分类筛选
    ========================================================================== */
 const ArchivesManager = {
-    workerBase: 'https://eva-proxy.whte97284.workers.dev/blog',
+    workerBase: 'https://api-worker.wh1te.top/blog',
 
     init() { this.fetchCategories(); },
 
@@ -3930,7 +3930,7 @@ window.AboutManager = AboutManager;
    ========================================================================== */
 const SteamManager = {
     // 请确保这里的 URL 和你的 Worker 一致
-    workerEndpoint: 'https://eva-proxy.whte97284.workers.dev/steam/summary',
+    workerEndpoint: 'https://api-worker.wh1te.top/steam/summary',
     isLoaded: false,
 
     init() {
@@ -4067,7 +4067,7 @@ const SteamManager = {
    ========================================================================== */
 const PixivManager = {
     // 你的 Worker 地址
-    workerEndpoint: 'https://eva-proxy.whte97284.workers.dev/pixiv/rank',
+    workerEndpoint: 'https://api-worker.wh1te.top/pixiv/rank',
     isLoaded: false,
 
     init() {
