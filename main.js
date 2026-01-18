@@ -1591,7 +1591,7 @@ if (aiCardContainer) {
 /* 1. API 配置 (3.0 Flash 优先 - 2026最新) */
 const BASE_URL = 'https://api-worker.wh1te.top/';
 const MODEL_LIST = [
-    'gemini-3.0-flash',  /* 🔥 最新模型 (2026发布) - 最强性能 */
+    'gemini-3-flash',  /* 🔥 最新模型 (2026发布) - 最强性能 */
     'gemini-2.5-flash',  /* 备用 - 速度快，逻辑增强 */
     'gemini-1.5-pro'     /* 兜底 - 稳定可靠 */
 ];
@@ -4259,3 +4259,4 @@ GlobalRender.start();
 
 console.log("MAGI SYSTEM: GRAPHICS ENGINE LINKED.");
 console.log("📱 MOBILE MENU: INITIALIZED.");
+
