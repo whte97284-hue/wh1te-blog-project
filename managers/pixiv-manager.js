@@ -4,7 +4,7 @@
  * 按需加载：仅在访问 Pixiv 视图时加载
  */
 const PixivManager = {
-    workerEndpoint: 'https://eva-proxy.whte97284.workers.dev/pixiv/rank',
+    workerEndpoint: 'https://api-worker.wh1te.top/pixiv/rank',
     isLoaded: false,
 
     init() {
