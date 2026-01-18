@@ -4,7 +4,7 @@
  * 按需加载：仅在访问 B站视图时加载
  */
 const BiliManager = {
-    workerEndpoint: 'https://eva-proxy.whte97284.workers.dev/bili/bangumi',
+    workerEndpoint: 'https://api-worker.wh1te.top/bili/bangumi',
     uid: '551898501',
 
     // 状态管理
