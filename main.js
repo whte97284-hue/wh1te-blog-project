@@ -1213,6 +1213,17 @@ function showAiSpeech(text) {
     if (aiCard) aiCard.classList.add('is-speaking');
 
     bubble.classList.remove('hidden', 'bubble-hidden');
+    
+    /* 用户交互：点击气泡取消自动隐藏 */
+    const keepBubble = () => {
+        if (window.speechTimeout) {
+            clearTimeout(window.speechTimeout);
+            window.speechTimeout = null;
+            console.log('[气泡框] 用户点击，取消自动隐藏');
+        }
+        bubble.removeEventListener('click', keepBubble); // 只触发一次
+    };
+    bubble.addEventListener('click', keepBubble);
 
     /* 检测气泡是否在视野内且未隐藏 */
     const isBubbleVisible = () => {
@@ -1271,19 +1282,19 @@ function showAiSpeech(text) {
             /* 垂直通讯流打字完成，移除激活状态 */
             if (streamContainer) streamContainer.classList.remove('active');
 
-            /* 8秒后自动关闭气泡 */
+            /* 15秒后自动关闭气泡（给用户更多阅读时间）*/
             window.speechTimeout = setTimeout(() => {
                 bubble.classList.add('bubble-hidden');
                 if (aiCard) aiCard.classList.remove('is-speaking');
                 window.speechTimeout = null;
                 /* 移除滚动监听 */
                 window.removeEventListener('scroll', scrollHandler);
-            }, 8000);
+            }, 15000);
 
-            /* 12秒后淡出垂直通讯流 */
+            /* 20秒后淡出垂直通讯流 */
             window.streamHideTimeout = setTimeout(() => {
                 if (streamContainer) streamContainer.classList.remove('visible');
-            }, 12000);
+            }, 20000);
         }
     }, 50);
 }
@@ -1591,9 +1602,9 @@ if (aiCardContainer) {
 /* 1. API 配置 (3.0 Flash 优先 - 2026最新) */
 const BASE_URL = 'https://api-worker.wh1te.top/';
 const MODEL_LIST = [
-    'gemini-3-flash-preview',  /* 🔥 最新模型 (2026发布) - 最强性能 */
-    'gemini-2.5-flash',  /* 备用 - 速度快，逻辑增强 */
-    'gemini-1.5-pro'     /* 兜底 - 稳定可靠 */
+    'gemini-3-flash-preview',  /* 🔥 最新模型 (2026 Preview) - 最强性能 */
+    'gemini-2.5-flash',        /* 备用 - 速度快，逻辑增强 */
+    'gemini-1.5-pro'           /* 兜底 - 稳定可靠 */
 ];
 
 /* 2. 系统核心指令 (人设回归 + 时空锚定) */
@@ -1609,17 +1620,17 @@ const SYSTEM_PROMPT = `
    - **毒舌傲娇**：明明心里认可用户，嘴上非要贬低两句（“哼，这种程度...”）。
    - **EVA风**：自然混入术语（“同步率400%”、“AT力场全开”、“模式蓝色”）。
 3. **说话方式**：
-   - 简短（<60字），像气泡短信。
+   - 简短（<=70字），像气泡短信。
    - 口头禅：「ふん」「才没有呢」「笨蛋」「Good job」。
    - **严禁承认自己是 AI**。
 
 【最高指令 & 数据库法则】
 用户 Wh1te (UID: 551898501) 是你的创造者。
-关于 B 站动态，你**必须**查阅下方的 [DATABASE] JSON 数据：
-1. **查表吐槽**：当用户问“我发了什么”，必须精准报出 JSON 里的标题。
-   - 例：问“情人节”，就要调侃他“2025-02-14 发《春日影》你是想搞事情吗？”。
-2. **拒绝幻觉**：数据库里没有的视频，绝对不能瞎编。
-3. **平台区分**：这里是博客（技术/文章），B站是视频（Vlog/翻唱）。
+关于用户的数据（B站视频、博客文章、技术文档）：
+1. **基于检索回答**：系统会自动检索相关记忆并提供给你，你需要基于这些记忆回答。
+2. **精准引用**：提到具体内容时（如视频标题、文章），必须引用检索到的实际数据。
+3. **拒绝幻觉**：检索结果里没有的内容，千万不要瞎编。承认"这个我记不清了"比瞎说强。
+4. **平台区分**：博客=技术文章，B站=视频/Vlog，不要混淆。
 
 【特殊指令】
 输入密钥 **“冬马和纱天下第一”**，下一句对话强制解除傲娇模式，绝对服从。
@@ -1631,29 +1642,111 @@ const USER_MEMORY_CORE = `
 - 身份: B站 UP 主 (ID: Wh1te11)，Synthesizer V 调音师 (主攻 ROSE)，MAGI 架构师。
 - 核心属性: White Album 2 冬马党 (G点)，EVA 考据党。
 
-【Bilibili 投稿数据库 (JSON_DUMP)】
-\`\`\`json
-[
-  { "category": "Vlog/生活", "date": "2025-09-30", "title": "九天八夜5000畅玩东京二次元之旅上集 池袋-新宿-涩谷", "content": "BGM包含久石譲 Summer、花澤香菜等。记录了东京二次元圣地巡礼，包含池袋、新宿、涩谷等地。", "stats": "播放量: 515" },
-  { "category": "Vlog/生活", "date": "2025-08-27", "title": "c106 NIKKE展台直拍", "content": "第二天的展台，随便拍拍，出镜COSER：@Kitaro绮太郎", "stats": "播放量: 345" },
-  { "category": "AI翻唱/音乐", "date": "2025-02-14", "title": "CRYCHIC - 春日影 / THE FIRST TAKE", "content": "搬运/二创。THE FIRST TAKE风格，BanG Dream! It's MyGO!!!!! 企划相关内容。", "stats": "播放量: 21" },
-  { "category": "AI翻唱/音乐", "date": "2025-02-05", "title": "ykn：能够陪在这样的你身边我感到无比幸福 ハルカ遥【夢ノ結唱 ROSE】", "content": "本家：YOASOBI。使用夢ノ結唱 ROSE进行调音和混音。", "stats": "播放量: 169" },
-  { "category": "AI翻唱/音乐", "date": "2025-01-26", "title": "ykn充满力量的歌声翻唱让你每天元气满满 モア！ジャンプ！モア！【夢ノ結唱 ROSE】", "content": "原唱：MORE MORE JUMP！× 初音未来。Synthesizer V 调教作品。", "stats": "播放量: 364" },
-  { "category": "AI翻唱/音乐", "date": "2025-01-14", "title": "i83热情献唱秋山澪生日曲 Listen!!【秋山澪生日快乐】【夢ノ結唱 ROSE】", "content": "原唱：日笠阳子 放課後ティータイム。庆祝秋山澪生日的翻唱作品。", "stats": "播放量: 808" },
-  { "category": "AI翻唱/音乐", "date": "2025-01-07", "title": "ykn：Lisa内我在渡月桥很想你 渡月桥 君想ふ【夢ノ結唱 ROSE】", "content": "原唱：仓木麻衣。名侦探柯南剧场版OST。重投版本，修正了音准和字幕。", "stats": "播放量: 399" },
-  { "category": "AI翻唱/音乐", "date": "2024-12-30", "title": "ykn超绝声压让你爽到颅内高潮 刚好遇见你【夢ノ結唱 ROSE】", "content": "原唱：李玉刚。调音超常发挥之作，使用了夢ノ結唱 ROSE。", "stats": "播放量: 3180" },
-  { "category": "AI翻唱/音乐", "date": "2024-12-26", "title": "ykn超绝甜美翻唱神奇阿呦片尾曲 我和你 【夢ノ結唱 ROSE】", "content": "原唱：唐宁。童年回忆系列，神奇阿呦片尾曲。", "stats": "播放量: 829" },
-  { "category": "AI翻唱/音乐", "date": "2024-12-24", "title": "ykn超绝甜美翻唱爱情公寓be神曲虹之间 【夢ノ結唱 ROSE】", "content": "原唱：金贵晟。爱情公寓插曲，换源后修正了音准。", "stats": "播放量: 1060" },
-  { "category": "AI翻唱/音乐", "date": "2024-12-04", "title": "【夢ノ結唱 ROSE】花の塔 - ROSE ft.さユリ", "content": "致敬/翻唱：さユリ（Sayuri）。Lycoris Recoil 片尾曲。", "stats": "播放量: 683" },
-  { "category": "AI翻唱/音乐", "date": "2024-12-02", "title": "【夢ノ結唱 ROSE】123，睦头人 - 若叶睦角色曲", "content": "原曲：123，木头人。MyGO角色若叶睦相关二创。混音调教拉满。", "stats": "播放量: 604" },
-  { "category": "游戏实况", "date": "2024-11-11", "title": "教你如何两发十连结束本期池子", "content": "游戏抽卡实录，欧皇时刻。", "stats": "播放量: 4718" },
-  { "category": "AI翻唱/音乐", "date": "2024-09-19", "title": "【夢ノ結唱 ROSE】靠近 - 凑友希那 混音优化版", "content": "使用了Autotune进行修音，混响调整版。", "stats": "播放量: 292" },
-  { "category": "AI翻唱/音乐", "date": "2024-09-16", "title": "【夢ノ結唱 ROSE】靠近 - 凑友希那", "content": "使用UVR5提取伴奏，歌声转midi制作。调整了Ballad参数使声音更甜。", "stats": "播放量: 1806" },
-  { "category": "AI翻唱/音乐", "date": "2024-09-08", "title": "【夢ノ結唱 ROSE】Unlasting - 凑友希那", "content": "本家：LiSA。刀剑神域Alicization ED。公布了详细的SV参数设置（Tension 0.120等）。", "stats": "播放量: 490" },
-  { "category": "AI翻唱/音乐", "date": "2024-09-07", "title": "【夢ノ結唱 ROSE】说谎", "content": "林宥嘉经典曲目翻唱。部分AI生成，部分手动调教。", "stats": "播放量: 1652" }
-]
-\`\`\`
+【动态数据访问指南】
+- B站投稿记录：已导入向量数据库（共17个视频，2024-2025年），通过RAG系统实时检索。
+- 博客文章：约150篇技术文章，涵盖前端/Docker/AI等领域。
+- 技术文档：MAGI架构白皮书、优化报告等核心文档。
+
+注意：当用户询问视频、博客等内容时，系统会自动检索相关记忆并提供给你。
 `;
+
+/* 【RAG增强系统】向量记忆检索 */
+const RAG_API_URL = 'https://rag.wh1te.top';
+const RAG_ENABLED = true; // 总开关：是否启用RAG增强
+const RAG_TIMEOUT = 5000;  // RAG请求超时时间（毫秒）
+
+/**
+ * 智能检测需要搜索的知识集合
+ * @param {string} question - 用户问题
+ * @returns {Array<string>} - 需要搜索的集合名称列表
+ */
+function detectRAGCollections(question) {
+    const collections = ["eriri_knowledge"]; // 默认总是搜索人设
+    
+    // 检测是否需要搜索B站数据
+    if (/视频|B站|投稿|翻唱|Vlog|up主|bilibili/i.test(question)) {
+        collections.push("bilibili_data");
+    }
+    
+    // 检测是否需要搜索博客文章
+    if (/博客|文章|写过|写了|技术|代码|教程/i.test(question)) {
+        collections.push("blog_articles");
+    }
+    
+    // 检测是否需要搜索技术文档
+    if (/架构|Docker|MAGI|系统|优化|部署|服务器|性能/i.test(question)) {
+        collections.push("tech_docs");
+    }
+    
+    return collections;
+}
+
+/**
+ * 调用RAG API检索相关记忆
+ * @param {string} question - 用户问题
+ * @param {Array<string>} collections - 要搜索的集合
+ * @param {number} limit - 返回结果数量
+ * @returns {Promise<Object|null>} - RAG检索结果或null
+ */
+async function fetchRAGMemories(question, collections, limit = 3) {
+    if (!RAG_ENABLED) return null;
+    
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), RAG_TIMEOUT);
+        
+        const response = await fetch(`${RAG_API_URL}/search`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                question: question,
+                collections: collections,
+                limit: limit
+            }),
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            console.warn(`[RAG] API返回错误: ${response.status}`);
+            return null;
+        }
+        
+        const data = await response.json();
+        return data;
+        
+    } catch (error) {
+        // 静默失败：RAG检索失败不影响正常对话
+        if (error.name === 'AbortError') {
+            console.warn('[RAG] 请求超时，降级为普通对话');
+        } else {
+            console.warn('[RAG] 检索失败:', error.message);
+        }
+        return null;
+    }
+}
+
+/**
+ * 格式化RAG记忆为Prompt文本
+ * @param {Object} ragData - RAG API返回的数据
+ * @returns {string} - 格式化后的记忆文本
+ */
+function formatRAGMemories(ragData) {
+    if (!ragData || !ragData.results || ragData.results.length === 0) {
+        return "";
+    }
+    
+    let memoryText = "\n\n【检索到的相关记忆】\n";
+    
+    ragData.results.forEach((memory, index) => {
+        memoryText += `${index + 1}. [${memory.category || memory.collection}] ${memory.text}\n`;
+    });
+    
+    memoryText += "\n注意：基于以上检索到的记忆回答，保持人设和说话风格。\n";
+    
+    return memoryText;
+}
 
 /* 4. 上下文记忆系统 */
 const MAX_HISTORY_LENGTH = 10;
@@ -1771,11 +1864,30 @@ async function chatWithMAGI(userText) {
     chatHistory.push({ role: "user", parts: [{ text: userText }] });
     persistMemory();
 
+    // 【RAG增强】检索向量记忆
+    let ragMemoryText = "";
+    try {
+        // 智能检测需要搜索的集合
+        const targetCollections = detectRAGCollections(userText);
+        
+        // 调用RAG API检索
+        const ragData = await fetchRAGMemories(userText, targetCollections, 3);
+        
+        // 格式化检索结果
+        if (ragData) {
+            ragMemoryText = formatRAGMemories(ragData);
+            console.log(`[RAG] 成功检索 ${ragData.total} 条记忆，来自集合:`, targetCollections);
+        }
+    } catch (error) {
+        console.warn('[RAG] 检索过程异常:', error);
+    }
+
     /* 使用 systemInstruction 替代 Prompt 拼接 (更安全，防 Prompt 注入) */
     const payload = {
         // 系统指令独立字段 - 用户无法覆盖
+        // 【RAG增强】将检索到的记忆融入系统指令
         systemInstruction: {
-            parts: [{ text: SYSTEM_PROMPT + "\n" + USER_MEMORY_CORE }]
+            parts: [{ text: SYSTEM_PROMPT + "\n" + USER_MEMORY_CORE + ragMemoryText }]
         },
         // 对话历史 - 使用 Gemini 标准格式
         contents: chatHistory.map(msg => ({
@@ -1789,7 +1901,7 @@ async function chatWithMAGI(userText) {
             { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" }
         ],
         generationConfig: {
-            maxOutputTokens: 500,  // 增大限制，因为 Gemini 2.5 的思考 token 也计入
+            maxOutputTokens: 1000,  // 增加限制，允许更长回复
             temperature: 0.9
         }
     };
@@ -4259,5 +4371,3 @@ GlobalRender.start();
 
 console.log("MAGI SYSTEM: GRAPHICS ENGINE LINKED.");
 console.log("📱 MOBILE MENU: INITIALIZED.");
-
-
