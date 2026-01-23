@@ -25,12 +25,13 @@
 /* 自定义音量滑块样式 */
 input[type=range] {
     -webkit-appearance: none;
-    /* 移除默认样式 */
+    appearance: none;
     background: transparent;
 }
 
 input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none;
+    appearance: none;
     height: 12px;
     width: 6px;
     background: var(--primary-color);
@@ -268,7 +269,7 @@ input[type=range]::-webkit-slider-runnable-track {
     --grid-color: rgba(0, 0, 0, 0.1);
 }
 
-//* --- 亮色模式下的机体配色微调 (修正版) --- */
+/* --- 亮色模式下的机体配色微调 (修正版) --- */
 /* 核心修复：强制所有机体在亮色模式下背景变量为白，消除顶部黑条 */
 
 /* Unit-01 (Default/Shinji) */
@@ -633,7 +634,7 @@ body.hovering .cursor-cross-h {
 }
 
 .social-text {
-    transition: transform 0.3s ease, opacity: 0.2s;
+    transition: transform 0.3s ease, opacity 0.2s;
 }
 
 @media (hover: hover) {
@@ -686,7 +687,7 @@ body.hovering .cursor-cross-h {
     font-family: 'JetBrains Mono';
     font-size: 10px;
     cursor: pointer;
-    select-none: none;
+    user-select: none;
     padding: 4px 8px;
     border: 1px solid var(--border-color);
     transition: all 0.3s;
@@ -906,7 +907,7 @@ body.lcl-mode #particles-container {
     background: var(--secondary-color);
     opacity: 0;
     bottom: -50px;
-    transition: background-color: 0.3s;
+    transition: background-color 0.3s;
 }
 
 .particle.bubble {
@@ -2101,8 +2102,8 @@ body.lcl-mode #particles-container {
         width: 16px;
         height: 16px;
         display: flex;
-        items-center;
-        justify-center;
+        align-items: center;
+        justify-content: center;
         border: 1px solid var(--secondary-color);
         color: var(--secondary-color);
         font-size: 10px;
@@ -2644,6 +2645,82 @@ body.lcl-mode #particles-container {
 }
 
 /* ==========================================================================
+   AI 气泡框处理中状态 (PROCESSING) - 等待API回复时的动画
+   ========================================================================== */
+
+#ai-speech-bubble.ai-speech-bubble-processing {
+    /* 脉冲边框动画 */
+    animation: bubble-processing-pulse 1.2s ease-in-out infinite !important;
+    border-color: var(--secondary-color) !important;
+    box-shadow: 
+        0 0 15px rgba(var(--secondary-color-rgb, 57, 255, 20), 0.3),
+        inset 0 0 20px rgba(var(--secondary-color-rgb, 57, 255, 20), 0.05) !important;
+}
+
+/* 处理中状态下的文字闪烁 */
+#ai-speech-bubble.ai-speech-bubble-processing #ai-speech-text {
+    animation: processing-text-blink 0.8s steps(2, start) infinite !important;
+    color: var(--secondary-color) !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    letter-spacing: 0.15em !important;
+}
+
+/* 气泡呼吸脉冲动画 */
+@keyframes bubble-processing-pulse {
+    0%, 100% {
+        opacity: 0.9;
+        transform: translateY(0) scale(1);
+        box-shadow: 
+            0 0 10px rgba(var(--secondary-color-rgb, 57, 255, 20), 0.2),
+            inset 0 0 15px rgba(var(--secondary-color-rgb, 57, 255, 20), 0.03);
+    }
+    50% {
+        opacity: 1;
+        transform: translateY(-2px) scale(1.01);
+        box-shadow: 
+            0 0 25px rgba(var(--secondary-color-rgb, 57, 255, 20), 0.4),
+            inset 0 0 25px rgba(var(--secondary-color-rgb, 57, 255, 20), 0.08);
+    }
+}
+
+/* 文字闪烁动画 */
+@keyframes processing-text-blink {
+    0%, 49% {
+        opacity: 1;
+    }
+    50%, 100% {
+        opacity: 0.4;
+    }
+}
+
+/* 处理中状态下添加扫描线效果 */
+#ai-speech-bubble.ai-speech-bubble-processing::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        var(--secondary-color) 50%,
+        transparent 100%
+    );
+    animation: processing-scanline 1.5s linear infinite !important;
+    opacity: 0.6;
+}
+
+@keyframes processing-scanline {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* ==========================================================================
    MAGI 垂直通讯流样式 (VERTICAL STREAM)
    ========================================================================== */
 
@@ -2795,4 +2872,19 @@ body.lcl-mode #particles-container {
     box-shadow:
         0 0 4px var(--primary-color),
         0 0 8px var(--primary-color);
+}
+
+/* === Fix for Literary Archive whitespace issue === */
+/* 消除 flex 容器中 HTML 换行产生的空白文本节点影响 */
+#literary-archive-card .flex.items-center.gap-4 {
+    font-size: 0; /* 隐藏空白文本节点 */
+}
+
+#literary-archive-card .flex.items-center.gap-4 > * {
+    font-size: 12px; /* 恢复子元素字体大小 */
+}
+
+/* 修复 button 的默认 text-align: center 导致的偏移 */
+#literary-archive-card button {
+    text-align: left;
 }
