@@ -1208,11 +1208,26 @@ function showAiSpeech(text) {
         clearTimeout(window.streamHideTimeout);
         window.streamHideTimeout = null;
     }
+    
+    /* [内存优化] 清理之前的事件监听器（防止打字被中断时的泄漏） */
+    if (window.currentScrollHandler) {
+        window.removeEventListener('scroll', window.currentScrollHandler);
+        window.currentScrollHandler = null;
+    }
+    if (window.currentKeepBubbleHandler) {
+        bubble.removeEventListener('click', window.currentKeepBubbleHandler);
+        window.currentKeepBubbleHandler = null;
+    }
 
     /* Add speaking class */
     if (aiCard) aiCard.classList.add('is-speaking');
 
     bubble.classList.remove('hidden', 'bubble-hidden');
+    
+    /* [内存优化] 清理旧的 click 监听器，防止泄漏 */
+    if (window.currentKeepBubbleHandler) {
+        bubble.removeEventListener('click', window.currentKeepBubbleHandler);
+    }
     
     /* 用户交互：点击气泡取消自动隐藏 */
     const keepBubble = () => {
@@ -1222,7 +1237,9 @@ function showAiSpeech(text) {
             console.log('[气泡框] 用户点击，取消自动隐藏');
         }
         bubble.removeEventListener('click', keepBubble); // 只触发一次
+        window.currentKeepBubbleHandler = null; // 清理引用
     };
+    window.currentKeepBubbleHandler = keepBubble;
     bubble.addEventListener('click', keepBubble);
 
     /* 检测气泡是否在视野内且未隐藏 */
@@ -1260,14 +1277,25 @@ function showAiSpeech(text) {
     /* 初始检查并设置滚动监听 */
     updateStreamVisibility();
 
+    /* [内存优化] 清理旧的 scroll 监听器，防止泄漏 */
+    if (window.currentScrollHandler) {
+        window.removeEventListener('scroll', window.currentScrollHandler);
+    }
+    
     /* 滚动时实时更新垂直流显示状态 */
     const scrollHandler = () => updateStreamVisibility();
+    window.currentScrollHandler = scrollHandler;
     window.addEventListener('scroll', scrollHandler, { passive: true });
 
-    /* Clear previous text */
-    textEl.innerText = "";
+    /* [优化] 在开始打字前移除 processing 状态，实现平滑过渡
+       这里移除而不是在 chatWithMAGI 中移除，避免闪烁 */
+    bubble.classList.remove('ai-speech-bubble-processing');
+    
+    /* [优化] 立即显示第一个字符，不等待 interval，彻底消除空白闪烁 */
+    textEl.innerText = text.charAt(0);
+    if (streamText) streamText.innerText = text.charAt(0);
 
-    let i = 0;
+    let i = 1; // 从第二个字符开始
     window.currentSpeechInterval = setInterval(() => {
         if (i < text.length) {
             const char = text.charAt(i);
@@ -1287,8 +1315,15 @@ function showAiSpeech(text) {
                 bubble.classList.add('bubble-hidden');
                 if (aiCard) aiCard.classList.remove('is-speaking');
                 window.speechTimeout = null;
-                /* 移除滚动监听 */
-                window.removeEventListener('scroll', scrollHandler);
+                /* [内存优化] 移除监听器并清理引用 */
+                if (window.currentScrollHandler) {
+                    window.removeEventListener('scroll', window.currentScrollHandler);
+                    window.currentScrollHandler = null;
+                }
+                if (window.currentKeepBubbleHandler) {
+                    bubble.removeEventListener('click', window.currentKeepBubbleHandler);
+                    window.currentKeepBubbleHandler = null;
+                }
             }, 15000);
 
             /* 20秒后淡出垂直通讯流 */
@@ -1644,10 +1679,10 @@ const USER_MEMORY_CORE = `
 
 【动态数据访问指南】
 - B站投稿记录：已导入向量数据库（共17个视频，2024-2025年），通过RAG系统实时检索。
-- 博客文章：约150篇技术文章，涵盖前端/Docker/AI等领域。
+- 博客文章：技术文章数据存储在向量数据库，涵盖前端/Docker/AI等领域。具体数量和内容以RAG检索结果为准。
 - 技术文档：MAGI架构白皮书、优化报告等核心文档。
 
-注意：当用户询问视频、博客等内容时，系统会自动检索相关记忆并提供给你。
+注意：当用户询问视频、博客等内容时，系统会自动检索相关记忆并提供给你。请基于检索到的实际数据回答，不要编造未检索到的内容。
 `;
 
 /* 【RAG增强系统】向量记忆检索 */
@@ -1740,7 +1775,33 @@ function formatRAGMemories(ragData) {
     let memoryText = "\n\n【检索到的相关记忆】\n";
     
     ragData.results.forEach((memory, index) => {
-        memoryText += `${index + 1}. [${memory.category || memory.collection}] ${memory.text}\n`;
+        const category = memory.category || memory.collection;
+        let content = memory.text || "";
+        
+        // 如果有payload，优先使用payload中的详细信息
+        if (memory.payload) {
+            const p = memory.payload;
+            
+            // B站视频格式
+            if (p.title && p.description) {
+                content = `视频《${p.title}》- ${p.description || p.intro || ''}`;
+                if (p.plays) content += ` (播放${p.plays})`;
+            }
+            // 博客文章格式
+            else if (p.title && p.content) {
+                content = `文章《${p.title}》- ${p.content.substring(0, 100)}...`;
+            }
+            // 通用格式：优先使用title
+            else if (p.title) {
+                content = p.title + (p.content ? `: ${p.content.substring(0, 100)}` : '');
+            }
+            // 如果text为空但有其他字段，拼接所有有用信息
+            else if (!content && Object.keys(p).length > 0) {
+                content = JSON.stringify(p).substring(0, 200);
+            }
+        }
+        
+        memoryText += `${index + 1}. [${category}] ${content}\n`;
     });
     
     memoryText += "\n注意：基于以上检索到的记忆回答，保持人设和说话风格。\n";
@@ -1761,11 +1822,15 @@ try {
 
 function persistMemory() {
     try {
-        if (chatHistory.length > MAX_HISTORY_LENGTH) {
-            chatHistory = chatHistory.slice(chatHistory.length - MAX_HISTORY_LENGTH);
+        /* [优化] 使用 shift() 实现真正的 FIFO 滑动窗口
+           删除最早的消息对（user + model），保持时间连续性 */
+        while (chatHistory.length > MAX_HISTORY_LENGTH * 2) {
+            chatHistory.shift(); // 删除最早的一条（user 或 model）
         }
         sessionStorage.setItem('magi_chat_history', JSON.stringify(chatHistory));
-    } catch (e) { }
+    } catch (e) {
+        console.error('[MAGI] Memory persistence failed:', e);
+    }
 }
 
 /* 5. 交互逻辑 */
@@ -1851,9 +1916,11 @@ async function chatWithMAGI(userText) {
         magiStatus.classList.remove('text-emergency');
     }
 
-    bubble.classList.remove('hidden');
+    /* [BUG FIX] 必须同时移除 hidden 和 bubble-hidden 类
+       bubble-hidden 设置了 opacity: 0，如果不移除气泡会透明不可见 */
+    bubble.classList.remove('hidden', 'bubble-hidden');
     bubble.classList.add('ai-speech-bubble-processing');
-    textEl.innerText = "MAGI SYSTEM DELIBERATING...";
+    textEl.innerText = "MAGI SYSTEM LOADING...";
 
     if (typeof startMagiAnimation === 'function') {
         startMagiAnimation();
@@ -1861,6 +1928,12 @@ async function chatWithMAGI(userText) {
     if (window.setWaveState) window.setWaveState('thinking');
 
     // 构建历史上下文
+    /* [优化] 在添加新消息前，先主动清理超长历史，防止 token 溢出 */
+    if (chatHistory.length >= MAX_HISTORY_LENGTH * 2) {
+        chatHistory.shift(); // 删除最早的消息（FIFO）
+        chatHistory.shift(); // 删除其对应的回复（保持成对）
+    }
+    
     chatHistory.push({ role: "user", parts: [{ text: userText }] });
     persistMemory();
 
@@ -1901,7 +1974,7 @@ async function chatWithMAGI(userText) {
             { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" }
         ],
         generationConfig: {
-            maxOutputTokens: 1000,  // 增加限制，允许更长回复
+            maxOutputTokens: 3000,  // 增加限制，允许更长回复
             temperature: 0.9
         }
     };
@@ -1947,7 +2020,8 @@ async function chatWithMAGI(userText) {
     if (typeof stopMagiAnimation === 'function') {
         stopMagiAnimation(success);
     }
-    bubble.classList.remove('ai-speech-bubble-processing');
+    /* [优化] 不在这里移除 processing 类，而是在 showAiSpeech 内部处理
+       避免气泡在输出文本前短暂消失的闪烁问题 */
 
     if (!success) {
         showAiSpeech(`MAGI 提案否决。错误代码: ${finalError || "UNKNOWN"}`);
@@ -1957,6 +2031,7 @@ async function chatWithMAGI(userText) {
         }
         if (window.setWaveState) window.setWaveState('flat');
 
+        /* [错误恢复] API 失败时，删除刚才添加的用户消息（回滚状态）*/
         chatHistory.pop();
         persistMemory();
     } else {
