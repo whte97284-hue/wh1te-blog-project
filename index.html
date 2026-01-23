@@ -115,6 +115,73 @@
 
 <body class="antialiased overflow-x-hidden font-sans selection:bg-secondary selection:text-black">
 
+    <!-- ============================================================ -->
+    <!-- MAGI SYSTEM BOOT LOADER (全屏加载遮罩)                        -->
+    <!-- ============================================================ -->
+    <div id="magi-boot-loader" class="magi-boot-overlay">
+        <div class="magi-boot-content">
+            <!-- 可爱的顶部水印 -->
+            <div class="magi-boot-watermark">
+                <span class="watermark-sparkle">✦</span>
+                <span>おかえりなさい</span>
+                <span class="watermark-sparkle">✦</span>
+            </div>
+
+            <!-- 六边形节点组 -->
+            <div class="magi-boot-hexagons">
+                <svg class="magi-hex-node" style="animation-delay: 0s" viewBox="0 0 100 100">
+                    <polygon points="50,5 95,27.5 95,72.5 50,95 5,72.5 5,27.5" 
+                             fill="none" stroke="var(--secondary-color)" stroke-width="1.5"/>
+                    <text x="50" y="52" text-anchor="middle" fill="var(--secondary-color)" 
+                          font-size="8" font-family="monospace" font-weight="bold">メルキオール</text>
+                    <text x="50" y="62" text-anchor="middle" fill="var(--secondary-color)" 
+                          font-size="10" font-family="monospace" font-weight="bold">M-1</text>
+                </svg>
+                <svg class="magi-hex-node" style="animation-delay: 0.2s" viewBox="0 0 100 100">
+                    <polygon points="50,5 95,27.5 95,72.5 50,95 5,72.5 5,27.5" 
+                             fill="none" stroke="var(--secondary-color)" stroke-width="1.5"/>
+                    <text x="50" y="52" text-anchor="middle" fill="var(--secondary-color)" 
+                          font-size="8" font-family="monospace" font-weight="bold">バルタザール</text>
+                    <text x="50" y="62" text-anchor="middle" fill="var(--secondary-color)" 
+                          font-size="10" font-family="monospace" font-weight="bold">B-2</text>
+                </svg>
+                <svg class="magi-hex-node" style="animation-delay: 0.4s" viewBox="0 0 100 100">
+                    <polygon points="50,5 95,27.5 95,72.5 50,95 5,72.5 5,27.5" 
+                             fill="none" stroke="var(--secondary-color)" stroke-width="1.5"/>
+                    <text x="50" y="52" text-anchor="middle" fill="var(--secondary-color)" 
+                          font-size="8" font-family="monospace" font-weight="bold">カスパー</text>
+                    <text x="50" y="62" text-anchor="middle" fill="var(--secondary-color)" 
+                          font-size="10" font-family="monospace" font-weight="bold">C-3</text>
+                </svg>
+            </div>
+
+            <!-- 系统标题 -->
+            <h1 class="magi-boot-title">MAGI 系统</h1>
+            <p class="magi-boot-subtitle">超级 AI 三贤人 · 泛用人型决策机</p>
+
+            <!-- 进度条容器 -->
+            <div class="magi-boot-progress-container">
+                <div class="magi-boot-progress-bar" id="magi-boot-progress"></div>
+                <div class="magi-boot-progress-text" id="magi-boot-percent">0%</div>
+            </div>
+
+            <!-- 状态文本 -->
+            <p class="magi-boot-status" id="magi-boot-status">正在初始化核心系统...</p>
+            
+            <!-- 日期时间 -->
+            <div class="magi-boot-datetime" id="magi-boot-datetime"></div>
+            
+            <!-- 版本信息与欢迎语 -->
+            <div class="magi-boot-footer">
+                <span>PROJECT MAGI v3.0</span>
+                <span>///</span>
+                <span>NERV本部</span>
+                <span>///</span>
+                <span class="footer-cute">ふん、また来たの</span>
+            </div>
+        </div>
+    </div>
+
     <div id="tactical-cursor">
         <div id="cursor-main" class="cursor-layer cursor-main">
             <div class="cursor-wrapper">
@@ -1789,6 +1856,10 @@
             window.toggleTetralogy = toggleTetralogy;
 
         </script>
+        
+        <!-- MAGI Boot Loader 控制脚本 -->
+        <script src="boot-loader.js"></script>
 </body>
+
 
 </html>
