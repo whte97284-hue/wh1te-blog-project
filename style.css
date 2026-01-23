@@ -18,9 +18,230 @@
 
     /* 文字颜色基准 */
     --text-main: #ffffff;
-    --text-muted: #9ca3af;
     --border-color: rgba(255, 255, 255, 0.1);
 }
+
+/* ============================================================
+   MAGI BOOT LOADER STYLES (开屏加载动画)
+   ============================================================ */
+
+/* 全屏遮罩 */
+.magi-boot-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    z-index: 99999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.7, 0, 0.3, 1);
+}
+
+/* 加载完成后的隐藏动画 */
+.magi-boot-overlay.loaded {
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+}
+
+/* 内容容器 */
+.magi-boot-content {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+}
+
+/* 顶部水印 - 可爱的欢迎语 */
+.magi-boot-watermark {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 0.3em;
+    color: rgba(255, 255, 255, 0.6);
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: -0.5rem;
+}
+
+.watermark-sparkle {
+    color: var(--primary-color);
+    font-size: 0.8rem;
+    animation: sparkle 2s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* 六边形节点组 */
+.magi-boot-hexagons {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 1rem;
+}
+
+.magi-hex-node {
+    width: 80px;
+    height: 80px;
+    opacity: 0;
+    animation: hexFadeIn 0.6s ease forwards, hexPulse 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 10px var(--secondary-color));
+}
+
+/* 主标题 */
+.magi-boot-title {
+    font-family: 'JetBrains Mono', 'Noto Sans SC', monospace;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 900;
+    letter-spacing: 0.3em;
+    color: var(--secondary-color);
+    text-shadow: 0 0 20px var(--secondary-color),
+                 0 0 40px var(--secondary-color);
+    margin: 0;
+    animation: titleGlitch 3s linear infinite;
+}
+
+/* 副标题 */
+.magi-boot-subtitle {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    color: rgba(255, 255, 255, 0.5);
+    margin: -1rem 0 0 0;
+    font-weight: 300;
+}
+
+/* 进度条容器 */
+.magi-boot-progress-container {
+    width: 300px;
+    max-width: 80vw;
+    height: 4px;
+    background: rgba(57, 255, 20, 0.1);
+    border: 1px solid rgba(57, 255, 20, 0.3);
+    position: relative;
+    overflow: visible;
+}
+
+/* 进度条 */
+.magi-boot-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--secondary-color);
+    box-shadow: 0 0 10px var(--secondary-color),
+                inset 0 0 10px rgba(255, 255, 255, 0.5);
+    transition: width 0.3s ease;
+}
+
+/* 进度百分比 */
+.magi-boot-progress-text {
+    position: absolute;
+    top: -1.5rem;
+    right: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--secondary-color);
+    font-weight: bold;
+    letter-spacing: 0.1em;
+}
+
+/* 状态文本 */
+.magi-boot-status {
+    font-family: 'JetBrains Mono', 'Noto Sans SC', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: var(--secondary-color);
+    margin: 0.5rem 0 0 0;
+    opacity: 0.8;
+    min-height: 1.2rem;
+}
+
+/* 日期时间 */
+.magi-boot-datetime {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: -0.5rem;
+}
+
+/* 页脚信息 */
+.magi-boot-footer {
+    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: rgba(255, 255, 255, 0.3);
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* 可爱的页脚文字 */
+.footer-cute {
+    color: rgba(255, 105, 180, 0.6) !important;
+    font-family: 'Noto Sans JP', sans-serif !important;
+    animation: cuteGlow 3s ease-in-out infinite;
+}
+
+@keyframes cuteGlow {
+    0%, 100% { 
+        opacity: 0.6; 
+        text-shadow: none;
+    }
+    50% { 
+        opacity: 1; 
+        text-shadow: 0 0 10px rgba(255, 105, 180, 0.5);
+    }
+}
+
+/* 动画定义 */
+@keyframes hexFadeIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) rotate(-10deg);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rot(0deg);
+    }
+}
+
+@keyframes hexPulse {
+    0%, 100% {
+        opacity: 1;
+        filter: drop-shadow(0 0 5px var(--secondary-color));
+    }
+    50% {
+        opacity: 0.7;
+        filter: drop-shadow(0 0 15px var(--secondary-color));
+    }
+}
+
+@keyframes titleGlitch {
+    0%, 90%, 100% {
+        transform: translate(0);
+    }
+    92% {
+        transform: translate(-2px, 0);
+    }
+    94% {
+        transform: translate(2px, 0);
+    }
+    96% {
+        transform: translate(0, -1px);
+    }
+    98% {
+        transform: translate(0, 1px);
+    }
+}
+
 
 /* 自定义音量滑块样式 */
 input[type=range] {
