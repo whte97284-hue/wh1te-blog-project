@@ -3667,7 +3667,8 @@ function toggleView(viewName) {
         // 隐藏主页元素
         if (homeHeader) homeHeader.classList.add('hidden');
         if (homeMain) homeMain.classList.add('hidden');
-        if (heroChar) heroChar.style.opacity = '0.1'; // 让立绘变淡而不是完全消失，更有层次感
+        /* [修复] 保持立绘完全可见，不再淡化 */
+        // if (heroChar) heroChar.style.opacity = '0.1'; // ❌ 移除
 
         // 显示 B 站容器
         biliView.classList.remove('hidden');
@@ -3863,21 +3864,28 @@ const ViewCommander = {
         const sfx = document.getElementById('sfx-click');
         if (sfx) sfx.play().catch(() => { });
 
-        // 1. 隐藏所有视图
-        Object.values(el).forEach(domFunc => {
+        /* [修复] 隐藏所有视图，但排除立绘容器
+           立绘不是"视图"，而是全局装饰元素，不应该被隐藏 */
+        Object.entries(el).forEach(([key, domFunc]) => {
+            if (key === 'hero') return; // 跳过立绘
             const dom = domFunc();
             if (dom) dom.classList.add('hidden');
         });
 
-        // 2. 立绘淡出处理
-        if (el.hero()) el.hero().style.opacity = '0.05';
+        /* [修复] 立绘显示逻辑优化：
+           - 只在"阅读类"视图（archive文章列表）中淡化背景
+           - 其他视图（home, about, pixiv, steam, bangumi）保持立绘完全可见
+           - 避免点击导航后图片莫名消失的问题 */
+        const shouldFadeHero = (targetView === 'archive');
+        if (el.hero()) {
+            el.hero().style.opacity = shouldFadeHero ? '0.05' : '1';
+        }
 
         // 3. 路由分发 (带懒加载)
         switch (targetView) {
             case 'home':
                 this._show(el.header());
                 this._show(el.main());
-                if (el.hero()) el.hero().style.opacity = '1';
                 break;
 
             case 'bangumi':
@@ -3973,8 +3981,8 @@ const ArchivesManager = {
         } else {
             if (header) header.classList.add('hidden');
             if (main) main.classList.add('hidden');
-            // 让立绘变淡，作为背景装饰，不完全消失
-            if (heroChar) heroChar.style.opacity = '0.1';
+            /* [修复] 保持立绘完全可见，不再淡化 */
+            // if (heroChar) heroChar.style.opacity = '0.1'; // ❌ 移除
         }
     },
 
