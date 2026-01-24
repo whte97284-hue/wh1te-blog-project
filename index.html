@@ -11,6 +11,27 @@
     <link rel="icon" type="image/svg+xml" href="./favicon.svg">
     <link rel="apple-touch-icon" href="./favicon.svg">
     <link rel="icon" href="data:,">
+    
+    <!-- ============================================================ -->
+    <!-- 主题预加载脚本 (必须在 CSS 之前，防止 FOUC 闪烁)              -->
+    <!-- ============================================================ -->
+    <script>
+        // 同步读取并应用主题，避免页面刷新时颜色闪变
+        (function() {
+            // 读取保存的主题
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme && savedTheme !== 'default') {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            }
+            
+            // 读取保存的视觉模式（明暗模式）
+            const savedVisualMode = localStorage.getItem('visualMode');
+            if (savedVisualMode === 'light') {
+                document.documentElement.setAttribute('data-mode', 'light');
+            }
+        })();
+    </script>
+    
     <link rel="stylesheet" href="style.css">
 
     <!-- ============================================================ -->
