@@ -3,6 +3,24 @@
    在 main.js 之后加载,控制开屏动画
    ========================================================================== */
 
+/* 预加载所有主题的背景人物图片，避免切换时卡顿 */
+function preloadThemeCharacters() {
+    const characterImages = [
+        './images/shinji.png',  // default
+        './images/asuka.png',   // unit-02
+        './images/rei.png',     // unit-00
+        './images/mari.png'     // unit-08
+    ];
+    
+    characterImages.forEach(src => {
+        const img = new Image();
+        img.src = src;
+        // 图片会自动缓存到浏览器
+    });
+    
+    console.log('[PRELOAD] 背景人物图片预加载完成');
+}
+
 const MAGIBootLoader = {
     loader: null,
     progressBar: null,
@@ -92,8 +110,10 @@ async function initializeMAGISystem() {
         MAGIBootLoader.updateProgress(20, '正在初始化渲染核心...');
         await new Promise(resolve => setTimeout(resolve, 300));
 
-        // 阶段 2: 连接外部数据节点 (40%)
+        // 阶段 2: 连接外部数据节点 + 预加载资源 (40%)
         MAGIBootLoader.updateProgress(40, '正在连接外部数据节点...');
+        // 🖼️ 预加载所有主题的背景人物图片（后台进行，不阻塞）
+        preloadThemeCharacters();
         await new Promise(resolve => setTimeout(resolve, 300));
 
         // 阶段 3: 检索战术日志 (WordPress API) (70%)
