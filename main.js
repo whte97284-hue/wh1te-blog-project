@@ -3558,12 +3558,22 @@ const BlogManager = {
             const date = new Date(post.date).toISOString().split('T')[0];
             const id = post.id;
 
-            // 分类提取
+            // 分类提取（优化版）- 添加安全检查和过滤
             let categoryHTML = '';
-            if (post._embedded && post._embedded['wp:term']) {
+            if (post._embedded && post._embedded['wp:term'] && post._embedded['wp:term'][0]) {
                 const cats = post._embedded['wp:term'][0];
-                if (cats && cats.length > 0) {
-                    categoryHTML = `<span class="text-primary border border-primary/30 px-2 bg-primary/10 text-[10px] font-bold ml-auto">[ ${cats[0].name} ]</span>`;
+                // 过滤有效分类：必须有ID、名称，且名称不为空
+                const validCats = cats.filter(cat => 
+                    cat && 
+                    cat.id && 
+                    cat.name && 
+                    cat.name.trim() !== '' &&
+                    cat.name !== 'Uncategorized' // 过滤默认分类
+                );
+                
+                if (validCats.length > 0) {
+                    // 使用第一个有效分类
+                    categoryHTML = `<span class="text-primary border border-primary/30 px-2 bg-primary/10 text-[10px] font-bold ml-auto">[ ${validCats[0].name} ]</span>`;
                 }
             }
 
@@ -3590,7 +3600,7 @@ const BlogManager = {
             return `
                 <article class="eva-card p-0 group cursor-pointer transform transition-transform hover:-translate-y-1 overflow-hidden flex flex-col bg-black/20" 
                          style="animation-delay: ${animDelay}s; animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0;"
-                         onclick="window.open('reader.html?id=${id}', '_blank')">
+                         onclick="ArticleViewer.open(${id})">
                     <div class="eva-glare"></div>
                     ${coverHTML}
                     <div class="p-5 flex flex-col flex-1">
@@ -3853,7 +3863,8 @@ const ViewCommander = {
         archiveView: () => document.getElementById('category-view-container'),
         aboutView: () => document.getElementById('about-view-container'),
         pixivView: () => document.getElementById('pixiv-view-container'),
-        steamView: () => document.getElementById('steam-view-container')
+        steamView: () => document.getElementById('steam-view-container'),
+        articleView: () => document.getElementById('article-viewer')  // 添加文章阅读器
     },
 
     // 模块加载状态缓存
@@ -3869,7 +3880,13 @@ const ViewCommander = {
         Object.entries(el).forEach(([key, domFunc]) => {
             if (key === 'hero') return; // 跳过立绘
             const dom = domFunc();
-            if (dom) dom.classList.add('hidden');
+            if (dom) {
+                dom.classList.add('hidden');
+                // 特殊处理：移除 article-viewer 的 active 类
+                if (dom.id === 'article-viewer') {
+                    dom.classList.remove('active');
+                }
+            }
         });
 
         /* [修复] 立绘显示逻辑优化：
@@ -3913,6 +3930,11 @@ const ViewCommander = {
                 this._show(el.steamView());
                 this._loadAndInit('Steam', () => import('./managers/steam-manager.js'));
                 break;
+
+            case 'article':
+                this._show(el.articleView());
+                // ArticleViewer会在自己的open方法中加载内容
+                break;
         }
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -3951,7 +3973,15 @@ const ViewCommander = {
         }
     },
 
-    _show(dom) { if (dom) dom.classList.remove('hidden'); }
+    _show(dom) { 
+        if (dom) {
+            dom.classList.remove('hidden');
+            // 特殊处理：article-viewer 需要 active 类来显示
+            if (dom.id === 'article-viewer') {
+                dom.classList.add('active');
+            }
+        }
+    }
 };
 
 // 保持全局兼容
@@ -3986,23 +4016,37 @@ const ArchivesManager = {
         }
     },
 
-    // 1. 获取分类并渲染下拉菜单
+    // 1. 获取分类并渲染下拉菜单（添加缓存破坏）
     fetchCategories() {
-        // [修正] 路径拼接：workerBase + /categories
-        fetch(`${this.workerBase}/categories?hide_empty=true`)
+        // 添加时间戳避免浏览器缓存
+        const timestamp = new Date().getTime();
+        const url = `${this.workerBase}/categories?hide_empty=true&_=${timestamp}`;
+        
+        fetch(url)
             .then(res => {
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 return res.json();
             })
             .then(categories => {
                 const list = document.getElementById('category-dropdown-list');
-                if (!categories || categories.length === 0) {
+                
+                // 过滤有效分类：必须有ID、名称，且名称不为空/Uncategorized
+                const validCategories = categories.filter(cat => 
+                    cat && 
+                    cat.id && 
+                    cat.name && 
+                    cat.name.trim() !== '' &&
+                    cat.name !== 'Uncategorized' &&
+                    cat.count > 0 // 必须有文章
+                );
+                
+                if (!validCategories || validCategories.length === 0) {
                     list.innerHTML = '<span class="text-[10px] text-gray-500 px-4">NO_CATEGORIES</span>';
                     return;
                 }
 
                 // 渲染分类列表
-                list.innerHTML = categories.map(cat => `
+                list.innerHTML = validCategories.map(cat => `
                     <a href="javascript:void(0)" 
                        onclick="ArchivesManager.openCategory(${cat.id}, '${cat.name}')"
                        class="px-4 py-2 text-xs text-gray-300 hover:text-black hover:bg-[var(--primary-color)] transition-all font-mono uppercase border-l-2 border-transparent hover:border-white block group">
@@ -4090,7 +4134,7 @@ const ArchivesManager = {
                         ${excerpt}
                     </div>
 
-                    <a href="reader.html?id=${post.id}" target="_blank" class="mt-auto inline-flex items-center gap-2 text-xs font-bold text-white group-hover:text-[var(--primary-color)] transition-colors uppercase tracking-widest border-b border-transparent group-hover:border-[var(--primary-color)] pb-0.5 w-fit">
+                    <a href="javascript:void(0)" onclick="ArticleViewer.open(${post.id})" class="mt-auto inline-flex items-center gap-2 text-xs font-bold text-white group-hover:text-[var(--primary-color)] transition-colors uppercase tracking-widest border-b border-transparent group-hover:border-[var(--primary-color)] pb-0.5 w-fit">
                         Read Data <i data-lucide="arrow-right" class="w-3 h-3"></i>
                     </a>
                 </div>
@@ -4437,6 +4481,612 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 挂载到全局
 window.MobileMenu = MobileMenu;
+
+/* ==========================================================================
+   ARTICLE VIEWER (全息展开式文章阅读器)
+   ========================================================================== */
+const ArticleViewer = {
+    overlay: null,
+    container: null,
+    contentDiv: null,
+    progressBar: null,
+    progressText: null,
+    isOpen: false,
+    previousView: 'home', // 记住打开前的视图，默认为home
+    previousScrollPosition: 0, // 记住打开前的滚动位置
+    articleCache: {}, // 文章缓存
+
+    init() {
+        this.overlay = document.getElementById('article-viewer');
+        this.container = this.overlay?.querySelector('.article-viewer-container');
+        this.contentDiv = document.getElementById('viewer-content');
+        this.progressBar = document.getElementById('viewer-progress');
+        this.progressText = document.getElementById('viewer-progress-text');
+
+        // [FIX] 确保article-viewer不被错误嵌套
+        if (this.overlay) {
+            const parent = this.overlay.parentElement;
+            // 如果父元素不是body，说明被错误嵌套了，移到body下
+            if (parent && parent.tagName !== 'BODY') {
+                console.log('[ArticleViewer] 检测到错误的DOM结构，修复中...', parent.id);
+                document.body.appendChild(this.overlay);
+            }
+        }
+
+        // ESC 键关闭
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.isOpen) {
+                this.close();
+            }
+        });
+
+        // 禁用点击外部关闭功能，避免误触
+        // 用户可以通过关闭按钮或ESC键关闭
+        // this.overlay?.addEventListener('click', (e) => {
+        //     if (e.target === this.overlay) {
+        //         this.close();
+        //     }
+        // });
+
+        // 滚动进度追踪
+        this.contentDiv?.addEventListener('scroll', () => this.updateProgress());
+    },
+
+    async open(postId, postTitle = '') {
+        if (!this.overlay) this.init();
+        if (!this.overlay) return;
+
+        console.log('[ArticleViewer] 打开文章阅读器，使用ViewCommander');
+
+        // 保存当前视图（在切换到article视图之前）
+        this.previousView = this.getCurrentView();
+        console.log('[ArticleViewer] 保存来源视图:', this.previousView);
+
+        // 保存当前滚动位置
+        this.previousScrollPosition = window.scrollY || window.pageYOffset;
+        console.log('[ArticleViewer] 保存滚动位置:', this.previousScrollPosition);
+
+        // 使用ViewCommander统一的视图切换逻辑
+        ViewCommander.navigate('article');
+
+        // 标记为已打开
+        this.isOpen = true;
+
+        // 更新文章 ID
+        const idSpan = document.getElementById('viewer-article-id');
+        if (idSpan) idSpan.textContent = `ID: ${postId}`;
+
+        // 更新状态
+        const statusSpan = document.getElementById('viewer-status');
+        if (statusSpan) statusSpan.textContent = 'LOADING...';
+
+        // 重置进度
+        this.updateProgress(0);
+
+        // 加载文章内容
+        await this.loadArticle(postId);
+
+        // 滚动到顶部
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // 刷新 Lucide 图标
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    },
+
+    async loadArticle(postId) {
+        console.log('[ArticleViewer] 开始加载文章, ID:', postId);
+        
+        // 显示加载动画
+        this.contentDiv.innerHTML = `
+            <div class="viewer-loading">
+                <div class="loading-hexagons">
+                    <div class="hex-spinner"></div>
+                </div>
+                <p class="loading-text">SYNCHRONIZING DATA...</p>
+            </div>
+        `;
+
+        try {
+            // 检查缓存
+            if (this.articleCache[postId]) {
+                console.log('[ArticleViewer] 使用缓存数据');
+                this.renderArticle(this.articleCache[postId]);
+                return;
+            }
+
+            // 调用 WordPress API (与 reader.html 相同的端点)
+            const url = `https://api-worker.wh1te.top/blog/post?id=${postId}`;
+            console.log('[ArticleViewer] 发起API请求:', url);
+            
+            const res = await fetch(url);
+            console.log('[ArticleViewer] API响应状态:', res.status, res.statusText);
+            
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            
+            // 检查是否被防火墙拦截
+            const text = await res.text();
+            console.log('[ArticleViewer] 响应文本长度:', text.length, '前100字符:', text.substring(0, 100));
+            
+            if (text.trim().startsWith('<') && !text.includes('wp-json')) {
+                console.error('[ArticleViewer] 检测到防火墙拦截');
+                throw new Error("Worker Firewall Intercepted");
+            }
+            
+            // 解析JSON
+            const post = JSON.parse(text);
+            console.log('[ArticleViewer] 解析成功, 文章标题:', post.title?.rendered);
+            console.log('[ArticleViewer] 文章内容长度:', post.content?.rendered?.length);
+
+            // 缓存文章
+            this.articleCache[postId] = post;
+
+            // 渲染文章
+            console.log('[ArticleViewer] 开始渲染文章');
+            this.renderArticle(post);
+            console.log('[ArticleViewer] 渲染完成');
+
+        } catch (error) {
+            console.error('[ArticleViewer] 加载失败:', error);
+            console.error('[ArticleViewer] 错误堆栈:', error.stack);
+            
+            this.contentDiv.innerHTML = `
+                <div class="viewer-error">
+                    <p>ERROR: FAILED TO RETRIEVE ARTICLE</p>
+                    <pre>${error.message}</pre>
+                    <button onclick="ArticleViewer.loadArticle(${postId})" 
+                            style="margin-top: 1rem; padding: 0.5rem 1rem; background: var(--secondary-color); color: black; border: none; cursor: pointer; font-family: 'JetBrains Mono'; font-size: 12px;">
+                        RETRY
+                    </button>
+                </div>
+            `;
+
+            const statusSpan = document.getElementById('viewer-status');
+            if (statusSpan) statusSpan.textContent = 'ERROR';
+        }
+    },
+
+    renderArticle(post) {
+        console.log('[ArticleViewer] renderArticle被调用, post对象:', post);
+        
+        // 格式化日期
+        const date = new Date(post.date).toLocaleDateString('zh-CN', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        // 获取分类名称 (如果有)
+        const categoryName = post._embedded?.['wp:term']?.[0]?.[0]?.name || 'UNCATEGORIZED';
+        
+        console.log('[ArticleViewer] 渲染信息:', {
+            title: post.title?.rendered,
+            date: date,
+            category: categoryName,
+            contentLength: post.content?.rendered?.length
+        });
+
+        // 渲染内容
+        const content = post.content?.rendered || '<p>No content available.</p>';
+        
+        // 计算阅读时间（平均阅读速度：300字/分钟）
+        const wordCount = content.replace(/<[^>]*>/g, '').length;
+        const readingTime = Math.ceil(wordCount / 300);
+
+        this.contentDiv.innerHTML = `
+            <article class="viewer-article">
+                <h1 class="article-title">${post.title?.rendered || 'Untitled'}</h1>
+                <div class="article-meta">
+                    <span class="meta-date">${date}</span>
+                    <span class="meta-category">${categoryName}</span>
+                </div>
+                <div class="article-reading-stats">
+                    <span>约 ${readingTime} 分钟读完</span>
+                    <span>${wordCount} 字</span>
+                </div>
+                <div class="article-body">
+                    ${content}
+                </div>
+            </article>
+        `;
+        
+        console.log('[ArticleViewer] innerHTML已设置, contentDiv高度:', this.contentDiv.scrollHeight);
+
+        // 隐藏loading，显示文章内容
+        const loadingDiv = this.contentDiv.querySelector('.viewer-loading');
+        const articleEl = this.contentDiv.querySelector('.viewer-article');
+        
+        if (loadingDiv) {
+            loadingDiv.style.display = 'none';
+        }
+        
+        if (articleEl) {
+            // 初始状态：完全透明
+            articleEl.style.opacity = '0';
+            articleEl.style.transform = 'translateY(20px)';
+            
+            // 强制重排，确保初始样式生效
+            articleEl.offsetHeight;
+            
+            // 添加过渡效果
+            articleEl.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+            
+            // 延迟一帧后触发动画
+            requestAnimationFrame(() => {
+                articleEl.style.opacity = '1';
+                articleEl.style.transform = 'translateY(0)';
+            });
+        }
+
+        // ===== 阅读体验增强功能 =====
+        // 延迟执行，等待渐显动画开始
+        setTimeout(() => {
+            this.enhanceReading();
+        }, 100);
+
+        // 更新状态
+        const statusSpan = document.getElementById('viewer-status');
+        if (statusSpan) statusSpan.textContent = 'SYNCHRONIZED';
+
+        // 滚动到顶部
+        this.contentDiv.scrollTop = 0;
+
+        // 初始化进度
+        setTimeout(() => this.updateProgress(), 100);
+    },
+
+    /**
+     * 获取当前激活的视图
+     */
+    getCurrentView() {
+        const views = {
+            'bilibili-view': 'bili',
+            'category-view-container': 'archive',
+            'about-view-container': 'about',
+            'pixiv-view-container': 'pixiv',
+            'steam-view-container': 'steam'
+        };
+
+        // 检查哪个视图是可见的（没有hidden类）
+        for (const [id, viewName] of Object.entries(views)) {
+            const el = document.getElementById(id);
+            if (el && !el.classList.contains('hidden')) {
+                return viewName;
+            }
+        }
+
+        // 默认返回home（如果main和header可见）
+        const main = document.querySelector('main');
+        const header = document.querySelector('header');
+        if (main && !main.classList.contains('hidden') && 
+            header && !header.classList.contains('hidden')) {
+            return 'home';
+        }
+
+        return 'home'; // 默认值
+    },
+
+    /**
+     * 阅读体验增强功能
+     * 包括：TOC生成、代码复制、图片灯箱、平滑滚动
+     */
+    enhanceReading() {
+        if (!this.contentDiv) return;
+
+        const articleBody = this.contentDiv.querySelector('.article-body');
+        if (!articleBody) return;
+
+        console.log('[ArticleViewer] 初始化阅读增强功能');
+
+        // 1. 生成目录
+        this.generateTOC(articleBody);
+
+        // 2. 为所有代码块添加复制按钮
+        this.addCodeCopyButtons(articleBody);
+
+        // 3. 为所有图片添加灯箱功能
+        this.addImageLightbox(articleBody);
+
+        // 4. 为标题添加锚点ID
+        this.addHeadingAnchors(articleBody);
+    },
+
+    /**
+     * 生成文章目录（TOC）
+     */
+    generateTOC(articleBody) {
+        const tocContainer = document.getElementById('article-toc');
+        const tocNav = document.getElementById('toc-nav');
+        const tocToggle = document.getElementById('toc-toggle');
+
+        if (!tocContainer || !tocNav) return;
+
+        // 获取所有标题
+        const headings = articleBody.querySelectorAll('h2, h3, h4');
+        
+        if (headings.length === 0) {
+            tocContainer.classList.add('hidden');
+            return;
+        }
+
+        console.log(`[ArticleViewer] 生成TOC，共 ${headings.length} 个标题`);
+
+        // 清空并生成TOC
+        tocNav.innerHTML = '';
+        headings.forEach((heading, index) => {
+            const level = heading.tagName.toLowerCase();
+            const text = heading.textContent;
+            const id = `heading-${index}`;
+            
+            // 为标题添加ID
+            heading.id = id;
+
+            // 创建TOC链接
+            const link = document.createElement('a');
+            link.href = `#${id}`;
+            link.className = `toc-item level-${level.charAt(1)}`;
+            link.textContent = text;
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                // 计算标题相对于内容区域的位置
+                const contentRect = this.contentDiv.getBoundingClientRect();
+                const headingRect = heading.getBoundingClientRect();
+                const offset = headingRect.top - contentRect.top + this.contentDiv.scrollTop;
+                
+                // 平滑滚动到目标位置，留出一些顶部空间
+                this.contentDiv.scrollTo({
+                    top: offset - 20, // 留出20px的顶部空间
+                    behavior: 'smooth'
+                });
+            });
+
+            tocNav.appendChild(link);
+        });
+
+        // 显示TOC
+        tocContainer.classList.remove('hidden');
+
+        // TOC收起/展开
+        if (tocToggle && !tocToggle.hasAttribute('data-initialized')) {
+            tocToggle.setAttribute('data-initialized', 'true');
+            tocToggle.addEventListener('click', () => {
+                tocContainer.classList.toggle('collapsed');
+            });
+        }
+
+        // 滚动高亮当前标题
+        this.updateActiveTOC(headings);
+    },
+
+    /**
+     * 更新TOC当前激活项
+     */
+    updateActiveTOC(headings) {
+        if (!this.contentDiv) return;
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.id;
+                    document.querySelectorAll('.toc-item').forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === `#${id}`) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }, {
+            root: this.contentDiv,
+            rootMargin: '-100px 0px -50% 0px'
+        });
+
+        headings.forEach(heading => observer.observe(heading));
+
+        // 绑定TOC中的回到顶部按钮
+        this.bindTOCBackToTop();
+    },
+
+    /**
+     * 绑定TOC中的回到顶部按钮
+     */
+    bindTOCBackToTop() {
+        const tocBackToTopBtn = document.getElementById('toc-back-to-top');
+        if (tocBackToTopBtn && !tocBackToTopBtn.hasAttribute('data-initialized')) {
+            tocBackToTopBtn.setAttribute('data-initialized', 'true');
+            tocBackToTopBtn.addEventListener('click', () => {
+                console.log('[ArticleViewer] TOC 回到顶部按钮被点击');
+                console.log('[ArticleViewer] this.contentDiv:', this.contentDiv);
+                console.log('[ArticleViewer] contentDiv scrollTop:', this.contentDiv?.scrollTop);
+                console.log('[ArticleViewer] contentDiv scrollHeight:', this.contentDiv?.scrollHeight);
+                
+                if (this.contentDiv) {
+                    // 尝试直接设置 scrollTop
+                    this.contentDiv.scrollTop = 0;
+                    
+                    // 同时尝试 scrollTo
+                    this.contentDiv.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                    
+                    console.log('[ArticleViewer] 滚动后 scrollTop:', this.contentDiv.scrollTop);
+                } else {
+                    console.error('[ArticleViewer] contentDiv 不存在！');
+                }
+            });
+            console.log('[ArticleViewer] TOC 回到顶部按钮已绑定');
+        }
+    },
+
+    /**
+     * 为代码块添加复制按钮
+     */
+    addCodeCopyButtons(articleBody) {
+        const codeBlocks = articleBody.querySelectorAll('pre');
+        
+        console.log(`[ArticleViewer] 为 ${codeBlocks.length} 个代码块添加复制按钮`);
+
+        codeBlocks.forEach(pre => {
+            // 跳过已经有复制按钮的
+            if (pre.querySelector('.code-copy-btn')) return;
+
+            const button = document.createElement('button');
+            button.className = 'code-copy-btn';
+            button.textContent = 'COPY';
+            button.setAttribute('aria-label', '复制代码');
+
+            button.addEventListener('click', async () => {
+                const code = pre.querySelector('code')?.textContent || pre.textContent;
+                
+                try {
+                    await navigator.clipboard.writeText(code);
+                    button.textContent = 'COPIED!';
+                    button.classList.add('copied');
+                    
+                    setTimeout(() => {
+                        button.textContent = 'COPY';
+                        button.classList.remove('copied');
+                    }, 2000);
+                } catch (err) {
+                    console.error('[ArticleViewer] 复制失败:', err);
+                    button.textContent = 'FAILED';
+                    setTimeout(() => {
+                        button.textContent = 'COPY';
+                    }, 2000);
+                }
+            });
+
+            pre.appendChild(button);
+        });
+    },
+
+    /**
+     * 为图片添加灯箱功能
+     */
+    addImageLightbox(articleBody) {
+        const images = articleBody.querySelectorAll('img');
+        const lightbox = document.getElementById('image-lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+        const lightboxClose = document.getElementById('lightbox-close');
+
+        if (!lightbox || !lightboxImg || !lightboxClose) return;
+
+        console.log(`[ArticleViewer] 为 ${images.length} 张图片添加灯箱功能`);
+
+        images.forEach(img => {
+            img.style.cursor = 'zoom-in';
+            img.addEventListener('click', () => {
+                lightboxImg.src = img.src;
+                lightboxImg.alt = img.alt;
+                lightbox.classList.remove('hidden');
+                setTimeout(() => lightbox.classList.add('show'), 10);
+            });
+        });
+
+        // 关闭灯箱（只初始化一次）
+        if (!lightboxClose.hasAttribute('data-initialized')) {
+            lightboxClose.setAttribute('data-initialized', 'true');
+            
+            const closeLightbox = () => {
+                lightbox.classList.remove('show');
+                setTimeout(() => {
+                    lightbox.classList.add('hidden');
+                    lightboxImg.src = '';
+                }, 300);
+            };
+
+            lightboxClose.addEventListener('click', closeLightbox);
+            lightbox.addEventListener('click', (e) => {
+                if (e.target === lightbox) closeLightbox();
+            });
+            
+            // ESC键关闭
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && lightbox.classList.contains('show')) {
+                    closeLightbox();
+                }
+            });
+        }
+    },
+
+    /**
+     * 为标题添加锚点ID（如果还没有）
+     */
+    addHeadingAnchors(articleBody) {
+        const headings = articleBody.querySelectorAll('h2, h3, h4');
+        headings.forEach((heading, index) => {
+            if (!heading.id) {
+                heading.id = `heading-${index}`;
+            }
+        });
+    },
+
+    updateProgress(forcePercent = null) {
+        if (!this.contentDiv || !this.progressBar || !this.progressText) return;
+
+        let percent;
+        if (forcePercent !== null) {
+            percent = forcePercent;
+        } else {
+            const scrollTop = this.contentDiv.scrollTop;
+            const scrollHeight = this.contentDiv.scrollHeight - this.contentDiv.clientHeight;
+            percent = scrollHeight > 0 ? Math.round((scrollTop / scrollHeight) * 100) : 0;
+        }
+
+        this.progressBar.style.width = `${percent}%`;
+        this.progressText.textContent = `${percent}%`;
+    },
+
+    close() {
+        if (!this.isOpen) return;
+
+        console.log('[ArticleViewer] 关闭文章阅读器，返回:', this.previousView);
+
+        // 使用ViewCommander返回到之前保存的视图
+        ViewCommander.navigate(this.previousView);
+
+        // 恢复滚动位置（延迟执行，确保视图切换完成）
+        setTimeout(() => {
+            window.scrollTo({
+                top: this.previousScrollPosition,
+                behavior: 'instant' // 立即跳转，不使用平滑滚动
+            });
+            console.log('[ArticleViewer] 恢复滚动位置:', this.previousScrollPosition);
+        }, 50);
+
+        // 标记为已关闭
+        this.isOpen = false;
+    }
+};
+
+// 初始化文章阅读器
+document.addEventListener('DOMContentLoaded', () => {
+    ArticleViewer.init();
+});
+
+// 挂载到全局
+window.ArticleViewer = ArticleViewer;
+
+/* ==========================================================================
+   PERFORMANCE: VISIBILITY AWARENESS (能见度感知优化)
+   参考: OPTIMIZATION_REPORT.md - 当用户切换标签页时停止动画
+   ========================================================================== */
+document.addEventListener('visibilitychange', () => {
+    if (ArticleViewer.isOpen && ArticleViewer.container) {
+        if (document.hidden) {
+            // 标签页隐藏：暂停动画，节省资源
+            ArticleViewer.container.style.animationPlayState = 'paused';
+            console.log('[ArticleViewer] 标签页隐藏，暂停动画');
+        } else {
+            // 标签页恢复：恢复动画
+            ArticleViewer.container.style.animationPlayState = 'running';
+            console.log('[ArticleViewer] 标签页恢复，继续动画');
+        }
+    }
+});
 
 // 兼容性：创建 toggleMode 别名
 window.toggleMode = toggleLightMode;
