@@ -1880,6 +1880,79 @@
         
         <!-- MAGI Boot Loader 控制脚本 -->
         <script src="boot-loader.js"></script>
+
+    <!-- ============================================================ -->
+    <!-- 全息展开式文章阅读器 (Holographic Article Viewer)             -->
+    <!-- ============================================================ -->
+    <section id="article-viewer" class="hidden min-h-screen pt-28 px-4 md:px-8 max-w-screen-2xl mx-auto relative z-20 pb-20">
+        <div class="article-viewer-container">
+            <!-- 顶部标题栏 -->
+            <div class="viewer-header">
+                <div class="header-left">
+                    <span class="viewer-badge">ARTICLE VIEWER</span>
+                    <span class="viewer-divider">//</span>
+                    <span class="viewer-id" id="viewer-article-id">ID: ---</span>
+                </div>
+                <div class="header-right">
+                    <span class="viewer-status" id="viewer-status">SYNCHRONIZED</span>
+                    <button class="viewer-close-btn" onclick="ArticleViewer.close()" title="关闭 (ESC)">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 内容区域 -->
+            <div class="viewer-content" id="viewer-content">
+                <div class="viewer-loading">
+                    <div class="loading-hexagons">
+                        <div class="hex-spinner"></div>
+                    </div>
+                    <p class="loading-text">SYNCHRONIZING DATA...</p>
+                </div>
+            </div>
+
+            <!-- 底部进度条 -->
+            <div class="viewer-footer">
+                <div class="viewer-progress-track">
+                    <div class="viewer-progress-bar" id="viewer-progress"></div>
+                </div>
+                <span class="viewer-progress-text" id="viewer-progress-text">0%</span>
+            </div>
+        </div>
+
+        <!-- 回到顶部按钮 -->
+        <button id="back-to-top" class="back-to-top-btn" title="回到顶部" aria-label="回到顶部">
+            <i data-lucide="arrow-up"></i>
+        </button>
+
+        <!-- 文章目录（TOC）导航 -->
+        <div id="article-toc" class="article-toc hidden">
+            <div class="toc-header">
+                <span class="toc-title">目录</span>
+                <button class="toc-toggle" id="toc-toggle" title="收起/展开">
+                    <i data-lucide="chevron-left"></i>
+                </button>
+            </div>
+            <nav class="toc-nav" id="toc-nav">
+                <!-- 目录将由JavaScript动态生成 -->
+            </nav>
+            <div class="toc-footer">
+                <button class="toc-action-btn" id="toc-back-to-top" title="回到顶部">
+                    <i data-lucide="arrow-up"></i>
+                    <span>回顶</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 图片灯箱 -->
+        <div id="image-lightbox" class="image-lightbox hidden">
+            <button class="lightbox-close" id="lightbox-close" title="关闭">
+                <i data-lucide="x"></i>
+            </button>
+            <img id="lightbox-img" src="" alt="">
+        </div>
+    </section>
+
 </body>
 
 
