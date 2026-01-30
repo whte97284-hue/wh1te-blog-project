@@ -4065,3 +4065,452 @@ header.blur-and-shrink {
         -2px -2px 0 2px var(--primary-color),
         2px 2px 0 2px var(--primary-color);
 }
+
+/* ==========================================================================
+   TACTICAL COMMENT SYSTEM (战术评论系统)
+   ========================================================================== */
+
+/* 评论区主容器 */
+.article-comments-section {
+    margin-top: 60px;
+    padding-top: 40px;
+    border-top: 2px solid var(--secondary-color);
+    animation: fadeInUp 0.6s ease-out;
+    position: relative;
+    overflow: hidden;
+    /* 性能优化：告诉浏览器该元素会发生动画 */
+    will-change: opacity, transform;
+}
+
+/* 装饰性背景网格 - 使用伪元素减少DOM节点 */
+.article-comments-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        linear-gradient(rgba(57, 255, 20, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(57, 255, 20, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+    pointer-events: none;
+    z-index: 0;
+    /* 性能优化：使用 transform 启用GPU加速 */
+    transform: translateZ(0);
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 折叠触发器 */
+.comments-trigger {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: rgba(57, 255, 20, 0.05);
+    border: 1px solid var(--secondary-color);
+    cursor: pointer;
+    /* 性能优化：只过渡必要的属性 */
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    z-index: 10;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    /* 性能优化：启用GPU加速 */
+    transform: translateZ(0);
+}
+
+.comments-trigger:hover {
+    background: rgba(57, 255, 20, 0.1);
+    box-shadow: 0 0 20px rgba(57, 255, 20, 0.3);
+}
+
+.trigger-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.trigger-badge {
+    color: var(--secondary-color);
+    font-weight: bold;
+    text-shadow: 0 0 8px var(--secondary-color);
+}
+
+.trigger-divider {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.trigger-count {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+}
+
+.trigger-icon {
+    color: var(--secondary-color);
+    transition: transform 0.3s ease;
+    width: 20px;
+    height: 20px;
+}
+
+.comments-trigger.expanded .trigger-icon {
+    transform: rotate(180deg);
+}
+
+/* 评论容器 */
+.comments-container {
+    margin-top: 20px;
+    animation: expandDown 0.4s ease-out;
+    position: relative;
+    z-index: 10;
+}
+
+@keyframes expandDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+        transform: scaleY(0.95);
+    }
+    to {
+        opacity: 1;
+        max-height: 5000px;
+        transform: scaleY(1);
+    }
+}
+
+/* 评论列表 */
+.comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+/* 加载状态 */
+.loading-comments {
+    text-align: center;
+    padding: 40px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--secondary-color);
+    letter-spacing: 2px;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.no-comments {
+    text-align: center;
+    padding: 40px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 2px;
+}
+
+/* 单条评论卡片 */
+.comment-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-left: 3px solid var(--secondary-color);
+    padding: 20px;
+    /* 性能优化：只过渡transform和opacity */
+    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), 
+                border-color 0.4s ease, 
+                background 0.4s ease,
+                box-shadow 0.4s ease;
+    position: relative;
+    overflow: hidden;
+    /* 性能优化：contain布局，isolate重绘 */
+    contain: layout style paint;
+    /* 性能优化：启用 GPU 加速 */
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+/* 扫描光特效 - 仅在hover时激活动画 */
+.comment-card::before {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: -100%;
+    width: 300%;
+    height: 300%;
+    background: linear-gradient(45deg, transparent 45%, rgba(57, 255, 20, 0.05) 50%, transparent 55%);
+    pointer-events: none;
+    /* 性能优化：初始状态不播放动画 */
+    animation-play-state: paused;
+}
+
+.comment-card:hover::before {
+    /* 性能优化：只在 hover 时启动动画 */
+    animation: scanShift 2s linear infinite;
+}
+
+@keyframes scanShift {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(30%, 30%); }
+}
+
+.comment-card:hover {
+    border-color: var(--secondary-color);
+    background: rgba(57, 255, 20, 0.04);
+    box-shadow: 
+        inset 0 0 20px rgba(57, 255, 20, 0.05),
+        0 0 15px rgba(57, 255, 20, 0.1);
+    /* 性能优化：使用 transform 而非 margin/padding */
+    transform: translateX(5px) translateZ(0);
+}
+
+.comment-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.comment-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 4px;
+    background: #000;
+    border: 1px solid var(--secondary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+    box-shadow: 0 0 10px rgba(57, 255, 20, 0.2);
+    /* 性能优化：GPU 加速 */
+    transform: translateZ(0);
+}
+
+/* 脉冲动画 - 使用transform优化性能 */
+.comment-avatar::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border: 1px solid var(--secondary-color);
+    opacity: 0.3;
+    animation: pulseAvatar 2s ease-out infinite;
+    pointer-events: none;
+    /* 性能优化：告诉浏览器会有动画 */
+    will-change: transform, opacity;
+}
+
+@keyframes pulseAvatar {
+    0% { 
+        transform: scale(1) translateZ(0); 
+        opacity: 0.3; 
+    }
+    100% { 
+        transform: scale(1.2) translateZ(0); 
+        opacity: 0; 
+    }
+}
+
+.avatar-initial {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--secondary-color);
+    text-shadow: 0 0 5px var(--secondary-color);
+}
+
+.comment-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.comment-author {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: bold;
+    color: #fff;
+    letter-spacing: 0.5px;
+}
+
+.comment-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 1px;
+}
+
+.comment-body {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 5px;
+}
+
+.comment-body p {
+    margin-bottom: 12px;
+}
+
+.comment-body p:last-child {
+    margin-bottom: 0;
+}
+
+/* 发表评论表单 */
+.comment-form-container {
+    margin-top: 50px;
+    padding: 30px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 2px solid var(--secondary-color);
+    position: relative;
+}
+
+.comment-form-container::before {
+    content: 'INTERFACE_POST_PROTO';
+    position: absolute;
+    top: -10px;
+    right: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    color: var(--secondary-color);
+    background: #000;
+    padding: 0 5px;
+}
+
+.form-header {
+    margin-bottom: 24px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(57, 255, 20, 0.2);
+}
+
+.form-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--secondary-color);
+    text-shadow: 0 0 8px var(--secondary-color);
+    letter-spacing: 2px;
+}
+
+.comment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-input,
+.form-textarea {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    padding: 14px;
+    font-size: 13px;
+    font-family: 'Noto Sans SC', sans-serif;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.form-input:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 15px rgba(57, 255, 20, 0.2);
+    background: rgba(20, 20, 20, 0.8);
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.form-submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 32px;
+    background: var(--secondary-color);
+    color: #000;
+    border: none;
+    font-weight: 800;
+    font-size: 14px;
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    align-self: flex-end;
+    position: relative;
+    overflow: hidden;
+}
+
+.form-submit::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: all 0.6s ease;
+}
+
+.form-submit:hover::after {
+    left: 150%;
+}
+
+.form-submit:hover {
+    background: #fff;
+    box-shadow: 0 0 25px rgba(57, 255, 20, 0.5);
+    transform: translateY(-2px);
+}
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+    .article-comments-section {
+        margin-top: 40px;
+        padding-top: 30px;
+    }
+
+    .comments-trigger {
+        padding: 12px 16px;
+        font-size: 12px;
+    }
+
+    .comment-card {
+        padding: 15px;
+    }
+
+    .comment-avatar {
+        width: 36px;
+        height: 36px;
+    }
+
+    .avatar-initial {
+        font-size: 16px;
+    }
+
+    .comment-form-container {
+        padding: 20px;
+    }
+}
