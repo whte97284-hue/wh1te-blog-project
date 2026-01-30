@@ -4719,6 +4719,22 @@ const ArticleViewer = {
             });
         }
 
+        // ===== 评论区初始化 (TACTICAL COMMENT SYSTEM) =====
+        // 在文章渲染完成后立即添加评论区HTML
+        const currentPostId = post.id;
+        const commentsHTML = this.generateCommentsSection(currentPostId);
+        
+        // 将评论区HTML追加到文章末尾（复用前面的articleEl变量）
+        if (articleEl) {
+            articleEl.insertAdjacentHTML('beforeend', commentsHTML);
+            
+            // 绑定评论区交互
+            this.bindCommentsToggle();
+            
+            // 异步加载评论数据
+            this.loadComments(currentPostId);
+        }
+
         // ===== 阅读体验增强功能 =====
         // 延迟执行，等待渐显动画开始
         setTimeout(() => {
@@ -5038,6 +5054,263 @@ const ArticleViewer = {
 
         this.progressBar.style.width = `${percent}%`;
         this.progressText.textContent = `${percent}%`;
+    },
+
+    /* ==========================================================================
+       TACTICAL COMMENT SYSTEM (战术评论系统)
+       ========================================================================== */
+
+    /**
+     * 生成评论区HTML结构
+     */
+    generateCommentsSection(postId) {
+        return `
+            <div class="article-comments-section" id="article-comments">
+                <div class="comments-trigger" id="comments-trigger">
+                    <div class="trigger-left">
+                        <span class="trigger-badge">战术讨论协议 / TACTICAL_DISCUSSION</span>
+                        <span class="trigger-divider">//</span>
+                        <span class="trigger-count" id="comments-count">同步中 / LOADING...</span>
+                    </div>
+                    <div class="trigger-right">
+                        <i data-lucide="chevron-down" class="trigger-icon"></i>
+                    </div>
+                </div>
+                <div class="comments-container hidden" id="comments-container">
+                    <div class="comments-list" id="comments-list">
+                        <div class="loading-comments">正在请求机密电讯数据... SYNCHRONIZING_DATA</div>
+                    </div>
+                    <div class="comment-form-container">
+                        <div class="form-header">
+                            <span class="form-title">[ 发送新电讯 / NEW_TRANSMISSION ]</span>
+                        </div>
+                        <form class="comment-form" id="comment-form">
+                            <input type="hidden" id="comment-post-id" value="${postId}">
+                            <input type="text" 
+                                   class="form-input" 
+                                   id="comment-author" 
+                                   placeholder="署名 / PILOT_ID" 
+                                   required>
+                            <input type="email" 
+                                   class="form-input" 
+                                   id="comment-email" 
+                                   placeholder="通信链路 / EMAIL_ADDR" 
+                                   required>
+                            <textarea class="form-textarea" 
+                                      id="comment-content" 
+                                      placeholder="请输入电讯正文 / MESSAGE CONTENT..." 
+                                      rows="4" 
+                                      required></textarea>
+                            <button type="submit" class="form-submit">
+                                <i data-lucide="send"></i>
+                                <span>发送 / TRANSMIT</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    /**
+     * 绑定评论区折叠/展开交互
+     */
+    bindCommentsToggle() {
+        const trigger = document.getElementById('comments-trigger');
+        const container = document.getElementById('comments-container');
+        
+        if (!trigger || !container) return;
+        
+        // 移除旧的监听器（如果存在）
+        const newTrigger = trigger.cloneNode(true);
+        trigger.parentNode.replaceChild(newTrigger, trigger);
+        
+        newTrigger.addEventListener('click', () => {
+            if (container.classList.contains('hidden')) {
+                container.classList.remove('hidden');
+                newTrigger.classList.add('expanded');
+            } else {
+                container.classList.add('hidden');
+                newTrigger.classList.remove('expanded');
+            }
+        });
+
+        // 绑定评论表单提交事件
+        this.bindCommentForm();
+    },
+
+    /**
+     * 绑定评论表单提交
+     */
+    bindCommentForm() {
+        const form = document.getElementById('comment-form');
+        if (!form) return;
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await this.submitComment();
+        });
+    },
+
+    /**
+     * 异步加载评论数据
+     */
+    async loadComments(postId) {
+        const comments = await this.fetchComments(postId);
+        this.renderComments(comments);
+    },
+
+    /**
+     * 从API获取评论数据
+     */
+    async fetchComments(postId) {
+        try {
+            const url = `https://api-worker.wh1te.top/blog/comments?post=${postId}&per_page=100`;
+            const res = await fetch(url);
+            
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+            
+            const comments = await res.json();
+            console.log('[Comments] 获取成功:', comments.length, '条评论');
+            return comments;
+        } catch (error) {
+            console.error('[Comments] 获取失败:', error);
+            return [];
+        }
+    },
+
+    /**
+     * 渲染评论列表
+     */
+    renderComments(comments) {
+        const list = document.getElementById('comments-list');
+        const count = document.getElementById('comments-count');
+        
+        if (!list || !count) return;
+        
+        count.textContent = `${comments.length} 条回复 / REPLIES`;
+        
+        if (comments.length === 0) {
+            list.innerHTML = '<div class="no-comments">暂无通信记录 / NO TRANSMISSIONS</div>';
+            return;
+        }
+        
+        list.innerHTML = comments.map(comment => `
+            <div class="comment-card">
+                <div class="comment-header">
+                    <div class="comment-avatar">
+                        <span class="avatar-initial">${this.getInitial(comment.author_name)}</span>
+                    </div>
+                    <div class="comment-meta">
+                        <span class="comment-author">${this.escapeHtml(comment.author_name)}</span>
+                        <span class="comment-date">${this.formatDate(comment.date)}</span>
+                    </div>
+                </div>
+                <div class="comment-body">
+                    ${comment.content.rendered}
+                </div>
+            </div>
+        `).join('');
+        
+        // 重新初始化Lucide图标
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    },
+
+    /**
+     * 提交评论
+     */
+    async submitComment() {
+        const postId = document.getElementById('comment-post-id')?.value;
+        const author = document.getElementById('comment-author')?.value;
+        const email = document.getElementById('comment-email')?.value;
+        const content = document.getElementById('comment-content')?.value;
+        const submitBtn = document.querySelector('.form-submit');
+
+        if (!postId || !author || !email || !content) {
+            alert('请填写所有必填字段');
+            return;
+        }
+
+        // 禁用按钮，防止重复提交
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.querySelector('span').textContent = '发送中 / SENDING...';
+        }
+
+        try {
+            const response = await fetch('https://api-worker.wh1te.top/blog/comments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    post: parseInt(postId),
+                    author_name: author,
+                    author_email: email,
+                    content: content
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`提交失败: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('[Comments] 提交成功:', result);
+
+            // 清空表单
+            document.getElementById('comment-author').value = '';
+            document.getElementById('comment-email').value = '';
+            document.getElementById('comment-content').value = '';
+
+            // 重新加载评论列表
+            await this.loadComments(postId);
+
+            alert('评论提交成功！审核通过后将显示。');
+
+        } catch (error) {
+            console.error('[Comments] 提交失败:', error);
+            alert('评论提交失败: ' + error.message);
+        } finally {
+            // 恢复按钮状态
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.querySelector('span').textContent = '发送 / TRANSMIT';
+            }
+        }
+    },
+
+    /**
+     * 获取用户名首字母
+     */
+    getInitial(name) {
+        if (!name) return '?';
+        return name.charAt(0).toUpperCase();
+    },
+
+    /**
+     * 转义HTML字符
+     */
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    },
+
+    /**
+     * 格式化日期
+     */
+    formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        }).replace(/\//g, '.').replace(',', '');
     },
 
     close() {
