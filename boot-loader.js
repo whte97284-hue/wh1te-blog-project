@@ -73,6 +73,69 @@ const MAGIBootLoader = {
         }
     },
 
+    async verifyIdentity() {
+        const token = localStorage.getItem('magi_auth_token');
+        const isCommander = localStorage.getItem('magi_access') === 'commander';
+        const BASE_URL = 'https://api-worker.wh1te.top/';
+
+        // Case 1: 没有任何登录痕迹 -> 访客模式，跳过
+        if (!isCommander && !token) return;
+
+        // Case 2: 有 commander 标记但无 Token -> 非法篡改，强制清除
+        if (isCommander && !token) {
+            console.warn('[BOOT] 检测到非法权限标记 (No Token)，强制清除');
+            this.forceLogout();
+            this.updateProgress(45, '警告：检测到非法权限标记');
+            await new Promise(r => setTimeout(r, 800));
+            return;
+        }
+
+        // Case 3: 正常校验
+        try {
+            this.statusText.textContent = '正在验证身份凭证...';
+            // 设置 3秒 超时，避免卡死启动页
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+            const response = await fetch(`${BASE_URL}verify`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.valid) {
+                    console.log('[BOOT] 身份验证通过:', result.user.id);
+                    this.updateProgress(45, `欢迎回来，${result.user.id} 指挥官`);
+                } else {
+                    throw new Error(result.error || 'Token Invalid');
+                }
+            } else {
+                throw new Error(`HTTP ${response.status}`);
+            }
+        } catch (error) {
+            console.warn('[BOOT] 身份验证异常:', error);
+            
+            // 如果是网络超时，保持离线信任（不做登出）
+            if (error.name === 'AbortError' || error.message.includes('NetworkError')) {
+                this.updateProgress(45, '验证超时 (Offline Mode)');
+            } else {
+                // 明确的验证失败（过期/伪造）-> 强制登出
+                this.forceLogout();
+                this.updateProgress(45, '凭证已失效，权限降级');
+                await new Promise(r => setTimeout(r, 1000)); // 让用户看清错误
+            }
+        }
+    },
+
+    forceLogout() {
+        localStorage.removeItem('magi_access');
+        localStorage.removeItem('commander_id');
+        localStorage.removeItem('magi_auth_token');
+    },
+
     async hide() {
         // 清除日期时间更新
         if (this.datetimeInterval) {
@@ -110,10 +173,14 @@ async function initializeMAGISystem() {
         MAGIBootLoader.updateProgress(20, '正在初始化渲染核心...');
         await new Promise(resolve => setTimeout(resolve, 300));
 
-        // 阶段 2: 连接外部数据节点 + 预加载资源 (40%)
-        MAGIBootLoader.updateProgress(40, '正在连接外部数据节点...');
+        // 阶段 2: 连接外部数据节点 + 预加载资源 + [SECURITY] 身份核验 (40%)
+        MAGIBootLoader.updateProgress(40, '正在建立安全连接...');
         // 🖼️ 预加载所有主题的背景人物图片（后台进行，不阻塞）
         preloadThemeCharacters();
+        
+        // 🔒 执行身份自检
+        await MAGIBootLoader.verifyIdentity();
+        
         await new Promise(resolve => setTimeout(resolve, 300));
 
         // 阶段 3: 检索战术日志 (WordPress API) (70%)
