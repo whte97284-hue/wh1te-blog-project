@@ -853,7 +853,8 @@
                         <div class="flex border border-secondary/50 bg-black/20 backdrop-blur-sm">
                             <input type="text" id="magi-input" placeholder="Ask ERIRI..."
                                 class="w-full bg-transparent border-none px-3 py-2 text-xs font-mono text-primary focus:outline-none placeholder-secondary/30"
-                                onkeypress="handleChatInput(event)">
+                                onkeypress="handleChatInput(event)"
+                                oninput="updateInputStatus(this.value)">
                             <button onclick="sendToMagi()"
                                 class="px-3 border-l border-secondary/50 hover:bg-secondary hover:text-black transition-colors text-secondary"
                                 aria-label="Send Message" title="Send Message">
@@ -1942,9 +1943,10 @@
             <div class="toc-footer">
                 <button class="toc-action-btn" id="toc-back-to-top" title="回到顶部">
                     <i data-lucide="arrow-up"></i>
-                    <span>回顶</span>
                 </button>
             </div>
+        </div>
+
         </div>
 
         <!-- 图片灯箱 -->
@@ -1955,6 +1957,87 @@
             <img id="lightbox-img" src="" alt="">
         </div>
     </section>
+
+    <!-- 战术授权系统 Overlay -->
+    <div id="tactical-auth-overlay" class="auth-crt-effect">
+        <div class="auth-panel">
+            <div class="auth-header">
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 bg-red-500 animate-pulse"></div>
+                    <span class="font-mono text-[10px] text-red-500 tracking-[0.2em]">身份認証プロトコル / AUTH_PROTOCOL</span>
+                </div>
+                <div class="font-mono text-[9px] text-red-900">SYS_V3.02</div>
+            </div>
+            
+            <div class="auth-body" id="auth-form-container">
+                <div class="text-center mb-08" style="margin-bottom: 2rem;">
+                    <h2 class="font-eva-title text-4xl text-white tracking-tighter" style="font-family: 'Noto Serif JP', serif; font-weight: 900;">
+                        [ アクセス制限 / ACCESS_RESTRICTED ]
+                    </h2>
+                    <p class="font-mono text-[9px] text-red-600 tracking-widest mt-2">
+                        身份同步协议已启动 | 認証開始
+                    </p>
+                </div>
+
+                <div class="auth-input-group">
+                    <label class="auth-label">操縦者ID / PILOT_ID</label>
+                    <input type="text" id="auth-id" class="auth-input" placeholder="碇シンジ" autocomplete="off">
+                </div>
+
+                <div class="auth-input-group">
+                    <label class="auth-label">暗号鍵 / ENCRYPTION_KEY</label>
+                    <input type="password" id="auth-key" class="auth-input" placeholder="******">
+                </div>
+
+                <div class="flex justify-center gap-4 mt-6">
+                    <button class="auth-btn" onclick="SecurityProtocol.submit()">
+                        起動 / INITIALIZE
+                    </button>
+                    <button class="border-2 border-red-900 px-6 text-red-900 text-xs hover:bg-red-900 hover:text-black transition-all font-mono tracking-widest" onclick="SecurityProtocol.close()">
+                        中止 / ABORT
+                    </button>
+                </div>
+            </div>
+
+            <!-- 认证进行中动画 -->
+            <div class="auth-syncing" id="auth-syncing-view" style="display: none;">
+                <div class="text-center">
+                    <div class="syncing-avatar-container">
+                        <div class="syncing-hexagon"></div>
+                        <div class="syncing-rings"></div>
+                        <div class="syncing-text font-mono text-2xl text-white tracking-widest" style="font-family: 'Noto Serif JP', serif;">
+                            同期率
+                        </div>
+                        <div class="syncing-percentage font-mono text-6xl text-secondary font-black" id="sync-percentage">0%</div>
+                    </div>
+                    <div class="syncing-status font-mono text-xs text-secondary mt-6 tracking-[0.3em]" id="sync-status">
+                        [ パターン青 / PATTERN_BLUE ]
+                    </div>
+                </div>
+            </div>
+
+            <!-- MAGI 决策视图 -->
+            <div class="magi-deliberation" id="auth-magi-view" style="display: none; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 2rem;">
+                <div class="magi-vote-node" id="auth-melchior">
+                    <div class="text-[8px] opacity-70">MELCHIOR-1</div>
+                    <div class="text-xs font-bold mt-2 status-label">待機中</div>
+                </div>
+                <div class="magi-vote-node" id="auth-balthasar">
+                    <div class="text-[8px] opacity-70">BALTHASAR-2</div>
+                    <div class="text-xs font-bold mt-2 status-label">待機中</div>
+                </div>
+                <div class="magi-vote-node" id="auth-casper">
+                    <div class="text-[8px] opacity-70">CASPER-3</div>
+                    <div class="text-xs font-bold mt-2 status-label">待機中</div>
+                </div>
+            </div>
+            
+            <div class="p-2 border-t border-red-900/30 flex justify-between items-center text-[8px] font-mono text-red-900">
+                <span>MAGI_システム起動中</span>
+                <span id="auth-sync-rate">SYNC_RATE: 0%</span>
+            </div>
+        </div>
+    </div>
 
 </body>
 
