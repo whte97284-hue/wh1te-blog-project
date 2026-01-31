@@ -4514,3 +4514,522 @@ header.blur-and-shrink {
         padding: 20px;
     }
 }
+
+/* ==========================================================================
+   TACTICAL AUTH SYSTEM (战术授权系统视觉) - 主题响应式
+   ========================================================================== */
+
+/* CRT 屏幕开启/关闭动画 */
+@keyframes turn-on {
+    0% { 
+        transform: scale(1, 0.002); 
+        opacity: 0; 
+        filter: brightness(3);
+    }
+    30% { 
+        transform: scale(1, 0.002); 
+        opacity: 1; 
+        filter: brightness(2);
+    }
+    60% { 
+        transform: scale(1, 0.002); 
+        opacity: 1; 
+    }
+    100% { 
+        transform: scale(1, 1); 
+        opacity: 1; 
+        filter: brightness(1);
+    }
+}
+
+@keyframes turn-off {
+    0% { transform: scale(1, 1); opacity: 1; }
+    60% { transform: scale(1, 0.002); opacity: 1; filter: brightness(2); }
+    100% { transform: scale(0, 0); opacity: 0; }
+}
+
+@keyframes auth-scan-line {
+    0% { top: -100%; opacity: 0; }
+    10% { opacity: 0.8; }
+    90% { opacity: 0.8; }
+    100% { top: 200%; opacity: 0; }
+}
+
+@keyframes auth-pulse {
+    0%, 100% { 
+        box-shadow: 0 0 20px var(--secondary-color); 
+        opacity: 0.8;
+    }
+    50% { 
+        box-shadow: 0 0 40px var(--secondary-color); 
+        opacity: 1;
+    }
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* 战术授权 Overlay */
+#tactical-auth-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.95);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    backdrop-filter: blur(20px);
+}
+
+#tactical-auth-overlay.active {
+    display: flex;
+    animation: turn-on 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+#tactical-auth-overlay.closing {
+    animation: turn-off 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+/* CRT 效果：扫描线 + RGB 偏移 */
+.auth-crt-effect::before {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: 
+        linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+        linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.04));
+    z-index: 2;
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+/* 动态扫描线 */
+.auth-crt-effect::after {
+    content: "";
+    position: absolute;
+    top: -100%;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: linear-gradient(
+        to bottom,
+        transparent,
+        var(--secondary-color),
+        transparent
+    );
+    opacity: 0.15;
+    z-index: 3;
+    pointer-events: none;
+    animation: auth-scan-line 4s linear infinite;
+}
+
+/* 战术折角裁切 - 响应主题色 */
+.auth-panel {
+    width: 100%;
+    max-width: 650px;
+    background: #000;
+    border: 2px solid var(--secondary-color);
+    position: relative;
+    padding: 3px;
+    clip-path: polygon(
+        0 0, 20px 0, 20px 4px, calc(100% - 20px) 4px, calc(100% - 20px) 0, 100% 0, 
+        100% calc(100% - 20px), calc(100% - 10px) calc(100% - 10px), calc(100% - 20px) 100%, 
+        20px 100%, 0 calc(100% - 20px)
+    );
+    box-shadow: 
+        0 0 40px var(--secondary-color),
+        inset 0 0 60px rgba(0, 0, 0, 0.8);
+    animation: auth-pulse 3s ease-in-out infinite;
+}
+
+.auth-header {
+    background: linear-gradient(90deg, var(--secondary-color), rgba(0, 0, 0, 0.8));
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--secondary-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Header 装饰光效 */
+.auth-header::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    animation: shimmer 3s infinite;
+}
+
+.auth-body {
+    padding: 50px 40px;
+    position: relative;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+/* 授权表单样式 */
+.auth-input-group {
+    margin-bottom: 35px;
+    position: relative;
+}
+
+.auth-label {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--secondary-color);
+    letter-spacing: 3px;
+    margin-bottom: 10px;
+    text-shadow: 0 0 8px var(--secondary-color);
+}
+
+.auth-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border: none;
+    border-bottom: 2px solid var(--secondary-color);
+    color: var(--secondary-color);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    padding: 12px 0;
+    outline: none;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    text-shadow: 0 0 10px var(--secondary-color);
+    letter-spacing: 2px;
+}
+
+.auth-input:focus {
+    border-bottom-color: var(--primary-color);
+    background: rgba(0, 0, 0, 0.5);
+    box-shadow: 
+        0 0 20px var(--secondary-color),
+        0 4px 30px -10px var(--secondary-color);
+    transform: translateY(-2px);
+}
+
+.auth-input::placeholder {
+    color: var(--secondary-color);
+    opacity: 0.3;
+}
+
+/* 输入框焦点装饰线 */
+.auth-input-group::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--primary-color);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateX(-50%);
+    box-shadow: 0 0 15px var(--primary-color);
+}
+
+.auth-input:focus + .auth-input-group::after,
+.auth-input-group:focus-within::after {
+    width: 100%;
+}
+
+.auth-btn {
+    background: var(--secondary-color);
+    color: #000;
+    font-weight: 900;
+    padding: 18px 32px;
+    border: 2px solid var(--secondary-color);
+    cursor: pointer;
+    clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%);
+    font-family: 'Noto Sans JP', sans-serif;
+    letter-spacing: 6px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.auth-btn::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.auth-btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.auth-btn:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    box-shadow: 
+        0 0 30px var(--primary-color),
+        inset 0 0 20px rgba(255, 255, 255, 0.2);
+    transform: translateY(-3px);
+}
+
+.auth-btn:active {
+    transform: translateY(-1px);
+}
+
+/* 三贤人表决动态 */
+.magi-deliberation {
+    display: none;
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.magi-vote-node {
+    border: 2px solid var(--secondary-color);
+    padding: 20px;
+    text-align: center;
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(0, 0, 0, 0.6);
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+/* 节点装饰角 */
+.magi-vote-node::before,
+.magi-vote-node::after {
+    content: "";
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border: 2px solid var(--secondary-color);
+    transition: all 0.6s;
+}
+
+.magi-vote-node::before {
+    top: 0;
+    left: 0;
+    border-right: none;
+    border-bottom: none;
+}
+
+.magi-vote-node::after {
+    bottom: 0;
+    right: 0;
+    border-left: none;
+    border-top: none;
+}
+
+.magi-vote-node.active {
+    border-color: var(--primary-color);
+    box-shadow: 
+        0 0 30px var(--primary-color),
+        inset 0 0 30px var(--primary-color);
+    animation: auth-pulse 1s ease-in-out infinite;
+}
+
+.magi-vote-node.active::before,
+.magi-vote-node.active::after {
+    border-color: var(--primary-color);
+}
+
+.magi-vote-node.resolved {
+    background: var(--secondary-color);
+    border-color: var(--secondary-color);
+    color: #000;
+    box-shadow: 0 0 40px var(--secondary-color);
+    font-weight: 900;
+}
+
+.magi-vote-node.denied {
+    background: #ff0000;
+    border-color: #ff0000;
+    color: #000;
+    box-shadow: 0 0 40px #ff0000;
+    font-weight: 900;
+    animation: glitch 0.3s infinite;
+}
+
+.magi-vote-node .status-label {
+    font-size: 14px;
+    font-weight: 700;
+    text-shadow: 0 0 10px currentColor;
+}
+
+/* ==========================================================================
+   认证进行中动画 (Syncing Animation)
+   ========================================================================== */
+
+@keyframes sync-rate-up {
+    0% { content: "0%"; }
+    10% { content: "12%"; }
+    20% { content: "28%"; }
+    30% { content: "41%"; }
+    40% { content: "57%"; }
+    50% { content: "63%"; }
+    60% { content: "75%"; }
+    70% { content: "84%"; }
+    80% { content: "92%"; }
+    90% { content: "99%"; }
+    100% { content: "100%"; }
+}
+
+@keyframes ring-rotate {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes ring-expand {
+    0% { 
+        transform: scale(0.8);
+        opacity: 0.8;
+    }
+    50% { 
+        transform: scale(1.2);
+        opacity: 0.3;
+    }
+    100% { 
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+.auth-syncing {
+    padding: 60px 40px;
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.syncing-avatar-container {
+    position: relative;
+    width: 220px;
+    height: 220px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 移除六边形，改用双层旋转圆环 */
+.syncing-hexagon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 140px;
+    height: 140px;
+    border: 3px solid var(--secondary-color);
+    border-radius: 50%;
+    border-top-color: transparent;
+    border-right-color: transparent;
+    transform: translate(-50%, -50%);
+    animation: ring-rotate 2s linear infinite;
+    box-shadow: 0 0 30px var(--secondary-color);
+    z-index: 1;
+}
+
+.syncing-hexagon::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100px;
+    height: 100px;
+    border: 2px solid var(--primary-color);
+    border-radius: 50%;
+    border-bottom-color: transparent;
+    border-left-color: transparent;
+    transform: translate(-50%, -50%);
+    animation: ring-rotate 1.5s linear infinite reverse;
+}
+
+.syncing-rings {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+}
+
+.syncing-rings::before,
+.syncing-rings::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 2px solid var(--primary-color);
+    border-radius: 50%;
+    animation: ring-expand 2s ease-out infinite;
+}
+
+.syncing-rings::before {
+    width: 60%;
+    height: 60%;
+}
+
+.syncing-rings::after {
+    width: 60%;
+    height: 60%;
+    animation-delay: 1s;
+}
+
+.syncing-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) translateY(-45px);
+    z-index: 10;
+    text-shadow: 0 0 15px var(--secondary-color);
+    white-space: nowrap;
+}
+
+.syncing-percentage {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    text-shadow: 0 0 20px var(--secondary-color);
+    animation: auth-pulse 1.5s ease-in-out infinite;
+    line-height: 1;
+}
+
+.syncing-status {
+    opacity: 0.7;
+    animation: fade-pulse 2s ease-in-out infinite;
+}
+
+@keyframes fade-pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+/* 状态切换动画 */
+.auth-body,
+.auth-syncing,
+.magi-deliberation {
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+.auth-body.hiding,
+.auth-syncing.hiding,
+.magi-deliberation.hiding {
+    opacity: 0;
+    transform: scale(0.95);
+    pointer-events: none;
+}
