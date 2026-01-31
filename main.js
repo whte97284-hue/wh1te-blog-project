@@ -2909,6 +2909,8 @@ function initWeekSelector(currentWeekday) {
 }
 
 function switchDay(weekday) {
+    weekday = parseInt(weekday);
+    if (isNaN(weekday)) weekday = (new Date().getDay() || 7);
     currentSelectedDay = weekday;
     document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
     const activeBtn = document.getElementById(`day-btn-${weekday}`);
@@ -5771,3 +5773,57 @@ window.SecurityProtocol = {
         }, 2000);
     }
 };
+
+/* --- 8. MAGI Identity System --- */
+
+
+// 更新身份徽章状态
+function updateChatUI() {
+    const badge = document.getElementById('magi-id-badge');
+    const label = document.getElementById('magi-id-label');
+    const isCommander = localStorage.getItem('magi_access') === 'commander';
+    
+    if (badge && label) {
+        if (isCommander) {
+            // 指挥官: 绿色高亮
+            label.innerText = 'COMMANDER';
+            badge.classList.remove('hover:text-secondary');
+            badge.classList.add('text-[var(--primary-color)]', 'drop-shadow-[0_0_5px_rgba(var(--primary-rgb),0.8)]');
+        } else {
+            // 访客: 默认灰色
+            label.innerText = 'VISITOR';
+            badge.classList.remove('text-[var(--primary-color)]', 'drop-shadow-[0_0_5px_rgba(var(--primary-rgb),0.8)]');
+            badge.classList.add('hover:text-secondary');
+        }
+    }
+}
+
+// 身份徽章点击交互
+function handleBadgeClick() {
+    const isCommander = localStorage.getItem('magi_access') === 'commander';
+    
+    if (isCommander) {
+        // 指挥官: 报告状态
+        const cmds = ["/status", "/todo", "/search", "/logout"];
+        showAiSpeech(`指挥官，权限认证通过。当前指令集: ${cmds.join(' ')}。系统运行正常。`);
+    } else {
+        // 游客: 提示次数 + 登录引导
+        const count = localStorage.getItem('guest_chat_count') || 0;
+        const left = 10 - parseInt(count);
+        if (left > 0) {
+            showAiSpeech(`访客模式：剩余对话次数 ${left}/10。点击此处进行 Pilot 认证以获取无限权限。`);
+            // 延迟一点弹出登录框，给用户一点反应时间
+            setTimeout(() => window.SecurityProtocol.open(), 1500);
+        } else {
+            showAiSpeech("访客配额已耗尽。必须进行身份认证。");
+            window.SecurityProtocol.open();
+        }
+    }
+}
+
+// 初始化调用
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(updateChatUI, 1000); // 延迟一点等待 DOM
+});
+window.updateChatUI = updateChatUI;
+window.handleBadgeClick = handleBadgeClick;
