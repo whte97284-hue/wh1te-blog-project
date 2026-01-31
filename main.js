@@ -2867,9 +2867,8 @@ async function loadAnimeData() {
 
     try {
         if (dateDisplay) dateDisplay.innerHTML = 'SYNCING...';
-        // Bangumi.tv 番剧日历 API
-        const ANIME_CALENDAR_API = 'https://api.bgm.tv/calendar';
-        const res = await fetch('https://corsproxy.io/?' + encodeURIComponent(ANIME_CALENDAR_API));
+        // Bangumi.tv 番剧日历 API (通过 MAGI Worker 代理)
+        const res = await fetch('https://api-worker.wh1te.top/bgm/calendar');
         animeCalendarData = await res.json();
 
         localStorage.setItem(CACHE_KEY, JSON.stringify(animeCalendarData));
