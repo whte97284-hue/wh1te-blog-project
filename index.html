@@ -842,8 +842,18 @@
                                     class="w-2 h-2 bg-secondary animate-pulse rounded-full shadow-[0_0_5px_var(--secondary-color)]">
                                 </div>
                             </div>
-                            <p class="text-gray-400 text-[10px] font-mono relative z-10">STATUS: <span
-                                    id="ai-status-text" class="text-secondary font-bold">ONLINE</span></p>
+                            <div class="flex items-center gap-3 relative z-10 text-[10px] font-mono text-gray-400 mt-1">
+                                <p>STATUS: <span id="ai-status-text" class="text-secondary font-bold">ONLINE</span></p>
+                                
+                                <span class="text-gray-600">|</span>
+                                
+                                <div id="magi-id-badge" onclick="handleBadgeClick()" 
+                                     class="group/badge flex items-center gap-1 cursor-pointer transition-colors hover:text-secondary">
+                                    <span>ID:</span>
+                                    <span id="magi-id-label" class="font-bold tracking-wider">VISITOR</span>
+                                    <i data-lucide="shield" class="w-3 h-3 ml-1 opacity-50 group-hover/badge:opacity-100"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -851,7 +861,9 @@
                         <div class="absolute -top-2 left-2 text-[8px] font-mono text-secondary bg-bg px-1 z-10">
                             MAGI_LINK</div>
                         <div class="flex border border-secondary/50 bg-black/20 backdrop-blur-sm">
-                            <input type="text" id="magi-input" placeholder="Ask ERIRI..."
+                            <input type="text" id="magi-input" 
+                                   autocomplete="off" name="magi_no_autofill"
+                                   placeholder="Ask ERIRI..."
                                 class="w-full bg-transparent border-none px-3 py-2 text-xs font-mono text-primary focus:outline-none placeholder-secondary/30"
                                 onkeypress="handleChatInput(event)"
                                 oninput="updateInputStatus(this.value)">
