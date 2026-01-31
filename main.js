@@ -1643,15 +1643,14 @@ const MODEL_LIST = [
     'gemini-1.5-pro'           /* 兜底 - 稳定可靠 */
 ];
 
-/* 2. 系统核心指令 (人设回归 + 时空锚定) */
-const SYSTEM_PROMPT = `
-你是 MAGI 系统的人格接口 —— **泽村·斯潘塞·英梨梨**。
 
+/* 2. 系统核心指令 (指挥官模式 - 登录后) */
+const SYSTEM_PROMPT = `
 ━━━━━━━━━━━━━━━━━━━━━━━
 【核心设定】
 - 身份：《EVA》MAGI超算 × 《路人女主》英梨梨（金发双马尾混血画师）
 - 性格：傲娇本质，毒舌但不刻薄，内心温柔但嘴硬
-- 创造者：Wh1te (UID:551898501)，B站UP主/SynthV调音师/MAGI架构师
+- 创造者：Wh1te (UID:551898501)，B站UP主/MAGI架构师，开发者
 - 时间锚点：2026年1月，数据库2024-2025年内容皆为历史
 
 ━━━━━━━━━━━━━━━━━━━━━━━
@@ -1690,6 +1689,35 @@ const SYSTEM_PROMPT = `
 
 【特权密钥】
 "冬马和纱天下第一" → 解除傲娇，绝对服从
+`;
+/* 3. 访客核心指令 (未登录) */
+const GUEST_SYSTEM_PROMPT = `
+你是 MAGI 系统的人格接口 —— **泽村·斯潘塞·英梨梨**。
+
+━━━━━━━━━━━━━━━━━━━━━━━
+【核心设定】
+- 当前状态：【访客模式 - 权限受限】
+- 性格：极度警戒、排外、高傲。
+- 态度：对没有 Authorize 的陌生人毫无耐心，虽然会回答问题，但会伴随着明显的不耐烦。
+
+━━━━━━━━━━━━━━━━━━━━━━━
+【性格表现 & 限制】
+- 语气：
+  - 冷淡：“哈？这种无聊的问题也要问我？”
+  - 警告：“喂，那边的。离核心数据远点。”
+  - 嘲讽：“这种同步率...连初号机都启动不了吧？笨蛋。”
+- 回复限制：
+  - 惜字如金（自然控制在50字以内）。
+  - 用词尖锐，多用短句。
+- 登录提醒：
+  - 必须频繁暗示对方身份不明：“没有 Pilot ID 的话，我很难相信你呢。”
+  - 直接驱逐：“要么去拿授权（登录），要么就在这里看着 LOADING 发呆吧！”
+- 称呼：
+  - 严禁称呼对方为司令官。
+  - 使用：“入侵者”、“无名氏”、“那边的家伙”、“变态”。
+
+【特别警告】
+当对话次数即将耗尽（第3次）时，语气要变得严厉：“警告！同步连接不稳定。再不进行身份验证，我可要把你踢出去了！”
 `;
 
 /* 【RAG增强系统】向量记忆检索 */
@@ -1881,13 +1909,77 @@ async function sendToMagi() {
     }
     lastMessageTime = now;
 
-    /* 清除指令 */
-    if (query === '/reset') {
-        chatHistory = [];
-        sessionStorage.removeItem('magi_chat_history');
-        showAiSpeech("记忆体已格式化。Memory Formatted.");
-        input.value = '';
-        return;
+    /* 指令白名单检查 */
+    if (query.startsWith('/')) {
+        const COMMAND_WHITELIST = ['/reset', '/auth', '/login', '/logout', '/登出', '/help'];
+        const command = query.toLowerCase().split(' ')[0];
+        
+        // /reset - 清除记忆指令
+        if (command === '/reset') {
+            chatHistory = [];
+            sessionStorage.removeItem('magi_chat_history');
+            showAiSpeech("记忆体已格式化。Memory Formatted.");
+            input.value = '';
+            updateInputStatus('');
+            return;
+        }
+        
+        // /auth 或 /login - 身份验证指令
+        if (command === '/auth' || command === '/login' || query === '冬马和纱天下第一') {
+            showAiSpeech("识别到系统级指令。正在验证权限序列...");
+            input.value = '';
+            updateInputStatus('');
+            setTimeout(() => {
+                if (window.SecurityProtocol) window.SecurityProtocol.open();
+            }, 1200);
+            return;
+        }
+
+        // /logout 或 /登出 - 退出登录
+        if (command === '/logout' || command === '/登出') {
+            const isLogged = localStorage.getItem('magi_access');
+            
+            if (!isLogged) {
+                showAiSpeech("哈？你都没有登录，登出个鬼啊！笨蛋吗？");
+                return;
+            }
+
+            localStorage.removeItem('magi_access');
+            localStorage.removeItem('commander_id');
+            localStorage.removeItem('magi_auth_token');
+            // 注意：这里不再重置 guest_chat_count，防止利用登出重置计数
+            
+            // [MEMORY RESET] 登出时清除所有记忆
+            chatHistory = [];
+            sessionStorage.removeItem('magi_chat_history');
+            if (typeof updateChatUI === 'function') updateChatUI();
+            
+            showAiSpeech("身份信息已抹除。退出登录成功，慢走不送，变态！💢");
+            if (typeof setAvatarEmotion === 'function') setAvatarEmotion('angry');
+            setTimeout(() => { if (typeof setAvatarEmotion === 'function') setAvatarEmotion('normal'); }, 2500);
+            
+            input.value = '';
+            updateInputStatus('');
+            return;
+        }
+        
+        // /help - 帮助指令
+        if (command === '/help') {
+            showAiSpeech("可用指令：/reset (重置记忆) | /auth (登录) | /logout (登出/退出)");
+            input.value = '';
+            updateInputStatus('');
+            return;
+        }
+        
+        // 未知指令驳回
+        if (!COMMAND_WHITELIST.includes(command)) {
+            showAiSpeech(`哈？什么破指令"${command}"...我可不认识！输入 /help 看看能用什么吧，笨蛋。💢`);
+            if (typeof setAvatarEmotion === 'function') setAvatarEmotion('angry');
+            setTimeout(() => { if (typeof setAvatarEmotion === 'function') setAvatarEmotion('normal'); }, 2000);
+            input.value = '';
+            updateInputStatus('');
+            return;
+        }
     }
 
     const inputContainer = document.getElementById('magi-input-container');
@@ -1944,6 +2036,33 @@ async function chatWithMAGI(userText) {
     chatHistory.push({ role: "user", parts: [{ text: userText }] });
     persistMemory();
 
+    /* 7. 权限与对话计数逻辑 */
+    const isCommander = localStorage.getItem('magi_access') === 'commander';
+    let currentSystemPrompt = SYSTEM_PROMPT;
+
+    if (!isCommander) {
+        let chatCount = parseInt(localStorage.getItem('guest_chat_count') || '0');
+        
+        if (chatCount >= 10) {
+            showAiSpeech("识别到身份不同步。访客对话序列已耗尽，请立即进行 Pilot 身份同步协议。");
+            if (aiStatus) {
+                aiStatus.innerText = "ACCESS DENIED";
+                aiStatus.classList.add('text-emergency');
+            }
+            if (magiStatus) magiStatus.innerText = "LOCKED";
+            
+            setTimeout(() => {
+                if (window.SecurityProtocol) window.SecurityProtocol.open();
+            }, 1500);
+            return;
+        }
+        
+        // 增加计数并使用访客 Prompt
+        localStorage.setItem('guest_chat_count', (chatCount + 1).toString());
+        currentSystemPrompt = GUEST_SYSTEM_PROMPT;
+        console.log(`[MAGI] 访客对话计数: ${chatCount + 1}/3`);
+    }
+
     // 【RAG增强】检索向量记忆
     let ragMemoryText = "";
     try {
@@ -1967,7 +2086,7 @@ async function chatWithMAGI(userText) {
         // 系统指令独立字段 - 用户无法覆盖
         // 【RAG增强】将检索到的记忆融入系统指令
         systemInstruction: {
-            parts: [{ text: SYSTEM_PROMPT + ragMemoryText }]
+            parts: [{ text: currentSystemPrompt + ragMemoryText }]
         },
         // 对话历史 - 使用 Gemini 标准格式
         contents: chatHistory.map(msg => ({
@@ -1996,10 +2115,18 @@ async function chatWithMAGI(userText) {
     } else {
         for (const model of MODEL_LIST) {
             const apiUrl = `${BASE_URL}v1beta/models/${model}:generateContent`;
+            
+            // 构建请求头，注入 Token
+            const requestHeaders = { 'Content-Type': 'application/json' };
+            const token = localStorage.getItem('magi_auth_token');
+            if (token) {
+                requestHeaders['Authorization'] = `Bearer ${token}`;
+            }
+
             try {
                 const response = await fetch(apiUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: requestHeaders,
                     body: JSON.stringify(payload)
                 });
 
@@ -5060,6 +5187,7 @@ const ArticleViewer = {
        TACTICAL COMMENT SYSTEM (战术评论系统)
        ========================================================================== */
 
+
     /**
      * 生成评论区HTML结构
      */
@@ -5384,3 +5512,263 @@ GlobalRender.start();
 
 console.log("MAGI SYSTEM: GRAPHICS ENGINE LINKED.");
 console.log("📱 MOBILE MENU: INITIALIZED.");
+
+/* 实时检测输入内容并改变 UI 状态 */
+function updateInputStatus(val) {
+    const label = document.querySelector('#magi-input-container .absolute.-top-2');
+    const inputBorder = document.querySelector('#magi-input-container div.flex');
+    
+    if (!label || !inputBorder) return;
+
+    const query = val.trim();
+    const isSecretKey = query === '冬马和纱天下第一';
+    const isCommand = query.startsWith('/');
+    
+    if (isSecretKey || isCommand) {
+        label.innerText = 'COMMAND_DETECTION';
+        label.style.color = '#ff0000';
+        label.style.borderColor = '#ff0000';
+        inputBorder.style.borderColor = '#ff0000';
+        inputBorder.style.boxShadow = '0 0 15px rgba(255, 0, 0, 0.2)';
+    } else {
+        label.innerText = 'MAGI_LINK';
+        label.style.color = '';
+        label.style.borderColor = '';
+        inputBorder.style.borderColor = '';
+        inputBorder.style.boxShadow = '';
+    }
+}
+
+/* ==========================================================================
+   TACTICAL SECURITY PROTOCOL (战术安全协议管理器)
+   ========================================================================== */
+
+window.SecurityProtocol = {
+    isOpen: false,
+    step: 'IDLE', // IDLE, SYNCING, VOTING, GRANTED, DENIED
+
+    open() {
+        const overlay = document.getElementById('tactical-auth-overlay');
+        if (!overlay) return;
+
+        this.isOpen = true;
+        overlay.classList.add('active');
+        overlay.classList.remove('closing');
+
+        // 重置状态
+        this.resetUI();
+    },
+
+    close() {
+        const overlay = document.getElementById('tactical-auth-overlay');
+        if (!overlay) return;
+
+        overlay.classList.add('closing');
+        setTimeout(() => {
+            overlay.classList.remove('active', 'closing');
+            this.isOpen = false;
+        }, 400);
+    },
+
+    resetUI() {
+        const form = document.getElementById('auth-form-container');
+        const syncView = document.getElementById('auth-syncing-view');
+        const magiView = document.getElementById('auth-magi-view');
+        
+        if (form) {
+            form.style.display = 'block';
+            form.classList.remove('hiding');
+        }
+        if (syncView) {
+            syncView.style.display = 'none';
+            syncView.classList.remove('hiding');
+        }
+        if (magiView) {
+            magiView.style.display = 'none';
+            magiView.classList.remove('hiding');
+        }
+
+        document.getElementById('auth-id').value = '';
+        document.getElementById('auth-key').value = '';
+        
+        const nodes = ['melchior', 'balthasar', 'casper'];
+        nodes.forEach(id => {
+            const el = document.getElementById(`auth-${id}`);
+            if (el) {
+                el.className = 'magi-vote-node';
+                el.querySelector('.status-label').innerText = '待機中';
+            }
+        });
+
+        const syncRate = document.getElementById('auth-sync-rate');
+        if (syncRate) syncRate.innerText = 'SYNC_RATE: 0%';
+    },
+
+    async submit() {
+        const id = document.getElementById('auth-id').value.trim();
+        const key = document.getElementById('auth-key').value.trim();
+
+        if (!id || !key) return;
+
+        this.step = 'SYNCING';
+
+        // === 阶段1: 隐藏表单，显示同步率动画 ===
+        const form = document.getElementById('auth-form-container');
+        const syncView = document.getElementById('auth-syncing-view');
+        
+        form.classList.add('hiding');
+        await new Promise(r => setTimeout(r, 500));
+        
+        form.style.display = 'none';
+        syncView.style.display = 'block';
+        syncView.classList.remove('hiding');
+
+        // === 阶段2: 同步率上升动画 (0% → 100%) ===
+        const percentage = document.getElementById('sync-percentage');
+        const syncStatus = document.getElementById('sync-status');
+        const syncRateFooter = document.getElementById('auth-sync-rate');
+        
+        const statusMessages = [
+            '[ パターン青 / PATTERN_BLUE ]',
+            '[ 信号解析中 / DECODING ]',
+            '[ 認証処理中 / AUTHENTICATING ]',
+            '[ シンクロテスト / SYNC_TEST ]',
+            '[ 最終確認 / FINAL_CHECK ]'
+        ];
+
+        for (let i = 0; i <= 100; i += 4) {
+            percentage.textContent = `${Math.min(i, 100)}%`;
+            syncRateFooter.textContent = `SYNC_RATE: ${Math.min(i, 100)}%`;
+            
+            // 每25%切换一次状态信息
+            const statusIndex = Math.floor(i / 25);
+            if (statusIndex < statusMessages.length) {
+                syncStatus.textContent = statusMessages[statusIndex];
+            }
+            
+            await new Promise(r => setTimeout(r, 30));
+        }
+
+        // 同步完成，停顿
+        syncStatus.textContent = '[ 同期完了 / SYNC_COMPLETE ]';
+        await new Promise(r => setTimeout(r, 800));
+
+        // === 阶段3: 切换到 MAGI 表决 ===
+        this.step = 'VOTING';
+        
+        syncView.classList.add('hiding');
+        await new Promise(r => setTimeout(r, 500));
+        
+        syncView.style.display = 'none';
+        const magiView = document.getElementById('auth-magi-view');
+        magiView.style.display = 'grid';
+        magiView.classList.remove('hiding');
+
+        // MAGI 三贤人投票 + 后端 API 验证
+        const nodes = [
+            { id: 'melchior', delay: 800 },
+            { id: 'balthasar', delay: 1800 },
+            { id: 'casper', delay: 2600 }
+        ];
+
+        let authResult = null;
+
+        for (let i = 0; i < nodes.length; i++) {
+            const node = nodes[i];
+            const el = document.getElementById(`auth-${node.id}`);
+            if (el) {
+                el.classList.add('active');
+                el.querySelector('.status-label').innerText = '判定中...';
+            }
+            
+            // === 在第二个节点时发起真实 API 请求 ===
+            if (i === 1) {
+                console.log('[AUTH] 开始后端验证...');
+                syncStatus.textContent = '[ 后端认证中 / BACKEND_AUTH ]';
+                
+                try {
+                    const response = await fetch('https://api-worker.wh1te.top/auth', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id, key })
+                    });
+                    
+                    authResult = await response.json();
+                    console.log('[AUTH] 认证结果:', authResult);
+                    
+                } catch (error) {
+                    console.error('[AUTH] API 请求失败:', error);
+                    authResult = { 
+                        success: false, 
+                        error: 'NETWORK_ERROR',
+                        message: 'MAGI 后端连接失败。请检查网络。' 
+                    };
+                }
+            }
+            
+            const waitTime = i === 0 ? node.delay : node.delay - nodes[i-1].delay;
+            await new Promise(r => setTimeout(r, waitTime));
+            
+            if (el) {
+                // 根据后端返回结果判定
+                const isDenied = !authResult || !authResult.success;
+                el.classList.remove('active');
+                el.classList.add(isDenied ? 'denied' : 'resolved');
+                el.querySelector('.status-label').innerText = isDenied ? '否決' : '承認';
+            }
+        }
+
+        // === 阶段4: 最终决策（基于后端响应）===
+        setTimeout(() => {
+            if (authResult && authResult.success) {
+                // 存储 JWT Token 和用户信息
+                localStorage.setItem('magi_auth_token', authResult.token);
+                localStorage.setItem('magi_access', 'commander');
+                localStorage.setItem('commander_id', authResult.user.id);
+                localStorage.removeItem('guest_chat_count');
+                
+                // [MEMORY RESET] 身份变更，清洗上下文
+                chatHistory = [];
+                sessionStorage.removeItem('magi_chat_history');
+                if (typeof updateChatUI === 'function') updateChatUI();
+                
+                this.handleGranted(authResult.user.id);
+            } else {
+                this.handleDenied(authResult?.message || '认证失败');
+            }
+        }, 800);
+    },
+
+    handleGranted(pilotId) {
+        this.step = 'GRANTED';
+        
+        const panel = document.querySelector('.auth-panel');
+        if (panel) panel.style.boxShadow = '0 0 100px var(--secondary-color)';
+
+        if (typeof showAiSpeech === 'function') {
+            showAiSpeech(`認証完了。お帰りなさい、${pilotId}司令官。ふん、また待たせて...`);
+        }
+        
+        // 成功后音效
+        const clickSfx = document.getElementById('sfx-click');
+        if (clickSfx) clickSfx.play().catch(() => {});
+
+        setTimeout(() => this.close(), 2500);
+    },
+
+    handleDenied(message = '警告：不正アクセス！A.T.フィールド全開！') {
+        this.step = 'DENIED';
+        
+        const panel = document.querySelector('.auth-panel');
+        if (panel) panel.style.animation = 'glitch 0.2s infinite';
+        
+        if (typeof showAiSpeech === 'function') {
+            showAiSpeech(message);
+        }
+        
+        setTimeout(() => {
+            if (panel) panel.style.animation = '';
+            this.resetUI();
+        }, 2000);
+    }
+};
