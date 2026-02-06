@@ -3238,12 +3238,13 @@ function searchArticles() {
     const matchedIds = new Set(results.map(r => r.item.id));
 
     // 显示/隐藏卡片
+    // 显示/隐藏卡片
     cards.forEach(card => {
-        // 从 onclick 属性提取文章 ID
-        const onclick = card.getAttribute('onclick') || '';
-        const match = onclick.match(/id=(\d+)/);
-        if (match) {
-            const cardId = parseInt(match[1]);
+        // [修复] 从 data-id 属性提取文章 ID (比 regex 解析 onclick 更稳定)
+        const cardId = parseInt(card.getAttribute('data-id'));
+        
+        // 只有当卡片拥有有效 ID 时才参与过滤
+        if (!isNaN(cardId)) {
             card.style.display = matchedIds.has(cardId) ? '' : 'none';
         }
     });
@@ -3728,6 +3729,7 @@ const BlogManager = {
             return `
                 <article class="eva-card p-0 group cursor-pointer transform transition-transform hover:-translate-y-1 overflow-hidden flex flex-col bg-black/20" 
                          style="animation-delay: ${animDelay}s; animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0;"
+                         data-id="${id}"
                          onclick="ArticleViewer.open(${id})">
                     <div class="eva-glare"></div>
                     ${coverHTML}
