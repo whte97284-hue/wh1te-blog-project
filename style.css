@@ -795,10 +795,62 @@ body.hovering .cursor-cross-h {
     border: 1px dotted currentColor;
     box-shadow: none;
 }
-
+/* 补回被覆盖的光标拖尾样式 */
 .cursor-trail-2 .cursor-center {
     display: none;
 }
+
+/* --- 战术相位转场 (Tactical View Transition) [PERF OPTIMIZED] --- */
+/* Phase Shift In (切入) */
+@keyframes phaseShiftIn {
+    0% {
+        opacity: 0;
+        transform: translateX(20px) scale(0.98); /* 减小位移幅度，减少重绘区域 */
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+/* Phase Shift Out (滑出) */
+@keyframes phaseShiftOut {
+    0% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-20px); /* 仅做轻微位移 */
+    }
+}
+
+/* 进场类 (Sequential Entry) */
+.view-enter-active {
+    animation: phaseShiftIn 0.3s cubic-bezier(0.2, 0, 0.2, 1) forwards !important;
+    /* 移除 position: relative; 保持默认流布局 */
+    will-change: transform, opacity;
+}
+
+/* 离场类 (Sequential Exit) */
+.view-exit-active {
+    animation: phaseShiftOut 0.2s cubic-bezier(0.4, 0, 1, 1) forwards !important;
+    /* 关键：移除 absolute，让旧视图在离场时保持占位，防止页面塌陷 */
+    pointer-events: none;
+    will-change: transform, opacity;
+}
+
+/* 移动端减弱 (Fade Only) */
+@media (max-width: 768px) {
+    .view-exit-active {
+        animation: simpleFadeOut 0.2s linear forwards !important;
+    }
+    .view-enter-active {
+        animation: simpleFadeIn 0.3s linear forwards !important;
+    }
+}
+@keyframes simpleFadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.98); } }
+@keyframes simpleFadeIn { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: scale(1); } }
 
 /* 点击反馈 */
 .click-ripple {
