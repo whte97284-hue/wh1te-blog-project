@@ -3792,199 +3792,15 @@ BlogManager.init();
 BILIBILI MANAGER (SYSTEM UPGRADE)
 ========================================================================== */
 
-// 1. 视图切换控制器
-function toggleView(viewName) {
-    const homeHeader = document.querySelector('header');
-    const homeMain = document.querySelector('main');
-    const heroChar = document.querySelector('.hero-character-container'); // 立绘
-    const biliView = document.getElementById('bilibili-view');
-
-    // 播放音效 (如果有)
-    const clickSfx = document.getElementById('sfx-click');
-    if (clickSfx) clickSfx.play().catch(e => { });
-
-    if (viewName === 'bangumi') {
-        // 隐藏主页元素
-        if (homeHeader) homeHeader.classList.add('hidden');
-        if (homeMain) homeMain.classList.add('hidden');
-        /* [修复] 保持立绘完全可见，不再淡化 */
-        // if (heroChar) heroChar.style.opacity = '0.1'; // ❌ 移除
-
-        // 显示 B 站容器
-        biliView.classList.remove('hidden');
-
-        // 触发数据加载
-        BiliManager.init();
-
-        // 更新 URL (可选)
-        history.pushState(null, '', '#bangumi');
-    } else {
-        // 恢复主页
-        if (homeHeader) homeHeader.classList.remove('hidden');
-        if (homeMain) homeMain.classList.remove('hidden');
-        if (heroChar) heroChar.style.opacity = '1';
-
-        biliView.classList.add('hidden');
-        history.pushState(null, '', 'index.html');
-    }
-}
-
-/* --- B站数据管理器 (V3.0 Pro) --- */
-const BiliManager = {
-    workerEndpoint: 'https://api-worker.wh1te.top/bili/bangumi',
-    uid: '551898501',
-
-    // 状态管理
-    state: {
-        page: 1,
-        pageSize: 24, // 推荐 24
-        status: 0,    // 0:全部, 1:想看, 2:在看, 3:看过
-        isLoading: false,
-        hasMore: true
-    },
-
-    // 初始化 (仅首次加载调用)
-    init() {
-        if (this.state.page === 1 && document.getElementById('bili-grid').children.length === 0) {
-            this.fetchData(true);
-        }
-    },
-
-    // 切换分类
-    switchStatus(newStatus, btnElement) {
-        if (this.state.isLoading || this.state.status === newStatus) return;
-
-        // 1. 更新 UI 样式
-        document.querySelectorAll('.bili-tab').forEach(b => {
-            b.classList.remove('text-[#ff69b4]', 'border-b', 'border-[#ff69b4]');
-            b.classList.add('text-gray-500');
-        });
-        if (btnElement) {
-            btnElement.classList.remove('text-gray-500');
-            btnElement.classList.add('text-[#ff69b4]', 'border-b', 'border-[#ff69b4]');
-        }
-
-        // 2. 重置状态
-        this.state.status = newStatus;
-        this.state.page = 1;
-        this.state.hasMore = true;
-
-        // 3. 清空列表并重新获取
-        const grid = document.getElementById('bili-grid');
-        grid.innerHTML = `<div class="col-span-full h-32 flex items-center justify-center"><div class="animate-spin w-6 h-6 border-2 border-[#ff69b4] border-t-transparent rounded-full"></div></div>`;
-        document.getElementById('bili-load-more').classList.add('hidden');
-
-        this.fetchData(true);
-    },
-
-    // 加载下一页
-    loadMore() {
-        if (this.state.isLoading || !this.state.hasMore) return;
-        this.state.page++;
-        this.fetchData(false);
-    },
-
-    // 核心获取函数
-    async fetchData(isReset) {
-        this.state.isLoading = true;
-        const loadBtn = document.getElementById('bili-load-more');
-        if (loadBtn) loadBtn.innerHTML = '<span class="animate-pulse">DOWNLOADING...</span>';
-
-        try {
-            // 组装 URL (带分页和状态)
-            const url = `${this.workerEndpoint}?uid=${this.uid}&pn=${this.state.page}&ps=${this.state.pageSize}&status=${this.state.status}`;
-
-            const res = await fetch(url);
-            const json = await res.json();
-
-            // 清除 Loading 动画 (如果是重置状态)
-            if (isReset) document.getElementById('bili-grid').innerHTML = '';
-
-            if (json.code === 0 && json.data.list && json.data.list.length > 0) {
-                this.render(json.data.list);
-
-                // 判断是否还有下一页
-                if (json.data.list.length < this.state.pageSize) {
-                    this.state.hasMore = false;
-                    loadBtn.classList.add('hidden');
-                } else {
-                    this.state.hasMore = true;
-                    loadBtn.classList.remove('hidden');
-                    loadBtn.innerHTML = `<button onclick="BiliManager.loadMore()" class="px-8 py-3 border border-[#ff69b4]/30 bg-[#ff69b4]/5 text-[#ff69b4] font-mono text-xs hover:bg-[#ff69b4] hover:text-black transition-all">/// LOAD_NEXT_PAGE [${this.state.page + 1}] ///</button>`;
-                }
-            } else {
-                this.state.hasMore = false;
-                loadBtn.classList.add('hidden');
-                if (isReset) {
-                    document.getElementById('bili-grid').innerHTML = `<div class="col-span-full text-center text-gray-500 font-mono text-xs py-10">NO_DATA_FOUND_IN_ARCHIVE</div>`;
-                }
-            }
-
-        } catch (e) {
-            console.error(e);
-            if (isReset) {
-                document.getElementById('bili-grid').innerHTML = `<div class="col-span-full text-center text-red-500 font-mono text-xs">CONNECTION_LOST: ${e.message}</div>`;
-            }
-        } finally {
-            this.state.isLoading = false;
-        }
-    },
-
-    // 渲染 (追加模式)
-    render(list) {
-        const grid = document.getElementById('bili-grid');
-        // 状态映射表
-        const statusMap = { 1: '想看', 2: '在看', 3: '看过' };
-
-        const html = list.map((item, idx) => {
-            const cover = item.cover.replace('http:', 'https:');
-            const safeCover = `https://images.weserv.nl/?url=${encodeURIComponent(cover)}&w=300&h=400&output=webp`;
-            // 计算动画延迟 (基于索引，让新加载的也有动画)
-            const delay = (idx % this.state.pageSize) * 0.05;
-
-            return `
-            <div class="eva-card group relative bg-[#151515] flex flex-col h-full hover:-translate-y-2 transition-transform duration-300" 
-                 style="animation: popIn 0.5s ease forwards; animation-delay: ${delay}s; opacity: 0;">
-                <div class="aspect-[3/4] relative overflow-hidden">
-                    <img src="${safeCover}" loading="lazy" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                    <div class="absolute top-0 left-0 bg-[#ff69b4] text-black text-[10px] font-bold px-2 py-0.5 font-mono">
-                        ${item.badge || statusMap[this.state.status] || 'BANGUMI'}
-                    </div>
-                </div>
-                <div class="p-3 flex flex-col flex-1 border-t border-[#ff69b4]/30 relative">
-                    <div class="eva-glare"></div>
-                    <h3 class="text-white text-xs font-bold leading-tight mb-2 line-clamp-2 group-hover:text-[#ff69b4] transition-colors">
-                        ${item.title}
-                    </h3>
-                    <div class="mt-auto flex justify-between items-center text-[10px] font-mono text-gray-500">
-                        <span>${item.new_ep ? item.new_ep.index_show : '完结'}</span>
-                        <span class="text-[#ff69b4]">${item.progress || '未看'}</span>
-                    </div>
-                </div>
-                <a href="https://www.bilibili.com/bangumi/play/ss${item.season_id}" target="_blank" class="absolute inset-0 z-10"></a>
-            </div>
-            `;
-        }).join('');
-
-        // 追加 HTML
-        grid.insertAdjacentHTML('beforeend', html);
-    }
-};
-
-// 监听浏览器后退按钮，处理 SPA 状态
-window.addEventListener('popstate', () => {
-    if (!location.hash) toggleView('home');
-    else if (location.hash === '#bangumi') toggleView('bangumi');
-});
-
-// 初始化检查
-if (location.hash === '#bangumi') toggleView('bangumi');
-
 /* ==========================================================================
-   VIEW COMMANDER V3.0 (LAZY LOADING)
-   优化：使用动态 import() 按需加载视图管理器
+   VIEW COMMANDER V4.0 (TACTICAL TRANSITION SYSTEM)
+   核心升级: 
+   1. 引入 "Phase Shift" 相位转场动画
+   2. 统一管理所有视图路由
+   3. 修复了旧版 toggleView 的逻辑冲突
    ========================================================================== */
 const ViewCommander = {
+    // 视图 DOM 映射表
     elements: {
         header: () => document.querySelector('header'),
         main: () => document.querySelector('main'),
@@ -3994,130 +3810,215 @@ const ViewCommander = {
         aboutView: () => document.getElementById('about-view-container'),
         pixivView: () => document.getElementById('pixiv-view-container'),
         steamView: () => document.getElementById('steam-view-container'),
-        articleView: () => document.getElementById('article-viewer')  // 添加文章阅读器
+        articleView: () => document.getElementById('article-viewer'),
+        searchView: () => document.getElementById('search-view-container') // 假设后续有搜索视图
     },
 
+    // 当前活跃的视图 ID (用于判断离场动画)
+    currentViewId: 'home', 
+    
+    // 🔒 转场锁：防止在动画期间触发新的切换导致状态混乱
+    isTransitioning: false,
+    
     // 模块加载状态缓存
     loadedModules: new Set(),
 
+    /**
+     * 核心导航函数
+     * @param {string} targetView - 目标视图名称 (home, bangumi, about, etc.)
+     */
     navigate(targetView) {
-        const el = this.elements;
+        // 0. 防止重复导航
+        if (this.currentViewId === targetView) return;
+
+        // 🔒 [FIX] 转场锁：如果正在转场中，拒绝新的请求，防止竞态条件
+        if (this.isTransitioning) {
+            console.warn('[MAGI] Transition in progress. Request rejected.');
+            return;
+        }
+
+        // 1. 播放战术音效
         const sfx = document.getElementById('sfx-click');
         if (sfx) sfx.play().catch(() => { });
 
-        /* [修复] 隐藏所有视图，但排除立绘容器
-           立绘不是"视图"，而是全局装饰元素，不应该被隐藏 */
-        Object.entries(el).forEach(([key, domFunc]) => {
-            if (key === 'hero') return; // 跳过立绘
-            const dom = domFunc();
-            if (dom) {
-                dom.classList.add('hidden');
-                // 特殊处理：移除 article-viewer 的 active 类
-                if (dom.id === 'article-viewer') {
-                    dom.classList.remove('active');
-                }
-            }
-        });
+        // 2. 确定该显示/隐藏哪些元素
+        // 逻辑：如果是 'home'，显示 header/main；否则显示对应的 target
+        let nextElements = [];
+        let viewId = '';
 
-        /* [修复] 立绘显示逻辑优化：
-           - 只在"阅读类"视图（archive文章列表）中淡化背景
-           - 其他视图（home, about, pixiv, steam, bangumi）保持立绘完全可见
-           - 避免点击导航后图片莫名消失的问题 */
-        const shouldFadeHero = (targetView === 'archive');
-        if (el.hero()) {
-            el.hero().style.opacity = shouldFadeHero ? '0.05' : '1';
-        }
-
-        // 3. 路由分发 (带懒加载)
+        /* --- 路由匹配逻辑 --- */
         switch (targetView) {
             case 'home':
-                this._show(el.header());
-                this._show(el.main());
+                nextElements = [this.elements.header(), this.elements.main()];
+                viewId = 'home';
+                history.pushState(null, '', 'index.html');
                 break;
-
+            
             case 'bangumi':
-                this._show(el.biliView());
-                this._loadAndInit('Bili', () => import('./managers/bili-manager.js'));
+                nextElements = [this.elements.biliView()];
+                viewId = 'bangumi';
+                this._scheduleLoad('Bili', () => import('./managers/bili-manager.js'));
+                history.pushState(null, '', '#bangumi');
                 break;
 
             case 'archive':
-                this._show(el.archiveView());
+                nextElements = [this.elements.archiveView()];
+                viewId = 'archive';
                 break;
 
             case 'about':
-                this._show(el.aboutView());
+                nextElements = [this.elements.aboutView()];
+                viewId = 'about';
+                // 轻量级初始化，无需延迟
                 if (window.AboutManager) window.AboutManager.init();
-                // [OTAKU HELIX] Initialize 3D DNA Visualization (DISABLED)
-                // if (window.HelixManager) window.HelixManager.init();
                 break;
 
             case 'pixiv':
-                this._show(el.pixivView());
-                this._loadAndInit('Pixiv', () => import('./managers/pixiv-manager.js'));
+                nextElements = [this.elements.pixivView()];
+                viewId = 'pixiv';
+                this._scheduleLoad('Pixiv', () => import('./managers/pixiv-manager.js'));
                 break;
 
             case 'steam':
-                this._show(el.steamView());
-                this._loadAndInit('Steam', () => import('./managers/steam-manager.js'));
+                nextElements = [this.elements.steamView()];
+                viewId = 'steam';
+                this._scheduleLoad('Steam', () => import('./managers/steam-manager.js'));
                 break;
-
+                
             case 'article':
-                this._show(el.articleView());
-                // ArticleViewer会在自己的open方法中加载内容
+                nextElements = [this.elements.articleView()];
+                viewId = 'article';
                 break;
         }
 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // 3. 执行立绘特殊逻辑 (非视图，而是背景装饰)
+        /* 立绘只在 'archive' (分类文章列表) 视图中淡化，其他视图保持可见 */
+        if (this.elements.hero()) {
+            const shouldFade = (targetView === 'archive');
+            this.elements.hero().style.transition = 'opacity 0.5s ease';
+            this.elements.hero().style.opacity = shouldFade ? '0.05' : '1';
+        }
+
+        // 4. 执行视图转场动画 (Phase Shift)
+        this._executeTransition(nextElements, viewId);
+    },
+    
+    /**
+     * [PERF] 调度繁重任务 (避免阻塞动画)
+     * 等待转场动画（约 400ms）完成后再执行模块加载和数据渲染
+     */
+    _scheduleLoad(name, importFn) {
+        // 如果浏览器支持 requestIdleCallback，则利用空闲时间；否则延迟 400ms
+        const delay = 400; 
+        setTimeout(() => {
+            this._loadAndInit(name, importFn);
+        }, delay);
+    },
+
+    /**
+     * 执行动画切换
+     * @param {HTMLElement[]} nextEls - 下一个要显示的元素数组
+     * @param {string} nextViewId - 下一个视图ID
+     */
+    _executeTransition(nextEls, nextViewId) {
+        // 🔒 [FIX] 上锁：开始转场
+        this.isTransitioning = true;
+
+        // A. 找到当前所有可见的视图元素 (作为旧视图)
+        // 排除 hero-character, loading 遮罩等非视图元素
+        const allViews = [
+            this.elements.header(), 
+            this.elements.main(), 
+            this.elements.biliView(),
+            this.elements.archiveView(),
+            this.elements.aboutView(),
+            this.elements.pixivView(),
+            this.elements.steamView(),
+            this.elements.articleView()
+        ];
+
+        const currentVisible = allViews.filter(el => el && !el.classList.contains('hidden'));
+
+        // B. 离场动画 (Exit Phase)
+        currentVisible.forEach(el => {
+            // 锁定当前样式，防止动画中跳变
+            el.classList.add('view-exit-active');
+            
+            // 动画结束后隐藏
+            el.addEventListener('animationend', () => {
+                el.classList.remove('view-exit-active');
+                el.classList.add('hidden');
+                // 特殊清理
+                if (el.id === 'article-viewer') el.classList.remove('active');
+            }, { once: true });
+        });
+
+        // C. 进场动画 (Sequential Phase)
+        // [调整] 等待离场动画完全结束（200ms +buffer），避免页面布局重叠导致的跳动
+        setTimeout(() => {
+            // 确保旧视图已隐藏
+            currentVisible.forEach(el => {
+                el.classList.remove('view-exit-active');
+                el.classList.add('hidden');
+            });
+
+            nextEls.forEach(el => {
+                if (!el) return;
+                
+                el.classList.remove('hidden');
+                // article-viewer 特殊处理
+                if (el.id === 'article-viewer') el.classList.add('active');
+
+                // 添加进场动画类
+                el.classList.add('view-enter-active');
+
+                // 动画结束后清理
+                el.addEventListener('animationend', () => {
+                    el.classList.remove('view-enter-active');
+                }, { once: true });
+            });
+            
+            // 确保滚动到顶部
+            window.scrollTo({ top: 0, behavior: 'auto' });
+            
+            // 🔒 [FIX] 释放锁：等待进场动画结束 (300ms)
+            // 总耗时：220ms (这里) + 300ms (进场) = 520ms
+            setTimeout(() => {
+                this.isTransitioning = false;
+            }, 320); // 略大于进场动画时长 (300ms)
+            
+        }, 220); // 略大于 0.2s 动画时长
+
+        // 更新状态
+        this.currentViewId = nextViewId;
     },
 
     /**
      * 懒加载模块并初始化
-     * @param {string} name - 模块名 (如 'Steam' -> SteamManager)
-     * @param {Function} importFn - 返回 import() Promise 的函数
      */
     async _loadAndInit(name, importFn) {
         const managerKey = name + 'Manager';
-
-        // 1. 如果已加载，直接初始化
         if (window[managerKey]) {
             window[managerKey].init();
             return;
         }
-
-        // 2. 显示加载指示器 (可选)
-        console.log(`[MAGI] 懒加载模块: ${managerKey}...`);
-
         try {
-            // 3. 动态加载模块
             const module = await importFn();
-
-            // 4. 挂载到全局并初始化
             window[managerKey] = module.default;
             window[managerKey].init();
-
             this.loadedModules.add(managerKey);
-            console.log(`[MAGI] 模块已加载: ${managerKey}`);
-
+            console.log(`[MAGI] Module Loaded: ${managerKey}`);
         } catch (e) {
-            console.error(`[MAGI] 模块加载失败: ${managerKey}`, e);
-        }
-    },
-
-    _show(dom) { 
-        if (dom) {
-            dom.classList.remove('hidden');
-            // 特殊处理：article-viewer 需要 active 类来显示
-            if (dom.id === 'article-viewer') {
-                dom.classList.add('active');
-            }
+            console.error(`[MAGI] Module Load Failed: ${managerKey}`, e);
         }
     }
 };
 
-// 保持全局兼容
+// 🌟 统一全局入口 (覆盖所有旧定义)
 window.toggleView = function (viewName) {
     ViewCommander.navigate(viewName);
 };
+
 
 /* ==========================================================================
    ARCHIVES MANAGER (OPTIMIZED V2.0)
@@ -5829,3 +5730,4 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 window.updateChatUI = updateChatUI;
 window.handleBadgeClick = handleBadgeClick;
+
