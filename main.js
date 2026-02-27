@@ -3820,8 +3820,14 @@ const ViewCommander = {
     // 🔒 转场锁：防止在动画期间触发新的切换导致状态混乱
     isTransitioning: false,
     
+    // 📥 待执行的导航请求（锁期间收到的最后一次请求，而非直接丢弃）
+    pendingNavigation: null,
+    
     // 模块加载状态缓存
     loadedModules: new Set(),
+    
+    // 定时器 ID 缓存（用于取消待加载任务）
+    _scheduleLoadTimers: [],
 
     /**
      * 核心导航函数
@@ -3831,11 +3837,19 @@ const ViewCommander = {
         // 0. 防止重复导航
         if (this.currentViewId === targetView) return;
 
-        // 🔒 [FIX] 转场锁：如果正在转场中，拒绝新的请求，防止竞态条件
+        // 🔒 转场锁处理：如果正在转场中，改为排队而非直接丢弃
+        // 这样用户在动画期间的点击不会被静默吃掉，就能避免“容器丢失”
         if (this.isTransitioning) {
-            console.warn('[MAGI] Transition in progress. Request rejected.');
+            console.warn('[MAGI] Transition in progress. Queuing request:', targetView);
+            this.pendingNavigation = targetView; // 记下最后一次请求
             return;
         }
+
+        // 取消所有待执行的模块加载任务（防止史并 fetch 回调操作已离开的视图 DOM）
+        this._cancelPendingLoads();
+
+        // 清除排队（此次导航就是对排队请求的执行）
+        this.pendingNavigation = null;
 
         // 1. 播放战术音效
         const sfx = document.getElementById('sfx-click');
@@ -3857,7 +3871,7 @@ const ViewCommander = {
             case 'bangumi':
                 nextElements = [this.elements.biliView()];
                 viewId = 'bangumi';
-                this._scheduleLoad('Bili', () => import('./managers/bili-manager.js'));
+                this._scheduleLoad('Bili', () => import('./managers/bili-manager.js'), 'bangumi');
                 history.pushState(null, '', '#bangumi');
                 break;
 
@@ -3876,13 +3890,13 @@ const ViewCommander = {
             case 'pixiv':
                 nextElements = [this.elements.pixivView()];
                 viewId = 'pixiv';
-                this._scheduleLoad('Pixiv', () => import('./managers/pixiv-manager.js'));
+                this._scheduleLoad('Pixiv', () => import('./managers/pixiv-manager.js'), 'pixiv');
                 break;
 
             case 'steam':
                 nextElements = [this.elements.steamView()];
                 viewId = 'steam';
-                this._scheduleLoad('Steam', () => import('./managers/steam-manager.js'));
+                this._scheduleLoad('Steam', () => import('./managers/steam-manager.js'), 'steam');
                 break;
                 
             case 'article':
@@ -3907,12 +3921,23 @@ const ViewCommander = {
      * [PERF] 调度繁重任务 (避免阻塞动画)
      * 等待转场动画（约 400ms）完成后再执行模块加载和数据渲染
      */
-    _scheduleLoad(name, importFn) {
-        // 如果浏览器支持 requestIdleCallback，则利用空闲时间；否则延迟 400ms
-        const delay = 400; 
-        setTimeout(() => {
-            this._loadAndInit(name, importFn);
+    _scheduleLoad(name, importFn, expectedView) {
+        const delay = 400;
+        // 保存 timer ID，这样如果用户快速导航走可以取消它
+        const timerId = setTimeout(() => {
+            // 将预期的 viewId 传入，确保加载回来时还能对得上
+            this._loadAndInit(name, importFn, expectedView);
         }, delay);
+        this._scheduleLoadTimers.push(timerId);
+    },
+
+    /**
+     * 取消所有待执行的模块加载
+     */
+    _cancelPendingLoads() {
+        this._scheduleLoadTimers.forEach(id => clearTimeout(id));
+        this._scheduleLoadTimers = [];
+        console.log('[MAGI] Pending loads cancelled.');
     },
 
     /**
@@ -3937,86 +3962,124 @@ const ViewCommander = {
             this.elements.articleView()
         ];
 
-        const currentVisible = allViews.filter(el => el && !el.classList.contains('hidden'));
-
-        // B. 离场动画 (Exit Phase)
-        currentVisible.forEach(el => {
-            // 锁定当前样式，防止动画中跳变
-            el.classList.add('view-exit-active');
-            
-            // 动画结束后隐藏
-            el.addEventListener('animationend', () => {
-                el.classList.remove('view-exit-active');
-                el.classList.add('hidden');
-                // 特殊清理
-                if (el.id === 'article-viewer') el.classList.remove('active');
-            }, { once: true });
+        // [FIX] article-viewer 用 active 类而非 !hidden 控制可见性
+        // 必须同时检查两种状态，否则 article-viewer 在离场扫描时永远检测不到，残留于 DOM
+        const currentVisible = allViews.filter(el => {
+            if (!el) return false;
+            if (el.id === 'article-viewer') return el.classList.contains('active');
+            return !el.classList.contains('hidden');
         });
 
-        // C. 进场动画 (Sequential Phase)
-        // [调整] 等待离场动画完全结束（200ms +buffer），避免页面布局重叠导致的跳动
+        // B. 离场动画 (Exit Phase)
+        // [CRITICAL FIX] 完全移除 animationend 监听器！
+        // 
+        // 根因：{ once: true } 的 animationend 监听器在 CSS 动画被 setTimeout 强行
+        // 中断时，不会自然触发，但会**永久残留**在 DOM 节点上。
+        // 
+        // 当下一次进场动画（view-enter-active）播放并触发 animationend 时:
+        // 该残留监听器会被"误杀"触发，将已经显示的 header/main 重新加上 hidden，
+        // 导致"内核认为在home，但DOM却是隐藏的"这个 CRITICAL 矛盾。
+        //
+        // 修复：B步骤只负责加 exit 类（触发动画），隐藏动作完全交由 C步骤的确定性
+        // setTimeout 处理，彻底消除一切事件残留风险。
+        currentVisible.forEach(el => {
+            el.classList.add('view-exit-active');
+            // ❌ 已移除: el.addEventListener('animationend', ...) ← 这是祸根
+        });
+
+        // C. 进场动画 (Sequential Phase - 纯 setTimeout 确定性控制)
         setTimeout(() => {
-            // 确保旧视图已隐藏
+            // C1. 强制清理所有离场元素（不依赖事件，100% 可靠）
             currentVisible.forEach(el => {
                 el.classList.remove('view-exit-active');
                 el.classList.add('hidden');
+                if (el.id === 'article-viewer') el.classList.remove('active');
             });
 
+            // C2. 显示目标视图并触发进场动画
             nextEls.forEach(el => {
                 if (!el) return;
-                
                 el.classList.remove('hidden');
-                // article-viewer 特殊处理
                 if (el.id === 'article-viewer') el.classList.add('active');
-
-                // 添加进场动画类
                 el.classList.add('view-enter-active');
-
-                // 动画结束后清理
-                el.addEventListener('animationend', () => {
-                    el.classList.remove('view-enter-active');
-                }, { once: true });
             });
             
-            // 确保滚动到顶部
+            // C3. 确保滚动到顶部
             window.scrollTo({ top: 0, behavior: 'auto' });
-            
-            // 🔒 [FIX] 释放锁：等待进场动画结束 (300ms)
-            // 总耗时：220ms (这里) + 300ms (进场) = 520ms
-            setTimeout(() => {
-                this.isTransitioning = false;
-            }, 320); // 略大于进场动画时长 (300ms)
-            
-        }, 220); // 略大于 0.2s 动画时长
 
-        // 更新状态
-        this.currentViewId = nextViewId;
+            // C4. 更新内核状态
+            this.currentViewId = nextViewId;
+
+            // C5. 进场动画结束后清理 CSS 类（300ms后，用 setTimeout 而非 animationend）
+            setTimeout(() => {
+                nextEls.forEach(el => {
+                    if (!el) return;
+                    el.classList.remove('view-enter-active');
+                });
+
+                // 释放转场锁
+                this.isTransitioning = false;
+
+                // 执行排队的导航请求（用户在动画期间的点击）
+                if (this.pendingNavigation) {
+                    const queued = this.pendingNavigation;
+                    this.pendingNavigation = null;
+                    console.log('[MAGI] Executing queued navigation:', queued);
+                    this.navigate(queued);
+                }
+            }, 320); // 略大于进场动画时长 (300ms)
+
+        }, 220); // 等待离场动画播放完成 (略大于 0.2s)
     },
 
     /**
-     * 懒加载模块并初始化
+     * 懒加载模块并初始化 (战术防御版)
      */
-    async _loadAndInit(name, importFn) {
+    async _loadAndInit(name, importFn, expectedView) {
         const managerKey = name + 'Manager';
+
+        // 1. 发射检查：如果异步任务开始前视图就已经变了（比如快速点回主页），直接终止
+        if (expectedView && this.currentViewId !== expectedView) {
+            console.warn(`[MAGI] Stale load aborted for ${name} (View changed before start)`);
+            return;
+        }
+
         if (window[managerKey]) {
             window[managerKey].init();
             return;
         }
+
         try {
-            const module = await importFn();
+            // --- 异步鸿沟 (Async Gap) ---
+            const module = await importFn(); 
+            // ---------------------------
+
+            // 2. 落地检查：异步加载文件通常需要几十到几百毫秒
+            // 如果文件下好了，但指挥官已经切换了当前视图，严禁初始化！
+            // 否则 Manager.init 内部的各种 fetch 和 DOM 操作会污染当前页面
+            if (expectedView && this.currentViewId !== expectedView) {
+                console.warn(`[MAGI] Stale load aborted for ${name} (View changed during download)`);
+                return;
+            }
+
             window[managerKey] = module.default;
             window[managerKey].init();
             this.loadedModules.add(managerKey);
-            console.log(`[MAGI] Module Loaded: ${managerKey}`);
+            console.log(`[MAGI] Module Loaded & Initialized: ${managerKey}`);
         } catch (e) {
             console.error(`[MAGI] Module Load Failed: ${managerKey}`, e);
         }
-    }
+    },
 };
 
-// 🌟 统一全局入口 (覆盖所有旧定义)
+// 🌟 统一全局入口
+window.ViewCommander = ViewCommander;
 window.toggleView = function (viewName) {
-    ViewCommander.navigate(viewName);
+    if (window.ViewCommander) {
+        window.ViewCommander.navigate(viewName);
+    } else {
+        console.error("[MAGI] ViewCommander not ready.");
+    }
 };
 
 
@@ -4029,22 +4092,15 @@ const ArchivesManager = {
 
     init() { this.fetchCategories(); },
 
-    // 辅助函数：切换主页内容的显示/隐藏
+    // 辅助函数：切换主页内容的显示/隐藏 (已由 ViewCommander 接管，保持废弃状态)
     toggleMainView(show) {
+        console.warn("[MAGI] Legacy toggleMainView called. Operation blocked to prevent DOM conflict.");
+        return; 
+        /* 
         const header = document.querySelector('header');
         const main = document.querySelector('main');
-        const heroChar = document.querySelector('.hero-character-container');
-
-        if (show) {
-            if (header) header.classList.remove('hidden');
-            if (main) main.classList.remove('hidden');
-            if (heroChar) heroChar.style.opacity = '1';
-        } else {
-            if (header) header.classList.add('hidden');
-            if (main) main.classList.add('hidden');
-            /* [修复] 保持立绘完全可见，不再淡化 */
-            // if (heroChar) heroChar.style.opacity = '0.1'; // ❌ 移除
-        }
+        ... 旧逻辑已注销 ...
+        */
     },
 
     // 1. 获取分类并渲染下拉菜单（添加缓存破坏）
@@ -5726,7 +5782,19 @@ function handleBadgeClick() {
 
 // 初始化调用
 document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(updateChatUI, 1000); // 延迟一点等待 DOM
+    // 1. 延迟更新 UI 状态
+    setTimeout(updateChatUI, 1000); 
+
+    // 2. [CORE FIX] 路由状态自动同步
+    // 处理用户刷新页面（特别是带 Hash 的强制刷新）
+    const hash = window.location.hash.replace('#', '');
+    if (hash && ['bangumi', 'archive', 'about', 'pixiv', 'steam', 'article'].includes(hash)) {
+        console.log(`[MAGI] Init sync: Detected hash #${hash}, navigating...`);
+        // 给系统一点缓冲时间确保所有 DOM 已渲染
+        setTimeout(() => {
+            window.ViewCommander.navigate(hash);
+        }, 100);
+    }
 });
 window.updateChatUI = updateChatUI;
 window.handleBadgeClick = handleBadgeClick;
