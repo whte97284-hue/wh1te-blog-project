@@ -1614,6 +1614,684 @@ body.lcl-mode #particles-container {
     text-shadow: 0 0 5px var(--secondary-color);
 }
 
+.charge-line {
+    z-index: 5;
+}
+
+.charge-glow {
+    background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent);
+    background-size: 100% 50%;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.eva-card:hover .charge-glow {
+    opacity: 1;
+    animation: chargeLine 1.5s ease-in-out infinite;
+}
+
+@keyframes chargeLine {
+    0% { background-position: 0% -100%; }
+    100% { background-position: 0% 100%; }
+}
+
+/* ==========================================================================
+   ARCHIVE TIMELINE (分类归档时间线)
+   ========================================================================== */
+.archive-timeline-line {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        var(--secondary-color) 3%,
+        var(--secondary-color) 97%,
+        transparent 100%
+    );
+    opacity: 0.2;
+}
+
+.archive-timeline-line::after {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        var(--secondary-color) 3%,
+        var(--secondary-color) 97%,
+        transparent 100%
+    );
+    opacity: 0.06;
+    filter: blur(2px);
+}
+
+.archive-year-marker {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    margin-top: 40px;
+}
+
+.archive-year-marker:first-of-type {
+    margin-top: 0;
+}
+
+.archive-year-dot {
+    width: 12px;
+    height: 12px;
+    background: var(--secondary-color);
+    border: 2px solid var(--primary-color);
+    border-radius: 50%;
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+    box-shadow: 0 0 6px var(--secondary-color), 0 0 12px rgba(57, 255, 20, 0.2);
+    margin-left: -6px;
+    transition: all 0.3s ease;
+}
+
+.archive-year-marker:hover .archive-year-dot {
+    box-shadow: 0 0 10px var(--secondary-color), 0 0 20px rgba(57, 255, 20, 0.4);
+    transform: scale(1.2);
+}
+
+.archive-year-dot::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 1px solid var(--secondary-color);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.archive-year-marker:hover .archive-year-dot::after {
+    opacity: 0.4;
+}
+
+.archive-year-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--primary-color);
+    letter-spacing: 3px;
+    text-shadow: 0 0 10px rgba(177, 93, 255, 0.4);
+    transition: text-shadow 0.3s ease;
+}
+
+.archive-year-marker:hover .archive-year-text {
+    text-shadow: 0 0 15px rgba(177, 93, 255, 0.6);
+}
+
+.archive-year-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, var(--primary-color), transparent);
+    opacity: 0.2;
+    position: relative;
+    overflow: hidden;
+}
+
+.archive-year-line::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -30%;
+    width: 30%;
+    height: 100%;
+    background: linear-gradient(to right, transparent, var(--secondary-color), transparent);
+    animation: yearLinePulse 3s ease-in-out infinite;
+}
+
+@keyframes yearLinePulse {
+    0% { left: -30%; }
+    100% { left: 130%; }
+}
+
+.archive-year-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--secondary-color);
+    opacity: 0.4;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+.archive-year-marker:hover .archive-year-count {
+    opacity: 0.8;
+    transform: scale(1.15);
+}
+
+.archive-timeline-item {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.archive-timeline-node {
+    width: 5px;
+    height: 5px;
+    background: var(--secondary-color);
+    border-radius: 50%;
+    position: absolute;
+    left: -27px;
+    top: 14px;
+    z-index: 2;
+    opacity: 0.4;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.archive-timeline-node::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 1px solid var(--secondary-color);
+    opacity: 0;
+    transition: all 0.4s ease;
+}
+
+.archive-timeline-item:hover .archive-timeline-node {
+    opacity: 1;
+    box-shadow: 0 0 6px var(--secondary-color), 0 0 12px rgba(57, 255, 20, 0.3);
+    transform: scale(1.6);
+}
+
+.archive-timeline-item:hover .archive-timeline-node::after {
+    opacity: 0.3;
+    inset: -8px;
+    border-width: 1px;
+    animation: nodeRipple 1s ease-out infinite;
+}
+
+@keyframes nodeRipple {
+    0% {
+        inset: -4px;
+        opacity: 0.4;
+    }
+    100% {
+        inset: -14px;
+        opacity: 0;
+    }
+}
+
+.archive-timeline-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--secondary-color);
+    opacity: 0.35;
+    letter-spacing: 1px;
+    padding-top: 6px;
+    min-width: 36px;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.archive-timeline-item:hover .archive-timeline-date {
+    opacity: 0.9;
+    text-shadow: 0 0 8px rgba(57, 255, 20, 0.3);
+}
+
+.archive-timeline-item .eva-card {
+    flex: 1;
+    min-width: 0;
+}
+
+.archive-card-cover {
+    position: relative;
+}
+
+.archive-card-cover::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--secondary-color), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.archive-card:hover .archive-card-cover::after {
+    opacity: 0.4;
+}
+
+.archive-card-cover .cover-scan {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        105deg,
+        transparent 30%,
+        rgba(57, 255, 20, 0.06) 45%,
+        rgba(57, 255, 20, 0.12) 50%,
+        rgba(57, 255, 20, 0.06) 55%,
+        transparent 70%
+    );
+    transform: translateX(-120%);
+    pointer-events: none;
+    z-index: 5;
+}
+
+.archive-card:hover .cover-scan {
+    animation: coverScanSweep 0.7s ease-out forwards;
+}
+
+@keyframes coverScanSweep {
+    from { transform: translateX(-120%); }
+    to { transform: translateX(120%); }
+}
+
+.archive-card-header {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.archive-card-header .header-indicator {
+    animation: headerIndicatorBreath 2.5s ease-in-out infinite;
+}
+
+@keyframes headerIndicatorBreath {
+    0%, 100% { opacity: 0.6; box-shadow: none; }
+    50% { opacity: 1; box-shadow: 0 0 6px var(--secondary-color); }
+}
+
+.archive-card-read {
+    letter-spacing: 0.5px;
+}
+
+.archive-card .charge-line {
+    left: 0;
+}
+
+.archive-card:hover .charge-line {
+    animation: none;
+    opacity: 1;
+}
+
+.archive-card .charge-glow {
+    opacity: 0;
+}
+
+.archive-card:hover .charge-glow {
+    opacity: 1;
+    animation: chargeLine 1.5s ease-in-out infinite;
+}
+
+.archive-card .card-bottom-line {
+    transition: all 0.3s ease;
+}
+
+.archive-card:hover .card-bottom-line {
+    border-image: linear-gradient(to right, var(--secondary-color), transparent) 1;
+    border-color: rgba(57, 255, 20, 0.15);
+}
+
+@keyframes archiveSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes archiveFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* --- A1: Header Entry Animations --- */
+.archive-header-section {
+    animation: archiveHeaderIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.archive-header-line {
+    position: relative;
+    overflow: hidden;
+}
+
+.archive-header-line::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -40%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(to right, transparent, rgba(57, 255, 20, 0.4), transparent);
+    animation: headerLinePulse 4s ease-in-out infinite;
+}
+
+@keyframes headerLinePulse {
+    0% { left: -40%; }
+    100% { left: 140%; }
+}
+
+@keyframes archiveHeaderIn {
+    from {
+        opacity: 0;
+        transform: translateX(-16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.archive-title-enter {
+    animation: archiveTitleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+    opacity: 0;
+}
+
+@keyframes archiveTitleIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.archive-header-line {
+    animation: archiveLineIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+    opacity: 0;
+    transform-origin: left;
+}
+
+@keyframes archiveLineIn {
+    from {
+        opacity: 0;
+        transform: scaleX(0);
+    }
+    to {
+        opacity: 0.3;
+        transform: scaleX(1);
+    }
+}
+
+/* --- A2: Back Button --- */
+.archive-back-btn {
+    clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+
+/* --- B1: Stats Bar Staggered Entry --- */
+.archive-stats-enter {
+    animation: archiveStatsIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.25s forwards;
+    opacity: 0;
+}
+
+.archive-stats-enter > div:first-child,
+.archive-stats-enter > div:nth-child(2) {
+    transition: all 0.3s ease;
+}
+
+.archive-stats-enter > div:first-child:hover,
+.archive-stats-enter > div:nth-child(2):hover {
+    border-color: rgba(57, 255, 20, 0.3);
+    box-shadow: 0 0 10px rgba(57, 255, 20, 0.08);
+}
+
+.archive-search-wrap svg {
+    transition: color 0.3s ease;
+}
+
+.archive-search-wrap:focus-within svg {
+    color: var(--secondary-color);
+}
+
+@keyframes archiveStatsIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- C1: Timeline Data Flow Pulse --- */
+.archive-timeline-line::before {
+    content: '';
+    position: absolute;
+    left: -2px;
+    width: 5px;
+    height: 40px;
+    background: linear-gradient(
+        to bottom,
+        transparent,
+        var(--secondary-color),
+        transparent
+    );
+    opacity: 0.6;
+    filter: blur(1px);
+    animation: archiveDataFlow 4s linear infinite;
+}
+
+@keyframes archiveDataFlow {
+    0% { top: -40px; }
+    100% { top: 100%; }
+}
+
+/* --- C2: Year Marker Bounce In --- */
+.archive-year-marker {
+    animation: archiveYearBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes archiveYearBounce {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* --- C3: Dashed connector after year marker --- */
+.archive-year-connector {
+    width: 1px;
+    height: 12px;
+    margin-left: 0;
+    border-left: 1px dashed rgba(57, 255, 20, 0.15);
+}
+
+/* --- D1: Card Scan Line on Hover --- */
+.archive-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--secondary-color), transparent);
+    opacity: 0;
+    transition: none;
+    z-index: 30;
+}
+
+.archive-card:hover::after {
+    width: 100%;
+    opacity: 0.5;
+    animation: archiveScanLine 0.8s ease-out forwards;
+}
+
+@keyframes archiveScanLine {
+    0% {
+        width: 0;
+        opacity: 0.8;
+    }
+    60% {
+        width: 100%;
+        opacity: 0.5;
+    }
+    100% {
+        width: 100%;
+        opacity: 0;
+    }
+}
+
+/* --- D2: Charge Line Breathing --- */
+.archive-card .charge-line {
+    animation: archiveChargeBreath 3s ease-in-out infinite;
+}
+
+@keyframes archiveChargeBreath {
+    0%, 100% { opacity: 0.05; }
+    50% { opacity: 0.15; }
+}
+
+.archive-card:hover .charge-line {
+    animation: none;
+    opacity: 1;
+}
+
+/* --- D3: ACCESS Arrow Nudge --- */
+.archive-card-read {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.archive-card:hover .archive-card-read {
+    animation: archiveArrowNudge 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes archiveArrowNudge {
+    from { transform: translateX(0); }
+    to { transform: translateX(3px); }
+}
+
+/* --- E2: Hexagonal Spinner --- */
+.archive-hex-spinner {
+    width: 32px;
+    height: 32px;
+    position: relative;
+}
+
+.archive-hex-spinner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 2px solid var(--primary-color);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    animation: archiveHexSpin 1.2s linear infinite;
+}
+
+.archive-hex-spinner::after {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border: 1px solid var(--secondary-color);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    animation: archiveHexSpin 1.2s linear infinite reverse;
+    opacity: 0.6;
+}
+
+@keyframes archiveHexSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* --- F1: Scroll To Top Button --- */
+#archive-scroll-top {
+    clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#archive-scroll-top.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+#archive-scroll-top:not(.visible) {
+    transform: translateY(12px);
+}
+
+/* --- E1: Empty State Animation --- */
+#archive-empty {
+    animation: archiveEmptyIn 0.5s ease-out forwards;
+}
+
+@keyframes archiveEmptyIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#archive-empty svg {
+    animation: archiveEmptyFloat 3s ease-in-out infinite;
+}
+
+@keyframes archiveEmptyFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+/* --- F2: Card Spacing Rhythm --- */
+.archive-timeline-item {
+    margin-bottom: 14px;
+}
+
+.archive-year-marker + .archive-timeline-item {
+    margin-top: 4px;
+}
+
+.archive-timeline-item + .archive-year-marker {
+    margin-top: 48px;
+}
+
+@media (max-width: 768px) {
+    .archive-year-text {
+        font-size: 1.1rem;
+    }
+
+    .archive-timeline-item {
+        gap: 10px;
+    }
+
+    .archive-timeline-date {
+        font-size: 0.5rem;
+        min-width: 30px;
+    }
+
+    .archive-timeline-node {
+        left: -22px;
+    }
+
+    .archive-header-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .archive-back-btn {
+        align-self: flex-start;
+    }
+}
+
 .eva-header-deco {
     width: 4px;
     height: 4px;
