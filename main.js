@@ -3683,7 +3683,7 @@ const BlogManager = {
         const html = posts.map((post, index) => {
             const title = post.title.rendered;
             let rawExcerpt = post.excerpt ? post.excerpt.rendered.replace(/<[^>]+>/g, '').replace('[&hellip;]', '').trim() : "NO SUMMARY";
-            const excerpt = rawExcerpt.length > 60 ? rawExcerpt.substring(0, 60) + '...' : rawExcerpt;
+            const excerpt = rawExcerpt.length > 40 ? rawExcerpt.substring(0, 40) + '...' : rawExcerpt;
             const date = new Date(post.date).toISOString().split('T')[0];
             const id = post.id;
 
@@ -3718,10 +3718,11 @@ const BlogManager = {
             if (post._embedded && post._embedded['wp:featuredmedia'] && post._embedded['wp:featuredmedia'][0]) {
                 const imgUrl = post._embedded['wp:featuredmedia'][0].source_url;
                 coverHTML = `
-                    <div class="w-full h-32 md:h-40 mb-4 relative overflow-hidden border-b border-white/10 group-hover:border-secondary/50 transition-colors">
+                    <div class="w-full h-24 md:h-28 relative overflow-hidden border-b border-white/10 group-hover:border-secondary/50 transition-colors">
                         <img src="${imgUrl}" loading="lazy" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-500 filter grayscale group-hover:grayscale-0 scale-105 group-hover:scale-100 transform transition-transform">
-                        <div class="absolute top-0 right-0 bg-black/60 px-2 py-1 text-[8px] font-mono text-white/70 backdrop-blur-sm">IMG_SRC</div>
                     </div>`;
+            } else {
+                coverHTML = `<div class="w-full h-[3px] bg-gradient-to-r from-secondary via-primary to-secondary opacity-40 group-hover:opacity-80 transition-opacity duration-500"></div>`;
             }
 
             const animDelay = (startIndex + index) * 0.1;
@@ -3733,13 +3734,14 @@ const BlogManager = {
                          onclick="ArticleViewer.open(${id})">
                     <div class="eva-glare"></div>
                     ${coverHTML}
-                    <div class="p-5 flex flex-col flex-1">
-                        <div class="eva-header mb-3 flex items-center w-full">
-                            <div class="flex items-center"><div class="eva-header-deco"></div><span class="text-xs">ARCHIVE_${id}</span></div>
+                    <div class="p-4 flex flex-col flex-1 relative pl-5">
+                        <div class="charge-line absolute left-0 top-0 bottom-0 w-[2px] bg-white/10 group-hover:bg-secondary/30 transition-colors duration-500 overflow-hidden"><div class="charge-glow w-full h-full"></div></div>
+                        <div class="eva-header mb-2 flex items-center w-full">
+                            <span class="text-xs">ARCHIVE_${id}</span>
                             ${categoryHTML}
                         </div>
-                        <h3 class="text-xl font-bold leading-tight group-hover:text-secondary transition-colors duration-300 font-serif mb-2">${title}</h3>
-                        <p class="text-gray-400 text-xs leading-relaxed border-l-2 border-white/10 pl-3 group-hover:border-secondary transition-colors mb-4">${excerpt}</p>
+                        <h3 class="text-lg font-bold leading-tight group-hover:text-secondary transition-colors duration-300 font-serif mb-1">${title}</h3>
+                        <p class="text-gray-400 text-xs leading-relaxed mb-3">${excerpt}</p>
                         <div class="mt-auto pt-3 flex items-center justify-between text-[10px] font-mono text-gray-500 border-t border-white/5">
                             <span>${date}</span>
                             <div class="flex gap-2 overflow-hidden truncate max-w-[60%] justify-end">${tagsHTML}</div>
@@ -4089,23 +4091,18 @@ window.toggleView = function (viewName) {
    ========================================================================== */
 const ArchivesManager = {
     workerBase: 'https://api-worker.wh1te.top/blog',
+    currentPosts: [],
+    fuseInstance: null,
+    _searchTimer: null,
 
     init() { this.fetchCategories(); },
 
-    // 辅助函数：切换主页内容的显示/隐藏 (已由 ViewCommander 接管，保持废弃状态)
     toggleMainView(show) {
         console.warn("[MAGI] Legacy toggleMainView called. Operation blocked to prevent DOM conflict.");
-        return; 
-        /* 
-        const header = document.querySelector('header');
-        const main = document.querySelector('main');
-        ... 旧逻辑已注销 ...
-        */
+        return;
     },
 
-    // 1. 获取分类并渲染下拉菜单（添加缓存破坏）
     fetchCategories() {
-        // 添加时间戳避免浏览器缓存
         const timestamp = new Date().getTime();
         const url = `${this.workerBase}/categories?hide_empty=true&_=${timestamp}`;
         
@@ -4117,14 +4114,11 @@ const ArchivesManager = {
             .then(categories => {
                 const list = document.getElementById('category-dropdown-list');
                 
-                // 过滤有效分类：必须有ID、名称，且名称不为空/Uncategorized
                 const validCategories = categories.filter(cat => 
-                    cat && 
-                    cat.id && 
-                    cat.name && 
+                    cat && cat.id && cat.name && 
                     cat.name.trim() !== '' &&
                     cat.name !== 'Uncategorized' &&
-                    cat.count > 0 // 必须有文章
+                    cat.count > 0
                 );
                 
                 if (!validCategories || validCategories.length === 0) {
@@ -4132,10 +4126,9 @@ const ArchivesManager = {
                     return;
                 }
 
-                // 渲染分类列表
                 list.innerHTML = validCategories.map(cat => `
                     <a href="javascript:void(0)" 
-                       onclick="ArchivesManager.openCategory(${cat.id}, '${cat.name}')"
+                       onclick="ArchivesManager.openCategory(${cat.id}, '${cat.name.replace(/'/g, "\\'")}')"
                        class="px-4 py-2 text-xs text-gray-300 hover:text-black hover:bg-[var(--primary-color)] transition-all font-mono uppercase border-l-2 border-transparent hover:border-white block group">
                        <span class="group-hover:font-bold">${cat.name}</span> 
                        <span class="opacity-30 text-[9px] ml-1">/// ${cat.count}</span>
@@ -4149,99 +4142,289 @@ const ArchivesManager = {
             });
     },
 
-    // [修改] 打开分类 -> 呼叫指挥官切换到 archive 视图
     openCategory(id, name) {
         const title = document.getElementById('current-category-title');
-        const grid = document.getElementById('category-posts-grid');
+        const timeline = document.getElementById('archive-timeline');
         const loader = document.getElementById('archive-loader');
+        const emptyEl = document.getElementById('archive-empty');
+        const searchInput = document.getElementById('archive-search-input');
+        const clearBtn = document.getElementById('archive-search-clear');
+        const resultCount = document.getElementById('archive-result-count');
+        const protocolLabel = document.getElementById('archive-protocol-label');
+        const scrollTopBtn = document.getElementById('archive-scroll-top');
 
-        // 1. 切换视图
         ViewCommander.navigate('archive');
 
-        // 2. 设置 UI
         if (title) title.innerText = name;
-        if (grid) grid.innerHTML = '';
-        if (loader) loader.classList.remove('hidden');
+        if (timeline) timeline.innerHTML = '';
+        if (emptyEl) emptyEl.classList.add('hidden');
+        if (searchInput) searchInput.value = '';
+        if (clearBtn) clearBtn.classList.add('hidden');
+        if (resultCount) resultCount.classList.add('hidden');
+        if (scrollTopBtn) {
+            scrollTopBtn.classList.remove('visible');
+        }
+        if (loader) {
+            loader.classList.remove('hidden');
+            loader.classList.add('flex');
+        }
 
-        // 3. 数据请求
-        fetch(`${this.workerBase}/posts?categories=${id}&_embed&per_page=12`)
+        if (protocolLabel) {
+            this._typewriter(protocolLabel, '/// ARCHIVE_PROTOCOL', 35);
+        }
+
+        this.currentPosts = [];
+        this.fuseInstance = null;
+
+        this._bindScrollTop();
+
+        fetch(`${this.workerBase}/posts?categories=${id}&_embed&per_page=100`)
             .then(res => res.json())
             .then(posts => {
-                if (loader) loader.classList.add('hidden');
-                this.renderPosts(posts, grid);
+                if (loader) {
+                    loader.classList.add('hidden');
+                    loader.classList.remove('flex');
+                }
+                this.currentPosts = posts;
+                this.initSearch(posts);
+                this.updateStats(posts);
+                this.renderTimeline(posts);
             })
             .catch(err => {
-                if (loader) loader.classList.add('hidden');
-                grid.innerHTML = `<div class="text-red-500 font-mono text-center">DATA_CORRUPTED: ${err.message}</div>`;
+                if (loader) {
+                    loader.classList.add('hidden');
+                    loader.classList.remove('flex');
+                }
+                timeline.innerHTML = `<div class="text-red-500 font-mono text-center py-20">DATA_CORRUPTED: ${err.message}</div>`;
             });
     },
 
-    // 3. 渲染文章卡片 (保持原有 EVA 风格)
-    renderPosts(posts, container) {
+    initSearch(posts) {
+        if (!posts || posts.length === 0) return;
+        const searchData = posts.map(post => ({
+            id: post.id,
+            title: post.title?.rendered || '',
+            excerpt: post.excerpt?.rendered?.replace(/<[^>]+>/g, '') || ''
+        }));
+        this.fuseInstance = new Fuse(searchData, {
+            keys: [
+                { name: 'title', weight: 0.6 },
+                { name: 'excerpt', weight: 0.4 }
+            ],
+            threshold: 0.4,
+            includeScore: true
+        });
+    },
+
+    filterPosts(query) {
+        const clearBtn = document.getElementById('archive-search-clear');
+        const resultCount = document.getElementById('archive-result-count');
+
+        if (clearBtn) clearBtn.classList.toggle('hidden', !query || !query.trim());
+
+        if (this._searchTimer) clearTimeout(this._searchTimer);
+
+        this._searchTimer = setTimeout(() => {
+            const timeline = document.getElementById('archive-timeline');
+            const emptyEl = document.getElementById('archive-empty');
+
+            if (!query || !query.trim()) {
+                this.renderTimeline(this.currentPosts);
+                if (emptyEl) emptyEl.classList.add('hidden');
+                if (resultCount) resultCount.classList.add('hidden');
+                return;
+            }
+
+            if (!this.fuseInstance) return;
+
+            const results = this.fuseInstance.search(query.trim());
+            const matchedIds = new Set(results.map(r => r.item.id));
+            const filtered = this.currentPosts.filter(p => matchedIds.has(p.id));
+
+            this.renderTimeline(filtered);
+
+            if (emptyEl) {
+                emptyEl.classList.toggle('hidden', filtered.length > 0);
+            }
+
+            if (resultCount) {
+                resultCount.textContent = `${filtered.length}/${this.currentPosts.length}`;
+                resultCount.classList.toggle('hidden', filtered.length === this.currentPosts.length);
+            }
+        }, 200);
+    },
+
+    clearSearch() {
+        const searchInput = document.getElementById('archive-search-input');
+        if (searchInput) searchInput.value = '';
+        this.filterPosts('');
+    },
+
+    updateStats(posts) {
+        const countEl = document.getElementById('archive-total-count');
+        const spanEl = document.getElementById('archive-time-span');
+
+        if (countEl) this._countUp(countEl, posts.length, 400);
+
+        if (spanEl && posts.length > 0) {
+            const dates = posts.map(p => new Date(p.date).getTime());
+            const earliest = new Date(Math.min(...dates));
+            const latest = new Date(Math.max(...dates));
+            const ey = earliest.getFullYear();
+            const ly = latest.getFullYear();
+            spanEl.textContent = ey === ly ? `${ey}` : `${ey} → ${ly}`;
+        } else if (spanEl) {
+            spanEl.textContent = '---';
+        }
+    },
+
+    renderTimeline(posts) {
+        const timeline = document.getElementById('archive-timeline');
+        const emptyEl = document.getElementById('archive-empty');
+
         if (!posts || posts.length === 0) {
-            container.innerHTML = `<div class="text-gray-500 font-mono col-span-full text-center py-20">/// SECTOR_EMPTY: NO DATA FOUND</div>`;
+            timeline.innerHTML = '';
+            if (emptyEl) emptyEl.classList.remove('hidden');
             return;
         }
 
-        container.innerHTML = posts.map((post, index) => {
-            // 获取特色图片
-            let imgUrl = 'https://via.placeholder.com/600x400/000000/ffffff?text=NO+SIGNAL';
-            if (post._embedded && post._embedded['wp:featuredmedia'] && post._embedded['wp:featuredmedia'][0]) {
-                imgUrl = post._embedded['wp:featuredmedia'][0].source_url;
-            }
+        const sorted = [...posts].sort((a, b) => new Date(b.date) - new Date(a.date));
+        const grouped = {};
+        sorted.forEach(post => {
+            const year = new Date(post.date).getFullYear();
+            if (!grouped[year]) grouped[year] = [];
+            grouped[year].push(post);
+        });
 
-            // 格式化日期
-            const date = new Date(post.date).toLocaleDateString();
-            // 处理摘要：去除 HTML 标签
-            const rawExcerpt = post.excerpt ? post.excerpt.rendered.replace(/<[^>]+>/g, '').trim() : "NO DATA";
-            const excerpt = rawExcerpt.length > 80 ? rawExcerpt.substring(0, 80) + '...' : rawExcerpt;
+        let html = '<div class="archive-timeline-line"></div>';
+        let globalIndex = 0;
 
-            return `
-            <article class="group relative bg-black/40 border border-white/10 hover:border-[var(--primary-color)] transition-all duration-300 overflow-hidden animate-[fadeIn_0.5s_ease-out] flex flex-col h-full" style="animation-delay: ${index * 0.1}s">
-                
-                <div class="h-48 overflow-hidden relative shrink-0">
-                    <img src="${imgUrl}" alt="${post.title.rendered}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100 filter grayscale group-hover:grayscale-0">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60"></div>
-                    <div class="absolute top-2 right-2 bg-black/80 border border-[var(--primary-color)] text-[var(--primary-color)] text-[10px] px-2 py-0.5 font-mono z-10">
-                        LOG_${post.id}
-                    </div>
+        Object.keys(grouped).sort((a, b) => b - a).forEach(year => {
+            const yearCount = grouped[year].length;
+
+            html += `
+                <div class="archive-year-marker" style="animation: archiveYearBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${globalIndex * 0.04}s forwards; opacity: 0;">
+                    <div class="archive-year-dot"></div>
+                    <span class="archive-year-text">${year}</span>
+                    <span class="archive-year-count">×${yearCount}</span>
+                    <div class="archive-year-line"></div>
                 </div>
+                <div class="archive-year-connector" style="animation: archiveFadeIn 0.3s ease ${globalIndex * 0.04 + 0.15}s forwards; opacity: 0;"></div>`;
 
-                <div class="p-5 relative flex flex-col flex-1">
-                    <div class="text-[10px] text-gray-500 font-mono mb-2 flex justify-between border-b border-white/5 pb-2">
-                        <span>${date}</span>
-                        <span class="text-[var(--secondary-color)]">SYNCED</span>
-                    </div>
-                    
-                    <h2 class="text-lg font-bold text-white mb-3 group-hover:text-[var(--primary-color)] transition-colors line-clamp-2 leading-tight font-serif">
-                        ${post.title.rendered}
-                    </h2>
-                    
-                    <div class="text-gray-400 text-xs leading-relaxed line-clamp-3 mb-4 font-sans flex-1">
-                        ${excerpt}
-                    </div>
+            grouped[year].forEach((post, idx) => {
+                const date = new Date(post.date);
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const dd = String(date.getDate()).padStart(2, '0');
+                const dateStr = `${mm}.${dd}`;
+                const fullDate = `${date.getFullYear()}.${mm}.${dd}`;
+                const title = post.title.rendered;
+                const rawExcerpt = post.excerpt ? post.excerpt.rendered.replace(/<[^>]+>/g, '').trim() : "NO SUMMARY";
+                const excerpt = rawExcerpt.length > 60 ? rawExcerpt.substring(0, 60) + '...' : rawExcerpt;
+                const id = post.id;
 
-                    <a href="javascript:void(0)" onclick="ArticleViewer.open(${post.id})" class="mt-auto inline-flex items-center gap-2 text-xs font-bold text-white group-hover:text-[var(--primary-color)] transition-colors uppercase tracking-widest border-b border-transparent group-hover:border-[var(--primary-color)] pb-0.5 w-fit">
-                        Read Data <i data-lucide="arrow-right" class="w-3 h-3"></i>
-                    </a>
-                </div>
+                let coverHTML = '';
+                if (post._embedded && post._embedded['wp:featuredmedia'] && post._embedded['wp:featuredmedia'][0]) {
+                    const imgUrl = post._embedded['wp:featuredmedia'][0].source_url;
+                    coverHTML = `
+                        <div class="archive-card-cover w-full h-20 md:h-24 relative overflow-hidden">
+                            <img src="${imgUrl}" loading="lazy" class="w-full h-full object-cover opacity-40 grayscale group-hover:opacity-80 group-hover:grayscale-0 transition-all duration-500 scale-105 group-hover:scale-100">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+                            <div class="cover-scan"></div>
+                            <div class="absolute bottom-1.5 left-3 flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-secondary/60 group-hover:bg-secondary group-hover:shadow-[0_0_6px_var(--secondary-color)] transition-all"></span>
+                                <span class="text-[8px] font-mono text-white/40 group-hover:text-white/70 transition-colors">FILE_${id}</span>
+                            </div>
+                        </div>`;
+                } else {
+                    coverHTML = `
+                        <div class="archive-card-header px-3 py-2 flex items-center justify-between border-b border-white/5">
+                            <div class="flex items-center gap-1.5">
+                                <span class="header-indicator w-1.5 h-1.5 rounded-full bg-secondary/60 group-hover:bg-secondary group-hover:shadow-[0_0_6px_var(--secondary-color)] transition-all"></span>
+                                <span class="text-[8px] font-mono text-white/40 group-hover:text-white/70 transition-colors">FILE_${id}</span>
+                            </div>
+                            <span class="text-[8px] font-mono text-primary/30">${fullDate}</span>
+                        </div>`;
+                }
 
-                <div class="absolute inset-0 pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNCIgaGVpZ2h0PSI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjEiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            </article>
-            `;
-        }).join('');
+                html += `
+                    <div class="archive-timeline-item" style="animation: archiveSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) ${globalIndex * 0.05 + 0.08}s forwards; opacity: 0;">
+                        <div class="archive-timeline-node"></div>
+                        <div class="archive-timeline-date">${dateStr}</div>
+                        <article class="archive-card eva-card p-0 group cursor-pointer overflow-hidden flex flex-col"
+                                 data-id="${id}"
+                                 onclick="ArticleViewer.open(${id})">
+                            <div class="eva-glare"></div>
+                            ${coverHTML}
+                            <div class="px-3.5 py-3 flex flex-col flex-1 relative">
+                                <div class="charge-line absolute left-0 top-0 bottom-0 w-[2px] bg-white/10 group-hover:bg-secondary/30 transition-colors duration-500 overflow-hidden"><div class="charge-glow w-full h-full"></div></div>
+                                <h3 class="text-[15px] font-bold leading-snug group-hover:text-secondary transition-colors duration-300 font-serif mb-1.5 pl-3 line-clamp-2">${title}</h3>
+                                <p class="text-gray-500 text-[11px] leading-[1.7] pl-3 mb-2 line-clamp-2">${excerpt}</p>
+                                <div class="mt-auto pt-2 pl-3 flex items-center justify-between card-bottom-line border-t border-white/5">
+                                    <span class="text-[9px] font-mono text-gray-600">${fullDate}</span>
+                                    <span class="archive-card-read text-[9px] font-mono text-secondary/0 group-hover:text-secondary/70 transition-colors duration-300">ACCESS →</span>
+                                </div>
+                            </div>
+                        </article>
+                    </div>`;
 
-        // 刷新图标
+                globalIndex++;
+            });
+        });
+
+        timeline.innerHTML = html;
         if (typeof lucide !== 'undefined') lucide.createIcons();
     },
 
-    // [修改] 关闭视图 -> 呼叫指挥官返回 home 视图
     closeView() {
+        const scrollTopBtn = document.getElementById('archive-scroll-top');
+        if (scrollTopBtn) scrollTopBtn.classList.remove('visible');
         ViewCommander.navigate('home');
+    },
+
+    _typewriter(el, text, speed) {
+        el.textContent = '';
+        el.style.opacity = '1';
+        let i = 0;
+        const timer = setInterval(() => {
+            if (i < text.length) {
+                el.textContent += text[i];
+                i++;
+            } else {
+                clearInterval(timer);
+            }
+        }, speed);
+    },
+
+    _countUp(el, target, duration) {
+        const start = 0;
+        const startTime = performance.now();
+        const step = (now) => {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            el.textContent = Math.round(start + (target - start) * eased);
+            if (progress < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+    },
+
+    _bindScrollTop() {
+        const container = document.getElementById('category-view-container');
+        const btn = document.getElementById('archive-scroll-top');
+        if (!container || !btn) return;
+
+        if (this._scrollHandler) {
+            container.removeEventListener('scroll', this._scrollHandler);
+        }
+
+        this._scrollHandler = () => {
+            btn.classList.toggle('visible', container.scrollTop > 400);
+        };
+
+        container.addEventListener('scroll', this._scrollHandler, { passive: true });
     }
 };
 
-// 启动
 ArchivesManager.init();
 
 /* ==========================================================================
