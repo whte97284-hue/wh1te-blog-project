@@ -3497,6 +3497,31 @@ const BlogManager = {
     cacheKey: 'magi_blog_cache_v1',
     cacheExpiry: 1000 * 60 * 30, // 30分钟过期
 
+    retryConfig: {
+        maxRetries: 3,
+        baseDelay: 800
+    },
+
+    async fetchWithRetry(url, retries = this.retryConfig.maxRetries) {
+        const delay = (ms) => new Promise(r => setTimeout(r, ms));
+        
+        for (let i = 0; i <= retries; i++) {
+            try {
+                const res = await fetch(url);
+                if (!res.ok) {
+                    if (res.status === 400) return res;
+                    throw new Error(`HTTP ${res.status}`);
+                }
+                return res;
+            } catch (err) {
+                if (i === retries) throw err;
+                const wait = this.retryConfig.baseDelay * Math.pow(1.5, i);
+                console.warn(`[MAGI] Fetch failed, retry ${i + 1}/${retries} in ${wait}ms`);
+                await delay(wait);
+            }
+        }
+    },
+
     init() {
         this.state.page = 1;
         this.state.hasMore = true;
@@ -3574,13 +3599,11 @@ const BlogManager = {
         this.state.isLoading = true;
 
         try {
-            // 请求带分页参数
             const url = `${this.workerEndpoint}?page=${this.state.page}&per_page=${this.state.perPage}`;
             console.log(`[MAGI] Fetching page ${this.state.page}...`);
 
-            const res = await fetch(url);
+            const res = await this.fetchWithRetry(url);
 
-            // WordPress 返回 400 表示页码超出范围，视为没有更多文章
             if (res.status === 400) {
                 this.state.hasMore = false;
                 this.updateLoadMoreButton();
@@ -3588,9 +3611,6 @@ const BlogManager = {
                 return;
             }
 
-            if (!res.ok) throw new Error(`Worker returned HTTP ${res.status}`);
-
-            // 获取总数 (WordPress 返回在 Header 中)
             const totalHeader = res.headers.get('X-WP-Total');
             if (totalHeader) {
                 this.state.totalPosts = parseInt(totalHeader);
@@ -4095,6 +4115,28 @@ const ArchivesManager = {
     fuseInstance: null,
     _searchTimer: null,
 
+    retryConfig: {
+        maxRetries: 3,
+        baseDelay: 600
+    },
+
+    async fetchWithRetry(url, retries = this.retryConfig.maxRetries) {
+        const delay = (ms) => new Promise(r => setTimeout(r, ms));
+        
+        for (let i = 0; i <= retries; i++) {
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res;
+            } catch (err) {
+                if (i === retries) throw err;
+                const wait = this.retryConfig.baseDelay * Math.pow(1.5, i);
+                console.warn(`[Archives] Fetch failed, retry ${i + 1}/${retries} in ${wait}ms`);
+                await delay(wait);
+            }
+        }
+    },
+
     init() { this.fetchCategories(); },
 
     toggleMainView(show) {
@@ -4106,7 +4148,7 @@ const ArchivesManager = {
         const timestamp = new Date().getTime();
         const url = `${this.workerBase}/categories?hide_empty=true&_=${timestamp}`;
         
-        fetch(url)
+        this.fetchWithRetry(url)
             .then(res => {
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 return res.json();
@@ -4178,7 +4220,7 @@ const ArchivesManager = {
 
         this._bindScrollTop();
 
-        fetch(`${this.workerBase}/posts?categories=${id}&_embed&per_page=100`)
+        this.fetchWithRetry(`${this.workerBase}/posts?categories=${id}&_embed&per_page=100`)
             .then(res => res.json())
             .then(posts => {
                 if (loader) {
@@ -4195,7 +4237,15 @@ const ArchivesManager = {
                     loader.classList.add('hidden');
                     loader.classList.remove('flex');
                 }
-                timeline.innerHTML = `<div class="text-red-500 font-mono text-center py-20">DATA_CORRUPTED: ${err.message}</div>`;
+                timeline.innerHTML = `
+                    <div class="text-center py-20">
+                        <div class="text-red-500 font-mono text-xs mb-2">DATA_CORRUPTED</div>
+                        <div class="text-gray-600 font-mono text-[10px] mb-4">${err.message}</div>
+                        <button onclick="ArchivesManager.openCategory(${id}, '${name}')" 
+                                class="px-4 py-2 border border-secondary/30 text-secondary text-xs font-mono hover:bg-secondary hover:text-black transition-colors">
+                            RETRY
+                        </button>
+                    </div>`;
             });
     },
 
