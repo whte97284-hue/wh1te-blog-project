@@ -3508,15 +3508,34 @@ const BlogManager = {
         for (let i = 0; i <= retries; i++) {
             try {
                 const res = await fetch(url);
+                
+                if (res.status === 400) return res;
+                
                 if (!res.ok) {
-                    if (res.status === 400) return res;
-                    throw new Error(`HTTP ${res.status}`);
+                    let errorMsg = `HTTP ${res.status}`;
+                    try {
+                        const errData = await res.json();
+                        if (errData.error === 'ALL_SOURCES_FAILED') {
+                            errorMsg = 'ALL_SOURCES_FAILED: Primary offline, Fallback blocked';
+                        } else if (errData.error === 'WORDPRESS_UNREACHABLE') {
+                            errorMsg = `WORDPRESS_UNREACHABLE: ${errData.primary_error || ''}`;
+                        } else if (errData.msg) {
+                            errorMsg = errData.msg;
+                        }
+                    } catch (_) {}
+                    throw new Error(errorMsg);
                 }
+                
+                const source = res.headers.get('X-MAGI-Source');
+                if (source) {
+                    console.log(`[MAGI] Data source: ${source}${source === 'fallback' ? ' (backup server)' : ' (primary)'}`);
+                }
+                
                 return res;
             } catch (err) {
                 if (i === retries) throw err;
                 const wait = this.retryConfig.baseDelay * Math.pow(1.5, i);
-                console.warn(`[MAGI] Fetch failed, retry ${i + 1}/${retries} in ${wait}ms`);
+                console.warn(`[MAGI] Fetch failed, retry ${i + 1}/${retries} in ${wait}ms — ${err.message}`);
                 await delay(wait);
             }
         }
@@ -4126,12 +4145,32 @@ const ArchivesManager = {
         for (let i = 0; i <= retries; i++) {
             try {
                 const res = await fetch(url);
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                
+                if (!res.ok) {
+                    let errorMsg = `HTTP ${res.status}`;
+                    try {
+                        const errData = await res.json();
+                        if (errData.error === 'ALL_SOURCES_FAILED') {
+                            errorMsg = 'ALL_SOURCES_FAILED: Primary offline, Fallback blocked';
+                        } else if (errData.error === 'WORDPRESS_UNREACHABLE') {
+                            errorMsg = `WORDPRESS_UNREACHABLE: ${errData.primary_error || ''}`;
+                        } else if (errData.msg) {
+                            errorMsg = errData.msg;
+                        }
+                    } catch (_) {}
+                    throw new Error(errorMsg);
+                }
+                
+                const source = res.headers.get('X-MAGI-Source');
+                if (source) {
+                    console.log(`[Archives] Data source: ${source}${source === 'fallback' ? ' (backup server)' : ' (primary)'}`);
+                }
+                
                 return res;
             } catch (err) {
                 if (i === retries) throw err;
                 const wait = this.retryConfig.baseDelay * Math.pow(1.5, i);
-                console.warn(`[Archives] Fetch failed, retry ${i + 1}/${retries} in ${wait}ms`);
+                console.warn(`[Archives] Fetch failed, retry ${i + 1}/${retries} in ${wait}ms — ${err.message}`);
                 await delay(wait);
             }
         }
