@@ -2814,10 +2814,8 @@ const AnimeManager = {
 
         // console.log(`[MAGI] Checking real episodes for subject ${id}...`);
         try {
-            // 使用 Bangumi v0 API 获取章节
-            // 同样使用代理防止 CORS
-            const url = `https://api.bgm.tv/v0/episodes?subject_id=${id}&type=0`; // type=0 是本篇
-            const res = await fetch('https://corsproxy.io/?' + encodeURIComponent('https://api.bgm.tv/calendar'));
+            const url = `https://api-worker.wh1te.top/bgm/v0/episodes?subject_id=${id}&type=0`;
+            const res = await fetch(url);
             const data = await res.json();
 
             if (data && data.data && Array.isArray(data.data)) {
@@ -2987,8 +2985,10 @@ function renderItems(container, items, showProgressBar) {
         const score = item.rating?.score || 0;
 
         let image = './images/placeholder.jpg';
-        if (item.images) image = item.images.large || item.images.common || '';
-        image = image.replace(/\/r\/[0-9x]+\/pic/, '/pic');
+        if (item.images) {
+            const raw = item.images.large || item.images.common || '';
+            if (raw) image = `https://api-worker.wh1te.top/bgm/image?url=${encodeURIComponent(raw.replace('http://', 'https://'))}`;
+        }
 
         const myData = db[item.id];
         const status = myData ? myData.status : null;
