@@ -22,6 +22,54 @@
 }
 
 /* ============================================================
+   📱 MOBILE BASE PATCH V2.0 — Layer 1 (全局基础, 纯增量)
+   作用: safe-area 变量 / 动态视口变量 / 全局触摸优化 / 防橡皮筋
+   原理: 不修改任何既有规则, 仅通过层叠补充
+   日期: 2026-07-30
+   ============================================================ */
+
+:root {
+    /* —— safe-area 动态变量 (默认 0px, 移动端由 env() 注入) —— */
+    /* 前提: index.html 的 viewport 必须含 viewport-fit=cover */
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-left: env(safe-area-inset-left, 0px);
+    --safe-area-right: env(safe-area-inset-right, 0px);
+
+    /* —— 动态视口高度变量 (JS 会覆盖, CSS 回退到 100vh) —— */
+    /* Layer 3 的 visualViewport IIFE 会注入真实值 */
+    --app-vh: 100vh;
+    --app-keyboard-offset: 0px;
+}
+
+/* —— 全局 tap-highlight 清除 (覆盖所有元素, 不止 body) —— */
+*,
+*::before,
+*::after {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* —— html 全局防橡皮筋 / 防下拉刷新 —— */
+html {
+    /* 阻止页面级别的下拉刷新与橡皮筋, 保护 SPA 体验 */
+    overscroll-behavior-y: none;
+    /* 允许平移但禁用双击缩放 (配合 viewport 移除 user-scalable) */
+    touch-action: pan-x pan-y manipulation;
+}
+
+/* —— 统一滚动容器惯性滚动 (移动端流畅度关键) —— */
+/* 仅作用于已声明 overflow 的元素, 不污染布局 */
+@supports (-webkit-overflow-scrolling: touch) {
+    [style*="overflow"],
+    .article-viewer-container,
+    #mobile-menu-content,
+    .article-toc,
+    .article-body .wp-block-table {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* ============================================================
    MAGI BOOT LOADER STYLES (开屏加载动画)
    ============================================================ */
 
@@ -3301,8 +3349,7 @@ body.lcl-mode #particles-container {
             overflow: hidden !important;
         }
 
-        /* 2. 隐藏不必要的装饰元素 */
-        .hero-character-container,
+        /* 2. 隐藏不必要的装饰元素 (hero-character 改为低透明度显示, 不再隐藏) */
         .hud-corner,
         #tactical-cursor,
         .cockpit-reticle,
@@ -3310,6 +3357,20 @@ body.lcl-mode #particles-container {
         .magi-node.hidden-mobile,
         .holo-scanner {
             display: none !important;
+        }
+
+        /* hero-character 移动端: 全宽低透明度, 居中不裁剪 (V2.3) */
+        .hero-character-container {
+            right: 0 !important;
+            width: 100vw !important;
+            max-width: 100vw !important;
+            opacity: 0.2 !important;
+            justify-content: center !important;
+        }
+
+        .hero-character-image {
+            object-fit: contain !important;
+            object-position: center bottom !important;
         }
 
         /* 3. 底部状态栏简化 */
@@ -4348,15 +4409,13 @@ body.lcl-mode #particles-container {
     color: #ccc;
 }
 
-/* 图片 - 立体相框 */
+/* 图片 - 干净显示 (移除遮罩/相框效果, V2.3) */
 .article-body img {
-    border: 1px solid rgba(0, 240, 255, 0.15);
-    padding: 5px;
-    background: rgba(0, 240, 255, 0.02);
-    box-shadow: 
-        -1px -1px 0 1px var(--primary-color),
-        1px 1px 0 1px var(--primary-color);
+    max-width: 100%;
+    height: auto;
     margin: 2.5em auto;
+    border-radius: 4px;
+    display: block;
 }
 
 /* 表格 */
@@ -4386,6 +4445,397 @@ body.lcl-mode #particles-container {
 
 .article-body tr:hover td {
     background: rgba(0, 240, 255, 0.05);
+}
+
+/* ==========================================================================
+   📝 文章正文样式补全（2026-07-28）
+   - 修复 <ol> 数字标记丢失 Bug
+   - 补全 H4/H5/H6 样式（与 TOC 扫描范围对齐）
+   - 补全 <hr> 分隔线样式
+   - 补全 <sup>/<sub> 上下标样式
+   - 补全 WordPress Gutenberg 块兜底样式
+   - 修复浅色模式白字隐形 Bug
+   全部为纯增量 CSS，不影响现有暗色模式与既有元素。
+   ========================================================================== */
+
+/* ----- 修复：有序列表数字标记（原 li{list-style:none} 把 ol 数字也清掉了） ----- */
+.article-body ol {
+    counter-reset: ol-counter;
+}
+
+.article-body ol > li {
+    counter-increment: ol-counter;
+}
+
+.article-body ol > li::before {
+    content: counter(ol-counter) '.';
+    position: absolute;
+    left: -1.8em;
+    color: var(--secondary-color);
+    font-weight: bold;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9em;
+    width: 1.5em;
+    text-align: right;
+}
+
+/* 嵌套列表缩进回归 */
+.article-body ol ol,
+.article-body ul ul,
+.article-body ol ul,
+.article-body ul ol {
+    margin-top: 0.5em;
+    margin-bottom: 0;
+}
+
+/* ----- 补全：H4 / H5 / H6 标题（TOC 扫描 h2/h3/h4，原 CSS 仅到 h3） ----- */
+.article-body h4 {
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 1.15rem;
+    color: var(--secondary-color);
+    margin: 1.6em 0 0.8em;
+    padding-left: 12px;
+    border-left: 3px solid var(--secondary-color);
+}
+
+.article-body h5 {
+    font-size: 1rem;
+    color: #fff;
+    margin: 1.3em 0 0.6em;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.article-body h6 {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 1.1em 0 0.5em;
+    font-style: italic;
+    font-family: 'Noto Serif SC', serif;
+}
+
+/* ----- 补全：分隔线 <hr>（Markdown 的 --- 原本无样式） ----- */
+.article-body hr,
+.article-body .wp-block-separator {
+    border: none;
+    height: 1px;
+    margin: 3em 0;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--primary-color) 20%,
+        var(--secondary-color) 50%,
+        var(--primary-color) 80%,
+        transparent 100%);
+    position: relative;
+    overflow: visible;
+}
+
+.article-body hr::after,
+.article-body .wp-block-separator::after {
+    content: '◆';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--secondary-color);
+    background: #0f0518;
+    padding: 0 12px;
+    font-size: 0.8rem;
+}
+
+/* ----- 补全：上下标 <sup>/<sub>（脚注、数学表达式） ----- */
+.article-body sup,
+.article-body sub {
+    font-size: 0.75em;
+    line-height: 0;
+    color: var(--secondary-color);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.article-body sup { vertical-align: super; }
+.article-body sub { vertical-align: sub; }
+
+/* ==========================================================================
+   WordPress Gutenberg 块兜底样式
+   原前端 wp-block-* 类名覆盖数 = 0，作者若用块编辑器会塌陷
+   ========================================================================== */
+
+/* 图片块 + 题注（figcaption 原本完全无样式） */
+.article-body .wp-block-image,
+.article-body figure {
+    margin: 2.5em 0;
+    text-align: center;
+}
+
+.article-body .wp-block-image figcaption,
+.article-body figure figcaption {
+    margin-top: 0.8em;
+    margin-bottom: 0;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.55);
+    font-style: italic;
+    text-align: center;
+    font-family: 'Noto Sans SC', sans-serif;
+}
+
+.article-body .wp-block-image img,
+.article-body figure img {
+    margin: 0 auto;
+}
+
+/* Pullquote（醒目引用，原本完全无样式） */
+.article-body .wp-block-pullquote {
+    border-top: 4px solid var(--primary-color);
+    border-bottom: 4px solid var(--primary-color);
+    margin: 2.5em 0;
+    padding: 30px 20px;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.article-body .wp-block-pullquote blockquote {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+}
+
+.article-body .wp-block-pullquote blockquote::before {
+    display: none;
+}
+
+.article-body .wp-block-pullquote p {
+    font-size: 1.3rem;
+    color: #fff;
+    margin: 0;
+}
+
+/* 多列布局（原本会塌陷为单列） */
+.article-body .wp-block-columns {
+    display: flex;
+    gap: 24px;
+    margin: 2em 0;
+    flex-wrap: wrap;
+}
+
+.article-body .wp-block-column {
+    flex: 1;
+    min-width: 240px;
+}
+
+@media (max-width: 768px) {
+    .article-body .wp-block-columns {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .article-body .wp-block-column {
+        min-width: 100%;
+    }
+}
+
+/* 按钮（原本渲染为裸链接） */
+.article-body .wp-block-button {
+    margin: 1.5em 0;
+}
+
+.article-body .wp-block-button .wp-block-button__link {
+    display: inline-block;
+    padding: 10px 24px;
+    background: var(--primary-color);
+    color: #000 !important;
+    text-decoration: none;
+    border: none;
+    border-radius: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: bold;
+    transition: all 0.2s;
+    border-bottom: none !important;
+    box-shadow: 0 0 10px rgba(177, 93, 255, 0.3);
+}
+
+.article-body .wp-block-button .wp-block-button__link:hover {
+    background: var(--secondary-color);
+    box-shadow: 0 0 18px var(--secondary-color);
+    color: #000 !important;
+    transform: translateY(-1px);
+}
+
+/* 画廊（原本网格布局丢失） */
+.article-body .wp-block-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin: 2em 0;
+    padding: 0;
+    list-style: none;
+}
+
+.article-body .wp-block-gallery li {
+    list-style: none;
+    margin: 0;
+}
+
+.article-body .wp-block-gallery li::before {
+    display: none;
+}
+
+.article-body .wp-block-gallery img,
+.article-body .wp-block-gallery .blocks-gallery-item img {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    aspect-ratio: 1;
+    border: 1px solid rgba(0, 240, 255, 0.15);
+}
+
+/* 表格滚动容器（宽表格原本会撑破文章容器） */
+.article-body .wp-block-table {
+    overflow-x: auto;
+    margin: 2em 0;
+    -webkit-overflow-scrolling: touch;
+}
+
+.article-body .wp-block-table table {
+    margin: 0;
+}
+
+/* ==========================================================================
+   浅色模式适配（修复 .article-body / .article-title 白字隐形 Bug）
+   原 .article-body color 硬编码 rgba(255,255,255,0.9)，浅色模式下完全隐形
+   ========================================================================== */
+[data-mode="light"] .article-title {
+    color: #1a1a1a !important;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.12);
+}
+
+[data-mode="light"] .article-body {
+    color: #2a2a2a;
+}
+
+[data-mode="light"] .article-body p {
+    color: #2a2a2a;
+}
+
+[data-mode="light"] .article-body strong {
+    color: var(--primary-color);
+}
+
+[data-mode="light"] .article-body a {
+    color: var(--primary-color);
+}
+
+[data-mode="light"] .article-body h2 {
+    color: #1a1a1a;
+    background: linear-gradient(90deg, rgba(235, 97, 0, 0.08), transparent);
+}
+
+[data-mode="light"] .article-body h3 {
+    color: var(--primary-color);
+    border-bottom-color: rgba(125, 42, 232, 0.25);
+}
+
+[data-mode="light"] .article-body h4 {
+    color: #006d00;
+}
+
+[data-mode="light"] .article-body h5 {
+    color: #1a1a1a;
+}
+
+[data-mode="light"] .article-body h6 {
+    color: #555;
+}
+
+[data-mode="light"] .article-body blockquote {
+    background: rgba(0, 0, 0, 0.03);
+    color: #444;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.04);
+}
+
+[data-mode="light"] .article-body blockquote::before {
+    color: var(--primary-color);
+    opacity: 0.15;
+}
+
+[data-mode="light"] .article-body pre {
+    background: #fafafa;
+    border-color: #ddd;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.06);
+}
+
+[data-mode="light"] .article-body pre::before {
+    background: #ddd;
+    color: #666;
+}
+
+[data-mode="light"] .article-body pre code {
+    color: #333;
+}
+
+[data-mode="light"] .article-body code {
+    background: rgba(0, 0, 0, 0.06);
+    color: var(--primary-color);
+}
+
+/* 浅色模式图片无需额外遮罩 (V2.3 已移除相框效果) */
+
+[data-mode="light"] .article-body table {
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-mode="light"] .article-body th {
+    background: rgba(125, 42, 232, 0.08);
+    border-bottom-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+[data-mode="light"] .article-body td {
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+    color: #2a2a2a;
+}
+
+[data-mode="light"] .article-body tr:hover td {
+    background: rgba(125, 42, 232, 0.04);
+}
+
+[data-mode="light"] .article-body hr,
+[data-mode="light"] .article-body .wp-block-separator {
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--primary-color) 20%,
+        var(--secondary-color) 50%,
+        var(--primary-color) 80%,
+        transparent 100%);
+}
+
+[data-mode="light"] .article-body hr::after,
+[data-mode="light"] .article-body .wp-block-separator::after {
+    background: #ffffff;
+    color: var(--primary-color);
+}
+
+[data-mode="light"] .article-body .wp-block-image figcaption,
+[data-mode="light"] .article-body figure figcaption {
+    color: rgba(0, 0, 0, 0.5);
+}
+
+[data-mode="light"] .article-body .wp-block-pullquote {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+[data-mode="light"] .article-body .wp-block-pullquote p {
+    color: #1a1a1a;
+}
+
+[data-mode="light"] .article-body .wp-block-gallery img,
+[data-mode="light"] .article-body .wp-block-gallery .blocks-gallery-item img {
+    border-color: rgba(0, 0, 0, 0.1);
 }
 
 /* 底部进度条 */
@@ -4786,14 +5236,11 @@ header.blur-and-shrink {
 /* 文章内图片可点击提示 */
 .article-body img {
     cursor: zoom-in;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform 0.2s;
 }
 
 .article-body img:hover {
     transform: scale(1.02);
-    box-shadow:
-        -2px -2px 0 2px var(--primary-color),
-        2px 2px 0 2px var(--primary-color);
 }
 
 /* ==========================================================================
@@ -5762,4 +6209,573 @@ header.blur-and-shrink {
     opacity: 0;
     transform: scale(0.95);
     pointer-events: none;
+}
+
+/* ============================================================
+   📱 MOBILE ENHANCEMENT PATCH V2.0 — Layer 2
+   位置: style.css 末尾追加 (2026-07-30)
+   策略: 后定义优先, 覆盖既有 100vh / 92vh 等
+   原则: 纯增量, 不删除任何既有规则; @supports 检测可回退
+   ============================================================ */
+
+/* —— L2-4: 动态视口高度回退 (解决 iOS Safari 地址栏遮挡) —— */
+/* 100dvh 会随地址栏收缩动态变化, 100vh 作为不支持时的回退 */
+/* 覆盖原 style.css:534/1351/2521/3853/3874 的 100vh */
+@supports (height: 100dvh) {
+    body {
+        min-height: 100dvh;
+    }
+    .hero-character-container {
+        height: 100dvh;
+    }
+    .crt-overlay {
+        height: 100dvh;
+    }
+    .article-viewer-overlay {
+        height: 100dvh;
+    }
+    #article-viewer {
+        min-height: 100dvh;
+    }
+}
+
+/* —— L2-5: ArticleViewer 移动端键盘适配 —— */
+/* 覆盖原 style.css:4817-4821 的 .article-viewer-container { height: 92vh } */
+@supports (height: 100dvh) {
+    @media (max-width: 768px) {
+        .article-viewer-container {
+            /* 100dvh 随地址栏变化, 再减去 safe-area 与键盘偏移 */
+            height: calc(100dvh - var(--safe-area-top) - var(--safe-area-bottom) - var(--app-keyboard-offset));
+            /* 内部滚动容器防链式滚动 */
+            overscroll-behavior: contain;
+        }
+
+        /* 文章正文区独立滚动, 键盘弹起时不被遮挡 */
+        .viewer-content {
+            padding-bottom: calc(20px + var(--safe-area-bottom));
+        }
+
+        /* 评论区表单过渡 (配合 Layer 3 的 visualViewport) */
+        .comment-form-container {
+            transition: transform 0.25s ease;
+        }
+    }
+}
+
+/* 不支持 dvh 的回退: 维持原 92vh, 仅加 safe-area */
+@supports not (height: 100dvh) {
+    @media (max-width: 768px) {
+        .article-viewer-container {
+            height: calc(92vh - var(--safe-area-bottom));
+        }
+    }
+}
+
+/* —— L2-6: iOS 输入框防自动放大 (font-size 必须 ≥ 16px) —— */
+/* iOS Safari 规则: 表单元素 font-size < 16px 时聚焦会自动放大页面 */
+@media (max-width: 768px) {
+    .form-input,
+    .form-textarea,
+    .comment-form input,
+    .comment-form textarea,
+    .comment-form select {
+        font-size: 16px !important;
+    }
+
+    /* placeholder 也要 ≥ 16px, 否则聚焦瞬间仍会触发缩放 */
+    .form-input::placeholder,
+    .form-textarea::placeholder {
+        font-size: 16px;
+    }
+
+    /* 其他可能的输入元素兜底 */
+    input[type="text"],
+    input[type="email"],
+    input[type="url"],
+    input[type="search"],
+    textarea,
+    select {
+        font-size: 16px;
+    }
+}
+
+/* —— L2-7: 代码块横向滚动 (解决长代码撑破容器) —— */
+/* 增强 style.css:4315 的 .article-body pre */
+.article-body pre {
+    overflow-x: auto;
+    overflow-y: hidden;
+    /* 长单词不换行, 让滚动条接管 */
+    word-wrap: normal;
+    word-break: normal;
+    /* 移动端代码字号略小但保证可读 */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+}
+
+.article-body pre code {
+    /* 块级代码保留原始格式, 靠 pre 滚动 */
+    white-space: pre;
+    tab-size: 2;
+}
+
+/* 行内 code 仍允许换行 (精确区分, 不误伤) */
+.article-body code:not(pre code) {
+    white-space: normal;
+    word-break: break-word;
+}
+
+/* —— L2-8: 图片与媒体防溢出兜底 —— */
+/* 增强 style.css:4352 和 5183 的 .article-body img */
+.article-body img,
+.article-body video,
+.article-body iframe,
+.article-body embed {
+    max-width: 100%;
+    height: auto;
+}
+
+/* SVG 图标也兜底 */
+.article-body svg {
+    max-width: 100%;
+}
+
+/* 文章正文图片容器 (移除 overflow-x: auto, 防止移动端左侧截断, V2.3) */
+.article-body figure,
+.article-body .wp-block-image {
+    max-width: 100%;
+}
+
+/* —— L2-9: safe-area 避让 (导航/底部栏/抽屉/TOC) —— */
+
+/* 顶部导航栏避让刘海 (index.html 的 <nav fixed top-0>) */
+nav.fixed.top-0 {
+    padding-top: var(--safe-area-top) !important;
+}
+
+/* 底部状态栏避让 Home Indicator (style.css:2309 .bottom-bar-container) */
+/* 用 padding-bottom 而非 bottom 位移, 更安全 (不改变定位锚点) */
+.bottom-bar-container {
+    padding-bottom: var(--safe-area-bottom) !important;
+}
+
+/* 移动端抽屉避让 (index.html:572 #mobile-menu-content) */
+#mobile-menu-content {
+    padding-top: var(--safe-area-top);
+    padding-bottom: var(--safe-area-bottom);
+    overscroll-behavior: contain;
+}
+
+/* TOC 侧边栏避让 (style.css:4861 .article-toc position: fixed) */
+.article-toc {
+    top: calc(50% + var(--safe-area-top));
+    max-height: calc(70vh - var(--safe-area-top) - var(--safe-area-bottom));
+}
+
+/* 文章查看器整体避让 */
+.article-viewer-overlay {
+    padding-top: var(--safe-area-top);
+    padding-bottom: var(--safe-area-bottom);
+}
+
+/* —— L2-10: 评论区移动端可读性增强 —— */
+/* 覆盖 style.css:5615-5642 的 @media 块 (补充, 不删除) */
+@media (max-width: 768px) {
+    /* 评论区触发按钮字体 12px → 14px (可读性) */
+    .comments-trigger {
+        font-size: 14px !important;
+        padding: 14px 20px;
+    }
+
+    /* 评论卡片内边距适配 */
+    .comment-card {
+        padding: 16px;
+    }
+
+    /* 评论正文段落最小字号保护 */
+    .comment-body p {
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    /* 评论表单容器横向 padding 收窄, 给输入框更多空间 */
+    .comment-form-container {
+        padding: 20px 16px;
+        margin-bottom: var(--safe-area-bottom);
+    }
+
+    /* 评论提交按钮触控目标 ≥ 44px (Apple HIG) */
+    .comment-form button[type="submit"],
+    .form-submit-btn {
+        min-height: 44px;
+        font-size: 15px;
+    }
+}
+
+/* —— L2-11: hero 区域竖屏优化 —— */
+@media (max-width: 768px) and (orientation: portrait) {
+    /* 主标题响应式字号 */
+    .hero-title,
+    h1 {
+        font-size: clamp(2rem, 8vw, 3rem) !important;
+        line-height: 1.1;
+        word-break: break-word;
+    }
+
+    /* 主内容区横向 padding 收窄 */
+    main.max-w-screen-xl {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+}
+
+/* ============================================================
+   🚀 MOBILE PERFORMANCE PATCH V2.0 — Layer 4
+   位置: style.css 末尾追加 (2026-07-30)
+   原则: 保留所有视觉元素, 仅优化渲染方式
+   目标: 消除 background-position 反模式 / SVG filter 开销 / 合成层爆炸
+   ============================================================ */
+
+/* —— L4-1: hex-bg will-change 反模式修复 —— */
+/* 原 will-change: background-position 是性能反模式:
+   background-position 变化触发 paint 而非 composite,
+   will-change 它会强制创建无用合成层, 导致移动端滚动闪烁+内存浪费 */
+@media (max-width: 768px) {
+    .hex-bg {
+        /* 移除反模式 will-change (核心修复) */
+        will-change: auto !important;
+        /* 减慢动画频率 60s → 120s, 降低重绘开销 50%, 视觉无感知差异 */
+        animation-duration: 120s !important;
+        /* mask-image 优化: 缩短淡出范围减少合成面积 (原 20%-90% → 30%-95%) */
+        -webkit-mask-image: linear-gradient(to bottom, black 30%, transparent 95%) !important;
+        mask-image: linear-gradient(to bottom, black 30%, transparent 95%) !important;
+        /* 限制重绘范围, 避免全屏合成 */
+        contain: paint;
+    }
+}
+
+/* —— L4-2: magi-rings SVG filter 优化 —— */
+/* SVG feGaussianBlur 在移动端是 GPU 杀手 (每帧高斯模糊计算)
+   移动端移除 filter, 用加粗 stroke 弥补 glow 视觉 */
+@media (max-width: 768px) {
+    /* 覆盖 SVG presentation attribute */
+    #magi-rings g[filter] {
+        filter: none !important;
+        /* 加粗线条弥补 glow 消失后的视觉存在感 */
+        stroke-width: 2.5;
+    }
+
+    /* 移动端降低 magi-rings 整体不透明度抖动 (旋转时合成开销) */
+    #magi-rings {
+        /* 降低 opacity 减少合成层数量 */
+        opacity: 0.2 !important;
+        /* contain 限制重绘范围 */
+        contain: layout style paint;
+    }
+
+    /* 单独减慢每个圆环 (原 25s/40s/55s/60s → 翻倍, 降低每帧合成开销) */
+    /* 注意: 不能用 inherit, 会导致动画消失 */
+    #magi-rings circle:nth-child(1) {
+        animation-duration: 50s !important;
+    }
+    #magi-rings circle:nth-child(2) {
+        animation-duration: 80s !important;
+    }
+    #magi-rings circle:nth-child(3) {
+        animation-duration: 110s !important;
+    }
+    #magi-rings rect {
+        animation-duration: 120s !important;
+    }
+}
+
+/* —— L4-3: rebuild-overlay 合成优化 —— */
+/* 原 6 层 linear-gradient + mix-blend-mode 在移动端滚动时每帧重新合成 */
+@media (max-width: 768px) {
+    .rebuild-overlay {
+        /* contain 限制重绘范围, 避免全屏合成 */
+        contain: strict;
+        /* 略降 opacity 减少合成可见度 (0.18 → 0.12, 视觉差异极小) */
+        opacity: 0.12;
+        /* 强制 GPU 层, 避免滚动时重绘 */
+        transform: translateZ(0);
+    }
+}
+
+/* —— L4-4: hex-flash 闪烁优化 —— */
+/* 原 4s 闪烁 + 20px box-shadow, 2 个元素持续消耗 GPU */
+@media (max-width: 768px) {
+    .hex-flash {
+        /* 降低闪烁频率 4s → 8s (闪烁减半, 视觉仍是随机闪烁) */
+        animation-duration: 8s !important;
+        /* 移除 box-shadow (opacity 闪烁已足够, glow 在移动端肉眼不可见) */
+        box-shadow: none !important;
+    }
+}
+
+/* —— L4-5: cursor-glow 移动端禁用 —— */
+/* cursor-glow 在移动端无光标, 但元素仍存在消耗合成层 */
+@media (max-width: 768px) {
+    #cursor-glow {
+        display: none !important;
+    }
+}
+
+/* —— L4-6: 通用合成层优化 —— */
+/* 移动端清理非必要的 will-change, 减少 GPU 内存压力 */
+@media (max-width: 768px) {
+    /* 这些元素的 will-change 在移动端不必要 (动画已减慢或无交互) */
+    .holo-scanner,
+    .hud-corner,
+    .holo-hex-deco {
+        will-change: auto !important;
+    }
+
+    /* perspective 在移动端开销大, particles-container 已有降级但保留 perspective */
+    #particles-container {
+        perspective: none !important;
+    }
+}
+
+/* —— L4-7: 中端移动设备部分降级 —— */
+/* 不等到低性能才降级, 中端设备也减少动画开销 */
+@media (max-width: 768px) and (prefers-reduced-motion: no-preference) {
+    /* 中端设备: 降低 backdrop-filter 数量 (保留主要面板的玻璃效果) */
+    .holo-status-bar {
+        backdrop-filter: blur(4px) !important;
+        -webkit-backdrop-filter: blur(4px) !important;
+    }
+
+    /* 中端设备: crt-overlay 降级 (扫描线简化) */
+    .crt-overlay {
+        opacity: 0.3 !important;
+    }
+}
+
+/* —— L4-8: 滚动性能优化 —— */
+/* 移动端滚动时减少合成层重计算 */
+@media (max-width: 768px) {
+    /* 滚动期间暂停非必要动画 (通过 scroll-timeline 不被支持, 用 will-change 兜底) */
+    body {
+        /* overscroll-behavior 已在 Layer 1 设置, 这里补 scroll-behavior */
+        scroll-behavior: auto;
+    }
+
+    /* fixed 背景层在滚动时减少合成 */
+    #bg-layer {
+        /* contain 限制整个背景层的重绘范围 */
+        contain: layout style;
+    }
+}
+
+/* ==========================================================================
+   🎬 ARTICLE ANIMATION SYSTEM (V2.1, 2026-07-31)
+   统一动效规范：分段渐入 + 进度条 + TOC + 代码块
+   easing: cubic-bezier(0.22, 1, 0.36, 1) — ease-out-quint (柔和高级)
+   duration: 0.5s (入场) / 0.3s (交互) / 0.15s (进度条)
+   ========================================================================== */
+:root {
+    --article-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --article-duration: 0.5s;
+}
+
+/* --- 1. 内容分段渐入 (Staggered Reveal)
+      仅在 JS 加载后启用 (.reveal-ready), 防止 JS 失败时内容永久不可见 --- */
+.article-body.reveal-ready > * {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity var(--article-duration) var(--article-ease),
+                transform var(--article-duration) var(--article-ease);
+}
+.article-body.reveal-ready > *.revealed {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* --- 2. 阅读进度条增强 (渐变色 + 发光拖尾) --- */
+.viewer-progress-bar {
+    background: linear-gradient(90deg,
+        var(--primary-color) 0%,
+        var(--secondary-color) 60%,
+        #ffffff 100%) !important;
+    box-shadow: 0 0 8px var(--primary-color),
+                0 0 4px var(--secondary-color) !important;
+    transition: width 0.15s linear !important;
+}
+
+/* --- 3. TOC 动效升级 (统一过渡 + active 项凸出位移) --- */
+.toc-item {
+    transition: color 0.3s var(--article-ease),
+                background 0.3s var(--article-ease),
+                border-color 0.3s var(--article-ease),
+                opacity 0.3s var(--article-ease),
+                transform 0.3s var(--article-ease);
+}
+.toc-item.active {
+    transform: translateX(4px);
+}
+
+/* --- 4. 代码块交互动效 (hover 上浮 + 复制闪绿脉冲) --- */
+.article-body pre {
+    transition: transform 0.3s var(--article-ease),
+                box-shadow 0.3s var(--article-ease);
+}
+.article-body pre:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 24px rgba(0, 240, 255, 0.12);
+}
+.article-body pre.code-just-copied {
+    animation: articleCodeFlash 0.6s var(--article-ease);
+}
+@keyframes articleCodeFlash {
+    0%   { box-shadow: 0 0 0 0 rgba(57, 255, 20, 0.5); }
+    100% { box-shadow: 0 0 0 12px rgba(57, 255, 20, 0); }
+}
+
+/* --- 5. 移动端动效降级 (减小位移幅度, 降低 GPU 开销) --- */
+@media (max-width: 768px) {
+    .article-body.reveal-ready > * {
+        transform: translateY(8px);
+    }
+}
+
+/* ==========================================================================
+   🎬 GLOBAL ANIMATION SYSTEM (V2.2, 2026-07-31)
+   全局动效：统一变量 + Stagger 入场 + Hover 微交互
+   与文章动效系统共用 ease-out-quint, 保证全站动效联动丝滑
+   ========================================================================== */
+
+/* --- 1. Stagger 入场 (视图切换后内容分段渐入) --- */
+.stagger-child {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity var(--article-duration, 0.5s) var(--article-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+                transform var(--article-duration, 0.5s) var(--article-ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+.stagger-child.stagger-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* --- 2. Hover 微交互 (社交按钮 + 战术按钮 微上浮 + 发光) --- */
+.social-btn,
+.tactical-btn {
+    transition: transform 0.3s var(--article-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+                background 0.3s var(--article-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+                box-shadow 0.3s var(--article-ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+.social-btn:hover,
+.tactical-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 240, 255, 0.15);
+}
+
+/* --- 3. 链接下划线绘制动画 --- */
+.article-body a:not(.wp-block-button__link) {
+    position: relative;
+}
+.article-body a:not(.wp-block-button__link)::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: var(--primary-color);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s var(--article-ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+.article-body a:not(.wp-block-button__link):hover::after {
+    transform: scaleX(1);
+}
+
+/* --- 4. 移动端 Stagger 降级 --- */
+@media (max-width: 768px) {
+    .stagger-child {
+        transform: translateY(10px);
+    }
+}
+
+/* --- 5. 浅色模式 Hover 阴影调整 --- */
+[data-mode="light"] .social-btn:hover,
+[data-mode="light"] .tactical-btn:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* ==========================================================================
+   🔧 ARTICLE SCROLLBAR FIX (V2.3, 2026-07-31)
+   修复文章阅读页面多余滚动条: 图片溢出 + 代码块/表格滚动条美化
+   ========================================================================== */
+
+/* --- 1. 图片全局防溢出 (原仅移动端有 max-width, PC 端大图溢出产生滚动条) --- */
+.article-body img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* --- 2. 文章内容区域禁止水平滚动 (图片/代码块溢出由各自容器处理) --- */
+.viewer-content {
+    overflow-x: hidden;
+}
+
+/* --- 3. 代码块横向滚动条美化 (4px 细条 + 半透明, 不喧宾夺主) --- */
+.article-body pre {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 240, 255, 0.2) transparent;
+}
+.article-body pre::-webkit-scrollbar {
+    height: 4px;
+}
+.article-body pre::-webkit-scrollbar-track {
+    background: transparent;
+}
+.article-body pre::-webkit-scrollbar-thumb {
+    background: rgba(0, 240, 255, 0.2);
+    border-radius: 2px;
+}
+.article-body pre::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 240, 255, 0.4);
+}
+
+/* --- 4. 表格横向滚动条美化 (同代码块风格) --- */
+.article-body .wp-block-table {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 240, 255, 0.2) transparent;
+}
+.article-body .wp-block-table::-webkit-scrollbar {
+    height: 4px;
+}
+.article-body .wp-block-table::-webkit-scrollbar-track {
+    background: transparent;
+}
+.article-body .wp-block-table::-webkit-scrollbar-thumb {
+    background: rgba(0, 240, 255, 0.2);
+    border-radius: 2px;
+}
+
+/* --- 5. 图片容器防溢出 (figure/wp-block-image 不产生滚动条) --- */
+.article-body .wp-block-image,
+.article-body figure {
+    overflow: visible;
+}
+
+/* ==========================================================================
+   🔧 HERO-CHARACTER RESPONSIVE FIX (V2.3, 2026-07-31)
+   修复: <=1024px 视口下 shinji/asuka 人物图片左侧被裁剪
+   根因: PC 端 right:-5% + justify-content:flex-end + overflow:hidden
+         → 容器偏右, 图片左侧被 overflow:hidden 裁剪
+   策略: <=1024px 时全宽居中 + contain 完整显示 + 底部对齐
+   位置: 文件末尾, 覆盖所有之前的规则 (后定义 + !important 优先)
+   ========================================================================== */
+@media (max-width: 1024px) {
+    .hero-character-container {
+        right: 0 !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        justify-content: center !important;
+    }
+    .hero-character-image {
+        object-fit: contain !important;
+        object-position: center bottom !important;
+    }
 }
