@@ -4,11 +4,23 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="public, max-age=3600">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>WH1TE_LOG | HUMAN_INSTRUMENTALITY</title>
     <link rel="icon" type="image/svg+xml" href="./favicon.svg">
     <link rel="apple-touch-icon" href="./favicon.svg">
     <link rel="icon" href="data:,">
+
+    <!-- ===== MOBILE META PATCH V2.0 (增量, 2026-07-30) ===== -->
+    <!-- theme-color: 让 iOS Safari / Chrome Android 地址栏匹配 EVA 配色 -->
+    <meta name="theme-color" content="#0f0518" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <!-- PWA 支持 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <!-- 防止 iOS 把数字串误识别为电话链接（博客有大量编号如 01/02） -->
+    <meta name="format-detection" content="telephone=no">
+    <!-- ===== /MOBILE META PATCH V2.0 ===== -->
     
     <link rel="dns-prefetch" href="//fonts.loli.net">
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
@@ -18,7 +30,12 @@
     <link rel="preconnect" href="//api-worker.wh1te.top">
     <link rel="preconnect" href="//fonts.loli.net" crossorigin>
     <link rel="preconnect" href="//fonts.gstatic.com" crossorigin>
-    
+
+    <!-- 高优先级预加载关键资源 (PC + 手机都受益) -->
+    <link rel="preload" href="style.css" as="style">
+    <link rel="preload" href="main.js" as="script">
+    <link rel="preload" href="./images/shinji.png" as="image">
+
     <!-- ============================================================ -->
     <!-- 主题预加载脚本 (必须在 CSS 之前，防止 FOUC 闪烁)              -->
     <!-- ============================================================ -->
