@@ -71,6 +71,23 @@ class RenderCore {
 const GlobalRender = new RenderCore(30);
 
 /* ==========================================================================
+   🚀 RAF THROTTLE UTILITY (Performance Patch V2.1, 2026-07-31)
+   高频事件 (resize/scroll) 的 rAF 节流, 每帧最多执行一次, 避免布局抖动
+   ========================================================================== */
+function rafThrottle(fn) {
+    let ticking = false;
+    return function (...args) {
+        if (!ticking) {
+            requestAnimationFrame(() => {
+                fn.apply(this, args);
+                ticking = false;
+            });
+            ticking = true;
+        }
+    };
+}
+
+/* ==========================================================================
    CORE OPTIMIZATION DEVICE & CAPABILITY DETECTION
    ========================================================================== */
 
@@ -274,7 +291,7 @@ function initLCL() {
         lclCanvas.height = window.innerHeight * dpr;
         ctx.scale(dpr, dpr); /* 缩放 Context 以匹配分辨率 */
     }
-    window.addEventListener('resize', resize);
+    window.addEventListener('resize', rafThrottle(resize));
     resize();
 
     /* LCL Colors: Orange/Amber gradient */
@@ -747,7 +764,7 @@ function resizeHolo() {
     holoWaveCanvas.width = window.innerWidth;
     holoWaveCanvas.height = 48;
 }
-window.addEventListener('resize', resizeHolo);
+window.addEventListener('resize', rafThrottle(resizeHolo));
 resizeHolo();
 
 let holoOffset = 0;
@@ -843,15 +860,20 @@ function createATField(x, y) {
 document.addEventListener('mousedown', (e) => createATField(e.clientX, e.clientY));
 
 function startHeroGlitch() {
+    /* 🚀 Performance Patch V2.1: 移动端跳过 (hero-character 已 display:none, 定时器纯浪费) */
+    if (isMobileDevice) return;
     const heroImg = document.getElementById('hero-character');
     if (!heroImg) return;
-    setInterval(() => {
+    /* 赋变量以便未来清除 (原匿名 setInterval 无法 clearInterval) */
+    const heroGlitchInterval = setInterval(() => {
         /* Only glitch if visible/not minimized to save battery */
         if (document.visibilityState === 'visible') {
             heroImg.classList.add('cyber-swap-active');
             setTimeout(() => { heroImg.classList.remove('cyber-swap-active'); }, 500);
         }
     }, 4000);
+    /* 页面卸载时清除, 避免泄漏 */
+    window.addEventListener('pagehide', () => clearInterval(heroGlitchInterval), { once: true });
 }
 
 /* ==========================================================================
@@ -1008,6 +1030,12 @@ const characterMap = {
     'unit-08': './images/mari.png'
 };
 
+// 预加载所有主题人物图片，避免切换主题时等待下载 (V2.3)
+Object.values(characterMap).forEach(src => {
+    const img = new Image();
+    img.src = src;
+});
+
 /* ERIRI 对各主题的专属吐槽 */
 const ERIRI_THEME_LINES = {
     'default': [
@@ -1079,18 +1107,39 @@ function setTheme(themeName) {
         }
     });
 
-    // 5. 切换立绘 (带淡入淡出，防止闪烁)
+    // 5. 切换立绘 (预加载 + 无缝淡入淡出, V2.3 优化)
     const heroImg = document.getElementById('hero-character');
     if (heroImg && characterMap[themeName]) {
+        const newSrc = characterMap[themeName];
+
+        // 检查是否已是当前图片 (避免重复切换)
+        if (heroImg.src.endsWith(newSrc.replace('./', ''))) return;
+
+        // 淡出当前图片
         heroImg.style.opacity = 0;
 
-        setTimeout(() => {
-            heroImg.src = characterMap[themeName];
-            // 图片加载完成后再显示
-            heroImg.onload = () => { heroImg.style.opacity = 1; };
-            // 保底：如果缓存很快，onload可能不触发，加个延时兜底
-            setTimeout(() => { heroImg.style.opacity = 1; }, 100);
-        }, 200);
+        // 预加载新图片 (已缓存则 onload 立即触发)
+        const preloader = new Image();
+        preloader.onload = () => {
+            // 图片已就绪, 等待淡出过渡完成后切换
+            setTimeout(() => {
+                heroImg.src = newSrc;
+                // 双 rAF 确保浏览器已应用新 src 后再淡入
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        heroImg.style.opacity = 1;
+                    });
+                });
+            }, 200);
+        };
+        preloader.onerror = () => {
+            // 加载失败仍然切换 (兜底)
+            setTimeout(() => {
+                heroImg.src = newSrc;
+                heroImg.style.opacity = 1;
+            }, 200);
+        };
+        preloader.src = newSrc;
     }
 
     // 6. 强制刷新光标颜色 (触发重绘，解决偶发的颜色卡死)
@@ -2332,7 +2381,7 @@ SONIC WAVE CONTROLLER (安全修复版 V2.0)
             }
         };
         resizeWaveCanvas();
-        window.addEventListener('resize', resizeWaveCanvas);
+        window.addEventListener('resize', rafThrottle(resizeWaveCanvas));
     }
 
     // 内部变量定义
@@ -3386,8 +3435,16 @@ if (!isTouchDevice) {
     document.querySelectorAll('.eva-card').forEach(card => {
         card.classList.add('holo-card-3d');
 
+        /* 🚀 Performance Patch V2.1: mouseenter 时缓存 rect, 避免 mousemove 中每帧 getBoundingClientRect 强制重排 */
+        let cachedRect = null;
+        card.addEventListener('mouseenter', (e) => {
+            cachedRect = card.getBoundingClientRect();
+        });
+
         card.addEventListener('mousemove', (e) => {
-            const rect = card.getBoundingClientRect();
+            /* 用缓存的 rect, 不再每帧调用 getBoundingClientRect (消除布局抖动) */
+            const rect = cachedRect;
+            if (!rect) return;
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
             const centerX = rect.width / 2;
@@ -3401,9 +3458,10 @@ if (!isTouchDevice) {
 
         card.addEventListener('mouseleave', () => {
             card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
+            cachedRect = null;
         });
     });
-}
+    }
 
 /* --- 4. 缺失的模态框与网络逻辑 (补丁) --- */
 
@@ -4058,6 +4116,13 @@ const ViewCommander = {
                     el.classList.remove('view-enter-active');
                 });
 
+                // 🎬 全局动效：触发内容分段渐入 (V2.2, 2026-07-31)
+                nextEls.forEach(el => {
+                    if (el && el.id !== 'article-viewer') {
+                        this._triggerStagger(el, true);
+                    }
+                });
+
                 // 释放转场锁
                 this.isTransitioning = false;
 
@@ -4074,6 +4139,80 @@ const ViewCommander = {
     },
 
     /**
+     * 🎬 获取视图 DOM 元素
+     */
+    _getViewElement(viewId) {
+        const map = {
+            home: () => this.elements.main(),
+            bangumi: () => this.elements.biliView(),
+            archive: () => this.elements.archiveView(),
+            about: () => this.elements.aboutView(),
+            pixiv: () => this.elements.pixivView(),
+            steam: () => this.elements.steamView(),
+        };
+        return map[viewId] ? map[viewId]() : null;
+    },
+
+    /**
+     * 🎬 全局 Stagger 渐入触发器 (Global Animation V2.2)
+     * 自动发现视图内的卡片/区块元素, 用 IntersectionObserver 分段渐入
+     * @param {HTMLElement} viewEl - 视图容器
+     * @param {boolean} isRefresh - true=视图切换(清理旧状态), false=补充新元素
+     */
+    _triggerStagger(viewEl, isRefresh = false) {
+        if (!viewEl) return;
+
+        /* 视图切换时清理旧 observer 和残留 class */
+        if (isRefresh) {
+            if (this._staggerObserver) {
+                this._staggerObserver.disconnect();
+            }
+            viewEl.querySelectorAll('.stagger-child').forEach(el => {
+                el.classList.remove('stagger-child', 'stagger-visible');
+            });
+        }
+
+        /* 发现尚未标记的关键元素 */
+        const SELECTORS = '.eva-card, .archive-card, .cyber-card, .pixiv-card, .anime-card, .steam-card, .stat-item';
+        const children = viewEl.querySelectorAll(SELECTORS + ':not(.stagger-child)');
+        if (children.length === 0) return;
+
+        children.forEach(el => el.classList.add('stagger-child'));
+
+        /* 缓存 DOM 顺序, 用于同批次分段延迟 */
+        const orderMap = new Map();
+        children.forEach((el, i) => orderMap.set(el, i));
+
+        /* 不支持 IntersectionObserver 时直接全部显示 */
+        if (!('IntersectionObserver' in window)) {
+            children.forEach(el => el.classList.add('stagger-visible'));
+            return;
+        }
+
+        /* 创建或复用 observer */
+        if (!this._staggerObserver || isRefresh) {
+            this._staggerObserver = new IntersectionObserver((entries) => {
+                const visible = entries
+                    .filter(e => e.isIntersecting)
+                    .sort((a, b) => orderMap.get(a.target) - orderMap.get(b.target));
+
+                visible.forEach((entry, index) => {
+                    const delay = Math.min(index * 60, 400);
+                    setTimeout(() => {
+                        entry.target.classList.add('stagger-visible');
+                    }, delay);
+                    this._staggerObserver.unobserve(entry.target);
+                });
+            }, {
+                rootMargin: '0px 0px -5% 0px',
+                threshold: 0.1
+            });
+        }
+
+        children.forEach(el => this._staggerObserver.observe(el));
+    },
+
+    /**
      * 懒加载模块并初始化 (战术防御版)
      */
     async _loadAndInit(name, importFn, expectedView) {
@@ -4087,6 +4226,12 @@ const ViewCommander = {
 
         if (window[managerKey]) {
             window[managerKey].init();
+            /* 🎬 全局动效：manager 渲染后触发 stagger (V2.2) */
+            setTimeout(() => {
+                if (this.currentViewId === expectedView) {
+                    this._triggerStagger(this._getViewElement(expectedView), false);
+                }
+            }, 600);
             return;
         }
 
@@ -4107,6 +4252,12 @@ const ViewCommander = {
             window[managerKey].init();
             this.loadedModules.add(managerKey);
             console.log(`[MAGI] Module Loaded & Initialized: ${managerKey}`);
+            /* 🎬 全局动效：manager 渲染后触发 stagger (V2.2) */
+            setTimeout(() => {
+                if (this.currentViewId === expectedView) {
+                    this._triggerStagger(this._getViewElement(expectedView), false);
+                }
+            }, 600);
         } catch (e) {
             console.error(`[MAGI] Module Load Failed: ${managerKey}`, e);
         }
@@ -4115,6 +4266,17 @@ const ViewCommander = {
 
 // 🌟 统一全局入口
 window.ViewCommander = ViewCommander;
+
+/* 🎬 全局动效：首页初始 stagger (Boot Loader 完成后触发, V2.2) */
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        if (ViewCommander.currentViewId === 'home') {
+            const main = document.querySelector('main');
+            if (main) ViewCommander._triggerStagger(main, true);
+        }
+    }, 500);
+});
+
 window.toggleView = function (viewName) {
     if (window.ViewCommander) {
         window.ViewCommander.navigate(viewName);
@@ -4888,7 +5050,7 @@ const ArticleViewer = {
         // });
 
         // 滚动进度追踪
-        this.contentDiv?.addEventListener('scroll', () => this.updateProgress());
+        this.contentDiv?.addEventListener('scroll', () => this.updateProgress(), { passive: true });
     },
 
     async open(postId, postTitle = '') {
@@ -5165,6 +5327,54 @@ const ArticleViewer = {
 
         // 4. 为标题添加锚点ID
         this.addHeadingAnchors(articleBody);
+
+        // 5. 🎬 动效系统：分段渐入 (Animation Patch V2.1, 2026-07-31)
+        this.setupScrollReveal(articleBody);
+    },
+
+    /**
+     * 🎬 滚动分段渐入 (Staggered Reveal)
+     * 正文段落/标题/代码块滚动到视口时渐入, 配合统一 easing 实现丝滑衔接
+     * - 同批次进入视口的元素按 DOM 顺序分段延迟 (60ms 步进, 上限 300ms)
+     * - 不支持 IntersectionObserver 时直接全部显示 (graceful degradation)
+     */
+    setupScrollReveal(articleBody) {
+        const elements = articleBody.querySelectorAll(':scope > *');
+        if (elements.length === 0) return;
+
+        /* 启用 reveal-ready 状态 (CSS 初始隐藏, 防止 JS 失败时内容不可见) */
+        articleBody.classList.add('reveal-ready');
+
+        /* 缓存 DOM 顺序, 用于同批次分段延迟计算 */
+        const orderMap = new Map();
+        elements.forEach((el, i) => orderMap.set(el, i));
+
+        /* 不支持 IntersectionObserver 时直接全部显示 */
+        if (!('IntersectionObserver' in window)) {
+            elements.forEach(el => el.classList.add('revealed'));
+            return;
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            /* 筛选当前进入视口的元素, 按 DOM 顺序排序 */
+            const visible = entries
+                .filter(e => e.isIntersecting)
+                .sort((a, b) => orderMap.get(a.target) - orderMap.get(b.target));
+
+            visible.forEach((entry, index) => {
+                /* 同批次分段延迟 (60ms 步进, 上限 300ms) */
+                const delay = Math.min(index * 60, 300);
+                entry.target.style.transitionDelay = delay + 'ms';
+                entry.target.classList.add('revealed');
+                observer.unobserve(entry.target);
+            });
+        }, {
+            root: this.contentDiv,
+            rootMargin: '0px 0px -8% 0px',
+            threshold: 0.05
+        });
+
+        elements.forEach(el => observer.observe(el));
     },
 
     /**
@@ -5320,7 +5530,11 @@ const ArticleViewer = {
                     await navigator.clipboard.writeText(code);
                     button.textContent = 'COPIED!';
                     button.classList.add('copied');
-                    
+
+                    /* 🎬 代码块闪绿脉冲 (Animation Patch V2.1) */
+                    pre.classList.add('code-just-copied');
+                    setTimeout(() => pre.classList.remove('code-just-copied'), 600);
+
                     setTimeout(() => {
                         button.textContent = 'COPY';
                         button.classList.remove('copied');
@@ -5795,6 +6009,13 @@ window.SecurityProtocol = {
         const overlay = document.getElementById('tactical-auth-overlay');
         if (!overlay) return;
 
+        // 清除 handleGranted/handleDenied 设置的 inline style (V2.3)
+        const panel = overlay.querySelector('.auth-panel');
+        if (panel) {
+            panel.style.boxShadow = '';
+            panel.style.animation = '';
+        }
+
         overlay.classList.add('closing');
         setTimeout(() => {
             overlay.classList.remove('active', 'closing');
@@ -5850,9 +6071,12 @@ window.SecurityProtocol = {
         
         form.classList.add('hiding');
         await new Promise(r => setTimeout(r, 500));
-        
+
         form.style.display = 'none';
-        syncView.style.display = 'block';
+        // 淡入同步视图: 先加 hiding 初始隐藏, 设 display, 强制重排, 再移除 hiding 触发 transition
+        syncView.classList.add('hiding');
+        syncView.style.display = 'flex';
+        void syncView.offsetHeight;
         syncView.classList.remove('hiding');
 
         // === 阶段2: 同步率上升动画 (0% → 100%) ===
@@ -5890,10 +6114,13 @@ window.SecurityProtocol = {
         
         syncView.classList.add('hiding');
         await new Promise(r => setTimeout(r, 500));
-        
+
         syncView.style.display = 'none';
+        // 淡入 MAGI 视图: 同样的 hiding → display → reflow → remove hiding
         const magiView = document.getElementById('auth-magi-view');
+        magiView.classList.add('hiding');
         magiView.style.display = 'grid';
+        void magiView.offsetHeight;
         magiView.classList.remove('hiding');
 
         // MAGI 三贤人投票 + 后端 API 验证
@@ -5990,9 +6217,9 @@ window.SecurityProtocol = {
 
     handleDenied(message = '警告：不正アクセス！A.T.フィールド全開！') {
         this.step = 'DENIED';
-        
+
         const panel = document.querySelector('.auth-panel');
-        if (panel) panel.style.animation = 'glitch 0.2s infinite';
+        if (panel) panel.style.animation = 'auth-glitch 0.15s infinite';
         
         if (typeof showAiSpeech === 'function') {
             showAiSpeech(message);
@@ -6070,4 +6297,56 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 window.updateChatUI = updateChatUI;
 window.handleBadgeClick = handleBadgeClick;
+
+/* ==========================================================================
+   📱 MOBILE JS PATCH V2.0 — Layer 3 (动态视口 & 键盘适配)
+   作用: 1. 用 visualViewport API 实时同步 --app-vh
+         2. 键盘弹起时注入 --app-keyboard-offset
+         3. 被动监听器, 不阻塞滚动
+   原理: 纯增量, 不修改既有任何函数; CSS 变量有默认值, JS 失败也能降级
+   日期: 2026-07-30
+   ========================================================================== */
+(function MobilePatchV2() {
+    'use strict';
+
+    // 仅在支持 visualViewport 的浏览器生效 (iOS 13+, Chrome 61+)
+    if (!window.visualViewport) {
+        console.log('[MOBILE_PATCH_V2] visualViewport 不可用, 跳过键盘适配');
+        return;
+    }
+
+    const root = document.documentElement;
+
+    /* —— 同步动态视口高度到 CSS 变量 —— */
+    function syncViewport() {
+        // visualViewport.height 已排除地址栏与键盘
+        const vh = window.visualViewport.height;
+        root.style.setProperty('--app-vh', vh + 'px');
+
+        // 键盘偏移 = 理论视口 - 实际可见视口
+        const keyboardOffset = window.innerHeight - vh - window.visualViewport.offsetTop;
+        // 仅当偏移 > 50px 时认定键盘弹起 (避免地址栏抖动误判, iOS 地址栏约 50-70px)
+        root.style.setProperty('--app-keyboard-offset', Math.max(0, keyboardOffset - 50) + 'px');
+    }
+
+    // 防抖: 地址栏收缩会高频触发
+    let rafId = null;
+    function debouncedSync() {
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(syncViewport);
+    }
+
+    window.visualViewport.addEventListener('resize', debouncedSync, { passive: true });
+    window.visualViewport.addEventListener('scroll', debouncedSync, { passive: true });
+
+    // 初始同步
+    syncViewport();
+
+    // 横竖屏切换重新计算 (等待地址栏动画结束)
+    window.addEventListener('orientationchange', () => {
+        setTimeout(syncViewport, 300);
+    }, { passive: true });
+
+    console.log('[MOBILE_PATCH_V2] visualViewport 适配已启用');
+})();
 
