@@ -5698,23 +5698,23 @@ header.blur-and-shrink {
 
 /* CRT 屏幕开启/关闭动画 */
 @keyframes turn-on {
-    0% { 
-        transform: scale(1, 0.002); 
-        opacity: 0; 
-        filter: brightness(3);
+    0% {
+        transform: scale(1, 0.002);
+        opacity: 0;
+        filter: brightness(1.5);
     }
-    30% { 
-        transform: scale(1, 0.002); 
-        opacity: 1; 
-        filter: brightness(2);
+    15% {
+        transform: scale(1, 0.002);
+        opacity: 1;
+        filter: brightness(1.2);
     }
-    60% { 
-        transform: scale(1, 0.002); 
-        opacity: 1; 
+    40% {
+        transform: scale(1, 0.08);
+        opacity: 1;
     }
-    100% { 
-        transform: scale(1, 1); 
-        opacity: 1; 
+    100% {
+        transform: scale(1, 1);
+        opacity: 1;
         filter: brightness(1);
     }
 }
@@ -5726,21 +5726,31 @@ header.blur-and-shrink {
 }
 
 @keyframes auth-scan-line {
-    0% { top: -100%; opacity: 0; }
+    0% { transform: translateY(-100%); opacity: 0; }
     10% { opacity: 0.8; }
     90% { opacity: 0.8; }
-    100% { top: 200%; opacity: 0; }
+    100% { transform: translateY(100vh); opacity: 0; }
 }
 
 @keyframes auth-pulse {
-    0%, 100% { 
-        box-shadow: 0 0 20px var(--secondary-color); 
+    0%, 100% {
+        box-shadow: 0 0 20px var(--secondary-color);
         opacity: 0.8;
     }
-    50% { 
-        box-shadow: 0 0 40px var(--secondary-color); 
+    50% {
+        box-shadow: 0 0 40px var(--secondary-color);
         opacity: 1;
     }
+}
+
+/* 认证失败 Glitch 抖动 (V2.3: 原代码引用了不存在的 @keyframes glitch) */
+@keyframes auth-glitch {
+    0% { transform: translate(0); filter: hue-rotate(0deg); }
+    20% { transform: translate(-3px, 2px); filter: hue-rotate(90deg); }
+    40% { transform: translate(-3px, -2px); filter: hue-rotate(180deg); }
+    60% { transform: translate(3px, 2px); filter: hue-rotate(270deg); }
+    80% { transform: translate(3px, -2px); filter: hue-rotate(0deg); }
+    100% { transform: translate(0); filter: hue-rotate(0deg); }
 }
 
 @keyframes shimmer {
@@ -5763,6 +5773,7 @@ header.blur-and-shrink {
 
 #tactical-auth-overlay.active {
     display: flex;
+    transform-origin: center center;
     animation: turn-on 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
@@ -5789,7 +5800,7 @@ header.blur-and-shrink {
 .auth-crt-effect::after {
     content: "";
     position: absolute;
-    top: -100%;
+    top: 0;
     left: 0;
     right: 0;
     height: 100px;
@@ -5802,6 +5813,7 @@ header.blur-and-shrink {
     opacity: 0.15;
     z-index: 3;
     pointer-events: none;
+    transform: translateY(-100%);
     animation: auth-scan-line 4s linear infinite;
 }
 
@@ -6777,5 +6789,80 @@ nav.fixed.top-0 {
     .hero-character-image {
         object-fit: contain !important;
         object-position: center bottom !important;
+    }
+}
+
+/* ==========================================================================
+   🔧 AUTH OVERLAY MOBILE FIX (V2.3, 2026-07-31)
+   修复: 登录弹窗移动端 UI 渲染问题
+   问题: 输入框 28px 太大 / padding 50px 太宽 / 容器 220px 占满屏幕
+         / MAGI 3 列 grid 太窄 / auth-pulse 持续重绘
+   ========================================================================== */
+@media (max-width: 768px) {
+    /* 面板宽度 + auth-pulse 减慢 (3s→6s, 降低重绘频率) */
+    .auth-panel {
+        max-width: 95vw;
+        animation-duration: 6s;
+    }
+
+    /* 表单区域 padding 缩小 (50px 40px → 30px 20px) */
+    .auth-body {
+        padding: 30px 20px;
+    }
+
+    /* 输入框: 28px→18px (>= 16px 防 iOS 放大, 移动端更合适) */
+    .auth-input {
+        font-size: 18px;
+        padding: 8px 0;
+        letter-spacing: 1px;
+    }
+
+    /* 输入框间距缩小 (35px → 20px) */
+    .auth-input-group {
+        margin-bottom: 20px;
+    }
+
+    /* 标题缩小 (text-4xl → 1.5rem) */
+    .auth-body h2 {
+        font-size: 1.5rem !important;
+    }
+
+    /* 同步动画区域 */
+    .auth-syncing {
+        padding: 30px 20px;
+        min-height: 300px;
+    }
+
+    /* 同步容器缩小 (220px → 160px) */
+    .syncing-avatar-container {
+        width: 160px;
+        height: 160px;
+    }
+
+    .syncing-hexagon {
+        width: 100px;
+        height: 100px;
+    }
+
+    .syncing-hexagon::after {
+        width: 70px;
+        height: 70px;
+    }
+
+    /* 百分比文字缩小 (text-6xl → 3rem) */
+    .syncing-percentage {
+        font-size: 3rem !important;
+    }
+
+    /* MAGI 表决: 3 列 → 1 列堆叠 (移动端每列太窄) */
+    .magi-deliberation {
+        grid-template-columns: 1fr !important;
+        gap: 0.5rem !important;
+    }
+
+    /* 按钮缩小 */
+    .auth-btn {
+        padding: 12px 20px;
+        font-size: 0.75rem;
     }
 }
