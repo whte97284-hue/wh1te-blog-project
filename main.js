@@ -4036,6 +4036,11 @@ const ViewCommander = {
     _cancelPendingLoads() {
         this._scheduleLoadTimers.forEach(id => clearTimeout(id));
         this._scheduleLoadTimers = [];
+        // [FIX 2026-08-05] 同步清理 shim 观察器，避免切换视图后观察器残留监听已离开的 DOM
+        if (this._shimObservers) {
+            this._shimObservers.forEach(o => o.disconnect());
+            this._shimObservers = [];
+        }
         console.log('[MAGI] Pending loads cancelled.');
     },
 
@@ -4102,6 +4107,21 @@ const ViewCommander = {
                 if (el.id === 'article-viewer') el.classList.add('active');
                 el.classList.add('view-enter-active');
             });
+
+            // [FIX 2026-08-05] 换显后立即触发 stagger：
+            // 原来放在 320ms 清理回调里，导致进场动画期间内容全透明 (stagger-child opacity:0)，
+            // 动画结束才渐显 → 视觉上"容器先空、内容后出"的空窗感。
+            // 提前到与进场动画同时启动，内容与视图一起淡入。
+            nextEls.forEach(el => {
+                if (el && el.id !== 'article-viewer') {
+                    this._triggerStagger(el, true);
+                }
+            });
+
+            // [FIX 2026-08-05] 懒加载视图骨架占位：
+            // bangumi/pixiv/steam 的模块延迟 400ms 才 import，内容区为空，
+            // 插入骨架占位避免"空容器淡入"露白，渲染完成后由 MutationObserver 自动移除。
+            this._ensureViewShim(nextViewId, nextEls[0]);
             
             // C3. 确保滚动到顶部
             window.scrollTo({ top: 0, behavior: 'auto' });
@@ -4114,13 +4134,6 @@ const ViewCommander = {
                 nextEls.forEach(el => {
                     if (!el) return;
                     el.classList.remove('view-enter-active');
-                });
-
-                // 🎬 全局动效：触发内容分段渐入 (V2.2, 2026-07-31)
-                nextEls.forEach(el => {
-                    if (el && el.id !== 'article-viewer') {
-                        this._triggerStagger(el, true);
-                    }
                 });
 
                 // 释放转场锁
@@ -4151,6 +4164,46 @@ const ViewCommander = {
             steam: () => this.elements.steamView(),
         };
         return map[viewId] ? map[viewId]() : null;
+    },
+
+    /**
+     * [FIX 2026-08-05] 懒加载视图骨架占位 (Shim)
+     * bangumi/pixiv/steam 的内容区初始为空（模块 400ms 后才 import + fetch），
+     * 换显时若内容区没有子元素，插入骨架占位，防止"空容器淡入"露出空白背景。
+     * 内容渲染完成后（内容区出现子元素）自动淡出移除，无需手动干预。
+     * @param {string} viewId - 目标视图ID
+     * @param {HTMLElement} viewEl - 视图容器
+     */
+    _ensureViewShim(viewId, viewEl) {
+        if (!viewEl || !viewId) return;
+        // 内容区选择器映射（三个懒加载视图各自的渲染容器）
+        const CONTENT_MAP = {
+            bangumi: '#bili-grid',
+            pixiv: '#pixiv-grid',
+            steam: '#steam-game-list'
+        };
+        const sel = CONTENT_MAP[viewId];
+        if (!sel) return;
+        const content = viewEl.querySelector(sel);
+        // 已有内容（缓存/加载过）或已有占位时不重复插入
+        if (!content || content.children.length > 0) return;
+        if (viewEl.querySelector('.magi-view-shim')) return;
+
+        const shim = document.createElement('div');
+        shim.className = 'magi-view-shim';
+        shim.innerHTML = '<div class="shim-spinner"></div><p class="shim-text">SYNCHRONIZING DATA...</p>';
+        viewEl.appendChild(shim);
+
+        // 观察内容区：渲染完成后淡出移除占位
+        const obs = new MutationObserver(() => {
+            if (content.children.length > 0) {
+                shim.classList.add('shim-leaving');
+                setTimeout(() => shim.remove(), 400);
+                obs.disconnect();
+            }
+        });
+        obs.observe(content, { childList: true });
+        (this._shimObservers || (this._shimObservers = [])).push(obs);
     },
 
     /**
