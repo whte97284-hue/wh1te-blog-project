@@ -656,7 +656,14 @@ function initMatrixFallback() {
         const columns = Math.floor(matrixCanvas.width / fontSize); /* 使用实际像素计算列数 */
         const newDrops = [];
         for (let i = 0; i < columns; i++) {
-            newDrops[i] = drops[i] || Math.floor(Math.random() * -matrixCanvas.height / fontSize);
+            if (drops[i] !== undefined) {
+                newDrops[i] = drops[i];
+            } else {
+                /* [FIX 2026-08-06] 一半字符列初始分布在屏幕内, 消除开场生长感 */
+                newDrops[i] = Math.random() < 0.5
+                    ? Math.floor(Math.random() * matrixCanvas.height / fontSize)
+                    : Math.floor(Math.random() * -matrixCanvas.height / fontSize);
+            }
         }
         drops = newDrops;
 
@@ -1024,7 +1031,7 @@ function createParticles() {
 }
 
 const characterMap = {
-    'default': './images/shinji.png',
+        'default': './images/shinji.webp',
     'unit-02': './images/asuka.png',
     'unit-00': './images/rei.png',
     'unit-08': './images/mari.png'
@@ -5948,14 +5955,16 @@ const ArticleViewer = {
         // 使用ViewCommander返回到之前保存的视图
         ViewCommander.navigate(this.previousView);
 
-        // 恢复滚动位置（延迟执行，确保视图切换完成）
+        // 恢复滚动位置（延迟到 ViewCommander 转场锁释放之后执行:
+        // 转场 C3 步骤会在 ~220ms 强制 scrollTo(0), 锁在 ~540ms 释放,
+        // 若在此前恢复会被覆盖, 导致关闭文章后永远落在页面顶部）
         setTimeout(() => {
             window.scrollTo({
                 top: this.previousScrollPosition,
-                behavior: 'instant' // 立即跳转，不使用平滑滚动
+                behavior: 'smooth' // 平滑滚回记忆位置, 避免生硬跳变 (浏览器自动按距离控制时长)
             });
             console.log('[ArticleViewer] 恢复滚动位置:', this.previousScrollPosition);
-        }, 50);
+        }, 600);
 
         // 标记为已关闭
         this.isOpen = false;

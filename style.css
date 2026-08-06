@@ -21,6 +21,53 @@
     --border-color: rgba(255, 255, 255, 0.1);
 }
 
+/* ==========================================================================
+   自托管字体 (本地加载, 消除 webfont 下载延迟导致的 FOUT swap)
+   JetBrains Mono: fonts/ 目录已有 400/700/800 三个 woff2 (2026-08-06 启用)
+   ========================================================================== */
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('./fonts/JetBrainsMono-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('./fonts/JetBrainsMono-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('./fonts/JetBrainsMono-ExtraBold.woff2') format('woff2');
+    font-weight: 800;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Noto Serif SC 本地子集 (2026-08-06)
+   仅包含首屏静态字符 (导航/hero 标题/常用标点), 14.8MB → ~19KB
+   未收录字符 (如动态文章标题) 自动回退系统衬线 serif */
+@font-face {
+    font-family: 'Noto Serif SC';
+    src: url('./fonts/NotoSerifSC-Bold-subset.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Noto Serif SC';
+    src: url('./fonts/NotoSerifSC-Black-subset.woff2') format('woff2');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
 /* ============================================================
    📱 MOBILE BASE PATCH V2.0 — Layer 1 (全局基础, 纯增量)
    作用: safe-area 变量 / 动态视口变量 / 全局触摸优化 / 防橡皮筋
@@ -55,6 +102,8 @@ html {
     overscroll-behavior-y: none;
     /* 允许平移但禁用双击缩放 (配合 viewport 移除 user-scalable) */
     touch-action: pan-x pan-y manipulation;
+    /* 预留滚动条槽位, 防止视图切换时页面高度变化导致滚动条出现/消失引发横向跳动 */
+    scrollbar-gutter: stable;
 }
 
 /* —— 统一滚动容器惯性滚动 (移动端流畅度关键) —— */
@@ -852,7 +901,7 @@ body.hovering .cursor-cross-h {
 /* Phase Shift In (切入) */
 @keyframes phaseShiftIn {
     0% {
-        opacity: 0;
+        opacity: 0.3; /* 起始可见透明度: 消除离场→进场之间的内容真空期 (原为0, 新视图需约65ms才淡入到可见) */
         transform: translateX(20px) scale(0.98); /* 减小位移幅度，减少重绘区域 */
     }
     100% {
@@ -898,7 +947,7 @@ body.hovering .cursor-cross-h {
     }
 }
 @keyframes simpleFadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.98); } }
-@keyframes simpleFadeIn { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: scale(1); } }
+@keyframes simpleFadeIn { from { opacity: 0.3; transform: scale(1.02); } to { opacity: 1; transform: scale(1); } }
 
 /* 点击反馈 */
 .click-ripple {
@@ -3971,7 +4020,9 @@ body.lcl-mode #particles-container {
 /* 优化的容器淡入动画 - 更柔和自然 */
 @keyframes containerFadeIn {
     0% {
-        opacity: 0;
+        /* 透明度淡入统一由 #article-viewer 的 phaseShiftIn 承担,
+           此处保持 1, 避免两层 opacity 相乘导致文章打开仍出现内容真空期 */
+        opacity: 1;
         transform: translateY(20px);
     }
     100% {
@@ -6864,5 +6915,54 @@ nav.fixed.top-0 {
     .auth-btn {
         padding: 12px 20px;
         font-size: 0.75rem;
+    }
+}
+
+/* ==========================================================================
+   MAGI VIEW SHIM (懒加载视图骨架占位) — 2026-08-05
+   配合 ViewCommander._ensureViewShim() 使用:
+   bangumi/pixiv/steam 数据加载期间显示居中 spinner + 状态文字,
+   内容渲染完成后由 JS 加 .shim-leaving 并在 0.4s 后移除 DOM。
+   纯增量规则, 不与其他选择器冲突。
+   ========================================================================== */
+.magi-view-shim {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    min-height: 40vh;
+    padding: 48px 16px;
+    color: var(--secondary-color);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-shadow: 0 0 8px var(--secondary-color);
+    opacity: 1;
+    transition: opacity 0.4s ease;
+}
+
+.magi-view-shim .shim-spinner {
+    width: 36px;
+    height: 36px;
+    border: 2px solid var(--secondary-color);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: shim-spin 0.8s linear infinite;
+}
+
+.magi-view-shim .shim-text {
+    margin: 0;
+}
+
+.magi-view-shim.shim-leaving {
+    opacity: 0;
+    pointer-events: none;
+}
+
+@keyframes shim-spin {
+    to {
+        transform: rotate(360deg);
     }
 }

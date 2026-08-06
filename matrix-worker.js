@@ -9,7 +9,7 @@ let ctx = null;
 let drops = [];
 let isRunning = false;
 let lastTime = 0;
-const FPS = 30;
+const FPS = 25; // [ULTRA LOW] 极限省电模式
 const INTERVAL = 1000 / FPS;
 
 // 可配置变量 (由主线程传入)
@@ -28,8 +28,8 @@ const katakana = 'アァカサタナハマヤャラワガザダバパイィキ�
 function initMatrix(width, height) {
     if (!canvas) return;
 
-    // [优化] 应用 DPR
-    const dpr = devicePixelRatio || 1;
+    // [ULTRA LOW] DPR 钳制到 0.5，极限省电
+    const dpr = Math.min(devicePixelRatio || 1, 0.7);
     canvas.width = width * dpr;
     canvas.height = height * dpr;
     // Worker 中不需要 scale，直接按物理像素渲染
@@ -39,7 +39,15 @@ function initMatrix(width, height) {
 
     for (let i = 0; i < columns; i++) {
         // 保留已有位置，避免全部重置
-        newDrops[i] = drops[i] || Math.floor(Math.random() * -canvas.height / fontSize);
+        if (drops[i] !== undefined) {
+            newDrops[i] = drops[i];
+        } else {
+            // [FIX 2026-08-06] 一半字符列初始分布在屏幕内,
+            // 消除首屏"从空到满"的生长感 (原实现全部在屏幕外, 需 ~2.2s 铺满)
+            newDrops[i] = Math.random() < 0.5
+                ? Math.floor(Math.random() * canvas.height / fontSize)
+                : Math.floor(Math.random() * -canvas.height / fontSize);
+        }
     }
     drops = newDrops;
 
