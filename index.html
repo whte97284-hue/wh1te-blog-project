@@ -32,8 +32,9 @@
     <link rel="preconnect" href="//fonts.gstatic.com" crossorigin>
 
     <!-- 高优先级预加载关键资源 (PC + 手机都受益) -->
-    <link rel="preload" href="style.css" as="style">
-    <link rel="preload" href="main.js" as="script">
+    <!-- [FIX 2026-08-07] 静态资源加版本号, 避免 Cloudflare 旧缓存导致样式/脚本不更新 -->
+    <link rel="preload" href="style.css?v=20260807" as="style">
+    <link rel="preload" href="main.js?v=20260807" as="script">
     <!-- [PERF 2026-08-06] hero 立绘转 WebP: 511KB → 167KB (省 66%) -->
     <link rel="preload" href="./images/shinji.webp" as="image">
 
@@ -57,7 +58,7 @@
         })();
     </script>
     
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20260807">
 
     <!-- ============================================================ -->
     <!-- [TAILWIND MODE SWITCH] 模式切换说明                           -->
@@ -66,7 +67,7 @@
     <!-- ============================================================ -->
 
     <!-- [生产模式] 打包版 Tailwind CSS (极速加载) -->
-    <link rel="stylesheet" href="./dist/tailwind.css">
+    <link rel="stylesheet" href="./dist/tailwind.css?v=20260807">
 
     <!-- Fonts: 国内镜像 (fonts.loli.net) 替代 Google Fonts
          [PERF 2026-08-06] 改为异步加载: 字体 CSS 不再阻塞首屏渲染,
@@ -80,7 +81,7 @@
         <link href="https://fonts.loli.net/css2?family=Space+Grotesk:wght@300;500;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
     </noscript>
     <!-- [PERF 2026-08-06] lucide 本地化: unpkg 实测 ~6s, 改为本地 vendor 文件瞬时加载 -->
-    <script src="./vendor/lucide.js" defer></script>
+    <script src="./vendor/lucide.js?v=20260807" defer></script>
 
     <!-- [开发模式] CDN 版 Tailwind (实时调试) - 需要时取消注释
     <script src="https://cdn.tailwindcss.com/3.4.0"></script>
@@ -1764,7 +1765,7 @@
         <!-- ERIRI 台词库加载器 (从 JSON 加载) -->
         <script src="managers/eriri-lines-manager.js" defer></script>
 
-        <script src="main.js" defer></script>
+    <script src="main.js?v=20260807" defer></script>
 
         <!-- 圣地巡礼地图初始化 (Leaflet 懒加载) -->
         <script>
@@ -1967,7 +1968,7 @@
         </script>
         
         <!-- MAGI Boot Loader 控制脚本 -->
-        <script src="boot-loader.js" defer></script>
+    <script src="boot-loader.js?v=20260807" defer></script>
 
     <!-- ============================================================ -->
     <!-- 全息展开式文章阅读器 (Holographic Article Viewer)             -->
