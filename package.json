@@ -4,7 +4,10 @@
   "description": "WH1TE.LOG - MAGI System Blog",
   "scripts": {
     "dev": "npx tailwindcss -i ./src/input.css -o ./dist/tailwind.css --watch",
-    "build:css": "npx tailwindcss -i ./src/input.css -o ./dist/tailwind.css --minify"
+    "build:css": "npx tailwindcss -i ./src/input.css -o ./dist/tailwind.css --minify",
+    "build:lucide": "node tools/build-lucide.mjs",
+    "prerender": "node tools/prerender.mjs",
+    "build": "npm run build:css && npm run build:lucide && npm run prerender"
   },
   "devDependencies": {
     "tailwindcss": "^3.4.0"

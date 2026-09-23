@@ -3,23 +3,14 @@
    在 main.js 之后加载,控制开屏动画
    ========================================================================== */
 
-/* 预加载所有主题的背景人物图片，避免切换时卡顿 */
-function preloadThemeCharacters() {
-    const characterImages = [
-        './images/shinji.png',  // default
-        './images/asuka.png',   // unit-02
-        './images/rei.png',     // unit-00
-        './images/mari.png'     // unit-08
-    ];
-    
-    characterImages.forEach(src => {
-        const img = new Image();
-        img.src = src;
-        // 图片会自动缓存到浏览器
-    });
-    
-    console.log('[PRELOAD] 背景人物图片预加载完成');
-}
+/* [PERF 2026-09-23] 移除 preloadThemeCharacters()
+   理由：
+   1. 与 main.js:1041 的 characterMap 预加载完全重复（那边用的还是正确的 .webp 路径）；
+   2. 本文件原列表里的 './images/shinji.png' 是错的——首屏 hero 用的是 shinji.webp，
+      shinji.png 全仓库零引用，却要白下 511KB；
+   3. 这 4 张 PNG 合计 1.37MB，在开屏阶段并发拉取，和 style.css / main.js / hero 图
+      抢同一条带宽——也就是说开屏遮罩"遮挡"的加载痕迹，主要就是它自己制造的。
+   现在图片预加载统一由 main.js 在空闲时进行（见 main.js characterMap 处的 requestIdleCallback）。 */
 
 const MAGIBootLoader = {
     loader: null,
@@ -28,7 +19,9 @@ const MAGIBootLoader = {
     statusText: null,
     datetimeText: null,
     startTime: null,
-    minDisplayTime: 1500, // 最小展示时间 1.5 秒
+    minDisplayTime: 200, // [PERF 2026-09-23] 1500 → 200：原来的 1.5 秒是纯人为延迟，
+                         // 缓存全命中时也照样撑满，属于"制造加载"而非"遮挡加载"。
+                         // 遮罩的作用只是防闪白，200ms 足够。
     datetimeInterval: null,
 
     init() {
@@ -92,10 +85,13 @@ const MAGIBootLoader = {
 
         // Case 3: 正常校验
         try {
-            this.statusText.textContent = '正在验证身份凭证...';
-            // 设置 3秒 超时，避免卡死启动页
+            // [FIX 2026-09-23] 加空值守卫：原来直接 .textContent 赋值，
+            // 若 #magi-boot-status 不存在会抛 TypeError，被下方 catch 当成
+            // "明确验证失败" 而误触发 forceLogout()（用户会被莫名其妙登出）。
+            if (this.statusText) this.statusText.textContent = '正在验证身份凭证...';
+            // 设置 2秒 超时，避免卡死启动页
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 3000);
+            const timeoutId = setTimeout(() => controller.abort(), 2000);
 
             const response = await fetch(`${BASE_URL}verify`, {
                 method: 'POST',
@@ -169,37 +165,31 @@ async function initializeMAGISystem() {
     MAGIBootLoader.init();
 
     try {
-        // 阶段 1: 初始化渲染核心 (20%)
-        MAGIBootLoader.updateProgress(20, '正在初始化渲染核心...');
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // 阶段 1: 初始化渲染核心
+        MAGIBootLoader.updateProgress(25, '正在初始化渲染核心...');
 
-        // 阶段 2: 连接外部数据节点 + 预加载资源 + [SECURITY] 身份核验 (40%)
-        MAGIBootLoader.updateProgress(40, '正在建立安全连接...');
-        // 🖼️ 预加载所有主题的背景人物图片（后台进行，不阻塞）
-        preloadThemeCharacters();
-        
-        // 🔒 执行身份自检
-        await MAGIBootLoader.verifyIdentity();
-        
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // 阶段 2: 建立安全连接
+        // [PERF 2026-09-23] 移除原来的三个 300ms 纯填充 sleep（合计 900ms）——
+        // 它们唯一的作用是让进度条"看起来在做事"，代价是每次进站多等近 1 秒。
+        MAGIBootLoader.updateProgress(50, '正在建立安全连接...');
 
-        // 阶段 3: 检索战术日志 (WordPress API) (70%)
-        MAGIBootLoader.updateProgress(70, '正在检索战术日志...');
-        
-        // 实际等待 WordPress 数据加载
-        if (typeof fetchBlogPosts === 'function') {
-            try {
-                await fetchBlogPosts();
-            } catch (error) {
-                console.warn('[BOOT] WordPress API 加载失败，继续启动:', error);
-            }
-        }
+        // 🔒 身份自检：给 800ms 上报窗口，超时即放行
+        // [PERF 2026-09-23] 原来是 await 整条链路，最坏阻塞 3s(网络超时) + 1s(失效分支)。
+        // 真正的权限由服务端判定，这里只是 UI 提示，不该参与首屏门控。
+        await Promise.race([
+            MAGIBootLoader.verifyIdentity(),
+            new Promise(resolve => setTimeout(resolve, 800))
+        ]);
 
-        // 阶段 4: 同步完成 (100%)
+        // 阶段 3: 检索战术日志
+        // [FIX 2026-09-23] 原来这里 await fetchBlogPosts()，但全仓库从未定义过该函数
+        // （typeof 恒为 false），所以这一段是 0ms 空转的死代码。
+        // 文章列表实际由 main.js 的 BlogManager.loadPosts() 独立加载；
+        // 开屏遮罩刻意不去等它——等它只会让首屏更慢。
+        MAGIBootLoader.updateProgress(75, '正在检索战术日志...');
+
+        // 阶段 4: 同步完成
         MAGIBootLoader.updateProgress(100, '系统同步完成 · ALL GREEN');
-        
-        // 💫 在100%完成后延迟0.3秒，让用户看清"ALL GREEN"
-        await new Promise(resolve => setTimeout(resolve, 300));
 
         // 隐藏加载器
         await MAGIBootLoader.hide();

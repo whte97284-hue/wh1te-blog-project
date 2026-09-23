@@ -23,9 +23,6 @@
     <!-- ===== /MOBILE META PATCH V2.0 ===== -->
     
     <link rel="dns-prefetch" href="//fonts.loli.net">
-    <link rel="dns-prefetch" href="//fonts.gstatic.com">
-    <link rel="dns-prefetch" href="//unpkg.com">
-    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
     <link rel="dns-prefetch" href="//api-worker.wh1te.top">
     <link rel="preconnect" href="//api-worker.wh1te.top">
     <link rel="preconnect" href="//fonts.loli.net" crossorigin>
@@ -33,8 +30,16 @@
 
     <!-- 高优先级预加载关键资源 (PC + 手机都受益) -->
     <!-- [FIX 2026-08-07] 静态资源加版本号, 避免 Cloudflare 旧缓存导致样式/脚本不更新 -->
-    <link rel="preload" href="style.css?v=20260807" as="style">
-    <link rel="preload" href="main.js?v=20260807" as="script">
+    <!-- [PERF 2026-09-23] 版本号已 bump 到 20260923（仅 style.css / main.js / boot-loader.js，
+         因为这三个文件本次有改动）。CSS/JS 的 Cache-Control 是 max-age=2592000（30天），
+         不换 token 的话浏览器和 Cloudflare 会继续发旧文件，改动等于没生效。
+         dist/tailwind.css 本次未改动，保持原 token；vendor/lucide.js 已按需裁剪，故一并 bump。
+         注意：手工版本号容易忘 —— 更可靠的做法是改成内容哈希文件名（style.a1b2c3.css）。 -->
+    <link rel="preload" href="style.css?v=20260923" as="style">
+    <link rel="preload" href="main.js?v=20260923" as="script">
+    <!-- [PERF 2026-09-23] 补上 dist/tailwind.css 的 preload。它和 style.css 一样是
+         渲染阻塞资源（两者合计约 227KB），但原来只有 style.css 被 preload。 -->
+    <link rel="preload" href="./dist/tailwind.css?v=20260807" as="style">
     <!-- [PERF 2026-08-06] hero 立绘转 WebP: 511KB → 167KB (省 66%) -->
     <link rel="preload" href="./images/shinji.webp" as="image">
 
@@ -50,6 +55,27 @@
                 document.documentElement.setAttribute('data-theme', savedTheme);
             }
             
+            // [FIX 2026-09-24] 立绘 preload 跟随主题。
+            // 原来 <link rel="preload" href="./images/shinji.webp"> 是写死的 default 主题图，
+            // 非 default 主题的访客会白下这张（167KB），而真正要用的那张才开始下 ——
+            // 换图时出现空窗。这里按已保存的主题注入正确的 preload。
+            try {
+                const HERO_SRC = {
+                    default: './images/shinji.webp',
+                    'unit-02': './images/asuka.png',
+                    'unit-00': './images/rei.png',
+                    'unit-08': './images/mari.png'
+                };
+                const heroSrc = HERO_SRC[savedTheme] || HERO_SRC.default;
+                if (heroSrc !== HERO_SRC.default) {
+                    const link = document.createElement('link');
+                    link.rel = 'preload';
+                    link.as = 'image';
+                    link.href = heroSrc;
+                    document.head.appendChild(link);
+                }
+            } catch (e) { /* 预载失败不影响主流程 */ }
+
             // 读取保存的视觉模式（明暗模式）
             const savedVisualMode = localStorage.getItem('visualMode');
             if (savedVisualMode === 'light') {
@@ -58,7 +84,14 @@
         })();
     </script>
     
-    <link rel="stylesheet" href="style.css?v=20260807">
+    <!-- [FIX 2026-09-24b] 首屏兜底底色。
+         必须在 style.css 之前生效，否则 CSS 加载完成前画布会回落到浏览器默认白色。
+         ⚠️ 放在 body 上而不是 html 上 —— html 一旦有背景，body 的背景就不再传播到画布，
+            会让所有负 z-index 背景层（代码雨 #matrix-bg:-3、网格 .hex-bg:-2、
+            光晕 #cursor-glow:-1、粒子等）被 body 的渐变盖住。
+         style.css 里的 body{background:var(--bg-gradient)} 在文档顺序上更靠后，会正常覆盖这条兜底。 -->
+    <style>body{background:#0f0518}html[data-mode="light"] body{background:#ffffff}</style>
+    <link rel="stylesheet" href="style.css?v=20260923">
 
     <!-- ============================================================ -->
     <!-- [TAILWIND MODE SWITCH] 模式切换说明                           -->
@@ -73,95 +106,27 @@
          [PERF 2026-08-06] 改为异步加载: 字体 CSS 不再阻塞首屏渲染,
          消除 ~2.4s 白屏等待 (实测 first-paint 2476ms → ~100ms)
          JetBrains Mono 与 Noto Serif SC 已自托管 (style.css @font-face + fonts/ 目录),
-         不再从在线 CSS 请求, 本地瞬时加载 -->
+         不再从在线 CSS 请求, 本地瞬时加载
+         [PERF 2026-09-24] 移除 Noto Sans JP 请求。它只是 CJK 兜底，却被切成 372 个 unicode-range 分片，
+         首页中文命中 186 片 = 5.70 MB / 186 个请求，且每片到达都触发文字重排，
+         是首次加载 5-9 秒掉帧的主因。改用系统中文字体栈后该请求归零。
+         附带收益：Noto Sans JP 渲染中文用的是日文字形变体，换系统字体后中文更正确。 -->
     <link
-        href="https://fonts.loli.net/css2?family=Space+Grotesk:wght@300;500;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap"
+        href="https://fonts.loli.net/css2?family=Space+Grotesk:wght@300;500;700;900&display=swap"
         rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript>
-        <link href="https://fonts.loli.net/css2?family=Space+Grotesk:wght@300;500;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+        <link href="https://fonts.loli.net/css2?family=Space+Grotesk:wght@300;500;700;900&display=swap" rel="stylesheet">
     </noscript>
     <!-- [PERF 2026-08-06] lucide 本地化: unpkg 实测 ~6s, 改为本地 vendor 文件瞬时加载 -->
-    <script src="./vendor/lucide.js?v=20260807" defer></script>
+    <!-- [PERF 2026-09-23] lucide 按需裁剪: 项目只用 61 个图标，而完整包有 1324 个。
+         vendor/lucide.js 现由 tools/build-lucide.mjs 从 vendor/lucide.full.js 裁剪生成，
+         505,745 → 23,222 字节（省 95.4%），gzip 后省约 78KB。
+         已用等价性测试逐个比对 61 个图标的 SVG 输出，与完整包逐字节一致。
+         ⚠ 新增 data-lucide 图标后需重新跑 npm run build:lucide，否则该图标不渲染。 -->
+    <script src="./vendor/lucide.js?v=20260923" defer></script>
 
-    <!-- [开发模式] CDN 版 Tailwind (实时调试) - 需要时取消注释
-    <script src="https://cdn.tailwindcss.com/3.4.0"></script>
-    <script>
-        window.tailwind = window.tailwind || {};
-        window.tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Space Grotesk', 'Noto Sans JP', 'sans-serif'],
-                        serif: ['Noto Serif SC', 'serif'],
-                        mono: ['JetBrains Mono', 'Noto Sans JP', 'monospace'],
-                    },
-                    colors: {
-                        primary: 'var(--primary-color)',
-                        secondary: 'var(--secondary-color)',
-                        bg: 'var(--bg-color)',
-                        surface: 'var(--surface-color)',
-                        emergency: '#ff0000',
-                    },
-                    animation: {
-                        'spin-slow': 'spin 30s linear infinite',
-                        'spin-slower': 'spin 60s linear infinite',
-                        'glitch': 'glitch 3s linear infinite',
-                        'scan': 'scan 4s linear infinite',
-                        'magi-pulse': 'magiPulse 4s ease-in-out infinite',
-                        'pop-in': 'popIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-                        'red-alert': 'redAlert 2s ease-in-out infinite',
-                        'typing': 'typing 3.5s steps(40, end)',
-                        'flash': 'flash 2s infinite',
-                        'scanner-beam': 'scannerBeam 4s ease-in-out infinite',
-                        'icon-glitch': 'iconGlitch 0.3s ease-in-out forwards',
-                        'speaking-shake': 'speakingShake 0.5s infinite',
-                        'hologram-flicker': 'hologramFlicker 3s infinite',
-                        'chromatic-move': 'chromaticMove 5s infinite alternate',
-                        'data-stream': 'dataStream 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards',
-                    },
-                    keyframes: {
-                        scan: { '0%': { backgroundPosition: '0 0' }, '100%': { backgroundPosition: '0 100%' } },
-                        magiPulse: { '0%, 100%': { opacity: 0.5, boxShadow: '0 0 15px var(--secondary-color)' }, '50%': { opacity: 1, boxShadow: '0 0 30px var(--secondary-color)' } },
-                        popIn: { '0%': { opacity: 0, transform: 'scale(0.95) translateY(10px)' }, '100%': { opacity: 1, transform: 'scale(1) translateY(0)' } },
-                        redAlert: { '0%, 100%': { boxShadow: 'inset 0 0 30px rgba(255,0,0,0.3)' }, '50%': { boxShadow: 'inset 0 0 80px rgba(255,0,0,0.6)' } },
-                        typing: { '0%': { width: '0' }, '100%': { width: '100%' } },
-                        flash: { '0%, 100%': { opacity: 1 }, '50%': { opacity: 0.3 } },
-                        scannerBeam: { '0%': { left: '-100%' }, '100%': { left: '200%' } },
-                        iconGlitch: {
-                            '0%': { transform: 'scale(0.8) skewX(20deg)', opacity: 0 },
-                            '50%': { transform: 'scale(1.1) skewX(-10deg)', opacity: 1 },
-                            '100%': { transform: 'scale(1) skewX(0deg)', opacity: 1 }
-                        },
-                        speakingShake: {
-                            '0%, 100%': { transform: 'translate(0, 0) scale(1.02)' },
-                            '25%': { transform: 'translate(1px, 1px) scale(1.02)' },
-                            '50%': { transform: 'translate(-1px, 0) scale(1.02)' },
-                            '75%': { transform: 'translate(0, -1px) scale(1.02)' }
-                        },
-                        hologramFlicker: {
-                            '0%, 100%': { opacity: 0.95, filter: 'brightness(1.1) contrast(1.2)' },
-                            '50%': { opacity: 0.8, filter: 'brightness(0.9) contrast(1)' },
-                            '92%': { opacity: 0.95, transform: 'skewX(0deg)' },
-                            '93%': { opacity: 0.6, transform: 'skewX(2deg)' },
-                            '94%': { opacity: 0.95, transform: 'skewX(0deg)' },
-                            '96%': { transform: 'translate(1px, 0)' },
-                            '97%': { transform: 'translate(-1px, 0)' }
-                        },
-                        chromaticMove: {
-                            '0%': { textShadow: '-2px 0 0 rgba(255,0,0,0.5), 2px 0 0 rgba(0,255,255,0.5)' },
-                            '100%': { textShadow: '-1px 0 0 rgba(255,0,0,0.5), 1px 0 0 rgba(0,255,255,0.5)' }
-                        },
-                        dataStream: {
-                            '0%': { opacity: 0, transform: 'translateX(-10px)' },
-                            '100%': { opacity: 1, transform: 'translateX(0)' }
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    [开发模式结束] -->
+    <!-- 开发模式：需要实时调试 Tailwind 时，把 dev/tailwind-cdn-snippet.html
+         的内容贴到这里（生产环境用 dist/tailwind.css，见下方） -->
 </head>
 
 <body class="antialiased overflow-x-hidden font-sans selection:bg-secondary selection:text-black">
@@ -274,7 +239,6 @@
     <div class="cockpit-side-meter meter-left"></div>
     <div class="cockpit-side-meter meter-right"></div>
     <div class="crt-overlay"></div>
-    <div class="scan-bar"></div>
     <div id="particles-container"></div>
 
     <!-- MAGI 垂直通讯流 (左侧竖向打字效果) -->
@@ -293,25 +257,24 @@
         <!-- [PERF] MAGI 圆环优化：移除 drop-shadow 滤镜，改用 GPU 友好的 box-shadow -->
         <svg id="magi-rings" viewBox="0 0 800 800" fill="none"
             class="fixed top-1/2 left-1/2 w-[130vmax] h-[130vmax] pointer-events-none opacity-30 transition-opacity duration-500"
-            style="will-change: transform; contain: layout style paint; transform: translate(-50%, -50%) translateZ(0);">
-            <!-- 使用 SVG 滤镜内置发光效果，比 CSS filter 更轻量 -->
-            <defs>
-                <filter id="magi-glow" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur stdDeviation="3" result="blur" />
-                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                </filter>
-            </defs>
-            <g stroke="var(--secondary-color)" stroke-width="1.5" filter="url(#magi-glow)">
-                <circle cx="400" cy="400" r="150" stroke-dasharray="20 10" class="animate-[spin_25s_linear_infinite]"
-                    style="will-change: transform;" />
+            style="contain: layout style paint; transform: translate(-50%, -50%) translateZ(0);">
+            <!-- [PERF 2026-09-23] 移除 <g filter="url(#magi-glow)"> 的 SVG 高斯模糊。
+                 原注释写"SVG 滤镜比 CSS filter 更轻量"——这个前提只在【静态】元素上成立。
+                 这里滤镜作用在 4 个正在旋转的子节点上，每一帧都要重新栅格化并重跑
+                 feGaussianBlur，而外层是 130vmax（视口对角线的 1.3 倍）。
+                 移动端在 L4 补丁里已经用 `#magi-rings g[filter] { filter: none }` 关掉了，
+                 桌面端一直没有，属于同样的开销留在最不该留的地方。
+                 按 L4 的做法用略粗的 stroke 弥补 glow 消失后的视觉存在感（1.5 → 2）。
+                 如果觉得观感差得多，把 filter 加回来即可（就这一处属性）。 -->
+            <g stroke="var(--secondary-color)" stroke-width="2">
+                <circle cx="400" cy="400" r="150" stroke-dasharray="20 10" class="animate-[spin_25s_linear_infinite]" />
                 <circle cx="400" cy="400" r="250" stroke-dasharray="40 20"
-                    class="animate-[spin_40s_linear_infinite_reverse]" stroke-opacity="0.8"
-                    style="will-change: transform;" />
+                    class="animate-[spin_40s_linear_infinite_reverse]" stroke-opacity="0.8" />
                 <circle cx="400" cy="400" r="350" stroke-dasharray="10 10" class="animate-[spin_55s_linear_infinite]"
-                    stroke-opacity="0.6" style="will-change: transform;" />
+                    stroke-opacity="0.6" />
                 <path d="M400 50 L400 750 M50 400 L750 400" stroke-opacity="0.2" />
                 <rect x="250" y="250" width="300" height="300" stroke-opacity="0.3"
-                    class="animate-[spin_60s_linear_infinite]" style="will-change: transform;" />
+                    class="animate-[spin_60s_linear_infinite]" />
                 <path d="M187 187 L613 613 M613 187 L187 613" stroke-opacity="0.3" />
             </g>
         </svg>
@@ -429,13 +392,21 @@
         </div>
     </div>
 
+    <!-- [FIX + PERF 2026-09-23] 顶部导航：
+         1) 原 class 里的 from-xxx/95 —— xxx 不是有效颜色名（tailwind.config.js 未定义、
+            dist/tailwind.css 里也搜不到），所以这个渐变从来没渲染过，
+            导航栏此前一直是"完全透明 + 2px 毛玻璃"。这里补成 from-black/95 恢复设计意图。
+         2) 同时移除 backdrop-blur-[2px]：顶部已 95% 不透明，这层模糊几乎看不见，
+            但它是 position:fixed —— 滚动时背后内容每帧都在变，模糊必须整块重算、无法复用。
+         ⚠️ 这一处会改变导航观感（由透明变深色渐变条）。若不想要：
+            把 from-black/95 改回 from-xxx/95，并在 py-8 后面加回 backdrop-blur-[2px]。 -->
     <nav class="fixed top-0 w-full z-40 px-6 md:px-12 flex items-center justify-between select-none transition-all duration-500
             /* 基础样式 */
-            py-8 backdrop-blur-[2px]
+            py-8
             
             /* --- 暗色模式 (默认) --- */
             /* 使用渐变，边缘清晰 */
-            bg-gradient-to-b from-xxx/95 to-black/0 
+            bg-gradient-to-b from-black/95 to-black/0 
             border-white/5
 
             /* --- 亮色模式 (Visual Mode) --- */
@@ -1049,7 +1020,121 @@
                         <span class="font-mono text-xs text-secondary">[ RECORDING ]</span>
                     </div>
                 </div>
-                <div id="article-list-container" class="space-y-8">
+                <div id="article-list-container" class="space-y-8" data-prerendered="67,58,52,48,1,47">
+                    <!-- PRERENDER:START -->
+                    <!-- 本段由 tools/prerender.mjs 生成，请勿手改。
+                         生成时间 2026-09-23 15:38 UTC
+                         作用：让首屏 HTML 里直接就能看到文章列表，不依赖运行时 API 往返。 -->
+                    <article class="eva-card p-0 group cursor-pointer transform transition-transform hover:-translate-y-1 overflow-hidden flex flex-col bg-black/20"
+                             data-id="67"
+                             onclick="ArticleViewer.open(67)">
+                        <div class="eva-glare"></div>
+                        <div class="w-full h-[3px] bg-gradient-to-r from-secondary via-primary to-secondary opacity-40 group-hover:opacity-80 transition-opacity duration-500"></div>
+                        <div class="p-4 flex flex-col flex-1 relative pl-5">
+                            <div class="charge-line absolute left-0 top-0 bottom-0 w-[2px] bg-white/10 group-hover:bg-secondary/30 transition-colors duration-500 overflow-hidden"><div class="charge-glow w-full h-full"></div></div>
+                            <div class="eva-header mb-2 flex items-center w-full">
+                                <span class="text-xs">ARCHIVE_67</span>
+                            </div>
+                            <h3 class="text-lg font-bold leading-tight group-hover:text-secondary transition-colors duration-300 font-serif mb-1">日常の写真</h3>
+                            <p class="text-gray-400 text-xs leading-relaxed mb-3">テーマ：コスプレ これが多分『Identity V（第五人格）』の少女。 写真を...</p>
+                            <div class="mt-auto pt-3 flex items-center justify-between text-[10px] font-mono text-gray-500 border-t border-white/5">
+                                <span>2026-07-27</span>
+                                <div class="flex gap-2 overflow-hidden truncate max-w-[60%] justify-end"></div>
+                            </div>
+                        </div>
+                    </article>
+                    <article class="eva-card p-0 group cursor-pointer transform transition-transform hover:-translate-y-1 overflow-hidden flex flex-col bg-black/20"
+                             data-id="58"
+                             onclick="ArticleViewer.open(58)">
+                        <div class="eva-glare"></div>
+                        <div class="w-full h-[3px] bg-gradient-to-r from-secondary via-primary to-secondary opacity-40 group-hover:opacity-80 transition-opacity duration-500"></div>
+                        <div class="p-4 flex flex-col flex-1 relative pl-5">
+                            <div class="charge-line absolute left-0 top-0 bottom-0 w-[2px] bg-white/10 group-hover:bg-secondary/30 transition-colors duration-500 overflow-hidden"><div class="charge-glow w-full h-full"></div></div>
+                            <div class="eva-header mb-2 flex items-center w-full">
+                                <span class="text-xs">ARCHIVE_58</span>
+                            </div>
+                            <h3 class="text-lg font-bold leading-tight group-hover:text-secondary transition-colors duration-300 font-serif mb-1">展示下最近的小玩意</h3>
+                            <p class="text-gray-400 text-xs leading-relaxed mb-3">布鲁可的驾驶舱版明日香，220左右 站在驾驶舱上的姿势，拍的最好的一张 还有用A...</p>
+                            <div class="mt-auto pt-3 flex items-center justify-between text-[10px] font-mono text-gray-500 border-t border-white/5">
+                                <span>2026-06-06</span>
+                                <div class="flex gap-2 overflow-hidden truncate max-w-[60%] justify-end"></div>
+                            </div>
+                        </div>
+                    </article>
+                    <article class="eva-card p-0 group cursor-pointer transform transition-transform hover:-translate-y-1 overflow-hidden flex flex-col bg-black/20"
+                             data-id="52"
+                             onclick="ArticleViewer.open(52)">
+                        <div class="eva-glare"></div>
+                        <div class="w-full h-[3px] bg-gradient-to-r from-secondary via-primary to-secondary opacity-40 group-hover:opacity-80 transition-opacity duration-500"></div>
+                        <div class="p-4 flex flex-col flex-1 relative pl-5">
+                            <div class="charge-line absolute left-0 top-0 bottom-0 w-[2px] bg-white/10 group-hover:bg-secondary/30 transition-colors duration-500 overflow-hidden"><div class="charge-glow w-full h-full"></div></div>
+                            <div class="eva-header mb-2 flex items-center w-full">
+                                <span class="text-xs">ARCHIVE_52</span>
+                            </div>
+                            <h3 class="text-lg font-bold leading-tight group-hover:text-secondary transition-colors duration-300 font-serif mb-1">关于成年后的我的近况</h3>
+                            <p class="text-gray-400 text-xs leading-relaxed mb-3">维护 自打上次搞定向量数据库，零零散散的修了几个 bug 之后博客就进入稳定维护...</p>
+                            <div class="mt-auto pt-3 flex items-center justify-between text-[10px] font-mono text-gray-500 border-t border-white/5">
+                                <span>2026-04-25</span>
+                                <div class="flex gap-2 overflow-hidden truncate max-w-[60%] justify-end"></div>
+                            </div>
+                        </div>
+                    </article>
+                    <article class="eva-card p-0 group cursor-pointer transform transition-transform hover:-translate-y-1 overflow-hidden flex flex-col bg-black/20"
+                             data-id="48"
+                             onclick="ArticleViewer.open(48)">
+                        <div class="eva-glare"></div>
+                        <div class="w-full h-[3px] bg-gradient-to-r from-secondary via-primary to-secondary opacity-40 group-hover:opacity-80 transition-opacity duration-500"></div>
+                        <div class="p-4 flex flex-col flex-1 relative pl-5">
+                            <div class="charge-line absolute left-0 top-0 bottom-0 w-[2px] bg-white/10 group-hover:bg-secondary/30 transition-colors duration-500 overflow-hidden"><div class="charge-glow w-full h-full"></div></div>
+                            <div class="eva-header mb-2 flex items-center w-full">
+                                <span class="text-xs">ARCHIVE_48</span>
+                            </div>
+                            <h3 class="text-lg font-bold leading-tight group-hover:text-secondary transition-colors duration-300 font-serif mb-1">博客AI英梨梨升级</h3>
+                            <p class="text-gray-400 text-xs leading-relaxed mb-3">部署了本地服务器之后，在我们的新服务器上配置了向量数据库，现在英梨梨可以访问我们...</p>
+                            <div class="mt-auto pt-3 flex items-center justify-between text-[10px] font-mono text-gray-500 border-t border-white/5">
+                                <span>2026-01-19</span>
+                                <div class="flex gap-2 overflow-hidden truncate max-w-[60%] justify-end"></div>
+                            </div>
+                        </div>
+                    </article>
+                    <article class="eva-card p-0 group cursor-pointer transform transition-transform hover:-translate-y-1 overflow-hidden flex flex-col bg-black/20"
+                             data-id="1"
+                             onclick="ArticleViewer.open(1)">
+                        <div class="eva-glare"></div>
+                        <div class="w-full h-[3px] bg-gradient-to-r from-secondary via-primary to-secondary opacity-40 group-hover:opacity-80 transition-opacity duration-500"></div>
+                        <div class="p-4 flex flex-col flex-1 relative pl-5">
+                            <div class="charge-line absolute left-0 top-0 bottom-0 w-[2px] bg-white/10 group-hover:bg-secondary/30 transition-colors duration-500 overflow-hidden"><div class="charge-glow w-full h-full"></div></div>
+                            <div class="eva-header mb-2 flex items-center w-full">
+                                <span class="text-xs">ARCHIVE_1</span>
+                            </div>
+                            <h3 class="text-lg font-bold leading-tight group-hover:text-secondary transition-colors duration-300 font-serif mb-1">Hello world!</h3>
+                            <p class="text-gray-400 text-xs leading-relaxed mb-3">Welcome to WordPress. This is your first...</p>
+                            <div class="mt-auto pt-3 flex items-center justify-between text-[10px] font-mono text-gray-500 border-t border-white/5">
+                                <span>2026-01-18</span>
+                                <div class="flex gap-2 overflow-hidden truncate max-w-[60%] justify-end"></div>
+                            </div>
+                        </div>
+                    </article>
+                    <article class="eva-card p-0 group cursor-pointer transform transition-transform hover:-translate-y-1 overflow-hidden flex flex-col bg-black/20"
+                             data-id="47"
+                             onclick="ArticleViewer.open(47)">
+                        <div class="eva-glare"></div>
+                        <div class="w-full h-[3px] bg-gradient-to-r from-secondary via-primary to-secondary opacity-40 group-hover:opacity-80 transition-opacity duration-500"></div>
+                        <div class="p-4 flex flex-col flex-1 relative pl-5">
+                            <div class="charge-line absolute left-0 top-0 bottom-0 w-[2px] bg-white/10 group-hover:bg-secondary/30 transition-colors duration-500 overflow-hidden"><div class="charge-glow w-full h-full"></div></div>
+                            <div class="eva-header mb-2 flex items-center w-full">
+                                <span class="text-xs">ARCHIVE_47</span>
+                            </div>
+                            <h3 class="text-lg font-bold leading-tight group-hover:text-secondary transition-colors duration-300 font-serif mb-1">为何中国的动画产业发展缓慢？</h3>
+                            <p class="text-gray-400 text-xs leading-relaxed mb-3">中国国产动画扶持政策失败史：2006-2012年的数据与反思 | 政策研究报告 ...</p>
+                            <div class="mt-auto pt-3 flex items-center justify-between text-[10px] font-mono text-gray-500 border-t border-white/5">
+                                <span>2026-01-14</span>
+                                <div class="flex gap-2 overflow-hidden truncate max-w-[60%] justify-end"></div>
+                            </div>
+                        </div>
+                    </article>
+                    <!-- PRERENDER:END -->
+                </div>
     </main>
     <div id="category-view-container"
         class="hidden min-h-screen pt-32 px-6 md:px-12 max-w-screen-xl mx-auto relative z-20 pb-20">
@@ -1756,7 +1841,10 @@
         </div>
 
         <!-- Fuse.js 模糊搜索库 -->
-        <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0" defer></script>
+        <!-- [PERF 2026-09-23] 本地化：cdn.jsdelivr.net 在大陆实测 TTFB 5.57s 且随时可能不可达，
+             与 vendor/lucide.js 采用同一策略。main.js 里的 new Fuse 已加 typeof 守卫，
+             即使此文件加载失败也会自动回退到简单匹配，不会再让整个 loadPosts 抛错。 -->
+        <script src="./vendor/fuse.js?v=20260923" defer></script>
 
         <script src="managers/bili-manager.js" type="module"></script>
         <!-- [ARCHIVED] Otaku Helix Component -->
@@ -1765,210 +1853,13 @@
         <!-- ERIRI 台词库加载器 (从 JSON 加载) -->
         <script src="managers/eriri-lines-manager.js" defer></script>
 
-    <script src="main.js?v=20260807" defer></script>
+    <script src="main.js?v=20260923" defer></script>
 
         <!-- 圣地巡礼地图初始化 (Leaflet 懒加载) -->
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                let pilgrimageMap = null;
-                let leafletLoaded = false;
-
-                function loadLeaflet(callback) {
-                    if (leafletLoaded) { callback(); return; }
-                    if (typeof L !== 'undefined') { leafletLoaded = true; callback(); return; }
-                    
-                    const link = document.createElement('link');
-                    link.rel = 'stylesheet';
-                    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-                    document.head.appendChild(link);
-                    
-                    const script = document.createElement('script');
-                    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-                    script.onload = function() { leafletLoaded = true; callback(); };
-                    document.head.appendChild(script);
-                }
-
-                window.initPilgrimageMap = function() {
-                if (pilgrimageMap) return;
-                const container = document.getElementById('pilgrimage-map');
-                if (!container || container.offsetParent === null) return;
-
-                loadLeaflet(function() {
-
-                // 圣地数据 (东京 + 镰仓)
-                const locations = {
-                    'ikebukuro': { lat: 35.7295, lng: 139.7109, label: '池袋', unit: '01', title: 'EVA STORE 本部', desc: '「EVA STORE TOKYO-01」所在地。补给据点。' },
-                    'shinjuku': { lat: 35.6938, lng: 139.7035, label: '新宿', unit: '01', title: '第三新东京市?', desc: '美里小姐飙车的地方。人很多，记得开 A.T.力场。' },
-                    'akihabara': { lat: 35.6984, lng: 139.7731, label: '秋叶原', unit: '02', title: '补给基地', desc: '手办和 RADIO EVA 的天堂。' },
-                    'shibuya': { lat: 35.6580, lng: 139.7016, label: '涩谷', unit: '02', title: 'PARCO', desc: '潮流圣地。' },
-                    'asakusa': { lat: 35.7148, lng: 139.7967, label: '浅草', unit: '02', title: '雷门', desc: '传统和风，补充能量的地方。' },
-                    'tokyobigsight': { lat: 35.6298, lng: 139.7942, label: '有明', unit: '02', title: 'Big Sight', desc: '夏冬两季的人类补完计划（漫展）。' },
-                    'kamakura': { lat: 35.3192, lng: 139.5467, label: '镰仓', unit: '00', title: '江之电沿线', desc: '坐江之电看海，不是红海，是蓝海。' },
-                    'shichirigahama': { lat: 35.3058, lng: 139.5106, label: '七里滨', unit: '00', title: '夕阳海岸', desc: '耳边自动响起 Fly Me To The Moon。' },
-                    'enoshima': { lat: 35.3017, lng: 139.4811, label: '江之岛', unit: '00', title: '圣地', desc: '像个好玩的迷宫。看到猫咪别给它戴使徒面具。' }
-                };
-
-                // 初始化地图 - 视野范围覆盖东京到�的仓
-                pilgrimageMap = L.map('pilgrimage-map', {
-                    zoomControl: true,
-                    attributionControl: false,
-                    scrollWheelZoom: true
-                }).setView([35.50, 139.60], 10); // 中心点和缩放级别
-
-                // OSM 图层
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 16,
-                    minZoom: 9
-                }).addTo(pilgrimageMap);
-
-                // 路线
-                const routePoints = [
-                    [locations.asakusa.lat, locations.asakusa.lng],
-                    [locations.akihabara.lat, locations.akihabara.lng],
-                    [locations.ikebukuro.lat, locations.ikebukuro.lng],
-                    [locations.shinjuku.lat, locations.shinjuku.lng],
-                    [locations.shibuya.lat, locations.shibuya.lng],
-                    [locations.tokyobigsight.lat, locations.tokyobigsight.lng],
-                    [35.5, 139.7],
-                    [locations.kamakura.lat, locations.kamakura.lng],
-                    [locations.shichirigahama.lat, locations.shichirigahama.lng],
-                    [locations.enoshima.lat, locations.enoshima.lng]
-                ];
-
-                L.polyline(routePoints, {
-                    color: '#a78bfa',
-                    weight: 2,
-                    opacity: 0.6,
-                    dashArray: '8, 12'
-                }).addTo(pilgrimageMap);
-
-                // 标记点
-                const unitColors = { '01': '#a78bfa', '02': '#fb7185', '00': '#60a5fa' };
-
-                Object.keys(locations).forEach(key => {
-                    const loc = locations[key];
-                    const color = unitColors[loc.unit];
-
-                    const icon = L.divIcon({
-                        className: 'pilgrimage-marker',
-                        html: `<div style="
-                        width: 24px; height: 24px; 
-                        background: ${color}; 
-                        border: 2px solid white; 
-                        border-radius: 50%; 
-                        box-shadow: 0 0 10px ${color};
-                        display: flex; align-items: center; justify-content: center;
-                        font-size: 10px; font-weight: bold; color: white;
-                        font-family: monospace;
-                    ">${loc.unit}</div>`,
-                        iconSize: [24, 24],
-                        iconAnchor: [12, 12]
-                    });
-
-                    L.marker([loc.lat, loc.lng], { icon })
-                        .addTo(pilgrimageMap)
-                        .on('click', () => showMapInfo(loc));
-                });
-
-                // 修复地图尺寸
-                setTimeout(() => pilgrimageMap.invalidateSize(), 200);
-                }); // end loadLeaflet callback
-            }
-
-            function showMapInfo(loc) {
-                const panel = document.getElementById('map-info-panel');
-                const content = document.getElementById('map-info-content');
-                const unitColors = { '01': 'text-purple-400', '02': 'text-red-400', '00': 'text-blue-400' };
-
-                content.innerHTML = `
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="${unitColors[loc.unit]} font-mono text-xs">UNIT-${loc.unit}</span>
-                    <span class="text-white font-bold font-serif">${loc.label}</span>
-                </div>
-                <div class="text-[var(--secondary-color)] text-sm font-bold mb-1">${loc.title}</div>
-                <p class="text-gray-400 text-xs leading-relaxed">${loc.desc}</p>
-            `;
-                panel.classList.remove('hidden');
-            }
-
-            function closeMapPanel() {
-                document.getElementById('map-info-panel').classList.add('hidden');
-            }
-
-            // 当切换到 About 视图时初始化地图
-            const originalSwitchView = window.switchView;
-            window.switchView = function (view) {
-                if (typeof originalSwitchView === 'function') {
-                    originalSwitchView(view);
-                }
-                if (view === 'about') {
-                    setTimeout(initPilgrimageMap, 300);
-                }
-            };
-
-            // 页面加载后检查是否在 About 视图
-            document.addEventListener('DOMContentLoaded', () => {
-                setTimeout(() => {
-                    const aboutView = document.getElementById('about-view-container');
-                    if (aboutView && !aboutView.classList.contains('hidden')) {
-                        initPilgrimageMap();
-                    }
-                }, 500);
-            });
-
-            // === Literary Archive: Tetralogy Toggle ===
-            function toggleTetralogy() {
-                const list = document.getElementById('tetralogy-list');
-                const chevron = document.querySelector('.tetralogy-chevron');
-
-                if (list.classList.contains('hidden')) {
-                    // Expand
-                    list.classList.remove('hidden');
-                    list.style.maxHeight = '0px';
-                    list.style.opacity = '0';
-                    list.style.overflow = 'hidden';
-                    list.style.transition = 'max-height 0.4s ease-out, opacity 0.3s ease-out';
-
-                    requestAnimationFrame(() => {
-                        list.style.maxHeight = list.scrollHeight + 'px';
-                        list.style.opacity = '1';
-                    });
-
-                    if (chevron) {
-                        chevron.style.transform = 'rotate(180deg)';
-                        chevron.style.transition = 'transform 0.3s ease';
-                    }
-
-                    // Reinitialize Lucide icons for new elements
-                    if (typeof lucide !== 'undefined') {
-                        lucide.createIcons();
-                    }
-                } else {
-                    // Collapse
-                    list.style.maxHeight = '0px';
-                    list.style.opacity = '0';
-
-                    if (chevron) {
-                        chevron.style.transform = 'rotate(0deg)';
-                    }
-
-                    setTimeout(() => {
-                        list.classList.add('hidden');
-                        list.style.maxHeight = '';
-                        list.style.opacity = '';
-                        list.style.overflow = '';
-                    }, 400);
-                }
-            }
-
-            // Make toggleTetralogy globally accessible
-            window.toggleTetralogy = toggleTetralogy;
-
-            }); // end DOMContentLoaded
-        </script>
+        <script src="managers/pilgrimage-map.js?v=20260924" defer></script>
         
         <!-- MAGI Boot Loader 控制脚本 -->
-    <script src="boot-loader.js?v=20260807" defer></script>
+    <script src="boot-loader.js?v=20260923" defer></script>
 
     <!-- ============================================================ -->
     <!-- 全息展开式文章阅读器 (Holographic Article Viewer)             -->

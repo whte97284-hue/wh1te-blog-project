@@ -98,6 +98,14 @@
 
 /* —— html 全局防橡皮筋 / 防下拉刷新 —— */
 html {
+    /* ⚠️ [FIX 2026-09-24b] 这里【不能】给 html 加背景色 —— 曾经加过，后果严重：
+       CSS 规定「html 没有背景时，body 的背景会被传播到画布，画在所有内容之后」。
+       本站所有背景层都用负 z-index（#matrix-bg:-3 / .hex-bg:-2 / #cursor-glow:-1 /
+       #particles-container:-1 / #rebuild-overlay:-1 / #lcl-bg:-3），正是靠这条传播
+       才能显示在 body 的渐变之上。一旦给 html 加背景，传播被取消，
+       body 的渐变就变成普通元素背景，把所有负 z-index 层【全部盖住】——
+       表现为代码雨、六边形网格、鼠标光晕、粒子、LCL 背景一起消失。
+       首屏兜底底色改放在 body 上（见 index.html <head> 里的内联 style）。 */
     /* 阻止页面级别的下拉刷新与橡皮筋, 保护 SPA 体验 */
     overscroll-behavior-y: none;
     /* 允许平移但禁用双击缩放 (配合 viewport 移除 user-scalable) */
@@ -155,7 +163,7 @@ html {
 
 /* 顶部水印 - 可爱的欢迎语 */
 .magi-boot-watermark {
-    font-family: 'Noto Sans JP', sans-serif;
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
     font-size: 1.2rem;
     letter-spacing: 0.3em;
     color: rgba(255, 255, 255, 0.6);
@@ -269,7 +277,7 @@ html {
 
 /* 页脚信息 */
 .magi-boot-footer {
-    font-family: 'JetBrains Mono', 'Noto Sans JP', monospace;
+    font-family: 'JetBrains Mono', "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", monospace;
     font-size: 0.6rem;
     letter-spacing: 0.2em;
     color: rgba(255, 255, 255, 0.3);
@@ -283,7 +291,7 @@ html {
 /* 可爱的页脚文字 */
 .footer-cute {
     color: rgba(255, 105, 180, 0.6) !important;
-    font-family: 'Noto Sans JP', sans-serif !important;
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif !important;
     animation: cuteGlow 3s ease-in-out infinite;
 }
 
@@ -1194,38 +1202,54 @@ body.lcl-mode #lcl-bg {
 }
 
 /* Hex BG 增强：更高的对比度和全息感 */
+/* [PERF 2026-09-23] 动画从 background-position 改为 transform —— 前者是 paint-only 属性，
+   （完整原因与实测数据见 博客修复_2026-09-23/README.md） */
 .hex-bg {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
+    overflow: hidden; /* 裁掉 ::before 向外溢出的一个 tile */
     pointer-events: none;
     z-index: -2;
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ffffff' stroke-opacity='0.12' stroke-width='1'/%3E%3C/svg%3E");
-    background-size: 60px 104px;
     mask-image: linear-gradient(to bottom, black 20%, transparent 90%);
-    animation: bg-scroll 60s linear infinite;
-    transition: background-image 0.3s;
     opacity: 0.5;
     /* [PERF] 移除 drop-shadow 滤镜，2px 发光肉眼几乎不可见，但滤镜计算开销巨大 */
     /* filter: drop-shadow(0 0 2px var(--grid-color)); */
     mix-blend-mode: var(--blend-mode);
     /* 随主题变化 */
-    will-change: background-position;
 }
 
-[data-mode="light"] .hex-bg {
+/* 纹理与位移动画放在子层：只有它被提升为合成层，父层的混合语义保持稳定 */
+.hex-bg::before {
+    content: "";
+    position: absolute;
+    top: -104px;
+    left: -60px;
+    width: calc(100% + 120px);
+    height: calc(100% + 208px);
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23ffffff' stroke-opacity='0.12' stroke-width='1'/%3E%3C/svg%3E");
+    background-size: 60px 104px;
+    transition: background-image 0.3s;
+    animation: bg-scroll 60s linear infinite;
+    /* 快速自检用：在 DevTools 里把 :root 的 --hex-drift 改成 paused，
+       就能立刻停掉这段位移，用来确认"闪白是否由它造成"，无需改文件。 */
+    animation-play-state: var(--hex-drift, running);
+}
+
+[data-mode="light"] .hex-bg::before {
     background-image: url("data:image/svg+xml,%3Csvg width='60' height='104' viewBox='0 0 60 104' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 17.32v34.64L30 69.28 0 51.96V17.32L30 0z' fill='none' stroke='%23000000' stroke-opacity='0.12' stroke-width='1'/%3E%3C/svg%3E");
 }
 
+/* [PERF 2026-09-23] 由 background-position 改为 transform，走合成器 */
 @keyframes bg-scroll {
     0% {
-        background-position: 0 0;
+        transform: translate3d(0, 0, 0);
     }
 
     100% {
-        background-position: 60px 104px;
+        transform: translate3d(60px, 104px, 0);
     }
 }
 
@@ -1310,53 +1334,6 @@ body.lcl-mode #particles-container {
     }
 }
 
-.scan-bar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 20px;
-    background: linear-gradient(to bottom, transparent, var(--secondary-color), transparent);
-    opacity: 0;
-    box-shadow: 0 0 40px var(--secondary-color);
-    z-index: 40;
-    pointer-events: none;
-    /* [PERF] 使用 transform 代替 top，避免 Layout 重排 */
-    transform: translateY(-10vh);
-    animation: scanDown 60s linear infinite;
-    will-change: transform, opacity;
-}
-
-@keyframes scanDown {
-    0% {
-        transform: translateY(-10vh);
-        opacity: 0;
-    }
-
-    0.1% {
-        opacity: 0.4;
-    }
-
-    /* 开始瞬间显示 */
-    5% {
-        transform: translateY(110vh);
-        opacity: 0.4;
-    }
-
-    /* 在 5% 的时间点(约3秒)扫到底部 */
-    5.1% {
-        transform: translateY(110vh);
-        opacity: 0;
-    }
-
-    /* 到底后立即隐藏 */
-    100% {
-        transform: translateY(110vh);
-        opacity: 0;
-    }
-
-    /* 剩下的 95% 时间保持隐藏，直到60s结束 */
-}
 
 .cockpit-overlay {
     position: fixed;
@@ -1368,7 +1345,8 @@ body.lcl-mode #particles-container {
     mix-blend-mode: multiply;
     /* [PERF] 隔离重绘区域，避免全屏混合层影响其他元素性能 */
     contain: strict;
-    will-change: opacity;
+    /* [PERF 2026-09-23] 删除 will-change: opacity —— 这是常驻的全屏覆盖层，
+       没有持续动画，永久合成层只占显存不带来收益（opacity 切换时浏览器会自行处理）。 */
 }
 
 [data-mode="light"] .cockpit-overlay {
@@ -1433,7 +1411,10 @@ body.lcl-mode #particles-container {
     z-index: -1;
     background-image: radial-gradient(circle var(--cursor-size) at var(--mouse-x) var(--mouse-y), var(--grid-color) 0%, transparent 60%);
     transition: --cursor-size 0.1s ease;
-    will-change: background-image;
+    /* [PERF 2026-09-23] 删除 will-change: background-image ——
+       will-change 只对 transform / opacity / filter 这类可合成属性有效，
+       写 background-image 是无效提示，只会白建一个全屏合成层。
+       真正的开销在 JS 侧（每帧写 --mouse-x/--mouse-y），已在 main.js 修复为"值变才写"。 */
     mix-blend-mode: screen;
 }
 
@@ -1466,7 +1447,12 @@ body.lcl-mode #particles-container {
     object-position: center top;
     filter: brightness(0.8) contrast(1.1);
     opacity: 0.9;
-    will-change: transform, opacity, clip-path, filter;
+    /* [PERF 2026-09-23] 删除 will-change: transform, opacity, clip-path, filter。
+       这是一张 60vw×100vh 的立绘，常驻 will-change 等于让它永久占一个全屏合成层。
+       需要说明的是 filter 和 clip-path 在 Chrome 里其实是支持合成器动画的，
+       所以问题不在"写了无效"，而在于：will-change 只在元素"即将变化"时才有收益，
+       而 cyberSwap 只在切换主题时触发——常驻声明的代价（一个全屏合成层的显存）
+       是持续的，收益却只在那一瞬间。合成层开销按元素尺寸算，与声明几个属性无关。 */
     transition: opacity 0.5s ease;
 }
 
@@ -1520,10 +1506,10 @@ body.lcl-mode #particles-container {
 .eva-card {
     background: var(--surface-color);
     /* [PERF] 降低模糊半径：10px → 4px，视觉几乎无差异，性能提升 2-3 倍 */
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    /* Safari 兼容 */
-    will-change: backdrop-filter;
+    /* [PERF 2026-09-24] 彻底移除 backdrop-filter。
+   （完整原因与实测数据见 博客修复_2026-09-23/README.md） */
+    /* [PERF 2026-09-23] 删除 will-change: backdrop-filter —— backdrop-filter 不是可被
+       will-change 优化的属性，这条声明没有任何效果，只会让每张卡片多建一个合成层。 */
     /* 提示浏览器预优化 */
     border: 1px solid var(--border-color);
     border-left: 2px solid var(--secondary-color);
@@ -2423,7 +2409,11 @@ body.lcl-mode #particles-container {
     background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.5) 70%, transparent 100%);
     border-bottom: 1px solid rgba(var(--secondary-color), 0.5);
     border-top: 1px solid rgba(var(--secondary-color), 0.1);
-    backdrop-filter: blur(4px);
+    /* [PERF 2026-09-23] 移除 backdrop-filter: blur(4px)。
+       这是 position:fixed 元素，滚动时它背后的内容每帧都在变，模糊必须整块重算、无法复用。
+       而上面的渐变背景在可见区域已是 95%→50% 不透明度，4px 模糊在这里本来就几乎看不出来，
+       属于"付了全帧模糊的钱，换来接近零的视觉收益"。顶部导航同理。
+       如果你确实想保留毛玻璃质感，把它加回去即可（就这一行）。 */
     mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
     -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
     overflow: hidden;
@@ -2722,7 +2712,7 @@ body.lcl-mode #particles-container {
 }
 
 .magi-node-status {
-    font-family: 'Noto Sans JP', sans-serif;
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
     /* 强制使用日文字体 */
     font-size: 9px;
     font-weight: 700;
@@ -2925,7 +2915,8 @@ body.lcl-mode #particles-container {
 .holo-card-3d {
     transition: transform 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     transform-style: preserve-3d;
-    will-change: transform;
+    /* [PERF 2026-09-23] 删除 will-change: transform —— 只在 hover 时有 transition，
+       浏览器在过渡期间会自动提升；常驻 will-change 会让每张卡片永久占一个合成层。 */
 }
 
 .holo-card-3d .eva-header,
@@ -3110,6 +3101,10 @@ body.lcl-mode #particles-container {
         animation: none;
     }
 
+}
+/* [FIX 2026-09-24] ↑ 这个闭合括号原先缺失，导致下面整段（TACTICAL PROGRESS /
+   （完整原因与实测数据见 博客修复_2026-09-23/README.md） */
+
     /* --- UPGRADE: TACTICAL PROGRESS & MENU --- */
 
     /* 1. 进度条样式 (Energy Cell) */
@@ -3254,7 +3249,7 @@ body.lcl-mode #particles-container {
         background: rgba(0, 0, 0, 0.4);
         color: var(--text-muted);
         transition: all 0.2s;
-        font-family: 'Noto Sans JP', sans-serif;
+        font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
         border-radius: 2px;
         min-width: 0;
         /* 关键：允许 Flex 子项缩小到内容以下 */
@@ -3677,7 +3672,6 @@ body.lcl-mode #particles-container {
             display: none !important;
         }
     }
-}
 
 /* ==========================================================================
    AI 气泡框过渡动画
@@ -4255,8 +4249,8 @@ body.lcl-mode #particles-container {
         0 0 40px rgba(0, 0, 0, 0.8),
         inset 0 0 0 1px rgba(0, 240, 255, 0.1); /* 内发光 */
     
-    /* 性能优化：提示浏览器优化渲染 */
-    will-change: opacity, transform;
+    /* [PERF 2026-09-23] 删除 will-change: opacity, transform ——
+       文章阅读器只在打开/关闭时过渡，常驻提示没有必要。 */
     contain: layout style paint; /* 隔离渲染，减少重排 */
     
     /* 装饰性的外边框 (模拟 HUD 框体) - 使用伪元素 */
@@ -5306,8 +5300,8 @@ header.blur-and-shrink {
     animation: fadeInUp 0.6s ease-out;
     position: relative;
     overflow: hidden;
-    /* 性能优化：告诉浏览器该元素会发生动画 */
-    will-change: opacity, transform;
+    /* [PERF 2026-09-23] 删除 will-change: opacity, transform —— 只在首次入场有 fadeInUp，
+       常驻提示无意义。 */
 }
 
 /* 装饰性背景网格 - 使用伪元素减少DOM节点 */
@@ -5463,9 +5457,10 @@ header.blur-and-shrink {
     overflow: hidden;
     /* 性能优化：contain布局，isolate重绘 */
     contain: layout style paint;
-    /* 性能优化：启用 GPU 加速 */
-    transform: translateZ(0);
-    will-change: transform;
+    /* [PERF 2026-09-23] 删除 transform: translateZ(0) + will-change: transform。
+       这是每条评论一个元素：50 条评论 = 50 个永久合成层，显存随评论数线性增长，
+       低配机/移动端会直接触发合成器降级。评论卡片本身没有持续动画，
+       contain 已经足够隔离重绘，不需要额外的 GPU 层。 */
 }
 
 /* 扫描光特效 - 仅在hover时激活动画 */
@@ -5988,7 +5983,7 @@ header.blur-and-shrink {
     border: 2px solid var(--secondary-color);
     cursor: pointer;
     clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%);
-    font-family: 'Noto Sans JP', sans-serif;
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
     letter-spacing: 6px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
@@ -6502,17 +6497,21 @@ nav.fixed.top-0 {
 /* 原 will-change: background-position 是性能反模式:
    background-position 变化触发 paint 而非 composite,
    will-change 它会强制创建无用合成层, 导致移动端滚动闪烁+内存浪费 */
+/* [FIX 2026-09-23b] 纹理与位移动画已移到 .hex-bg::before（见文件上方说明），
+   所以这里的选择器要跟着拆开：mask / contain 留在父层，animation-duration 挪到子层。
+   父层现在本身没有 will-change，那条 !important 覆盖已无必要。 */
 @media (max-width: 768px) {
     .hex-bg {
-        /* 移除反模式 will-change (核心修复) */
-        will-change: auto !important;
-        /* 减慢动画频率 60s → 120s, 降低重绘开销 50%, 视觉无感知差异 */
-        animation-duration: 120s !important;
         /* mask-image 优化: 缩短淡出范围减少合成面积 (原 20%-90% → 30%-95%) */
         -webkit-mask-image: linear-gradient(to bottom, black 30%, transparent 95%) !important;
         mask-image: linear-gradient(to bottom, black 30%, transparent 95%) !important;
         /* 限制重绘范围, 避免全屏合成 */
         contain: paint;
+    }
+
+    .hex-bg::before {
+        /* 减慢动画频率 60s → 120s, 降低重绘开销 50%, 视觉无感知差异 */
+        animation-duration: 120s !important;
     }
 }
 
@@ -6965,4 +6964,34 @@ nav.fixed.top-0 {
     to {
         transform: rotate(360deg);
     }
+}
+
+
+/* ============================================================
+   🚀 DESKTOP PERFORMANCE PATCH — Layer 5 (2026-09-24)
+   ------------------------------------------------------------------
+   背景：项目有一整套移动端降级（Layer 4），但全部写在
+        @media (max-width: 768px) 里 —— 桌面一条都吃不到。
+        而桌面是 3120×2080 @120Hz，每帧预算只有 8.3ms，比 60Hz 严格一倍。
+   原则：只加 contain（限制重绘范围），不改任何视觉。
+        不用 contain: strict —— 它包含 size containment，会让未显式设尺寸的元素塌成 0。
+   ============================================================ */
+
+/* —— 5-1: 全屏合成层限制重绘范围 —— */
+/* 这些层都是 position:fixed 铺满视口，内部元素不会溢出，
+   加 contain 后浏览器的重绘/栅格化区域被限制在各自层内，不再牵动整棵树。 */
+#matrix-bg,
+#particles-container,
+#cursor-glow,
+.rebuild-overlay,
+.cockpit-overlay,
+#magi-rings {
+    contain: layout style paint;
+}
+
+/* —— 5-2: 粒子层不再需要 3D 透视 —— */
+/* perspective 会让容器成为 3D 渲染上下文，每个子元素都要走一遍矩阵变换；
+   粒子只是 2D 上浮，透视纯属浪费。移动端已有同样降级，桌面补上。 */
+#particles-container {
+    perspective: none;
 }

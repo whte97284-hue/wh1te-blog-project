@@ -10,9 +10,9 @@ module.exports = {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Space Grotesk', 'Noto Sans JP', 'sans-serif'],
+                sans: ['Space Grotesk', ['PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', 'sans-serif']],
                 serif: ['Noto Serif SC', 'serif'],
-                mono: ['JetBrains Mono', 'Noto Sans JP', 'monospace'],
+                mono: ['JetBrains Mono', ['PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', 'sans-serif']],
             },
             colors: {
                 primary: 'var(--primary-color)',

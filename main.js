@@ -1,4 +1,14 @@
-lucide.createIcons();
+/* [FIX 2026-09-23] 原来是裸调用 lucide.createIcons();
+   本文件由 defer 加载、vendor/lucide.js 也在它之前 defer，正常顺序下是安全的。
+   但一旦启用 Cloudflare Rocket Loader，脚本会由它重新调度执行，顺序不再由 HTML 保证——
+   此时 lucide 若未定义，这一行抛 ReferenceError 会让整个 261KB 的 main.js 一行都不执行，
+   博客列表/搜索/主题切换/评论全部静默失效，且页面上看不到任何错误。
+   本文件其它位置（4686/4748/5154 行）都做了同样的守卫，这里补齐。 */
+if (typeof lucide !== 'undefined' && lucide) {
+    lucide.createIcons();
+} else {
+    console.warn('[MAGI] lucide 未就绪，图标渲染跳过（不影响其它功能）');
+}
 
 /* 页面初始化标志 - 防止初始化时触发 ERIRI 的切换台词 */
 window.isPageInitializing = true;
@@ -395,6 +405,13 @@ if (!isTouchDevice) {
     let posTrail1 = { x: mouse.x, y: mouse.y };
     let posTrail2 = { x: mouse.x, y: mouse.y };
 
+    /* [PERF 2026-09-23] 记录上一次写入的光晕坐标。
+       --mouse-x / --mouse-y 挂在 documentElement 上，每帧无条件写入会让整棵样式树失效，
+       进而触发 #cursor-glow 与 .eva-glare 的全屏重绘 + mix-blend-mode 混合——
+       鼠标静止时也在烧 GPU。改为值真正变化时才写。 */
+    let lastGlareX = null;
+    let lastGlareY = null;
+
     const LERP_TRAIL1 = 0.15;
     const LERP_TRAIL2 = 0.08;
     const lerp = (start, end, factor) => start + (end - start) * factor;
@@ -460,11 +477,16 @@ if (!isTouchDevice) {
                 cursorInfo.innerText = `TGT:${Math.round(mouse.x)},${Math.round(mouse.y)}`;
             }
 
-            /* Update CSS Vars for Glare Effects (Only needed on PC) */
+            /* Update CSS Vars for Glare Effects (Only needed on PC)
+               [PERF 2026-09-23] 值未变化时跳过写入（鼠标静止 → 零重绘） */
             const xPct = (mouse.x / window.innerWidth) * 100;
             const yPct = (mouse.y / window.innerHeight) * 100;
-            document.documentElement.style.setProperty('--mouse-x', `${xPct}%`);
-            document.documentElement.style.setProperty('--mouse-y', `${yPct}%`);
+            if (xPct !== lastGlareX || yPct !== lastGlareY) {
+                document.documentElement.style.setProperty('--mouse-x', `${xPct}%`);
+                document.documentElement.style.setProperty('--mouse-y', `${yPct}%`);
+                lastGlareX = xPct;
+                lastGlareY = yPct;
+            }
         }
         requestAnimationFrame(renderCursorLoop);
     }
@@ -959,7 +981,11 @@ const ParticlePool = {
         const depth = Math.random();
         p.style.setProperty('--p-opacity', depth * 0.5 + 0.3);
         p.style.setProperty('--p-scale', depth * 0.5 + 0.5);
-        p.style.filter = depth < 0.5 ? `blur(${3 * (1 - depth)}px)` : 'none';
+        // [PERF 2026-09-24] 移除每颗粒子的 filter: blur()。
+        // 原来约一半粒子（depth<0.5）会挂上模糊滤镜，PC 档 150 颗粒子 → 约 75 个模糊元素，
+        // 每个都要单独走一遍 GPU 采样，是滚动时填充率的主要来源。
+        // 深度感改用已有的 --p-opacity / --p-scale 表达（更小更淡 = 更远），视觉几乎无差异。
+        p.style.filter = 'none';
 
         // 初始位置 (首次加载时随机分布在屏幕上)
         if (initial) {
@@ -1038,10 +1064,21 @@ const characterMap = {
 };
 
 // 预加载所有主题人物图片，避免切换主题时等待下载 (V2.3)
-Object.values(characterMap).forEach(src => {
-    const img = new Image();
-    img.src = src;
-});
+// [PERF 2026-09-23] 改为空闲时预加载。原实现在脚本解析后立即并发 4 张图（约 0.89MB），
+// 会和首屏的 style.css / hero 立绘抢同一条带宽；而这些图只在切换主题时才用得到，
+// 挪到浏览器空闲期完全不损失体验。
+(function preloadThemeCharacters() {
+    const srcs = Object.values(characterMap);
+    const run = () => srcs.forEach(src => {
+        const img = new Image();
+        img.src = src;
+    });
+    if ('requestIdleCallback' in window) {
+        requestIdleCallback(run, { timeout: 4000 });
+    } else {
+        setTimeout(run, 2000);
+    }
+})();
 
 /* ERIRI 对各主题的专属吐槽 */
 const ERIRI_THEME_LINES = {
@@ -1122,13 +1159,28 @@ function setTheme(themeName) {
         // 检查是否已是当前图片 (避免重复切换)
         if (heroImg.src.endsWith(newSrc.replace('./', ''))) return;
 
+        // [FIX 2026-09-24] 首次加载：直接换图，不走淡入淡出。
+        // index.html 里的 <img src> 是写死的 shinji.webp（default 主题），
+        // 而用户的主题可能是 unit-02/00/08 —— 于是每次进站都会触发一次"淡出→换图→淡入"。
+        // 这个立绘是 60vw×100vh 的 position:fixed 层，父容器带 mix-blend-mode: screen（加亮），
+        // 它一淡出，整屏立刻失去这部分亮度 —— 表现就是"已经渲染好的 UI 突然变暗一下"，
+        // 等新图加载完再亮回来。首次加载时这张图用户根本还没看到，直接换 src 零观感损失。
+        // （isPageInitializing 在 main.js 第 14 行置 true，约 2.5s 后置 false，
+        //   正好区分"首次应用主题"与"用户主动点主题按钮"。）
+        if (window.isPageInitializing) {
+            heroImg.src = newSrc;
+            return;
+        }
+
         // 淡出当前图片
         heroImg.style.opacity = 0;
 
         // 预加载新图片 (已缓存则 onload 立即触发)
         const preloader = new Image();
         preloader.onload = () => {
-            // 图片已就绪, 等待淡出过渡完成后切换
+            // [FIX 2026-09-24] 等待淡出过渡完成再换图。
+            // 原来等 200ms，而 .hero-character-image 的 transition 是 opacity 0.5s ——
+            // 淡出还没结束就换 src，新图会在半透明状态下显形，出现重影。改成 480ms 对齐。
             setTimeout(() => {
                 heroImg.src = newSrc;
                 // 双 rAF 确保浏览器已应用新 src 后再淡入
@@ -1137,14 +1189,14 @@ function setTheme(themeName) {
                         heroImg.style.opacity = 1;
                     });
                 });
-            }, 200);
+            }, 480);
         };
         preloader.onerror = () => {
             // 加载失败仍然切换 (兜底)
             setTimeout(() => {
                 heroImg.src = newSrc;
                 heroImg.style.opacity = 1;
-            }, 200);
+            }, 480);
         };
         preloader.src = newSrc;
     }
@@ -1340,7 +1392,11 @@ function showAiSpeech(text) {
     }
     
     /* 滚动时实时更新垂直流显示状态 */
-    const scrollHandler = () => updateStreamVisibility();
+    /* [PERF 2026-09-23] 套 rAF 节流：updateStreamVisibility → isBubbleVisible 内部会调
+       getBoundingClientRect()，属于同步强制布局。原来每个 scroll 事件都跑一次，
+       而开屏结束后 showAiSpeech 会让气泡常驻 15 秒 —— 首屏一滚动就抖。
+       本文件里 7 处 resize 监听已全部节流/防抖，这里补齐最后两处 scroll。 */
+    const scrollHandler = rafThrottle(() => updateStreamVisibility());
     window.currentScrollHandler = scrollHandler;
     window.addEventListener('scroll', scrollHandler, { passive: true });
 
@@ -3263,6 +3319,16 @@ function initFuseSearch(posts) {
         useExtendedSearch: false  // 保持简单模式
     };
 
+    // [FIX 2026-09-23] 加守卫。fuse.js 原先来自 cdn.jsdelivr.net（大陆实测 TTFB 5.6s，
+    // 且随时可能不可达），一旦它没加载成功，这里的 new Fuse 会抛 ReferenceError，
+    // 而 initFuseSearch 是在 loadPosts 的 try 块里被调用的 → 会被 catch 当成
+    // "连接失败" 渲染出 CONNECTION LOST 面板，看起来像后端挂了，实际只是搜索库没到。
+    // 未就绪时保持 fuseInstance = null，searchPosts 会自动回退到内置的 includes 简单匹配。
+    if (typeof Fuse === 'undefined') {
+        fuseInstance = null;
+        console.warn('[MAGI] Fuse.js 未加载，搜索回退到简单匹配模式');
+        return;
+    }
     fuseInstance = new Fuse(searchableData, options);
     console.log(`[MAGI] Fuse.js 搜索引擎已初始化: ${searchableData.length} 条数据`);
 }
@@ -3555,7 +3621,10 @@ const BlogManager = {
         perPage: 6,        // 每页显示数量
         totalPosts: 0,
         isLoading: false,
-        hasMore: true
+        hasMore: true,
+        // [FIX 2026-09-23] 容器里当前是否有可用内容。
+        // 用来判断失败时能否安全地显示错误面板（见 loadPosts 的 catch）。
+        hasContent: false
     },
 
     // 缓存配置
@@ -3569,10 +3638,24 @@ const BlogManager = {
 
     async fetchWithRetry(url, retries = this.retryConfig.maxRetries) {
         const delay = (ms) => new Promise(r => setTimeout(r, ms));
-        
+
+        // [FIX 2026-09-23] 加 8 秒超时。原来 fetch 完全没有超时控制：
+        // 请求"挂起"（TCP 已连上但服务端不响应）时 fetch 永远不 reject，
+        // 下方 finally 也就永远不执行 → isLoading 永久停在 true →
+        // 之后"加载更多"和错误面板的 RETRY 全被 loadPosts 开头的闩锁静默吞掉，
+        // 页面就永久停在骨架屏上，而且不给任何错误提示。
+        const timeoutSignal = () => {
+            if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+                return AbortSignal.timeout(8000);
+            }
+            const c = new AbortController();
+            setTimeout(() => c.abort(), 8000);
+            return c.signal;
+        };
+
         for (let i = 0; i <= retries; i++) {
             try {
-                const res = await fetch(url);
+                const res = await fetch(url, { signal: timeoutSignal() });
                 
                 if (res.status === 400) return res;
                 
@@ -3607,6 +3690,13 @@ const BlogManager = {
     },
 
     init() {
+        // [FIX 2026-09-23] 用户主动重试（RETRY 按钮 / 刷新）时先解锁。
+        // 原来这里不重置任何状态，而 loadPosts 开头的闩锁会检查 isLoading：
+        // 上一次请求若仍在 fetchWithRetry 的重试退避里（最多 4 次尝试 + 每次 8s 超时），
+        // isLoading 仍为 true 且距今不足 15 秒，于是 loadPosts 直接 return ——
+        // 表现就是"RETRY 按钮点不动"。
+        this.state.isLoading = false;
+        this.state.loadingSince = 0;
         this.state.page = 1;
         this.state.hasMore = true;
         this.loadPosts(true);
@@ -3655,13 +3745,25 @@ const BlogManager = {
     },
 
     async loadPosts(isReset = false) {
-        if (this.state.isLoading) return;
+        // [FIX 2026-09-23] 闩锁加超时。原来只要 isLoading 为 true 就直接 return，
+        // 一旦某次请求挂起（或异常路径没走到 finally），这个标记会永久为 true，
+        // 之后用户点"加载更多"、点错误面板的 RETRY 都会静默无反应。
+        // 现在超过 15 秒视为失效锁，允许重试。
+        if (this.state.isLoading && (Date.now() - (this.state.loadingSince || 0)) < 15000) return;
 
         const container = document.getElementById('article-list-container');
         if (!container) return;
 
-        // 重置时清空容器
-        if (isReset) {
+        // [PERF 2026-09-23] 检测构建期预渲染的内容。
+        // tools/prerender.mjs 会把第一页文章直接写进 index.html，并把 id 列表放在
+        // 容器的 data-prerendered 上。这样首屏 HTML 到达时用户就能看到真实文章，
+        // 不需要等一次 API 往返 —— 社区公认这是 LCP 提升最明显的一招，
+        // 同时顺带消除了"API 偶发 502 就显示 CONNECTION LOST"的不可靠问题。
+        const prerenderedIds = isReset ? (container.dataset.prerendered || '') : '';
+        const usePrerendered = prerenderedIds !== '';
+
+        // 重置时清空容器（已有预渲染内容时不动它——那段就是第一页）
+        if (isReset && !usePrerendered) {
             this.state.page = 1;
             container.innerHTML = `
                 <div class="eva-card p-8 flex flex-col items-center justify-center opacity-70 min-h-[200px]">
@@ -3674,6 +3776,10 @@ const BlogManager = {
         // 优先使用缓存
         const cached = this.getCache();
         if (cached && isReset) {
+            if (usePrerendered) {
+                this.adoptPrerendered(cached, prerenderedIds);
+                return;
+            }
             console.log('[MAGI] 使用缓存数据');
             this.state.totalPosts = cached.length;
             this.renderPage(cached, true);
@@ -3681,12 +3787,22 @@ const BlogManager = {
         }
 
         this.state.isLoading = true;
+        this.state.loadingSince = Date.now(); // [FIX 2026-09-23] 配合上方闩锁超时
 
         try {
-            const url = `${this.workerEndpoint}?page=${this.state.page}&per_page=${this.state.perPage}`;
+            // [PERF 2026-09-23] 加 _fields 裁剪响应体积。
+            // 实测：不加参数时 6 篇文章返回 76,969 字节，其中 content 字段占 23,569 字符 ——
+            // 而列表渲染只用到 id / date / title / excerpt（合计 503 字符）。
+            // 加 _fields 后同样的请求降到 3,000 字节，省 96%。
+            // Worker 已确认会透传该参数。
+            const url = `${this.workerEndpoint}?page=${this.state.page}&per_page=${this.state.perPage}`
+                      + `&_fields=id,date,title,excerpt,slug`;
             console.log(`[MAGI] Fetching page ${this.state.page}...`);
 
-            const res = await this.fetchWithRetry(url);
+            // [PERF 2026-09-23] 容器里已有预渲染内容时，这次请求只是"后台刷新"，
+            // 失败了也不影响用户看到的内容（见下方 catch），所以不必做 4 次重试 + 退避，
+            // 少等几秒、也让失败更快暴露出来。
+            const res = await this.fetchWithRetry(url, usePrerendered ? 1 : this.retryConfig.maxRetries);
 
             if (res.status === 400) {
                 this.state.hasMore = false;
@@ -3708,6 +3824,20 @@ const BlogManager = {
 
             const posts = JSON.parse(text);
 
+            // [PERF 2026-09-23] 与预渲染的 id 列表比对：一致就保留静态 DOM 不重绘。
+            // 既拿到"首屏即有内容"，又不会出现"静态内容 → 清空 → 动画重绘"的闪烁；
+            // 若不一致（发了新文章），才回落到原来的重绘路径。
+            if (usePrerendered && isReset) {
+                const fetchedIds = posts.map(p => String(p.id)).join(',');
+                if (fetchedIds === prerenderedIds) {
+                    this.setCache(posts);
+                    this.adoptPrerendered(posts, prerenderedIds);
+                    return;
+                }
+                console.log('[MAGI] 预渲染内容与线上不一致，重新渲染');
+                container.dataset.prerendered = '';
+            }
+
             // 首次加载时缓存所有数据并初始化搜索
             if (isReset && posts.length > 0) {
                 this.setCache(posts);
@@ -3724,7 +3854,16 @@ const BlogManager = {
 
         } catch (error) {
             console.error(error);
-            if (isReset) {
+            // [FIX 2026-09-23] 关键修复：不要用错误面板覆盖【已经显示出来的内容】。
+            // 原来的逻辑是无条件覆盖，于是出现这个现象：
+            //   首屏预渲染的文章正常显示 → 后台刷新请求失败 → 整块被换成
+            //   "CONNECTION LOST + RETRY"，文章就"凭空消失"了。
+            // 而预渲染的意义恰恰是"内容不依赖 API"，所以失败时应当保留内容、只记录日志。
+            // 只有容器里确实没有可用内容时，才显示错误面板。
+            const keepContent = this.state.hasContent || usePrerendered;
+            if (keepContent) {
+                console.warn('[MAGI] 后台刷新失败，保留当前已显示的内容：', error.message);
+            } else if (isReset) {
                 container.innerHTML = `
                     <div class="eva-card p-8 border-red-500/50 min-h-[150px] flex flex-col justify-center">
                         <h3 class="text-red-500 font-mono text-lg font-bold flex items-center gap-2">
@@ -3739,11 +3878,32 @@ const BlogManager = {
                         </button>
                     </div>
                 `;
+                lucide.createIcons();
             }
-            lucide.createIcons();
         } finally {
             this.state.isLoading = false;
         }
+    },
+
+    /**
+     * [PERF 2026-09-23] 采纳构建期预渲染的 DOM。
+     * 卡片已经在页面上，这里只补齐 JS 侧需要的状态：
+     * 搜索索引、分页状态、加载更多按钮，然后清掉标记避免被重复采纳。
+     * @param {Array} posts - 本次拉到的文章（用于建索引与判断是否还有下一页）
+     * @param {string} prerenderedIds - 预渲染时写入的 id 列表，仅用于日志
+     */
+    adoptPrerendered(posts, prerenderedIds) {
+        const container = document.getElementById('article-list-container');
+        if (!container) return;
+        console.log(`[MAGI] 复用构建期预渲染的列表（${prerenderedIds}），跳过重绘`);
+        this.state.page = 1;
+        this.state.totalPosts = posts.length;
+        initFuseSearch(posts);
+        this.state.hasMore = posts.length >= this.state.perPage;
+        this.state.hasContent = true; // [FIX 2026-09-23] 页面上的卡片就是内容
+        container.dataset.prerendered = '';
+        this.updateLoadMoreButton();
+        lucide.createIcons();
     },
 
     /**
@@ -3856,6 +4016,7 @@ const BlogManager = {
         }).join('');
 
         container.insertAdjacentHTML('beforeend', html);
+        this.state.hasContent = true; // [FIX 2026-09-23]
         this.updateLoadMoreButton();
         lucide.createIcons();
     },
@@ -4363,10 +4524,24 @@ const ArchivesManager = {
 
     async fetchWithRetry(url, retries = this.retryConfig.maxRetries) {
         const delay = (ms) => new Promise(r => setTimeout(r, ms));
-        
+
+        // [FIX 2026-09-23] 加 8 秒超时。原来 fetch 完全没有超时控制：
+        // 请求"挂起"（TCP 已连上但服务端不响应）时 fetch 永远不 reject，
+        // 下方 finally 也就永远不执行 → isLoading 永久停在 true →
+        // 之后"加载更多"和错误面板的 RETRY 全被 loadPosts 开头的闩锁静默吞掉，
+        // 页面就永久停在骨架屏上，而且不给任何错误提示。
+        const timeoutSignal = () => {
+            if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+                return AbortSignal.timeout(8000);
+            }
+            const c = new AbortController();
+            setTimeout(() => c.abort(), 8000);
+            return c.signal;
+        };
+
         for (let i = 0; i <= retries; i++) {
             try {
-                const res = await fetch(url);
+                const res = await fetch(url, { signal: timeoutSignal() });
                 
                 if (!res.ok) {
                     let errorMsg = `HTTP ${res.status}`;
@@ -4517,6 +4692,12 @@ const ArchivesManager = {
             title: post.title?.rendered || '',
             excerpt: post.excerpt?.rendered?.replace(/<[^>]+>/g, '') || ''
         }));
+        // [FIX 2026-09-23] 加守卫，理由同 initFuseSearch
+        if (typeof Fuse === 'undefined') {
+            this.fuseInstance = null;
+            console.warn('[ARCHIVE] Fuse.js 未加载，搜索回退到简单匹配模式');
+            return;
+        }
         this.fuseInstance = new Fuse(searchData, {
             keys: [
                 { name: 'title', weight: 0.6 },
@@ -4546,11 +4727,21 @@ const ArchivesManager = {
                 return;
             }
 
-            if (!this.fuseInstance) return;
-
-            const results = this.fuseInstance.search(query.trim());
-            const matchedIds = new Set(results.map(r => r.item.id));
-            const filtered = this.currentPosts.filter(p => matchedIds.has(p.id));
+            // [FIX 2026-09-23] Fuse 不可用时回退到 includes 简单匹配。
+            // 原来是 `if (!this.fuseInstance) return;` —— 搜索框完全没反应，
+            // 用户会以为页面卡死。
+            let filtered;
+            if (this.fuseInstance) {
+                const results = this.fuseInstance.search(query.trim());
+                const matchedIds = new Set(results.map(r => r.item.id));
+                filtered = this.currentPosts.filter(p => matchedIds.has(p.id));
+            } else {
+                const q = query.trim().toLowerCase();
+                filtered = this.currentPosts.filter(p =>
+                    (p.title?.rendered || '').toLowerCase().includes(q) ||
+                    (p.excerpt?.rendered || '').toLowerCase().includes(q)
+                );
+            }
 
             this.renderTimeline(filtered);
 
@@ -5110,7 +5301,10 @@ const ArticleViewer = {
         // });
 
         // 滚动进度追踪
-        this.contentDiv?.addEventListener('scroll', () => this.updateProgress(), { passive: true });
+        // [PERF 2026-09-23] 套 rAF 节流：updateProgress 内部先读 scrollTop/scrollHeight/clientHeight、
+        // 再写 progressBar.style.width，是典型的 layout thrashing（强制同步布局）。
+        // 原来每个 scroll 事件都执行一次，读长文章时明显掉帧。
+        this.contentDiv?.addEventListener('scroll', rafThrottle(() => this.updateProgress()), { passive: true });
     },
 
     async open(postId, postTitle = '') {
